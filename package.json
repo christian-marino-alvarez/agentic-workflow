@@ -1,0 +1,50 @@
+{
+    "name": "@cmarino/agentic-workflow",
+    "version": "1.1.0-beta.1",
+    "description": "Portable agentic workflow orchestration system with strict identity and gate discipline",
+    "type": "module",
+    "main": "dist/index.js",
+    "bin": {
+        "agentic-workflow": "./bin/cli.js"
+    },
+    "files": [
+        "dist",
+        "bin",
+        "README.md",
+        "LICENSE"
+    ],
+    "scripts": {
+        "build": "tsc && npm run copy-assets",
+        "copy-assets": "cp -r src/rules src/workflows src/templates dist/",
+        "start": "node dist/index.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/christian-marino-alvarez/agentic-workflow.git"
+    },
+    "bugs": {
+        "url": "https://github.com/christian-marino-alvarez/agentic-workflow/issues"
+    },
+    "homepage": "https://github.com/christian-marino-alvarez/agentic-workflow#readme",
+    "keywords": [
+        "agent",
+        "workflow",
+        "orchestration",
+        "ai",
+        "llm",
+        "agentic",
+        "governance"
+    ],
+    "author": "Christian Marino Alvarez",
+    "license": "ISC",
+    "dependencies": {
+        "@clack/prompts": "^0.7.0",
+        "@modelcontextprotocol/sdk": "^1.25.2",
+        "commander": "^11.1.0",
+        "gray-matter": "^4.0.3"
+    },
+    "devDependencies": {
+        "@types/node": "^20.10.6",
+        "typescript": "^5.3.3"
+    }
+}

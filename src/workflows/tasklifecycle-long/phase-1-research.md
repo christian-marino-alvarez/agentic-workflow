@@ -70,11 +70,20 @@ blocking: true
    - `task.md` contains acceptance criteria
    - If fails → go to **Step 8 (FAIL)**.
 
-2. Load research template (architect-agent)
+2. Ask 5 mandatory clarification questions (architect-agent)
+   - Capture answers in `research.md` under a `clarifications` section.
+   - Use these 5 questions:
+     1) What is the exact outcome you want?
+     2) What inputs/data are available or required?
+     3) What outputs or behaviors must be delivered?
+     4) What constraints or non-goals apply?
+     5) What does "done" mean (success criteria)?
+
+3. Load research template (architect-agent)
    - Load `templates.research`
    - If it doesn't exist or cannot be read → go to **Step 8 (FAIL)**.
 
-3. **Delegate to researcher-agent (MANDATORY)**
+4. **Delegate to researcher-agent (MANDATORY)**
    > ⚠️ **PERMANENT RULE**: The `architect-agent` **CANNOT** create the research report.
    > The `researcher-agent` is the **only authorized agent** to create `research.md`.
 
@@ -98,7 +107,7 @@ blocking: true
      - Official or prestigious sources
    - Hand back control to the `architect-agent` upon completion
 
-4. Request developer approval (MANDATORY, via console)
+5. Request developer approval (MANDATORY, via console)
    - The developer **MUST** issue a binary decision:
      - **YES** → Approved
      - **NO** → Rejected
@@ -112,7 +121,7 @@ blocking: true
      ```
    - If `decision != YES` → go to **Step 8 (FAIL)**.
 
-5. PASS
+6. PASS
    - Update `.agent/artifacts/<taskId>-<taskTitle>/task.md` (using prefix):
      - Mark Phase 1 as completed
      - Set `task.lifecycle.phases.phase-1-research.validated_at = <ISO-8601>`

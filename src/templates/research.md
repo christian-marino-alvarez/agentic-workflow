@@ -24,6 +24,18 @@ First line of the document:
 
 ---
 
+## Clarifications (5 Mandatory Questions)
+
+| # | Question | Answer (from developer) |
+|---|----------|-------------------------|
+| 1 | What is the exact outcome you want? | |
+| 2 | What inputs/data are available or required? | |
+| 3 | What outputs or behaviors must be delivered? | |
+| 4 | What constraints or non-goals apply? | |
+| 5 | What does "done" mean (success criteria)? | |
+
+---
+
 ## 2. Detected Needs
 - Technical requirements identified by the architect-agent
 - Assumptions and limits

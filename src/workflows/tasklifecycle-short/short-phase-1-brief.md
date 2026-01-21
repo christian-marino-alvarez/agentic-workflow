@@ -34,6 +34,12 @@ blocking: true
    - `task.strategy == "short"`.
 
 2. Execute 5 mandatory questions.
+   - Use these 5 questions:
+     1) What is the exact outcome you want?
+     2) What inputs/data are available or required?
+     3) What outputs or behaviors must be delivered?
+     4) What constraints or non-goals apply?
+     5) What does "done" mean (success criteria)?
 
 3. Complexity analysis.
 

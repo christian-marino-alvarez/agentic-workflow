@@ -16,6 +16,13 @@ First line of the document:
 ```yaml
 bootstrap:
   done: true
+language:
+  confirmed: false
+developer:
+  name: ""
+strategy: ""
+task:
+  description: ""
 roles:
   architect: {{architectAgentId}}
 constitution:

@@ -4,9 +4,11 @@ import {
     CallToolRequestSchema,
     ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import { execFile } from "node:child_process";
+import path from "node:path";
 import { performCreate } from "../cli/commands/create.js";
 import { ContextManager } from "../core/context/manager.js";
-import { resolveCorePath } from "../core/mapping/resolver.js";
+import { resolveCorePath, resolveInstalledCorePath } from "../core/mapping/resolver.js";
 
 
 /**
@@ -29,6 +31,8 @@ export async function runMcpServer() {
     // Configuración del Ciclo de Vida (Lifecycle)
     const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutos
     let inactivityTimer: NodeJS.Timeout;
+    const projectRoot = process.cwd();
+    const allowedCommands = new Set(["cat", "ls", "rg", "sed", "head", "tail", "pwd"]);
 
     const resetInactivityTimer = () => {
         if (inactivityTimer) clearTimeout(inactivityTimer);
@@ -106,6 +110,29 @@ export async function runMcpServer() {
                         properties: {},
                     },
                 },
+                {
+                    name: "run_command",
+                    description: "Ejecuta comandos de lectura seguros dentro del proyecto (cat/ls/rg/sed/head/tail/pwd).",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            command: {
+                                type: "string",
+                                description: "Comando a ejecutar (ej: cat, rg, ls).",
+                            },
+                            args: {
+                                type: "array",
+                                items: { type: "string" },
+                                description: "Argumentos del comando.",
+                            },
+                            cwd: {
+                                type: "string",
+                                description: "Directorio de trabajo relativo al proyecto (opcional).",
+                            },
+                        },
+                        required: ["command"],
+                    },
+                },
             ],
         };
     });
@@ -139,7 +166,7 @@ export async function runMcpServer() {
         }
 
         if (name === "bootstrap_context") {
-            const corePath = await resolveCorePath();
+            const corePath = (await resolveInstalledCorePath(projectRoot)) ?? await resolveCorePath();
             const manager = new ContextManager(process.cwd(), corePath);
             const bundle = await manager.bootstrapContext();
             return {
@@ -148,7 +175,7 @@ export async function runMcpServer() {
         }
 
         if (name === "hydrate_context") {
-            const corePath = await resolveCorePath();
+            const corePath = (await resolveInstalledCorePath(projectRoot)) ?? await resolveCorePath();
             const manager = new ContextManager(process.cwd(), corePath);
             const alias = (args as any).alias;
             const files = await manager.resolveAlias(alias);
@@ -163,6 +190,28 @@ export async function runMcpServer() {
             const bundle = (manager as any).formatBundle(files);
             return {
                 content: [{ type: "text", text: bundle }]
+            };
+        }
+
+        if (name === "run_command") {
+            const { command, args: cmdArgs, cwd } = args as any;
+            if (!command) {
+                throw new Error("El comando es obligatorio.");
+            }
+
+            const baseCommand = path.basename(command);
+            if (!allowedCommands.has(baseCommand)) {
+                throw new Error(`Comando no permitido: ${baseCommand}`);
+            }
+
+            const resolvedCwd = cwd ? path.resolve(projectRoot, cwd) : projectRoot;
+            if (!resolvedCwd.startsWith(projectRoot)) {
+                throw new Error("El cwd debe estar dentro del proyecto.");
+            }
+
+            const output = await execFileAsync(baseCommand, Array.isArray(cmdArgs) ? cmdArgs : [], resolvedCwd);
+            return {
+                content: [{ type: "text", text: output }],
             };
         }
 
@@ -181,4 +230,18 @@ export async function runMcpServer() {
     await server.connect(transport);
 
     console.error("Agentic Workflow MCP Server running on stdio");
+}
+
+function execFileAsync(command: string, args: string[], cwd: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+        execFile(command, args, { cwd, maxBuffer: 1024 * 1024 }, (error, stdout, stderr) => {
+            if (error) {
+                const message = stderr?.trim() || error.message || "Error ejecutando comando.";
+                reject(new Error(message));
+                return;
+            }
+            const output = `${stdout ?? ""}${stderr ?? ""}`.trim();
+            resolve(output.length > 0 ? output : "(sin salida)");
+        });
+    });
 }

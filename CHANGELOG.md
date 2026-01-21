@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0-beta.1](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.5.0-beta.1...agentic-workflow-v1.6.0-beta.1) (2026-01-21)
+
+
+### Features
+
+* add clean command for legacy MCP config ([e2220d3](https://github.com/christian-marino-alvarez/agentic-workflow/commit/e2220d35ef3ba86c726406f59c9226fc2cc4c903))
+
 ## [1.5.0-beta.1](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.4.0-beta.1...agentic-workflow-v1.5.0-beta.1) (2026-01-21)
 
 

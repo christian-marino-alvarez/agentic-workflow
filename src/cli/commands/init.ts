@@ -83,6 +83,7 @@ Global entry point for the agentic system. It uses absolute references to the co
 agent:
   core:
     root: "${corePath}"
+    bootstrap: "${path.join(corePath, 'bootstrap.md')}"
     artifacts: "${path.join(corePath, 'artifacts/index.md')}"
     rules: "${path.join(corePath, 'rules/index.md')}"
     workflows: "${path.join(corePath, 'workflows/index.md')}"

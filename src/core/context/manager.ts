@@ -49,40 +49,6 @@ export class ContextManager {
         return files;
     }
 
-    /**
-     * Crea un bundle de inicialización (Bootstrap) siguiendo las Best Practices.
-     */
-    async bootstrapContext(): Promise<string> {
-        const files: ContextFile[] = [];
-
-        // 1. Índice Maestro Local
-        const localIndex = path.join(this.projectRoot, '.agent/index.md');
-        files.push(await this.readFile(localIndex, 'agent.index'));
-
-        // 2. Local Domain Indexes (client-defined)
-        const localRulesIndex = path.join(this.projectRoot, '.agent/rules/index.md');
-        const localRolesIndex = path.join(this.projectRoot, '.agent/rules/roles/index.md');
-        const localWorkflowsIndex = path.join(this.projectRoot, '.agent/workflows/index.md');
-        const localArtifactsIndex = path.join(this.projectRoot, '.agent/artifacts/index.md');
-        const localTemplatesIndex = path.join(this.projectRoot, '.agent/templates/index.md');
-
-        if (await this.exists(localRulesIndex)) files.push(await this.readFile(localRulesIndex, 'agent.local.rules'));
-        if (await this.exists(localRolesIndex)) files.push(await this.readFile(localRolesIndex, 'agent.local.roles'));
-        if (await this.exists(localWorkflowsIndex)) files.push(await this.readFile(localWorkflowsIndex, 'agent.local.workflows'));
-        if (await this.exists(localArtifactsIndex)) files.push(await this.readFile(localArtifactsIndex, 'agent.local.artifacts'));
-        if (await this.exists(localTemplatesIndex)) files.push(await this.readFile(localTemplatesIndex, 'agent.local.templates'));
-
-        const localBundle = this.formatBundle(files, true);
-
-        // Use prebuilt core bootstrap bundle only (no dynamic fallback).
-        const coreBootstrapPath = path.join(this.corePath, 'bootstrap.md');
-        if (!(await this.exists(coreBootstrapPath))) {
-            throw new Error('No se encontró bootstrap.md en el core. Ejecuta el build para generarlo.');
-        }
-
-        const coreBundle = await fs.readFile(coreBootstrapPath, 'utf-8');
-        return `${localBundle}\n\n---\n\n${coreBundle}`.trim();
-    }
 
     private async readFile(filePath: string, alias: string): Promise<ContextFile> {
         const content = await fs.readFile(filePath, 'utf-8');

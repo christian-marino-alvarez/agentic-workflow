@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0-beta.1](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.4.0-beta.1...agentic-workflow-v1.5.0-beta.1) (2026-01-21)
+
+
+### Features
+
+* clean dist before build ([2a46570](https://github.com/christian-marino-alvarez/agentic-workflow/commit/2a46570be3859cbc48c66eb8ab6c57748a903681))
+
 ## [1.4.0-beta.1](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.3.0-beta.1...agentic-workflow-v1.4.0-beta.1) (2026-01-21)
 
 

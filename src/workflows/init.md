@@ -29,12 +29,13 @@ blocking: true
 1. **Reasoning (MANDATORY)**
    - Explain to the developer what will be done in this phase and why.
 2. Use the `bootstrap_context` tool to load indices, constitutions, and core roles in a single step.
-3. If the tool is unavailable, load the bootstrap indices and base constitutions manually.
-4. Save the bundle output to `.agent/artifacts/candidate/bootstrap.md`.
-5. Detect preferred language and ask for explicit confirmation (**YES**).
-6. Select lifecycle strategy (**Long** or **Short**).
-7. Create the `init.md` artifact using `templates.init`.
-8. Evaluate Gate.
+3. If `bootstrap_context` is unavailable, use the `run_command` tool to read `.agent/index.md` and the referenced core paths, then assemble the bundle manually.
+4. If `run_command` is unavailable, load the bootstrap indices and base constitutions manually.
+5. Save the bundle output to `.agent/artifacts/candidate/bootstrap.md`.
+6. Detect preferred language and ask for explicit confirmation (**YES**).
+7. Select lifecycle strategy (**Long** or **Short**).
+8. Create the `init.md` artifact using `templates.init`.
+9. Evaluate Gate.
    - The developer **MUST** explicitly confirm with a **YES**.
 
 ## Output (REQUIRED)

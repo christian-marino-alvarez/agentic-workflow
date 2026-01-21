@@ -21,6 +21,7 @@ jobs:
           config-file: .release-please-config.json
           manifest-file: .release-please-manifest.json
           target-branch: main
+          include-component-in-tag: false
 
   release-please-develop:
     runs-on: ubuntu-latest
@@ -35,3 +36,4 @@ jobs:
           config-file: .release-please-config.json
           manifest-file: .release-please-manifest.json
           target-branch: develop
+          include-component-in-tag: false

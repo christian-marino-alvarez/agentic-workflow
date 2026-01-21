@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0-beta.1](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.6.0-beta.1...agentic-workflow-v1.7.0-beta.1) (2026-01-21)
+
+
+### Features
+
+* simplify init and add clarification questions ([cb24916](https://github.com/christian-marino-alvarez/agentic-workflow/commit/cb2491644380b8bb1ce56082619b43303268bf96))
+
 ## [1.6.0-beta.1](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.5.0-beta.1...agentic-workflow-v1.6.0-beta.1) (2026-01-21)
 
 

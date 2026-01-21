@@ -26,10 +26,11 @@ blocking: true
 ## Mandatory Steps
 1. Load the prebuilt bootstrap bundle from the core path: `${agent.core.root}/bootstrap.md`.
 2. Save the bundle content to `.agent/artifacts/candidate/bootstrap.md`.
-3. Ask the developer to confirm language (**YES**). Do not continue until answered.
-4. Ask the developer for their preferred name (used in all future responses). Do not continue until answered.
-5. Ask the developer to choose lifecycle strategy: **short (fast)** or **long**. Do not continue until answered.
-6. Ask for the first task description (1-3 sentences). Do not continue until answered.
+3. Ask the developer the **Gate questions** in order (one by one, do not continue until answered):
+   - Language confirmation (**YES**).
+   - Developer name (preferred form of address).
+   - Task strategy: **short (fast)** or **long**.
+   - Task description (1-3 sentences).
 7. Create the `init.md` artifact using `templates.init`.
 8. Evaluate Gate.
    - The developer **MUST** explicitly confirm with a **YES**.
@@ -50,7 +51,7 @@ Requirements (all mandatory):
 3. In `init.md` YAML:
    - `language.confirmed == true`
    - `developer.name` is defined
-   - `strategy` is defined
+   - `strategy` is defined (short/fast or long)
    - `task.description` is defined
 4. The developer has explicitly approved with **YES**.
 

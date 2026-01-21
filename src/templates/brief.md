@@ -8,22 +8,22 @@ related_task: <taskId>-<taskTitle>
 
 # Brief — <taskId>-<taskTitle>
 
-## Identificacion del agente (OBLIGATORIA)
-Primera linea del documento:
-`<icono> **<nombre-agente>**: <mensaje>`
+## Agent Identification (MANDATORY)
+First line of the document:
+`<icon> **<agent-name>**: <message>`
 
-## 1. Identificación de la tarea
+## 1. Task Identification
 
-**Título**: <título de la tarea>
-**Objetivo**: <objetivo principal>
-**Estrategia**: Short
+**Title**: <task title>
+**Objective**: <main objective>
+**Strategy**: Short
 
 ---
 
-## 2. Las 5 Preguntas Obligatorias
+## 2. The 5 Mandatory Questions
 
-| # | Pregunta (formulada por architect) | Respuesta (del desarrollador) |
-|---|-----------------------------------|-------------------------------|
+| # | Question (formulated by architect) | Answer (from developer) |
+|---|-----------------------------------|-------------------------|
 | 1 | | |
 | 2 | | |
 | 3 | | |
@@ -34,63 +34,63 @@ Primera linea del documento:
 
 ## 3. Acceptance Criteria
 
-Derivados de las respuestas anteriores:
+Derived from the previous answers:
 
-1. **Alcance**: 
-2. **Entradas/Datos**: 
-3. **Salidas esperadas**: 
-4. **Restricciones**: 
-5. **Criterio de Done**: 
-
----
-
-## 4. Análisis simplificado
-
-### Estado actual (As-Is)
-- Estructura afectada:
-- Limitaciones conocidas:
-
-### Evaluación de complejidad
-
-| Indicador | Estado | Comentario |
-|-----------|--------|------------|
-| Afecta más de 3 paquetes | ☐ Sí ☐ No | |
-| Requiere investigación APIs | ☐ Sí ☐ No | |
-| Cambios breaking | ☐ Sí ☐ No | |
-| Tests E2E complejos | ☐ Sí ☐ No | |
-
-**Resultado de complejidad**: ☐ BAJA (continuar Short) ☐ ALTA (recomendar abortar a Long)
+1. **Scope**: 
+2. **Inputs/Data**: 
+3. **Expected Outputs**: 
+4. **Constraints**: 
+5. **Done Criteria**: 
 
 ---
 
-## 5. Plan de implementación
+## 4. Simplified Analysis
 
-### Pasos ordenados
+### Current State (As-Is)
+- Affected structure:
+- Known limitations:
 
-1. **Paso 1**
-   - Descripción:
-   - Entregables:
+### Complexity Evaluation
 
-2. **Paso 2**
-   - Descripción:
-   - Entregables:
+| Indicator | Status | Comment |
+|-----------|--------|---------|
+| Affects more than 3 packages | ☐ Yes ☐ No | |
+| Requires API research | ☐ Yes ☐ No | |
+| Breaking changes | ☐ Yes ☐ No | |
+| Complex E2E tests | ☐ Yes ☐ No | |
 
-(Añadir más pasos según necesidad)
-
-### Verificación prevista
-- Tipo de tests:
-- Criterios de éxito:
+**Complexity Result**: ☐ LOW (continue Short) ☐ HIGH (recommend aborting to Long)
 
 ---
 
-## 6. Aprobación del desarrollador (OBLIGATORIA)
+## 5. Implementation Plan
+
+### Ordered Steps
+
+1. **Step 1**
+   - Description:
+   - Deliverables:
+
+2. **Step 2**
+   - Description:
+   - Deliverables:
+
+(Add more steps as needed)
+
+### Planned Verification
+- Test types:
+- Success criteria:
+
+---
+
+## 6. Developer Approval (MANDATORY)
 
 ```yaml
 approval:
   developer:
-    decision: SI | NO
+    decision: YES | NO
     date: <ISO-8601>
-    comments: <opcional>
+    comments: <optional>
 ```
 
-> Sin aprobación, esta fase NO puede avanzar a Implementation.
+> Without approval, this phase CANNOT move to Implementation.

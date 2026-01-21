@@ -2,48 +2,48 @@
 artifact: todo_item
 owner: architect-agent
 status: open | in-progress | done | cancelled
-priority: alta | media | baja
+priority: high | medium | low
 ---
 
-# TODO: <título breve>
+# TODO: <brief title>
 
-## Identificacion del agente (OBLIGATORIA)
-Primera linea del documento:
-`<icono> **<nombre-agente>**: <mensaje>`
+## Agent Identification (MANDATORY)
+First line of the document:
+`<icon> **<agent-name>**: <message>`
 
-## Origen
-- **Detectado en tarea**: <taskId>-<taskTitle>
-- **Fase**: <phase donde se detectó>
-- **Fecha**: <ISO-8601>
-- **Agente**: <agente que lo detectó>
+## Source
+- **Detected in task**: <taskId>-<taskTitle>
+- **Phase**: <phase where it was detected>
+- **Date**: <ISO-8601>
+- **Agent**: <agent who detected it>
 
-## Descripción
-<Descripción clara de la mejora propuesta>
+## Description
+<Clear description of the proposed improvement>
 
-## Justificación
-<Por qué es importante hacer este cambio>
+## Justification
+<Why it is important to make this change>
 
-## Impacto estimado
-- **Complejidad**: baja | media | alta
-- **Áreas afectadas**: <componentes/workflows/templates>
+## Estimated Impact
+- **Complexity**: low | medium | high
+- **Affected Areas**: <components/workflows/templates>
 
-## Criterio de aceptación
-- [ ] <Condición verificable 1>
-- [ ] <Condición verificable 2>
+## Acceptance Criteria
+- [ ] <Verifiable condition 1>
+- [ ] <Verifiable condition 2>
 
-## Notas
-<Información adicional relevante>
+## Notes
+<Additional relevant information>
 
 ---
 
-## Historial
+## History
 ```yaml
 history:
   - action: created
     date: <ISO-8601>
-    by: <agente>
+    by: <agent>
   # - action: started | completed | cancelled
   #   date: <ISO-8601>
-  #   by: <agente>
-  #   task: <taskId donde se implementó>
+  #   by: <agent>
+  #   task: <taskId where it was implemented>
 ```

@@ -1,6 +1,6 @@
 ---
 id: workflow.tasklifecycle.phase-6-results-acceptance
-description: Fase 6 del ciclo de tarea. Presenta el informe final de resultados y requiere aceptación explícita del desarrollador (SI/NO).
+description: Task cycle Phase 6. Presents the final results report and requires explicit developer acceptance (YES/NO).
 owner: architect-agent
 version: 1.1.0
 severity: PERMANENT
@@ -12,60 +12,68 @@ blocking: true
 # WORKFLOW: tasklifecycle.phase-6-results-acceptance
 
 ## Input (REQUIRED)
-- Existe el informe de verificación:
+- Verification report exists:
   - `.agent/artifacts/<taskId>-<taskTitle>/verification.md`
-- Existe la current task:
+- Current task exists:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
-- El `task.md` **DEBE** reflejar:
+- `task.md` **MUST** reflect:
   - `task.phase.current == aliases.taskcycle-long.phases.phase_6.id`
 
 > [!IMPORTANT]
-> **Constitución activa (OBLIGATORIO)**:
-> - Cargar `constitution.extensio_architecture` antes de iniciar
-> - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
+> **Active Constitution (MANDATORY)**:
+> - Load `constitution.project_architecture` before starting
+> - Load `constitution.agents_behavior` (Section 7: Gates, Section 8: Constitution)
 
 ## Output (REQUIRED)
-- Crear el informe de aceptación de resultados:
+- Create results acceptance report:
   - `.agent/artifacts/<taskId>-<taskTitle>/results-acceptance.md`
-- Decisión final del desarrollador (OBLIGATORIA): **SI / NO**
-- Actualización del estado en `task.md`.
+- Final developer decision (MANDATORY): **YES / NO**
+- Status update in `task.md`.
 
-## Objetivo (ONLY)
-- Presentar un **informe final de resultados** basado en la verificación.
-- Obtener una **aceptación final explícita (SI)** por parte del desarrollador.
+## Objective (ONLY)
+- Present a **final results report** based on verification.
+- Obtain a **final explicit acceptance (YES)** from the developer.
 
-## Template (OBLIGATORIO)
-- El informe **DEBE** crearse usando `templates.results_acceptance`.
+## Template (MANDATORY)
+- The report **MUST** be created using `templates.results_acceptance`.
 
 ---
 
-## Pasos obligatorios
+## Reasoning (MANDATORY)
+- Before executing, the responsible agent must explain to the developer what will be done and why.
+- No document is required for this step.
 
-0. **Activación de Rol y Prefijo (OBLIGATORIO)**
-   - El `architect-agent` **DEBE** comenzar su intervención identificándose.
-   - Mensaje: `🏛️ **architect-agent**: Iniciando Phase 6 - Results Acceptance.`
+## Mandatory Steps
 
-1. Verificar inputs
-   - Existe `verification.md` y `task.md`.
+0. **Role Activation and Prefix (MANDATORY)**
+   - The `architect-agent` **MUST** begin its intervention by identifying itself.
+   - Message: `🏛️ **architect-agent**: Starting Phase 6 - Results Acceptance.`
 
-2. Cargar template y crear `results-acceptance.md`.
+1. Verify inputs
+   - `verification.md` and `task.md` exist.
 
-3. Solicitar aceptación final del desarrollador (OBLIGATORIA, por consola)
-   - Exigir decisión binaria **SI**.
-   - Registrar en `results-acceptance.md`: `decision: SI`.
+2. Load template and create `results-acceptance.md`.
+
+3. Request final developer acceptance (MANDATORY, via console)
+   - Require binary decision **YES**.
+   - Record in `results-acceptance.md`: `decision: YES`.
 
 4. PASS
-   - Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md` (usando prefijo).
-   - Marcar fase completada y avanzar a Phase 7.
+   - Update `.agent/artifacts/<taskId>-<taskTitle>/task.md` (using prefix).
+   - Mark phase completed and advance to Phase 7.
+
+## Pass
+- All required artifacts are created from templates.
+- Developer approval is recorded where required.
 
 ## Gate (REQUIRED)
-Requisitos (todos obligatorios):
-1. Existe `results-acceptance.md` con Gate PASS (`decision: SI`).
-2. `task.md` refleja timestamps y estado:
+Requirements (all mandatory):
+1. `results-acceptance.md` exists with Gate PASS (`decision: YES`).
+2. `task.md` reflects timestamps and state:
    - `task.phase.current == aliases.taskcycle-long.phases.phase_7.id`
    - `task.lifecycle.phases.phase-6-results-acceptance.completed == true`
-   - `task.lifecycle.phases.phase-6-results-acceptance.validated_at` no nulo
-   - `task.phase.updated_at` no nulo
+   - `task.lifecycle.phases.phase-6-results-acceptance.validated_at` not null
+   - `task.phase.updated_at` not null
 
-Si Gate FAIL:
-- Ejecutar **FAIL**.
+If Gate FAIL:
+- Execute **FAIL**.

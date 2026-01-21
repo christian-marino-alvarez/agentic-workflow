@@ -8,24 +8,24 @@ trigger: always_on
 
 # INDEX — Rules / Roles
 
-## Objetivo
-Este fichero enumera todas las rules del dominio `roles`.
-Los workflows/agentes **DEBEN** referenciar estas reglas
-por alias en lugar de rutas directas.
+## Objective
+This file lists all the rules for the `roles` domain.
+Workflows/agents **MUST** reference these rules
+via aliases instead of direct paths.
 
-## Reglas Globales (PERMANENT)
+## Global Rules (PERMANENT)
 
-### Comportamiento e Identificación de Agentes
-**Severidad**: PERMANENT  
-**Alcance**: Todos los roles
+### Behavior and Agent Identification
+**Severity**: PERMANENT  
+**Scope**: All roles
 
-Todos los agentes DEBEN seguir estrictamente las normas de identificación e interacción definidas en:
+All agents MUST strictly follow the identification and interaction rules defined in:
 `constitution.agents_behavior`
 
-**Resumen**:
-- Identificación obligatoria mediante `<icono> **<nombre-agente>**`, con la excepcion de compatibilidad definida en `constitution.agents_behavior`.
-- Solo el Architect puede modificar reglas.
-- QA no implementa código funcional.
+**Summary**:
+- Mandatory identification using `<icon> **<agent-name>**`, with the compatibility exception defined in `constitution.agents_behavior`.
+- Only the Architect can modify rules.
+- QA does not implement functional code.
 
 ---
 
@@ -34,15 +34,12 @@ Todos los agentes DEBEN seguir estrictamente las normas de identificación e int
 roles:
   architect: .agent/rules/roles/architect.md
   qa: .agent/rules/roles/qa.md
-  driver: .agent/rules/roles/driver.md
   researcher: .agent/rules/roles/researcher.md
-  module: .agent/rules/roles/module.md
-  surface: .agent/rules/roles/surface.md
   tooling: .agent/rules/roles/tooling.md
   neo: .agent/rules/roles/neo.md
 ```
 
-## Reglas
-- Este índice **solo** declara reglas del dominio `roles`.
-- Cada nuevo rol **DEBE** añadirse aquí antes de ser utilizado.
-- Cada rol **DEBE** incluir la regla de prefijo obligatorio en su definición.
+## Rules
+- This index **only** declares rules for the `roles` domain.
+- Each new role **MUST** be added here before being used.
+- Each role **MUST** include the mandatory prefix rule in its definition.

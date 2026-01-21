@@ -9,101 +9,102 @@ related_plan: .agent/artifacts/<taskId>-<taskTitle>/plan.md
 
 # Architectural Implementation Review — <taskId>-<taskTitle>
 
-## Identificacion del agente (OBLIGATORIA)
-Primera linea del documento:
-`<icono> **<nombre-agente>**: <mensaje>`
+## Agent Identification (MANDATORY)
+First line of the document:
+`<icon> **<agent-name>**: <message>`
 
-## 1. Resumen de la revisión
-- **Objetivo del review**  
-  Verificar que la implementación ejecutada cumple el **plan de implementación aprobado** sin desviaciones no autorizadas.
+## 1. Review Summary
+- **Review Objective**  
+  Verify that the executed implementation complies with the **approved implementation plan** without unauthorized deviations.
 
-- **Resultado global**  
-  - Estado: ☐ APROBADO ☐ RECHAZADO
-  - Fecha de revisión:
-  - Arquitecto responsable:
-
----
-
-## 2. Verificación contra el plan de implementación
-Revisión directa y trazable **plan → implementación**.
-
-### 2.1 Pasos del plan
-Para **cada paso definido en `plan.md`**:
-
-| Paso del plan | Estado | Evidencia | Observaciones |
-|---------------|--------|-----------|---------------|
-| Paso 1 | ☐ OK ☐ NO OK | refs / commits / artefactos | |
-| Paso 2 | ☐ OK ☐ NO OK | | |
-
-> Todos los pasos **DEBEN** estar en estado **OK** para aprobar la fase.
+- **Global Result**  
+  - Status: ☐ APPROVED ☐ REJECTED
+  - Review Date:
+  - Responsible Architect:
 
 ---
 
-## 3. Subtareas por agente
-Revisión de las implementaciones individuales.
+## 2. Verification against the Implementation Plan
+Direct and traceable review **plan → implementation**.
 
-### Agente: `<agent-name>`
-- **Subtask document**:
-  - `.agent/artifacts/<taskId>-<taskTitle>/<agent>/subtask-implementation.md`
-- **Evaluación**:
-  - ☐ Cumple el plan
-  - ☐ Desviaciones detectadas (detallar abajo)
+### 2.1 Plan Steps
+For **each step defined in `plan.md`**:
 
-**Notas del arquitecto**
-- Cambios realizados:
-- Decisiones técnicas:
-- Coherencia con el resto del sistema:
+| Plan Step | Status | Evidence | Observations |
+|-----------|--------|----------|--------------|
+| Step 1 | ☐ OK ☐ NO OK | refs / commits / artifacts | |
+| Step 2 | ☐ OK ☐ NO OK | | |
 
-(Repetir sección por cada agente participante)
+> All steps **MUST** be in **OK** status to approve the phase.
 
 ---
 
-## 4. Acceptance Criteria (impacto)
-Verificación de que la implementación **no rompe** los acceptance criteria definidos.
+## 3. Subtasks per Agent
+Review of individual implementations.
 
-- ☐ Todos los AC siguen siendo válidos
-- ☐ Algún AC requiere revisión (detallar)
+### Agent: `<agent-name>`
+- **Task document**:
+  - `.agent/artifacts/<taskId>-<taskTitle>/agent-tasks/<N>-<agent>-<taskName>.md`
+- **Evaluation**:
+  - ☐ Complies with the plan
+  - ☐ Deviations detected (detail below)
 
-**Observaciones**
-- AC afectados:
-- Motivo:
+**Architect's Notes**
+- Changes made:
+- Technical decisions:
+- Consistency with the rest of the system:
 
----
-
-## 5. Coherencia arquitectónica
-Evaluación global del sistema tras la implementación.
-
-- ☐ Respeta arquitectura Extensio
-- ☐ Respeta clean code
-- ☐ No introduce deuda técnica significativa
-- ☐ Mantiene compatibilidad esperada (multi-browser si aplica)
-
-**Observaciones arquitectónicas**
-- Impacto en estructura:
-- Impacto en módulos/drivers:
-- Riesgos introducidos:
+(Repeat section for each participating agent)
 
 ---
 
-## 6. Desviaciones del plan
-Registro explícito de desviaciones (si existen).
+## 4. Acceptance Criteria (Impact)
+Verification that the implementation **does not break** the defined acceptance criteria.
 
-- **Desviación**
-  - Descripción:
-  - Justificación:
-  - ¿Estaba prevista en el plan? ☐ Sí ☐ No
-  - ¿Requiere replanificación? ☐ Sí ☐ No
+- ☐ All ACs remain valid
+- ☐ Any AC requires review (detail below)
 
-(Si no hay desviaciones, indicar explícitamente: “Sin desviaciones detectadas”).
+**Observations**
+- Affected ACs:
+- Reason:
 
 ---
 
-## 7. Decisión final del arquitecto
-Decisión **severa y binaria**.
+## 5. Architectural Consistency
+Global evaluation of the system after implementation.
+
+- ☐ Respects project architecture
+- ☐ Respects clean code
+- ☐ Does not introduce significant technical debt
+- ☐ Maintains expected compatibility (multi-browser if applicable)
+
+**Architectural Observations**
+- Impact on structure:
+- Impact on modules/drivers:
+- Risks introduced:
+
+---
+
+## 6. Plan Deviations
+Explicit record of deviations (if any).
+
+- **Deviation**
+  - Description:
+  - Justification:
+  - Was it anticipated in the plan? ☐ Yes ☐ No
+  - Does it require re-planning? ☐ Yes ☐ No
+
+(If there are no deviations, explicitly state: "No deviations detected").
+
+---
+
+## 7. Architect's Final Decision
+Severe and binary decision.
 
 ```yaml
 decision:
   architect:
-    result: APROBADO | RECHAZADO
+    result: APPROVED | REJECTED
     date: <ISO-8601>
-    comments: <opcional>
+    comments: <optional>
+```

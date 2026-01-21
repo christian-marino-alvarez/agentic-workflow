@@ -9,98 +9,98 @@ task_id: "{{taskId}}-{{N}}"
 ---
 
 ################################################################################
-# 🛑 BLOQUEO DE SEGURIDAD: TAREA NO ACTIVADA                                   #
+# 🛑 SECURITY BLOCK: TASK NOT ACTIVATED                                        #
 ################################################################################
-# El agente {{agent}} ha sido asignado para esta tarea.                       #
+# Agent {{agent}} has been assigned to this task.                             #
 #                                                                              #
-# PROHIBIDO USAR HERRAMIENTAS DE ESCRITURA O EJECUCIÓN (run, write, create).   #
-# Acción requerida: Desarrollador debe responder con "SI" para activar.        #
+# FORBIDDEN TO USE WRITING OR EXECUTION TOOLS (run, write, create).            #
+# Required action: Developer must respond with "YES" to activate.              #
 ################################################################################
 
 # Agent Task — {{taskId}}-{{N}} ({{taskName}})
 
 ## 1. Input (REQUIRED)
-- **Objetivo**: {{objective}}
-- **Alcance**: {{scope}}
-- **Dependencias**: {{dependencies}}
+- **Objective**: {{objective}}
+- **Scope**: {{scope}}
+- **Dependencies**: {{dependencies}}
 
 ---
 
-## 2. Reasoning (ESPERANDO ACTIVACIÓN)
+## 2. Reasoning (AWAITING ACTIVATION)
 
 > [!IMPORTANT]
-> El agente **DEBE** completar esta sección DESPUÉS de ser activado (Gate A) y ANTES de ejecutar (Gate B).
+> The agent **MUST** complete this section AFTER being activated (Gate A) and BEFORE executing (Gate B).
 
-### Análisis del objetivo
-- (¿Qué se pide exactamente?)
+### Objective Analysis
+- (What exactly is being requested?)
 
-### Opciones consideradas
-- **Opción A**: (descripción)
-- **Opción B**: (descripción)
+### Options Considered
+- **Option A**: (description)
+- **Option B**: (description)
 
-### Decisión tomada
-- **Opción elegida**: (A/B)
-- **Justificación**: (por qué)
+### Decision Made
+- **Chosen Option**: (A/B)
+- **Justification**: (why)
 
 ---
 
 ## 3. Output (REQUIRED)
-- **Entregables**:
+- **Deliverables**:
   - {{deliverables}}
-- **Evidencia requerida**:
+- **Required Evidence**:
   - {{evidence}}
 
 ---
 
 ## 4. Implementation Report
 
-> Esta sección la completa el agente asignado durante la ejecución.
+> This section is completed by the assigned agent during execution.
 
-### Cambios realizados
-- (Archivos modificados, funciones añadidas, etc.)
+### Changes Made
+- (Modified files, added functions, etc.)
 
-### Decisiones técnicas
-- (Decisiones clave y justificación)
+### Technical Decisions
+- (Key decisions and justification)
 
-### Evidencia
-- (Logs, capturas, tests ejecutados)
+### Evidence
+- (Logs, screenshots, executed tests)
 
 ---
 
-## Gate A: Activación de Agente (Handover)
+## Gate A: Agent Activation (Handover)
 
-El desarrollador **DEBE** activar al agente antes de que este pueda presentar su razonamiento o usar herramientas.
+The developer **MUST** activate the agent before they can present their reasoning or use tools.
 
 ```yaml
 activation:
   agent: {{agent}}
   assigned_by: architect-agent
-  decision: null # SI | NO
+  decision: null # YES | NO
 ```
 
-## Gate B: Aprobación de Reasoning (Plan de Acción)
+## Gate B: Reasoning Approval (Action Plan)
 
-El desarrollador **DEBE** aprobar el razonamiento antes de que el agente proceda con la implementación.
+The developer **MUST** approve the reasoning before the agent proceeds with the implementation.
 
 ```yaml
 reasoning_approval:
   agent: {{agent}}
-  decision: null # SI | NO
+  decision: null # YES | NO
 ```
 
-## Gate C: Aprobación de Resultados (Cierre)
+## Gate C: Results Approval (Closure)
 
 ```yaml
 completion:
   agent: {{agent}}
-  decision: null # SI | NO
+  decision: null # YES | NO
 ```
 
 ---
 
-## Reglas contractuales (AHRP)
+## Contractual Rules (AHRP)
 
-1. **Gate A síncrono**: Prohibido usar herramientas sin activación `SI`.
-2. **Gate B síncrono**: Prohibido modificar código sin aprobación de Reasoning `SI`.
-3. **Métricas**: El incumplimiento de cualquier Gate resulta en una **Puntuación de 0** inmediata.
-4. El agente asignado **NO puede modificar** el Input ni el Output definidos por el arquitecto.
+1. **Synchronous Gate A**: Forbidden to use tools without `YES` activation.
+2. **Synchronous Gate B**: Forbidden to modify code without `YES` Reasoning approval.
+3. **Metrics**: Failure of any Gate results in an immediate **Score of 0**.
+4. The assigned agent **CANNOT modify** the Input or Output defined by the architect.

@@ -1,6 +1,6 @@
 ---
 id: workflow.tasklifecycle-short.short-phase-2-implementation
-description: Fase 2 del ciclo Short. Ejecuta la implementación según el brief aprobado.
+description: Phase 2 of the Short cycle. Executes implementation according to the approved brief.
 owner: architect-agent
 version: 1.1.0
 severity: PERMANENT
@@ -11,45 +11,62 @@ blocking: true
 
 # WORKFLOW: tasklifecycle-short.short-phase-2-implementation
 
-## Pasos obligatorios
+## Input (REQUIRED)
+- Approved `brief.md` exists.
+- Current task exists.
+- `task.phase.current == aliases.taskcycle-short.phases.short_phase_2.id`.
 
-0. **Activación de Rol y Prefijo (OBLIGATORIO)**
-   - El `architect-agent` **DEBE** comenzar su intervención identificándose.
-   - Mensaje: `🏛️ **architect-agent**: Iniciando Phase 2 Short - Implementation.`
+## Output (REQUIRED)
+- Implementation report:
+  - `.agent/artifacts/<taskId>-<taskTitle>/architect/implementation.md` (use `templates.subtask_implementation`).
 
-1. Protocolo de Validación Pre-Vuelo (OBLIGATORIO)
-   - Leer físicamente `brief.md`.
-   - **Citar explícitamente** aprobación: `decision: SI`.
+## Reasoning (MANDATORY)
+- Before executing, the architect-agent must explain to the developer what will be done and why.
+- No document is required for this step.
 
-2. Ejecutar implementación según `brief.md`.
-   - **Gate A (Activación)**: El agente debe esperar a ser activado por el desarrollador.
-   - **Gate B (Reasoning)**: El agente debe presentar su razonamiento antes de ejecutar.
-   - **PROHIBIDO**: No usar herramientas sin Gates PASS.
+## Mandatory Steps
 
-3. Revisión arquitectónica (OBLIGATORIA)
-   - El `architect-agent` **DEBE** verificar el cumplimiento de AC y arquitectura.
+0. **Role Activation and Prefix (MANDATORY)**
+   - The `architect-agent` **MUST** begin its intervention by identifying itself.
+   - Message: `🏛️ **architect-agent**: Starting Phase 2 Short - Implementation.`
 
-4. Crear informe de implementación.
-   - Crear `.agent/artifacts/<taskId>-<taskTitle>/architect/implementation.md`.
+1. Pre-Flight Validation Protocol (MANDATORY)
+   - Physically read `brief.md`.
+   - **Explicitly cite** approval: `decision: YES`.
 
-5. Solicitar aprobación del desarrollador (OBLIGATORIA, por consola)
-   - Exigir decisión binaria **SI**.
-   - Registrar en `architect/implementation.md`: `decision: SI`.
+2. Execute implementation according to `brief.md`.
+   - **Gate A (Activation)**: The agent must wait to be activated by the developer.
+   - **Gate B (Reasoning)**: The agent must present its reasoning before execution.
+   - **FORBIDDEN**: Do not use tools without passing Gates.
+
+3. Architectural Review (MANDATORY)
+   - The `architect-agent` **MUST** verify compliance with AC and architecture.
+
+4. Create implementation report.
+   - Create `.agent/artifacts/<taskId>-<taskTitle>/architect/implementation.md` using `templates.subtask_implementation`.
+
+5. Request developer approval (MANDATORY, via console)
+   - Require binary decision **YES**.
+   - Record in `architect/implementation.md`: `decision: YES`.
 
 6. PASS
-   - Actualizar `task.md` (usando prefijo):
-     - Marcar fase como completada.
-     - Establecer timestamps y avanzar a Phase 3 Short.
+   - Update `task.md` (using prefix):
+     - Mark phase as completed.
+     - Set timestamps and advance to Phase 3 Short.
+
+## Pass
+- Implementation report is created from `templates.subtask_implementation`.
+- Developer approval is recorded in `architect/implementation.md`.
 
 ## Gate (REQUIRED)
-Requisitos (todos obligatorios):
-1. Existe informe de implementación con estado APROBADO.
-2. Existe aprobación explícita del desarrollador registrada en `architect/implementation.md`:
-   - `approval.developer.decision == SI`
-3. `task.md` refleja timestamps y estado:
+Requirements (all mandatory):
+1. Implementation report exists with APPROVED status.
+2. Explicit developer approval is recorded in `architect/implementation.md`:
+   - `approval.developer.decision == YES`
+3. `task.md` reflects timestamps and state:
    - `task.lifecycle.phases.short-phase-2-implementation.completed == true`
-   - `task.lifecycle.phases.short-phase-2-implementation.validated_at` no nulo
-   - `task.phase.updated_at` no nulo
+   - `task.lifecycle.phases.short-phase-2-implementation.validated_at` is not null
+   - `task.phase.updated_at` is not null
 
-Si Gate FAIL:
-- Bloquear hasta resolver.
+If Gate FAIL:
+- Block until resolved.

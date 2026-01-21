@@ -4,41 +4,58 @@ owner: architect-agent
 version: 4.1.0
 severity: PERMANENT
 trigger:
-  commands: ["init", "/init"]
+  commands: ["init", "/init", "/bootstrap", "/agentic-init"]
 blocking: true
 ---
 
 # WORKFLOW: init
 
-## 0. Activación de Rol y Prefijo (OBLIGATORIO)
-- El agente **DEBE** comenzar su intervención identificándose.
-- Mensaje: `🏛️ **architect-agent**: Iniciando sesión de trabajo.`
+## 0. Role Activation and Prefix (MANDATORY)
+- The agent **MUST** start their intervention by identifying themselves.
+- Message: `🏛️ **architect-agent**: Starting work session.`
 
-## Objetivo (ONLY)
-- Activar el rol **architect-agent**.
-- Cargar el bootstrap mínimo de índices.
-- Cargar en contexto las rules de constitución.
-- Detectar idioma de conversación y confirmar explícitamente.
-- **Seleccionar estrategia de ciclo de vida (Long/Short)**.
-- Crear el **artefacto task candidate** `init.md`.
+## Input (REQUIRED)
+- None (init).
 
-## Pasos obligatorios
-1. Cargar índices mínimos (bootstrap).
-2. Cargar en contexto las constitutions (`GEMINI_location`, `project_architecture`, `clean_code`).
-3. Detectar idioma preferido y pedir confirmación explícita (**SI**).
-4. Seleccionar estrategia de ciclo de vida (**Long** o **Short**).
-5. Crear el artefacto `init.md` usando `templates.init`.
-6. Evaluar Gate.
-   - El desarrollador **DEBE** confirmar explícitamente con un **SI**.
+## Objective (ONLY)
+- Activate the **architect-agent** role.
+- Load the minimum bootstrap indices.
+- Load the constitution rules into context.
+- Detect the conversation language and confirm explicitly.
+- **Select the lifecycle strategy (Long/Short)**.
+- Create the **task candidate** artifact `init.md`.
+
+## Mandatory Steps
+1. **Reasoning (MANDATORY)**
+   - Explain to the developer what will be done in this phase and why.
+2. Use the `bootstrap_context` tool to load indices, constitutions, and core roles in a single step.
+3. If the tool is unavailable, load the bootstrap indices and base constitutions manually.
+4. Save the bundle output to `.agent/artifacts/candidate/bootstrap.md`.
+5. Detect preferred language and ask for explicit confirmation (**YES**).
+6. Select lifecycle strategy (**Long** or **Short**).
+7. Create the `init.md` artifact using `templates.init`.
+8. Evaluate Gate.
+   - The developer **MUST** explicitly confirm with a **YES**.
 
 ## Output (REQUIRED)
-- Artefacto creado: `artifacts.candidate.init`.
+- Created artifact: `artifacts.candidate.init` (from `templates.init`).
+- Created artifact: `artifacts.candidate.bootstrap` (bundle from `bootstrap_context`).
+
+## Reasoning (MANDATORY)
+- Before executing, the architect-agent must explain to the developer what will be done and why.
+- No document is required for this step.
+
+## Pass
+- `init.md` is created from `templates.init`.
+- Language is confirmed and strategy is set.
+- `bootstrap.md` exists and contains the bundle.
 
 ## Gate (REQUIRED)
-Requisitos (todos obligatorios):
-1. Existe `artifacts.candidate.init`.
-2. En su YAML: `language.confirmed == true` y `strategy` definido.
-3. El desarrollador ha aprobado explícitamente con **SI**.
+Requirements (all mandatory):
+1. `artifacts.candidate.init` exists.
+2. `artifacts.candidate.bootstrap` exists.
+3. In `init.md` YAML: `language.confirmed == true` and `strategy` is defined.
+4. The developer has explicitly approved with **YES**.
 
-Si Gate FAIL:
-- Bloquear hasta resolver.
+If Gate FAIL:
+- Block until resolved.

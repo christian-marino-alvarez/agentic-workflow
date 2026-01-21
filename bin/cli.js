@@ -4,6 +4,7 @@ import { initCommand } from '../dist/cli/commands/init.js';
 import { createCommand } from '../dist/cli/commands/create.js';
 import { restoreCommand } from '../dist/cli/commands/restore.js';
 import { runMcpServer } from '../dist/mcp/server.js';
+import { registerMcpCommand } from '../dist/cli/commands/mcp-register.js';
 
 const program = new Command();
 
@@ -28,6 +29,12 @@ program
     .command('mcp')
     .description('Start the Model Context Protocol (MCP) server')
     .action(runMcpServer);
+
+program
+    .command('mcp:register')
+    .description('Register the MCP server in a config file')
+    .option('--path <path>', 'Write to a specific MCP config path (required)')
+    .action(registerMcpCommand);
 
 program
     .command('restore')

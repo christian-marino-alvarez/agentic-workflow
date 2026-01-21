@@ -50,7 +50,7 @@ Discipline is non-negotiable. The local metrics system will apply the **Zero Tol
 To ensure the resilience of the local orchestration history:
 
 ### 3.1 Preventive Auto-Backups
-- The system MUST perform a backup of the `.agent/` folder to `.agent-backups/TIMESTAMP/` before executing destructive commands:
+- The system MUST perform a backup of the `.agent/` folder to `.backups/TIMESTAMP/` before executing destructive commands:
   - `init --force`
   - Massive migration operations.
   - Scheduled cleanup.

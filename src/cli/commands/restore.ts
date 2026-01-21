@@ -6,12 +6,12 @@ export async function restoreCommand() {
     intro('Agentic Workflow Recovery');
 
     const cwd = process.cwd();
-    const backupBaseDir = path.join(cwd, '.agent-backups');
+    const backupBaseDir = path.join(cwd, '.backups');
 
     try {
         await fs.access(backupBaseDir);
     } catch {
-        outro('No backups were found in .agent-backups/');
+        outro('No backups were found in .backups/');
         return;
     }
 

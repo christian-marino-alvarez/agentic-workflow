@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0-beta.1](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.3.0-beta.1...agentic-workflow-v1.4.0-beta.1) (2026-01-21)
+
+
+### Features
+
+* remove MCP and simplify bootstrap ([b3d31ad](https://github.com/christian-marino-alvarez/agentic-workflow/commit/b3d31ad2353bbdb362c6a2599a2d1395d1ec612f))
+
 ## [1.3.0-beta.1](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.2.0-beta.1...agentic-workflow-v1.3.0-beta.1) (2026-01-21)
 
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0-beta.1](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.7.0-beta.1...agentic-workflow-v1.8.0-beta.1) (2026-01-21)
+
+
+### Features
+
+* init uses bootstrap alias without bootstrap tool ([30b2bda](https://github.com/christian-marino-alvarez/agentic-workflow/commit/30b2bdacfeb41794c04eec4ea91ad3be0c20f5db))
+
 ## [1.7.0-beta.1](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.6.0-beta.1...agentic-workflow-v1.7.0-beta.1) (2026-01-21)
 
 

@@ -72,7 +72,16 @@ export class ContextManager {
         if (await this.exists(localArtifactsIndex)) files.push(await this.readFile(localArtifactsIndex, 'agent.local.artifacts'));
         if (await this.exists(localTemplatesIndex)) files.push(await this.readFile(localTemplatesIndex, 'agent.local.templates'));
 
-        // 3. Índices del Core
+        const localBundle = this.formatBundle(files, true);
+
+        // Fast-path: use prebuilt core bootstrap bundle if available.
+        const coreBootstrapPath = path.join(this.corePath, 'bootstrap.md');
+        if (await this.exists(coreBootstrapPath)) {
+            const coreBundle = await fs.readFile(coreBootstrapPath, 'utf-8');
+            return `${localBundle}\n\n---\n\n${coreBundle}`.trim();
+        }
+
+        // 3. Índices del Core (fallback)
         const coreRulesIndex = path.join(this.corePath, 'rules/index.md');
         const coreWorkflowsIndex = path.join(this.corePath, 'workflows/index.md');
         const coreTemplatesIndex = path.join(this.corePath, 'templates/index.md');

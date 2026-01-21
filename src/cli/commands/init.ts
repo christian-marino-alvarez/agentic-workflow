@@ -53,6 +53,7 @@ export async function initCommand() {
   const sCleanup = spinner();
   sCleanup.start('Cleaning up redundant legacy core files...');
   await cleanupLegacyFiles(agentDir);
+  await cleanupLegacyMcpConfig(cwd);
   sCleanup.stop('Local environment cleaned (Core references only).');
 
   const s = spinner();
@@ -208,5 +209,19 @@ async function cleanupLegacyFiles(agentDir: string) {
     } catch {
       // Directory doesn't exist, skip
     }
+  }
+}
+
+/**
+ * Removes legacy MCP configuration if present.
+ */
+async function cleanupLegacyMcpConfig(cwd: string) {
+  const mcpConfigPath = path.join(cwd, '.antigravity', 'task_mcp_config.json');
+  try {
+    await fs.rm(mcpConfigPath, { force: true });
+    const mcpDir = path.join(cwd, '.antigravity');
+    await fs.rmdir(mcpDir);
+  } catch {
+    // Ignore if missing or not removable.
   }
 }

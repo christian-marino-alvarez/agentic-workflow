@@ -3,6 +3,7 @@ import { Command } from 'commander';
 import { initCommand } from '../dist/cli/commands/init.js';
 import { createCommand } from '../dist/cli/commands/create.js';
 import { restoreCommand } from '../dist/cli/commands/restore.js';
+import { cleanCommand } from '../dist/cli/commands/clean.js';
 
 const program = new Command();
 
@@ -27,5 +28,10 @@ program
     .command('restore')
     .description('Restore the agentic system from a backup')
     .action(restoreCommand);
+
+program
+    .command('clean')
+    .description('Remove legacy configuration files (e.g. MCP)')
+    .action(cleanCommand);
 
 program.parse();

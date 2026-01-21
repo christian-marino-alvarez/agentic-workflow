@@ -135,29 +135,6 @@ The core rules reside at:
 `;
     await fs.writeFile(path.join(cwd, 'AGENTS.md'), agentsMdContent);
 
-    // 5. Create MCP Configuration for Antigravity/IDE
-    const sMcp = spinner();
-    sMcp.start('Configuring MCP Server for IDE...');
-    const mcpConfigDir = path.join(cwd, '.antigravity');
-    await fs.mkdir(mcpConfigDir, { recursive: true });
-
-    const mcpConfig = {
-      mcpServers: {
-        "agentic-workflow": {
-          command: "node",
-          args: [path.join(corePath, '../bin/cli.js'), "mcp"],
-          env: {},
-          disabled: false
-        }
-      }
-    };
-
-    await fs.writeFile(
-      path.join(mcpConfigDir, 'task_mcp_config.json'),
-      JSON.stringify(mcpConfig, null, 2)
-    );
-    sMcp.stop('MCP Server configured (.antigravity/task_mcp_config.json)');
-
     s.stop('Configuration complete.');
 
     note(`Core located at: ${corePath}\nAbsolute references have been configured for the IDE.`, 'Architecture by Reference');

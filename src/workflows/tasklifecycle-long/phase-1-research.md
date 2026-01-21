@@ -71,13 +71,8 @@ blocking: true
    - If fails → go to **Step 8 (FAIL)**.
 
 2. Ask 5 mandatory clarification questions (architect-agent)
+   - Generate them dynamically from the task description to clarify scope, inputs, outputs, constraints, and success criteria.
    - Capture answers in `research.md` under a `clarifications` section.
-   - Use these 5 questions:
-     1) What is the exact outcome you want?
-     2) What inputs/data are available or required?
-     3) What outputs or behaviors must be delivered?
-     4) What constraints or non-goals apply?
-     5) What does "done" mean (success criteria)?
 
 3. Load research template (architect-agent)
    - Load `templates.research`

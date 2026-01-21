@@ -20,15 +20,15 @@ First line of the document:
 
 ---
 
-## 2. The 5 Mandatory Questions
+## 2. The 5 Mandatory Questions (Dynamic)
 
 | # | Question (formulated by architect) | Answer (from developer) |
 |---|-----------------------------------|-------------------------|
-| 1 | | |
-| 2 | | |
-| 3 | | |
-| 4 | | |
-| 5 | | |
+| 1 | <dynamic question based on task description> | |
+| 2 | <dynamic question based on task description> | |
+| 3 | <dynamic question based on task description> | |
+| 4 | <dynamic question based on task description> | |
+| 5 | <dynamic question based on task description> | |
 
 ---
 

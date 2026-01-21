@@ -24,15 +24,15 @@ First line of the document:
 
 ---
 
-## Clarifications (5 Mandatory Questions)
+## Clarifications (5 Mandatory Questions, Dynamic)
 
-| # | Question | Answer (from developer) |
-|---|----------|-------------------------|
-| 1 | What is the exact outcome you want? | |
-| 2 | What inputs/data are available or required? | |
-| 3 | What outputs or behaviors must be delivered? | |
-| 4 | What constraints or non-goals apply? | |
-| 5 | What does "done" mean (success criteria)? | |
+| # | Question (formulated by architect) | Answer (from developer) |
+|---|-----------------------------------|-------------------------|
+| 1 | <dynamic question based on task description> | |
+| 2 | <dynamic question based on task description> | |
+| 3 | <dynamic question based on task description> | |
+| 4 | <dynamic question based on task description> | |
+| 5 | <dynamic question based on task description> | |
 
 ---
 

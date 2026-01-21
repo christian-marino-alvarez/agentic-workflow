@@ -11,168 +11,167 @@ related_verification: .agent/artifacts/<taskId>-<taskTitle>/verification.md
 
 # Final Results Report — <taskId>-<taskTitle>
 
-## Identificacion del agente (OBLIGATORIA)
-Primera linea del documento:
-`<icono> **<nombre-agente>**: <mensaje>`
+## Agent Identification (MANDATORY)
+First line of the document:
+`<icon> **<agent-name>**: <message>`
 
-## 1. Resumen ejecutivo (para decisión)
-Este documento presenta **el resultado final completo de la tarea**, consolidando:
-- lo que se planificó
-- lo que se implementó
-- cómo se revisó
-- cómo se verificó
+## 1. Executive Summary (for decision)
+This document presents **the complete final result of the task**, consolidating:
+- what was planned
+- what was implemented
+- how it was reviewed
+- how it was verified
 
-**Conclusión rápida**
-- Estado general: ☐ SATISFACTORIO ☐ NO SATISFACTORIO
-- Recomendación del arquitecto: ☐ Aceptar ☐ Iterar
+**Quick Conclusion**
+- General status: ☐ SATISFACTORY ☐ UNSATISFACTORY
+- Architect's Recommendation: ☐ Accept ☐ Iterate
 
 ---
 
-## 2. Contexto de la tarea
-### 2.1 Objetivo original
-(Extraído de `task.md`)
+## 2. Task Context
+### 2.1 Original Objective
+(Extracted from `task.md`)
 
-- Objetivo:
-- Alcance definido:
-- Fuera de alcance:
+- Objective:
+- Defined scope:
+- Out of scope:
 
-### 2.2 Acceptance Criteria acordados
-Listado de los AC definidos en Fase 0.
+### 2.2 Agreed Acceptance Criteria (AC)
+List of ACs defined in Phase 0.
 
-| ID | Descripción | Estado final |
+| ID | Description | Final Status |
 |----|-------------|--------------|
-| AC-1 | | ✅ Cumplido / ❌ No |
-| AC-2 | | ✅ Cumplido / ❌ No |
+| AC-1 | | ✅ Met / ❌ No |
+| AC-2 | | ✅ Met / ❌ No |
 
 ---
 
-## 3. Planificación (qué se acordó hacer)
-Resumen del **plan aprobado** en Fase 2.
+## 3. Planning (What was agreed upon)
+Summary of the **approved plan** from Phase 3.
 
-- Estrategia general
-- Fases y pasos principales
-- Agentes involucrados y responsabilidades
-- Estrategia de testing acordada
-- Plan de demo (si aplica)
+- General strategy
+- Main phases and steps
+- Involved agents and responsibilities
+- Agreed testing strategy
+- Demo plan (if applicable)
 
-> Referencia: `plan.md`
-
----
-
-## 4. Implementación (qué se hizo realmente)
-Descripción clara de la implementación ejecutada.
-
-### 4.1 Subtareas por agente
-Para cada agente participante:
-
-**Agente:** `<agent-name>`
-- Responsabilidad asignada:
-- Subtareas ejecutadas:
-- Artefactos generados:
-- Cambios relevantes:
-
-(Repetir por cada agente)
-
-### 4.2 Cambios técnicos relevantes
-- Nuevos módulos / drivers
-- Cambios estructurales
-- APIs afectadas
-- Compatibilidad entre navegadores (si aplica)
+> Reference: `plan.md`
 
 ---
 
-## 5. Revisión arquitectónica
-Resumen del informe de revisión del arquitecto.
+## 4. Implementation (What was actually done)
+Clear description of the executed implementation.
 
-- Coherencia con el plan: ☐ Sí ☐ No
-- Cumplimiento de arquitectura: ☐ Sí ☐ No
-- Cumplimiento de clean code: ☐ Sí ☐ No
-- Desviaciones detectadas:
-  - Ninguna / Detalladas abajo
+### 4.1 Subtasks per Agent
+For each participating agent:
 
-**Conclusiones del arquitecto**
-- Impacto en el sistema
-- Riesgos residuales
-- Deuda técnica (si existe)
+**Agent:** `<agent-name>`
+- Assigned responsibility:
+- Executed subtasks:
+- Generated artifacts:
+- Relevant changes:
 
-> Referencia: `architect/review.md`
+(Repeat for each agent)
+
+### 4.2 Relevant Technical Changes
+- New modules / drivers
+- Structural changes
+- Affected APIs
+- Multi-browser compatibility (if applicable)
 
 ---
 
-## 6. Verificación y validación
-Resultados de la verificación funcional.
+## 5. Architectural Review
+Summary of the architect's review report.
 
-### 6.1 Tests ejecutados
-- Unitarios:
-- Integración:
+- Consistency with the plan: ☐ Yes ☐ No
+- Architectural compliance: ☐ Yes ☐ No
+- Clean code compliance: ☐ Yes ☐ No
+- Detected deviations:
+  - None / Detailed below
+
+**Architect's Conclusions**
+- Impact on the system
+- Residual risks
+- Technical debt (if any)
+
+> Reference: `architect/review.md`
+
+---
+
+## 6. Verification and Validation
+Functional verification results.
+
+### 6.1 Executed Tests
+- Unit:
+- Integration:
 - End-to-End / Manual:
-- Resultado global: ☐ OK ☐ NO OK
+- Global Result: ☐ OK ☐ NO OK
 
-### 6.2 Demo (si aplica)
-- Qué se demostró
-- Resultado de la demo
-- Observaciones del desarrollador
+### 6.2 Demo (if applicable)
+- What was demonstrated
+- Demo result
+- Developer's observations
 
-> Referencia: `verification.md`
+> Reference: `verification.md`
 
 ---
 
-## 7. Estado final de Acceptance Criteria
-Evaluación definitiva.
+## 7. Final Status of Acceptance Criteria
+Definitive evaluation.
 
-| Acceptance Criteria | Resultado | Evidencia |
-|---------------------|-----------|-----------|
+| Acceptance Criteria | Result | Evidence |
+|---------------------|--------|----------|
 | AC-1 | ✅ / ❌ | |
 | AC-2 | ✅ / ❌ | |
 
-> Todos los AC **DEBEN** estar cumplidos para aceptar la tarea.
+> All ACs **MUST** be met to accept the task.
 
 ---
 
-## 8. Disciplina y Conformidad AHRP (CRITICAL)
-Evaluación del cumplimiento del protocolo de seguridad y orquestación.
+## 8. AHRP Discipline and Conformity (CRITICAL)
+Evaluation of compliance with safety and orchestration protocol.
 
-| Gate | Estado | Observaciones |
+| Gate | Status | Observations |
 | :--- | :--- | :--- |
-| **Gate A (Activación)** | ☐ PASS ☐ FAIL | ¿Se esperó a la firma antes de usar herramientas? |
-| **Gate B (Reasoning)** | ☐ PASS ☐ FAIL | ¿Se aprobó el plan técnico antes de la implementación? |
-| **Conformidad Global** | ☐ SI ☐ NO | |
+| **Gate A (Activation)** | ☐ PASS ☐ FAIL | Did the agent wait for signature before using tools? |
+| **Gate B (Reasoning)** | ☐ PASS ☐ FAIL | Was the technical plan approved before implementation? |
+| **Global Conformity** | ☐ YES ☐ NO | |
 
-> **NOTA**: Si la conformidad global es **NO**, la puntuación final de la tarea será **0** automáticamente.
-
----
-
-## 9. Incidencias y desviaciones
-Listado consolidado de problemas encontrados durante el ciclo.
-
-- Incidencia:
-  - Fase donde se detectó
-  - Impacto
-  - Resolución aplicada
-- Incidencia:
-  - (Repetir)
-
-Si no hubo incidencias, indicar explícitamente:
-> “No se detectaron incidencias relevantes”.
+> **NOTE**: If global conformity is **NO**, the final task score will be **0** automatically.
 
 ---
 
-## 9. Valoración global
-Evaluación final del resultado.
+## 9. Issues and Deviations
+Consolidated list of problems found during the cycle.
 
-- Calidad técnica: ☐ Alta ☐ Media ☐ Baja
-- Alineación con lo solicitado: ☐ Total ☐ Parcial ☐ Insuficiente
-- Estabilidad de la solución: ☐ Alta ☐ Media ☐ Baja
-- Mantenibilidad: ☐ Alta ☐ Media ☐ Baja
+- Issue:
+  - Phase where it was detected
+  - Impact
+  - Applied resolution
+
+If no issues were found, explicitly state:
+> "No relevant issues detected."
 
 ---
 
-## 10. Decisión final del desarrollador (OBLIGATORIA)
-Esta decisión **cierra la fase**.
+## 10. Global Evaluation
+Final assessment of the result.
+
+- Technical Quality: ☐ High ☐ Medium ☐ Low
+- Alignment with Request: ☐ Full ☐ Partial ☐ Insufficient
+- Solution Stability: ☐ High ☐ Medium ☐ Low
+- Maintainability: ☐ High ☐ Medium ☐ Low
+
+---
+
+## 11. Developer's Final Decision (MANDATORY)
+This decision **closes the phase**.
 
 ```yaml
 approval:
   developer:
-    decision: SI | NO
+    decision: YES | NO
     date: <ISO-8601>
-    comments: <opcional>
+    comments: <optional>
+```

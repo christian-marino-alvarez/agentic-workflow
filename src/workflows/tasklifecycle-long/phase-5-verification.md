@@ -1,6 +1,6 @@
 ---
 id: workflow.tasklifecycle.phase-5-verification
-description: Fase 5 del ciclo de tarea. Verifica la implementación con tests (unitarios y E2E si aplica) y reporta métricas y cobertura. NO corrige código; si hay errores, delega una nueva tarea de corrección al agente responsable.
+description: Task cycle Phase 5. Verifies the implementation with tests (unit and E2E if applicable) and reports metrics and coverage. DOES NOT fix code; if errors occur, it delegates a new fix task to the responsible agent.
 owner: architect-agent
 version: 1.1.0
 severity: PERMANENT
@@ -12,63 +12,71 @@ blocking: true
 # WORKFLOW: tasklifecycle.phase-5-verification
 
 ## Input (REQUIRED)
-- Existe el informe de revisión del arquitecto creado en Fase 4:
+- Architect review report created in Phase 4 exists:
   - `.agent/artifacts/<taskId>-<taskTitle>/architect/review.md`
-- Existe la current task:
+- Current task exists:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
-- El `task.md` **DEBE** reflejar:
+- `task.md` **MUST** reflect:
   - `task.phase.current == aliases.taskcycle-long.phases.phase_5.id`
 
 > [!IMPORTANT]
-> **Constitución activa (OBLIGATORIO)**:
-> - Cargar `constitution.extensio_architecture` antes de iniciar
-> - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
+> **Active Constitution (MANDATORY)**:
+> - Load `constitution.project_architecture` before starting
+> - Load `constitution.agents_behavior` (Section 7: Gates, Section 8: Constitution)
 
 ## Output (REQUIRED)
-- Informe detallado de verificación y testing:
+- Detailed verification and testing report:
   - `.agent/artifacts/<taskId>-<taskTitle>/verification.md`
-- Actualización del estado en:
+- Status update in:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 
-## Objetivo (ONLY)
-- Verificar la implementación mediante tests (unitarios y E2E si aplica).
-- Obtener aprobación explícita del desarrollador (SI) para avanzar.
+## Objective (ONLY)
+- Verify the implementation through tests (unit and E2E if applicable).
+- Obtain explicit developer approval (YES) to move forward.
 
-## Pasos obligatorios
+## Reasoning (MANDATORY)
+- Before executing, the responsible agent must explain to the developer what will be done and why.
+- No document is required for this step.
 
-0. **Activación de Rol y Prefijo (OBLIGATORIO)**
-   - El `architect-agent` **DEBE** comenzar su intervención identificándose.
-   - Mensaje: `🏛️ **architect-agent**: Iniciando Phase 5 - Verification.`
+## Mandatory Steps
 
-1. Asignar rol de verificacion
-   - El `qa-agent` **DEBE** ejecutar esta fase.
-   - Mensaje: `🧪 **qa-agent**: Iniciando verificación técnica...`
+0. **Role Activation and Prefix (MANDATORY)**
+   - The `architect-agent` **MUST** begin its intervention by identifying itself.
+   - Message: `🏛️ **architect-agent**: Starting Phase 5 - Verification.`
 
-2. Verificar inputs
-   - Existe `architect/review.md`.
+1. Assign verification role
+   - The `qa-agent` **MUST** execute this phase.
+   - Message: `🧪 **qa-agent**: Starting technical verification...`
+
+2. Verify inputs
+   - `architect/review.md` exists.
    - `task.phase.current == aliases.taskcycle-long.phases.phase_5.id`.
 
-3. Cargar template de verificación (`templates.verification`).
+3. Load verification template (`templates.verification`).
 
-4. Ejecutar testing y crear informe (`verification.md`).
+4. Execute testing and create report (`verification.md`).
 
-5. Solicitar aprobación del desarrollador (OBLIGATORIA, por consola)
-   - Exigir decisión binaria **SI**.
-   - Registrar en `verification.md`: `decision: SI`.
+5. Request developer approval (MANDATORY, via console)
+   - Require binary decision **YES**.
+   - Record in `verification.md`: `decision: YES`.
 
 6. PASS
-   - Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md` (usando prefijo):
-     - marcar Fase 5 como completada
-     - establecer timestamps y avanzar a Phase 6.
+   - Update `.agent/artifacts/<taskId>-<taskTitle>/task.md` (using prefix):
+     - Mark Phase 5 as completed
+     - Set timestamps and advance to Phase 6.
+
+## Pass
+- All required artifacts are created from templates.
+- Developer approval is recorded where required.
 
 ## Gate (REQUIRED)
-Requisitos (todos obligatorios):
-1. Existe `verification.md` con Gate PASS (`decision: SI`).
-2. `task.md` refleja timestamps y estado:
+Requirements (all mandatory):
+1. `verification.md` exists with Gate PASS (`decision: YES`).
+2. `task.md` reflects timestamps and state:
    - `task.phase.current == aliases.taskcycle-long.phases.phase_6.id`
    - `task.lifecycle.phases.phase-5-verification.completed == true`
-   - `task.lifecycle.phases.phase-5-verification.validated_at` no nulo
-   - `task.phase.updated_at` no nulo
+   - `task.lifecycle.phases.phase-5-verification.validated_at` not null
+   - `task.phase.updated_at` not null
 
-Si Gate FAIL:
-- Ejecutar **FAIL**.
+If Gate FAIL:
+- Execute **FAIL**.

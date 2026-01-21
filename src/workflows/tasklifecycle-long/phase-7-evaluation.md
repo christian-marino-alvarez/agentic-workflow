@@ -1,6 +1,6 @@
 ---
 id: workflow.tasklifecycle.phase-7-evaluation
-description: Fase 7 del ciclo de tarea. Evalua la participacion de los agentes y la ejecucion de la tarea con puntuaciones objetivas.
+description: Task cycle Phase 7. Evaluates agent participation and task execution with objective scores.
 owner: architect-agent
 version: 1.1.0
 severity: PERMANENT
@@ -12,68 +12,74 @@ blocking: true
 # WORKFLOW: tasklifecycle.phase-7-evaluation
 
 ## Input (REQUIRED)
-- Existe el informe de revision del arquitecto:
+- Architect review report exists:
   - `.agent/artifacts/<taskId>-<taskTitle>/architect/review.md`
-- Existe la current task:
+- Current task exists:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
-- El `task.md` **DEBE** reflejar:
+- `task.md` **MUST** reflect:
   - `task.phase.current == aliases.taskcycle-long.phases.phase_7.id`
 
 > [!IMPORTANT]
-> **Constitución activa (OBLIGATORIO)**:
-> - Cargar `constitution.extensio_architecture` antes de iniciar
-> - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
+> **Active Constitution (MANDATORY)**:
+> - Load `constitution.project_architecture` before starting
+> - Load `constitution.agents_behavior` (Section 7: Gates, Section 8: Constitution)
 
 ## Output (REQUIRED)
-- Crear metricas de la tarea (por agente y global):
+- Create task metrics (per agent and global):
   - `.agent/artifacts/<taskId>-<taskTitle>/metrics.md`
-- Actualizacion del estado en `task.md`.
+- Status update in `task.md`.
 
-## Objetivo (ONLY)
-- Valorar objetivamente a cada agente participante.
-- Obtener aprobación (SI) del desarrollador para la evaluación.
+## Objective (ONLY)
+- Objectively evaluate each participating agent.
+- Obtain developer approval (YES) for the evaluation.
 
-## Templates (OBLIGATORIOS)
-- Metricas de tarea: `templates.task_metrics`
-- Metricas globales: `templates.agent_scores`
+## Templates (MANDATORY)
+- Task metrics: `templates.task_metrics`
+- Global metrics: `templates.agent_scores`
 
 ---
 
-## Pasos obligatorios
+## Reasoning (MANDATORY)
+- Before executing, the responsible agent must explain to the developer what will be done and why.
+- No document is required for this step.
 
-0. **Activación de Rol y Prefijo (OBLIGATORIO)**
-   - El `architect-agent` **DEBE** comenzar su intervención identificándose.
-   - Mensaje: `🏛️ **architect-agent**: Iniciando Phase 7 - Evaluation.`
+## Mandatory Steps
 
-1. Verificar inputs (`task.md`, `review.md`).
+0. **Role Activation and Prefix (MANDATORY)**
+   - The `architect-agent` **MUST** begin its intervention by identifying itself.
+   - Message: `🏛️ **architect-agent**: Starting Phase 7 - Evaluation.`
 
-2. Cargar templates y generar `metrics.md`.
+1. Verify inputs (`task.md`, `review.md`).
 
-3. Evaluar agentes y calcular puntuación global.
+2. Load templates and generate `metrics.md`.
 
-4. Solicitar feedback y puntuación obligatoria del desarrollador (por consola)
-   - Presentar `metrics.md`.
-   - Exigir confirmación explícita **SI**.
-   - Registrar puntuación (1-10) en el artefacto.
+3. Evaluate agents and calculate global score.
+
+4. Request developer feedback and mandatory score (via console)
+   - Present `metrics.md`.
+   - Require explicit confirmation **YES**.
+   - Record score (1-10) in the artifact.
 
 5. PASS
-   - Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md` (usando prefijo).
-   - Marcar fase completada y avanzar a Phase 8.
+   - Update `.agent/artifacts/<taskId>-<taskTitle>/task.md` (using prefix).
+   - Mark phase completed and advance to Phase 8.
 
-## FAIL (OBLIGATORIO)
-9. Declarar Fase 7 como **NO completada**.
-   - Terminar bloqueado: no avanzar de fase.
+## FAIL (MANDATORY)
+9. Declare Phase 7 as **NOT completed**.
+   - End blocked: do not advance phase.
 
----
+## Pass
+- All required artifacts are created from templates.
+- Developer approval is recorded where required.
 
 ## Gate (REQUIRED)
-Requisitos (todos obligatorios):
-1. Existe `metrics.md` con validación `Aprobado: SI`.
-2. `task.md` refleja timestamps y estado:
+Requirements (all mandatory):
+1. `metrics.md` exists with validation `Approved: YES`.
+2. `task.md` reflects timestamps and state:
    - `task.phase.current == aliases.taskcycle-long.phases.phase_8.id`
    - `task.lifecycle.phases.phase-7-evaluation.completed == true`
-   - `task.lifecycle.phases.phase-7-evaluation.validated_at` no nulo
-   - `task.phase.updated_at` no nulo
+   - `task.lifecycle.phases.phase-7-evaluation.validated_at` not null
+   - `task.phase.updated_at` not null
 
-Si Gate FAIL:
-- Ejecutar **FAIL**.
+If Gate FAIL:
+- Execute **FAIL**.

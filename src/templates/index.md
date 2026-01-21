@@ -7,14 +7,14 @@ severity: PERMANENT
 
 # INDEX — Templates
 
-## Identificacion del agente (OBLIGATORIA)
-Primera linea del documento:
-`<icono> **<nombre-agente>**: <mensaje>`
+## Agent Identification (MANDATORY)
+First line of the document:
+`<icon> **<agent-name>**: <message>`
  (Agentic System)
 
-## Objetivo
-Enumerar templates contractuales del sistema agéntico.
-Deben referenciarse por alias.
+## Objective
+Enumerate the contractual templates of the agentic system.
+Must be referenced via aliases.
 
 ## Aliases (YAML)
 ```yaml
@@ -36,10 +36,10 @@ templates:
   changelog: .agent/templates/changelog.md
   supplemental_report: .agent/templates/supplemental-report.md
 
-  # Ciclo Short
+  # Short Cycle
   brief: .agent/templates/brief.md
   closure: .agent/templates/closure.md
 ```
 
-## Reglas
-- Cualquier nuevo template **DEBE** añadirse aquí.
+## Rules
+- Any new template **MUST** be added here.

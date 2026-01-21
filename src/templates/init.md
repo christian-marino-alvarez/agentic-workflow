@@ -1,8 +1,8 @@
 # init bootstrap
 
-## Identificacion del agente (OBLIGATORIA)
-Primera linea del documento:
-`<icono> **<nombre-agente>**: <mensaje>`
+## Agent Identification (MANDATORY)
+First line of the document:
+`<icon> **<agent-name>**: <message>`
 
 - command: {{command}}
 - role.architect: {{architectAgentId}}
@@ -23,3 +23,4 @@ constitution:
     - {{constitutionPaths[0]}}
     - {{constitutionPaths[1]}}
     - {{constitutionPaths[2]}}
+```

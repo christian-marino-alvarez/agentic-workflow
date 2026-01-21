@@ -1,28 +1,28 @@
 # Task (Template)
 
-## Identificacion del agente (OBLIGATORIA)
-Primera linea del documento:
-`<icono> **<nombre-agente>**: <mensaje>`
+## Agent Identification (MANDATORY)
+First line of the document:
+`<icon> **<agent-name>**: <message>`
 
-## Identificación
+## Identification
 - id: {{task.id}}
 - title: {{task.title}}
 - scope: candidate | current
 - owner: architect-agent
 
-## Origen
+## Source
 - created_from:
   - workflow: tasklifecycle
   - source: init / tasklifecycle
   - candidate_path: artifacts.candidate.task
 
-## Descripción de la tarea
+## Task Description
 {{task.description}}
 
-## Objetivo
+## Objective
 {{task.goal}}
 
-## Estado del ciclo de vida (FUENTE ÚNICA DE VERDAD)
+## Lifecycle Status (SINGLE SOURCE OF TRUTH)
 
 ```yaml
 task:
@@ -134,18 +134,18 @@ task:
 
 ---
 
-## 2. Definición y Alcance (Contrato)
+## 2. Definition and Scope (Contract)
 - **Acceptance Criteria**: [acceptance.md](file:///{{task.acceptance_path}})
 - **Alias**: `task.acceptance`
 
 ---
 
-## Reglas contractuales
-- Este fichero es la **fuente única de verdad** del estado de la tarea.
-- El campo `task.phase.current` **SOLO puede ser modificado por `architect-agent`**.
-- El campo `task.lifecycle.phases.*` **SOLO puede ser marcado como completed por `architect-agent`**.
-- Una fase **NO puede marcarse como completed** si no es la fase actual.
-- El avance de fase requiere:
-  1. Marcar la fase actual como `completed: true`
-  2. Validación explícita del architect
-  3. Actualización de `task.phase.current` a la siguiente fase
+## Contractual Rules
+- This file is the **single source of truth** for the task status.
+- The `task.phase.current` field **ONLY can be modified by `architect-agent`**.
+- The `task.lifecycle.phases.*` field **ONLY can be marked as completed by `architect-agent`**.
+- A phase **cannot be marked as completed** if it is not the current phase.
+- Advancing to the next phase requires:
+  1. Marking the current phase as `completed: true`
+  2. Explicit validation from the architect
+  3. Updating `task.phase.current` to the next phase

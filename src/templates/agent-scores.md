@@ -6,20 +6,20 @@ status: ongoing
 
 # Agent Scores — <taskId>-<taskTitle>
 
-## Identificacion del agente (OBLIGATORIA)
-Primera linea del documento:
-`<icono> **<nombre-agente>**: <mensaje>`
+## Agent Identification (MANDATORY)
+First line of the document:
+`<icon> **<agent-name>**: <message>`
 
-## 1. Resumen por agente
+## 1. Summary per Agent
 - **Agent A**
   - scores: [taskId-score, ...]
-  - media: value
+  - average: value
 - **Agent B**
   - scores: [taskId-score, ...]
-  - media: value
+  - average: value
 
 ---
 
-## 2. Resumen global
-- Media general de tareas: value
-- Ultima actualizacion: <ISO-8601>
+## 2. Global Summary
+- Overall Task Average: value
+- Last Update: <ISO-8601>

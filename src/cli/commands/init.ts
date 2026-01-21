@@ -4,7 +4,7 @@ import path from 'node:path';
 import { detectAgentSystem } from '../../core/migration/detector.js';
 import { createBackup } from '../../core/migration/backup.js';
 import { transformMarkdownContent } from '../../core/migration/transformer.js';
-import { resolveCorePath } from '../../core/mapping/resolver.js';
+import { resolveCorePath, resolveInstalledCorePath } from '../../core/mapping/resolver.js';
 import { performBackup } from '../../core/utils/backup.js';
 
 export async function initCommand() {
@@ -13,40 +13,40 @@ export async function initCommand() {
   const cwd = process.cwd();
   const agentDir = path.join(cwd, '.agent');
 
-  // 1. Detección de sistema existente
+  // 1. Existing System Detection
   const systemType = await detectAgentSystem(cwd);
 
   if (systemType === 'legacy') {
     const shouldUpdate = await confirm({
-      message: 'Se ha detectado un sistema .agent antiguo. ¿Deseas migrarlo a la última versión portable?',
+      message: 'A legacy .agent system has been detected. Do you want to migrate it to the latest portable version?',
     });
 
     if (!shouldUpdate || typeof shouldUpdate === 'symbol') {
-      outro('Inicialización cancelada por el usuario.');
+      outro('Initialization cancelled by user.');
       return;
     }
 
     const sBackup = spinner();
-    sBackup.start('Creando copia de seguridad...');
+    sBackup.start('Creating backup...');
     const resultBackup = await performBackup(cwd);
     if (resultBackup) {
-      sBackup.stop(`Backup creado en: ${path.relative(cwd, resultBackup)}`);
+      sBackup.stop(`Backup created at: ${path.relative(cwd, resultBackup)}`);
     } else {
-      sBackup.stop('No se requería backup.');
+      sBackup.stop('No backup was required.');
     }
   } else if (systemType === 'current') {
-    note('El sistema ya está actualizado a la última versión.', 'Información');
+    note('The system is already updated to the latest version.', 'Information');
     const reinit = await confirm({
-      message: '¿Deseas forzar una reinicialización por referencia? (Se creará backup)',
+      message: 'Do you want to force a re-initialization by reference? (A backup will be created)',
     });
     if (!reinit || typeof reinit === 'symbol') {
-      outro('Proceso finalizado.');
+      outro('Process finished.');
       return;
     }
     const sBackup = spinner();
-    sBackup.start('Creando copia de seguridad...');
+    sBackup.start('Creating backup...');
     const resultBackup = await performBackup(cwd);
-    sBackup.stop(`Backup creado en: ${path.relative(cwd, resultBackup)}`);
+    sBackup.stop(`Backup created at: ${path.relative(cwd, resultBackup)}`);
   }
 
   // 2. Cleanup Legacy Files (Enforce Purity)
@@ -60,13 +60,13 @@ export async function initCommand() {
 
   try {
     // Resolve absolute path to core package in node_modules
-    const corePath = await resolveCorePath();
+    const corePath = (await resolveInstalledCorePath(cwd)) ?? await resolveCorePath();
 
     // 1. Create .agent structure (Only project-specific directories)
     await fs.mkdir(agentDir, { recursive: true });
 
     // Create mirror directories (empty by default)
-    const mirrorDirs = ['rules/roles', 'workflows', 'templates', 'artifacts', 'metrics'];
+    const mirrorDirs = ['rules/roles', 'rules/constitution', 'workflows', 'templates', 'artifacts', 'metrics'];
     for (const dir of mirrorDirs) {
       await fs.mkdir(path.join(agentDir, dir), { recursive: true });
     }
@@ -74,14 +74,15 @@ export async function initCommand() {
     // 2. Create Root Index with ABSOLUTE references to Core
     const indexContent = transformMarkdownContent(`# INDEX — .agent (Root)
 
-## Objetivo
-Punto de entrada global del sistema agéntico. Utiliza referencias absolutas al core para garantizar inmutabilidad y facilidad de actualización.
+## Objective
+Global entry point for the agentic system. It uses absolute references to the core to ensure immutability and ease of update.
 
 ## Aliases (YAML)
 \`\`\`yaml
 agent:
   core:
     root: "${corePath}"
+    artifacts: "${path.join(corePath, 'artifacts/index.md')}"
     rules: "${path.join(corePath, 'rules/index.md')}"
     workflows: "${path.join(corePath, 'workflows/index.md')}"
     templates: "${path.join(corePath, 'templates/index.md')}"
@@ -89,6 +90,8 @@ agent:
   domains:
     workflows:
       index: .agent/workflows/index.md
+    artifacts:
+      index: .agent/artifacts/index.md
     rules:
       index: .agent/rules/index.md
     roles:
@@ -106,33 +109,58 @@ agent:
     await fs.writeFile(path.join(agentDir, 'index.md'), indexContent);
 
     // 3. Create local domain indices (Proxy/Extension indices)
-    await fs.writeFile(path.join(agentDir, 'rules', 'index.md'), '# LOCAL RULES\n\nAquí puedes añadir reglas específicas del proyecto.');
-    await fs.writeFile(path.join(agentDir, 'rules', 'roles', 'index.md'), '# LOCAL ROLES\n\nAquí puedes añadir roles personalizados (ej: neo-agent).');
-    await fs.writeFile(path.join(agentDir, 'workflows', 'index.md'), '# LOCAL WORKFLOWS\n\nAquí puedes añadir tus propios ciclos de trabajo.');
+    await fs.writeFile(path.join(agentDir, 'rules', 'index.md'), '# LOCAL RULES\n\nYou can add project-specific rules here.');
+    await fs.writeFile(path.join(agentDir, 'rules', 'constitution', 'index.md'), '# LOCAL CONSTITUTION\n\nYou can add project-specific constitutions here.');
+    await fs.writeFile(path.join(agentDir, 'rules', 'roles', 'index.md'), '# LOCAL ROLES\n\nYou can add custom roles here (e.g., neo-agent).');
+    await fs.writeFile(path.join(agentDir, 'workflows', 'index.md'), '# LOCAL WORKFLOWS\n\nYou can add your own custom workflows here.');
+    await fs.writeFile(path.join(agentDir, 'artifacts', 'index.md'), '# LOCAL ARTIFACTS\n\nYou can add custom artifact aliases here.');
 
     // 4. Create AGENTS.md (The "Portal" for IDE Agents)
     const agentsMdContent = `# AGENTS
 
-Este proyecto utiliza el framework **Portable Agentic Workflow**.
+This project uses the **Portable Agentic Workflow** framework.
 
-## Cómo empezar
-Para inicializar la sesión agéntica, el agente DEBE leer primero los índices:
-1. Lee el índice maestro: \`.agent/index.md\`
-2. Sigue las referencias del Core en \`node_modules\` descritas en dicho índice.
+## Getting Started
+To initialize the agentic session, the agent MUST first read the index files:
+1. Read the master index: \`.agent/index.md\`
+2. Follow the Core references in \`node_modules\` described in that index.
 
-## Workflow principal
-Ejecuta el workflow de inicialización del core:
+## Main Workflow
+Execute the core initialization workflow:
 - \`${path.join(corePath, 'workflows/init.md')}\`
 
-## Reglas y Disciplina
-El núcleo de reglas reside en:
+## Rules and Discipline
+The core rules reside at:
 - \`${path.join(corePath, 'rules/index.md')}\`
 `;
     await fs.writeFile(path.join(cwd, 'AGENTS.md'), agentsMdContent);
 
+    // 5. Create MCP Configuration for Antigravity/IDE
+    const sMcp = spinner();
+    sMcp.start('Configuring MCP Server for IDE...');
+    const mcpConfigDir = path.join(cwd, '.antigravity');
+    await fs.mkdir(mcpConfigDir, { recursive: true });
+
+    const mcpConfig = {
+      mcpServers: {
+        "agentic-workflow": {
+          command: "node",
+          args: [path.join(corePath, '../bin/cli.js'), "mcp"],
+          env: {},
+          disabled: false
+        }
+      }
+    };
+
+    await fs.writeFile(
+      path.join(mcpConfigDir, 'task_mcp_config.json'),
+      JSON.stringify(mcpConfig, null, 2)
+    );
+    sMcp.stop('MCP Server configured (.antigravity/task_mcp_config.json)');
+
     s.stop('Configuration complete.');
 
-    note(`Core localizado en: ${corePath}\nSe han configurado referencias absolutas para el IDE.`, 'Arquitectura por Referencia');
+    note(`Core located at: ${corePath}\nAbsolute references have been configured for the IDE.`, 'Architecture by Reference');
 
     outro('Agentic System initialized successfully\nYour core is now protected in node_modules.');
 

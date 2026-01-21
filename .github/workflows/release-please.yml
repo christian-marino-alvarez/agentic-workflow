@@ -35,5 +35,3 @@ jobs:
           config-file: .release-please-config.json
           manifest-file: .release-please-manifest.json
           target-branch: develop
-          prerelease: true
-          prerelease-type: beta

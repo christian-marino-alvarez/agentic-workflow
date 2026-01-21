@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0-beta.1](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.8.0-beta.1...agentic-workflow-v1.9.0-beta.1) (2026-01-21)
+
+
+### Features
+
+* align init aliases ([05f7dac](https://github.com/christian-marino-alvarez/agentic-workflow/commit/05f7dacc0355781f3d9a8d0d91725373459230f3))
+
 ## [1.8.0-beta.1](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.7.0-beta.1...agentic-workflow-v1.8.0-beta.1) (2026-01-21)
 
 

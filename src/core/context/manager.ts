@@ -74,40 +74,14 @@ export class ContextManager {
 
         const localBundle = this.formatBundle(files, true);
 
-        // Fast-path: use prebuilt core bootstrap bundle if available.
+        // Use prebuilt core bootstrap bundle only (no dynamic fallback).
         const coreBootstrapPath = path.join(this.corePath, 'bootstrap.md');
-        if (await this.exists(coreBootstrapPath)) {
-            const coreBundle = await fs.readFile(coreBootstrapPath, 'utf-8');
-            return `${localBundle}\n\n---\n\n${coreBundle}`.trim();
+        if (!(await this.exists(coreBootstrapPath))) {
+            throw new Error('No se encontró bootstrap.md en el core. Ejecuta el build para generarlo.');
         }
 
-        // 3. Índices del Core (fallback)
-        const coreRulesIndex = path.join(this.corePath, 'rules/index.md');
-        const coreWorkflowsIndex = path.join(this.corePath, 'workflows/index.md');
-        const coreTemplatesIndex = path.join(this.corePath, 'templates/index.md');
-        const coreArtifactsIndex = path.join(this.corePath, 'artifacts/index.md');
-
-        if (await this.exists(coreRulesIndex)) files.push(await this.readFile(coreRulesIndex, 'agent.core.rules'));
-        if (await this.exists(coreWorkflowsIndex)) files.push(await this.readFile(coreWorkflowsIndex, 'agent.core.workflows'));
-        if (await this.exists(coreTemplatesIndex)) files.push(await this.readFile(coreTemplatesIndex, 'agent.core.templates'));
-        if (await this.exists(coreArtifactsIndex)) files.push(await this.readFile(coreArtifactsIndex, 'agent.core.artifacts'));
-
-        // 4. Constituciones Críticas
-        const constitutions = ['GEMINI.location.md', 'project-architecture.md', 'clean-code.md', 'agent-system.md'];
-        for (const c of constitutions) {
-            const p = path.join(this.corePath, 'rules/constitution', c);
-            if (await this.exists(p)) {
-                files.push(await this.readFile(p, `constitution.${c.replace('.md', '')}`));
-            }
-        }
-
-        // 5. Rol Arquitecto
-        const archRole = path.join(this.corePath, 'rules/roles/architect.md');
-        if (await this.exists(archRole)) {
-            files.push(await this.readFile(archRole, 'roles.architect'));
-        }
-
-        return this.formatBundle(files, true);
+        const coreBundle = await fs.readFile(coreBootstrapPath, 'utf-8');
+        return `${localBundle}\n\n---\n\n${coreBundle}`.trim();
     }
 
     private async readFile(filePath: string, alias: string): Promise<ContextFile> {

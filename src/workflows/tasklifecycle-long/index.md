@@ -64,7 +64,7 @@ aliases:
 - The `init` artifact **MUST** contain in its YAML block:
   - `language.value`: Not empty
   - `language.confirmed == true`
-- The developer **MUST have responded** to the question in **Section 8 of the `init` workflow**:
+- The developer **MUST have responded** to the task prompt in the **PASS step of the `init` workflow**:
   - Task definition
   - Task objective
 

@@ -14,7 +14,7 @@
         "LICENSE"
     ],
     "scripts": {
-        "build": "tsc && npm run copy-assets && node scripts/build-bootstrap.mjs",
+        "build": "node scripts/clean-dist.mjs && tsc && npm run copy-assets && node scripts/build-bootstrap.mjs",
         "copy-assets": "cp -r src/rules src/workflows src/templates src/artifacts dist/",
         "start": "node dist/index.js",
         "publish:npm": "npm publish --registry https://registry.npmjs.org --access public",

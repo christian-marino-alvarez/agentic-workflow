@@ -16,7 +16,6 @@ program
     .command('init')
     .description('Initialize the agentic system in the current directory')
     .option('--non-interactive', 'Run without prompts (assume YES)')
-    .option('--bootstrap', 'Install bootstrap bundle if available')
     .action((options) => initCommand(options));
 
 program

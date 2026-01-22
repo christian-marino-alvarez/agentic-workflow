@@ -16,7 +16,6 @@ blocking: true
 
 ## Input (REQUIRED)
 - Comando del desarrollador: `init` o `/agentic-init`
-- Si se desea usar el bundle opcional: `--bootstrap`
 
 ## Objetivo (ONLY)
 - Activar el rol **architect-agent**.

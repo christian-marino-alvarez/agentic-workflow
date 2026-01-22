@@ -5,13 +5,12 @@ import { detectAgentSystem } from '../../core/migration/detector.js';
 import { resolveCorePath, resolveInstalledCorePath } from '../../core/mapping/resolver.js';
 import { performBackup } from '../../core/utils/backup.js';
 
-export async function initCommand(options: { nonInteractive?: boolean; bootstrap?: boolean } = {}) {
+export async function initCommand(options: { nonInteractive?: boolean } = {}) {
   intro('Agentic Workflow Initialization');
 
   const cwd = process.cwd();
   const agentDir = path.join(cwd, '.agent');
   const nonInteractive = Boolean(options.nonInteractive);
-  const useBootstrap = Boolean(options.bootstrap);
 
   // 1. Existing System Detection
   const systemType = await detectAgentSystem(cwd);
@@ -71,14 +70,10 @@ export async function initCommand(options: { nonInteractive?: boolean; bootstrap
     await fs.mkdir(agentDir, { recursive: true });
 
     await copyCoreToAgent(corePath, agentDir);
-    if (useBootstrap) {
-      await copyBootstrap(corePath, agentDir);
-    }
 
     s.stop('Configuration complete.');
 
-    const bootstrapNote = useBootstrap ? '\nBootstrap bundle installed into .agent.' : '';
-    note(`Core located at: ${corePath}\nCore files installed into .agent.${bootstrapNote}`, 'Installed');
+    note(`Core located at: ${corePath}\nCore files installed into .agent.`, 'Installed');
 
     outro('Agentic System initialized successfully.');
 
@@ -123,15 +118,5 @@ async function copyCoreToAgent(corePath: string, agentDir: string) {
     } catch {
       // Skip missing entries in core.
     }
-  }
-}
-
-async function copyBootstrap(corePath: string, agentDir: string) {
-  const srcPath = path.join(corePath, 'bootstrap.md');
-  const destPath = path.join(agentDir, 'bootstrap.md');
-  try {
-    await fs.copyFile(srcPath, destPath);
-  } catch {
-    // Ignore if bootstrap doesn't exist.
   }
 }

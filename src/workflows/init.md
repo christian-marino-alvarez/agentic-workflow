@@ -53,6 +53,7 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
      1) `.agent/index.md`
      2) `agent.domains.rules.index`
      3) `rules.constitution.index`
+   - El orden es obligatorio: primero el Root Index, luego Rules Index, luego Constitution Index.
    - **PROHIBIDO** cargar índices de `templates` o `artifacts` durante `init`.
    - Si alguna falla → FAIL.
 
@@ -116,3 +117,4 @@ Requisitos (todos obligatorios):
 4) Idioma definido y confirmado.
 5) Estrategia seleccionada.
 6) No se cargaron índices fuera del set permitido (solo `.agent/index.md`, `agent.domains.rules.index`, `rules.constitution.index`).
+7) El Root Index `.agent/index.md` fue cargado antes de cualquier otro índice.

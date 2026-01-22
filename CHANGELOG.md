@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0-beta.1](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.9.0-beta.1...agentic-workflow-v1.10.0-beta.1) (2026-01-22)
+
+
+### Features
+
+* require explicit gate confirmation ([ef1e62b](https://github.com/christian-marino-alvarez/agentic-workflow/commit/ef1e62b4243ea342741d32ddf9ce0319b8aac0df))
+
 ## [1.9.0-beta.1](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.8.0-beta.1...agentic-workflow-v1.9.0-beta.1) (2026-01-21)
 
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.0-beta.1](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.10.0-beta.1...agentic-workflow-v1.11.0-beta.1) (2026-01-22)
+
+
+### Features
+
+* reset core content to extensio backup baseline ([c5e6b03](https://github.com/christian-marino-alvarez/agentic-workflow/commit/c5e6b03780ea0e601701c284d6a98ec5ad3e4c77))
+
 ## [1.10.0-beta.1](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.9.0-beta.1...agentic-workflow-v1.10.0-beta.1) (2026-01-22)
 
 

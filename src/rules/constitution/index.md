@@ -15,16 +15,15 @@ por alias en lugar de rutas directas.
 
 ## Aliases (YAML)
 ```yaml
-rules:
-  constitution:
-    GEMINI_location: .agent/rules/constitution/GEMINI.location.md
-    extensio_architecture: .agent/rules/constitution/extensio-architecture.md
-    clean_code: .agent/rules/constitution/clean-code.md
-    drivers: .agent/rules/constitution/drivers.md
-    modules: .agent/rules/constitution/modules.md
-    shards: .agent/rules/constitution/shards.md
-    pages: .agent/rules/constitution/pages.md
-    agents_behavior: .agent/rules/constitution/agents-behavior.md
+constitution:
+  GEMINI_location: .agent/rules/constitution/GEMINI.location.md
+  extensio_architecture: .agent/rules/constitution/extensio-architecture.md
+  clean_code: .agent/rules/constitution/clean-code.md
+  drivers: .agent/rules/constitution/drivers.md
+  modules: .agent/rules/constitution/modules.md
+  shards: .agent/rules/constitution/shards.md
+  pages: .agent/rules/constitution/pages.md
+  agents_behavior: .agent/rules/constitution/agents-behavior.md
 ```
 
 ## Reglas

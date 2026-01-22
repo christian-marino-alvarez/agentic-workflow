@@ -1,5 +1,5 @@
 ---
-description: Workflow obligatorio de setup: verifica GEMINI.md, carga constitutions (GEMINI.location, extensio-architecture, clean-code), define el idioma de conversación y selecciona la estrategia Long/Short.
+description: Workflow obligatorio de setup: verifica GEMINI.location, carga constitutions (GEMINI.location, extensio-architecture, clean-code), define el idioma de conversación y selecciona la estrategia Long/Short.
 ---
 
 ---
@@ -54,9 +54,9 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
 2. Cargar índices mínimos (OBLIGATORIO):
    - Antes de continuar, revisar `.agent/index.md` para comprender dominios, indices y alias.
    - Bootstrap por ruta directa (hardcodeado y único permitido):
-     - `.agent/index.md`
-   2) `agent.domains.rules.index`
-   3) `rules.constitution.index`
+     1) `.agent/index.md`
+     2) `agent.domains.rules.index`
+     3) `rules.constitution.index`
    - Si alguna falla → FAIL.
 
 3. Cargar en contexto las constitutions (en orden):

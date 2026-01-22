@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.12.0-beta.1](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.11.0-beta.1...agentic-workflow-v1.12.0-beta.1) (2026-01-22)
+
+
+### Features
+
+* add non-interactive init mode ([5b82d4b](https://github.com/christian-marino-alvarez/agentic-workflow/commit/5b82d4bec8102554dc0b20ca1dfe7c822325c869))
+* align constitution aliases ([dbf339c](https://github.com/christian-marino-alvarez/agentic-workflow/commit/dbf339c54ed62477f38199c58a8a1f534fc0826c))
+
 ## [1.11.0-beta.1](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.10.0-beta.1...agentic-workflow-v1.11.0-beta.1) (2026-01-22)
 
 

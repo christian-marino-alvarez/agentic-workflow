@@ -1,4 +1,4 @@
-# @christian-marino-alvarez/agentic-workflow
+# @christianmaf80/agentic-workflow
 
 [English] | [Español](./README.es.md)
 
@@ -18,7 +18,7 @@
 ## 📦 Installation
 
 ```bash
-npm install @christian-marino-alvarez/agentic-workflow
+npm install @christianmaf80/agentic-workflow
 ```
 
 ## 🛠️ CLI Commands
@@ -26,7 +26,7 @@ npm install @christian-marino-alvarez/agentic-workflow
 ### `init`
 Initializes the agentic system in the current directory.
 - Detects legacy systems and offers migration with automatic backups.
-- Creates the `.agent/` structure (indexes, proxy directories).
+- Creates/refreshes the `.agent/` structure with the core files.
 - Generates `AGENTS.md`, the entry point for IDE assistants.
 ```bash
 npx agentic-workflow init
@@ -42,23 +42,11 @@ npx agentic-workflow create role neo
 
 ### `restore`
 Recovers the `.agent/` configuration from a previous backup.
-- Backups are stored in `.agent-backups/`.
+- Backups are stored as `.agent.backup_<timestamp>` in the project root.
 - Allows selecting versions before a destructive change.
 ```bash
 npx agentic-workflow restore
 ```
-
-## 🔌 MCP Server Configuration
-
-To use the framework with IDEs that support the Model Context Protocol (e.g., Cursor, Windsurf), you must add the server to your settings.
-
-### Recommended (via NPX)
-Use `npx` to ensure you are always using the correct version from your project:
-- **Command**: `npx agentic-workflow mcp`
-
-### Manual (Global/Local)
-If you have the package installed locally, you can point to the local binary:
-- **Command**: `node ./node_modules/.bin/agentic-workflow mcp`
 
 ## 🧠 Core Concepts
 
@@ -73,8 +61,8 @@ Every agent task follows the **Agentic Handover & Reasoning Protocol**:
 2. **Gate B (Reasoning)**: The agent proposes a plan. Developer must approve with `YES`.
 3. **Gate C (Results)**: The agent completes the work. Developer validates with `YES`.
 
-### Architecture by Reference
-To ensure stability, the framework's core logic (rules and workflows) resides inside `node_modules`. Your project's `.agent/index.md` uses absolute paths to reference these immutable assets, protecting the framework from accidental local modifications.
+### Architecture by Install
+To ensure stability, the framework's core logic (rules and workflows) is installed into your project's `.agent` folder. This provides a clean, local copy that can be extended without touching the published package.
 
 ## ⚖️ Governance
 

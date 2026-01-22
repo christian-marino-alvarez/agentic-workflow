@@ -1,4 +1,4 @@
-# @christian-marino-alvarez/agentic-workflow
+# @christianmaf80/agentic-workflow
 
 [English](./README.md) | [Español]
 
@@ -18,7 +18,7 @@
 ## 📦 Instalación
 
 ```bash
-npm install @christian-marino-alvarez/agentic-workflow
+npm install @christianmaf80/agentic-workflow
 ```
 
 ## 🛠️ Comandos del CLI
@@ -26,7 +26,7 @@ npm install @christian-marino-alvarez/agentic-workflow
 ### `init`
 Inicializa el sistema agéntico en el directorio actual.
 - Detecta sistemas heredados y ofrece migración con copias de seguridad automáticas.
-- Crea la estructura `.agent/` (índices, directorios proxy).
+- Crea/refresca la estructura `.agent/` con los ficheros core.
 - Genera `AGENTS.md`, el punto de entrada para los asistentes del IDE.
 ```bash
 npx agentic-workflow init
@@ -42,23 +42,11 @@ npx agentic-workflow create role neo
 
 ### `restore`
 Recupera la configuración de `.agent/` desde una copia de seguridad previa.
-- Los backups se almacenan en `.agent-backups/`.
+- Los backups se almacenan como `.agent.backup_<timestamp>` en la raíz del proyecto.
 - Permite seleccionar versiones antes de un cambio destructivo.
 ```bash
 npx agentic-workflow restore
 ```
-
-## 🔌 Configuración del Servidor MCP
-
-Para usar el framework con IDEs que soportan el Protocolo de Contexto de Modelo (ej: Cursor, Windsurf), debes añadir el servidor a tu configuración.
-
-### Recomendado (vía NPX)
-Usa `npx` para asegurar que siempre usas la versión correcta de tu proyecto:
-- **Comando**: `npx agentic-workflow mcp`
-
-### Manual (Global/Local)
-Si tienes el paquete instalado localmente, puedes apuntar al binario local:
-- **Comando**: `node ./node_modules/.bin/agentic-workflow mcp`
 
 ## 🧠 Conceptos Core
 
@@ -73,8 +61,8 @@ Cada tarea de un agente sigue el **Protocolo de Traspaso y Razonamiento Agéntic
 2. **Puerta B (Razonamiento)**: El agente propone un plan. El desarrollador debe aprobar con `SI`.
 3. **Puerta C (Resultados)**: El agente completa el trabajo. El desarrollador valida con `SI`.
 
-### Arquitectura por Referencia
-Para garantizar la estabilidad, la lógica central del framework (reglas y workflows) reside dentro de `node_modules`. El archivo `.agent/index.md` de tu proyecto utiliza rutas absolutas para referenciar estos activos inmutables, protegiendo al framework de modificaciones locales accidentales.
+### Arquitectura por Instalación
+Para garantizar la estabilidad, la lógica central del framework (reglas y workflows) se instala dentro de la carpeta `.agent` del proyecto. Esto ofrece una copia local limpia que se puede extender sin tocar el paquete publicado.
 
 ## ⚖️ Gobernanza
 

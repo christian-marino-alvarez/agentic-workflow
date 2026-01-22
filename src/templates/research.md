@@ -41,7 +41,7 @@ Para cada hallazgo:
 
 ---
 
-## 4. APIs Web / WebExtensions relevantes
+## 4. APIs relevantes
 - API / especificacion
 - Estado de soporte (Chrome/Firefox/Safari)
 - Restricciones conocidas

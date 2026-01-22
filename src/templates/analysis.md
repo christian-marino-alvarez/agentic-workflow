@@ -29,11 +29,11 @@ Primera linea del documento:
 Describe el estado real del proyecto **antes de implementar nada**.
 
 - **Estructura relevante**
-  - Carpetas, módulos, drivers o áreas afectadas.
-- **Drivers existentes**
+  - Carpetas, componentes o áreas afectadas.
+- **Componentes existentes**
   - Estado actual, responsabilidades y limitaciones.
-- **Core / Engine / Surfaces**
-  - Qué partes del core están implicadas (si aplica).
+- **Nucleo / capas base**
+  - Qué partes del core o infraestructura estan implicadas (si aplica).
 - **Artifacts / tareas previas**
   - Tareas existentes que influyen o condicionan esta.
 - **Limitaciones detectadas**
@@ -88,12 +88,12 @@ Lista explícita de agentes necesarios para ejecutar la tarea.
 - Cómo se transfiere información o resultados entre agentes.
 
 **Componentes necesarios**
-- Indicar si se requiere crear, modificar o eliminar componentes (drivers, modulos u otros).
+- Indicar si se requiere crear, modificar o eliminar componentes.
 - Referenciar el impacto y la dependencia con el plan de implementacion.
 
 **Demo (si aplica)**
 - Indicar si se requiere crear demo.
-- Justificar necesidad y alineacion con `constitution.extensio_architecture`.
+- Justificar necesidad y alineacion con la arquitectura del proyecto.
 
 ---
 

@@ -22,7 +22,7 @@ export async function detectAgentSystem(cwd: string): Promise<SystemType> {
         // No hay index.md global
     }
 
-    // Comprobar si es legacy (Extensio)
+    // Comprobar si es legacy
     try {
         const rulesIndex = await fs.readFile(path.join(agentDir, 'rules', 'index.md'), 'utf-8');
         if (rulesIndex.includes('id: rules.index')) {

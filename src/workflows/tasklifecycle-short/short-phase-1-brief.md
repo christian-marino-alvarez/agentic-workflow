@@ -17,7 +17,7 @@ blocking: true
 
 > [!IMPORTANT]
 > **Constitución activa (OBLIGATORIO)**:
-> - Cargar `constitution.extensio_architecture` antes de iniciar
+> - Cargar `constitution.clean_code` antes de iniciar
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
 
 ## Output (REQUIRED)
@@ -69,7 +69,7 @@ Evaluar indicadores de complejidad:
   - Análisis simplificado del estado actual.
   - Plan de implementación con pasos ejecutables.
   - Evaluación de complejidad.
-  - **Evaluación de Agentes**: Desempeño y propuestas de mejora (basado en `.agent/metrics/agents.json`).
+  - **Evaluación de Agentes**: Desempeño y propuestas de mejora.
 
 ### 5. Solicitar aprobación del desarrollador (por consola)
 ```yaml

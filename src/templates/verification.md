@@ -21,13 +21,13 @@ Primera linea del documento:
 ---
 
 ## 2. Tests ejecutados
-- Unit tests (segun `constitution.extensio-architecture`)
+- Unit tests (segun criterios del proyecto)
   - Suites
   - Resultado (pass/fail)
-- Integration tests (segun `constitution.extensio-architecture`, si aplica)
+- Integration tests (segun criterios del proyecto, si aplica)
   - Suites
   - Resultado (pass/fail)
-- E2E tests (segun `constitution.extensio-architecture`, si aplica)
+- E2E tests (segun criterios del proyecto, si aplica)
   - Suites
   - Resultado (pass/fail)
 

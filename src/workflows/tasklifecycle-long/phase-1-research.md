@@ -23,7 +23,7 @@ blocking: true
 
 > [!IMPORTANT]
 > **Constitución activa (OBLIGATORIO)**:
-> - Cargar `constitution.extensio_architecture` antes de iniciar
+> - Cargar `constitution.clean_code` antes de iniciar
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
 
 ## Output (REQUIRED)
@@ -34,8 +34,8 @@ blocking: true
 
 ## Objetivo (ONLY)
 - Investigar necesidades tecnicas detectadas para la tarea.
-- Explorar alternativas y APIs relevantes (Web APIs / WebExtensions).
-- Documentar compatibilidad multi-browser y riesgos.
+- Explorar alternativas y APIs relevantes.
+- Documentar compatibilidad y riesgos.
 - Entregar un informe riguroso y verificable para el architect-agent.
 
 > Esta fase **NO implementa código**.

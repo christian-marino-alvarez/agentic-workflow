@@ -38,17 +38,6 @@ agent:
     rules:
       index: .agent/rules/index.md
 
-    skills:
-      index: .agent/skills/index.md
-
-    tools:
-      index: .agent/tools/index.md
-
-    todo:
-      index: .agent/todo/index.md
-
-    metrics:
-      index: .agent/metrics/index.md
 ```
 
 ## Reglas

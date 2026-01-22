@@ -21,7 +21,7 @@ blocking: true
 
 > [!IMPORTANT]
 > **Constitución activa (OBLIGATORIO)**:
-> - Cargar `constitution.extensio_architecture` antes de iniciar
+> - Cargar `constitution.clean_code` antes de iniciar
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
 > - Cargar constituciones específicas del dominio según la tarea
 
@@ -84,7 +84,7 @@ Para cada tarea `N` en el plan:
 
 #### 3.2 Asignar al agente
 - El `architect-agent` **DEBE** activar al agente correspondiente:
-  - `module-agent`, `driver-agent`, `surface-agent`, `qa-agent`, etc.
+  - `qa-agent`, `researcher-agent` u otros roles definidos.
 - El agente ejecuta la tarea y completa la sección "Implementation Report" del fichero.
 
 #### 3.3 Presentar al desarrollador

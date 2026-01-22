@@ -21,7 +21,7 @@ blocking: true
 
 > [!IMPORTANT]
 > **Constitución activa (OBLIGATORIO)**:
-> - Cargar `constitution.extensio_architecture` antes de iniciar
+> - Cargar `constitution.clean_code` antes de iniciar
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
 
 ## Output (REQUIRED)
@@ -32,8 +32,8 @@ blocking: true
 
 ## Reglas de commits
 Ejemplos válidos:
-- `feat(extension): add reactive storage driver`
-- `fix(core): handle offscreen context lifecycle`
+- `feat(core): add caching layer`
+- `fix(core): handle cache eviction`
 - `refactor(workflows): normalize tasklifecycle phases`
 - No se permiten:
 - mensajes genéricos (`update`, `changes`, `fix stuff`)

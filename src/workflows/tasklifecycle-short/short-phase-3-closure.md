@@ -17,7 +17,7 @@ blocking: true
 
 > [!IMPORTANT]
 > **Constitución activa (OBLIGATORIO)**:
-> - Cargar `constitution.extensio_architecture` antes de iniciar
+> - Cargar `constitution.clean_code` antes de iniciar
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
 
 ## Output (REQUIRED)
@@ -48,7 +48,7 @@ blocking: true
 
 ### 2. Ejecutar verificación
 Si la tarea requiere tests:
-- Ejecutar tests según `constitution.extensio_architecture`.
+- Ejecutar tests según `constitution.clean_code`.
 - Documentar resultados.
 
 Si no requiere tests:
@@ -69,14 +69,14 @@ Si no requiere tests:
 ### 6. Evaluar agentes (OBLIGATORIO)
 - Solicitar puntuación (1-10) del desarrollador para cada agente que haya intervenido.
 - **GATE OBLIGATORIO**: Sin puntuación, la tarea NO puede cerrarse.
-- Actualizar `.agent/metrics/agents.json` calculando la nueva media histórica (ponderada).
+- Registrar las puntuaciones en `closure.md`.
 
 ### 7. Consolidar commits
 Si hay cambios de código:
 - Preparar commits siguiendo Conventional Commits.
 - Solicitar aprobación del desarrollador para push.
 
-### 7. PASS
+### 8. PASS
 - Marcar tarea como **COMPLETADA**.
 - Generar changelog (si aplica).
 - Actualizar task.md con estado final.
@@ -91,7 +91,7 @@ Requisitos (todos obligatorios):
 2. El `closure.md` inicia con el prefijo del `architect-agent`.
 3. Todos los acceptance criteria están marcados.
 4. Existe aceptación final del desarrollador.
-5. Se han registrado las puntuaciones de los agentes en `.agent/metrics/agents.json`.
+5. Se han registrado las puntuaciones de los agentes en `closure.md`.
 6. Commits realizados (si aplica).
 7. task.md refleja tarea completada.
 8. task.md refleja timestamp y estado:

@@ -77,7 +77,15 @@ approval:
 
 ---
 
-## 6. Push final (si aplica)
+## 6. Puntuaciones de agentes (OBLIGATORIO)
+
+| Agente | Puntuacion (1-10) | Notas |
+|--------|-------------------|-------|
+| | | |
+
+---
+
+## 7. Push final (si aplica)
 
 ```yaml
 push:

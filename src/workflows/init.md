@@ -1,5 +1,5 @@
 ---
-description: Workflow obligatorio de setup: verifica GEMINI.location, carga constitutions (GEMINI.location, extensio-architecture, clean-code), define el idioma de conversación y selecciona la estrategia Long/Short.
+description: Workflow obligatorio de setup: verifica GEMINI.location, carga el bootstrap inicial de constitutions base y define el idioma de conversación y la estrategia Long/Short.
 ---
 
 ---
@@ -19,7 +19,8 @@ blocking: true
 
 ## Objetivo (ONLY)
 - Activar el rol **architect-agent**.
-- Cargar el bootstrap de pruebas (incluye constituciones base).
+- Cargar el bootstrap inicial de constituciones (bundle único).
+- Cargar índices mínimos del sistema.
 - Detectar idioma de conversación y confirmar explícitamente.
 - **Seleccionar estrategia de ciclo de vida (Long/Short)**.
 - Crear el **artefacto task candidate** `init.md`.
@@ -37,7 +38,7 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
     - La única salida de un Gate fallido es corregir y reevaluar, o abortar.
 
 2.  **Identidad de Roles**:
-    - El agente **DEBE** cambiar de rol explícitamente cuando el workflow lo indique (ej: `architect` -> `module`).
+    - El agente **DEBE** cambiar de rol explícitamente cuando el workflow lo indique (ej: `architect` -> `qa`).
     - Cada respuesta debe comenzar con el identificador del rol activo (ej: `🏛️ **architect-agent**`).
 
 3.  **Prioridad de Proceso**:
@@ -47,42 +48,53 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
 ## Pasos obligatorios
 1. Activar `architect-agent` como rol arquitecto.
 
-2. Cargar el bootstrap de pruebas (OBLIGATORIO):
-   - Leer `.agent/bootstrap.md`.
-   - Este fichero ya contiene las constituciones base.
-   - Si falla → FAIL.
+2. Cargar bootstrap inicial (OBLIGATORIO):
+   - Bundle único con las constituciones base.
+   - Ruta directa (hardcodeada y única permitida): `.agent/bootstrap.md`
+   - El bundle **DEBE** listar los paths/aliases originales de cada constitution.
+   - Este bootstrap es solo para la carga inicial; **NO** recargar constitutions por separado en `init`.
+   - Si falla la carga → FAIL.
 
-3. Detectar idioma preferido y pedir confirmación explícita.
-   - Si no hay confirmación → ir a **Paso 8 (FAIL)**.
+3. Cargar índices mínimos (OBLIGATORIO):
+   - Antes de continuar, revisar `.agent/index.md` para comprender dominios, indices y alias.
+   - Bootstrap por ruta directa (hardcodeado y único permitido):
+     1) `.agent/index.md`
+     2) `agent.domains.rules.index`
+     3) `rules.constitution.index`
+   - Si alguna falla → FAIL.
 
-4. **Seleccionar estrategia de ciclo de vida (OBLIGATORIO)**
+4. Detectar idioma preferido y pedir confirmación explícita.
+   - Si no hay confirmación → ir a **Paso 9 (FAIL)**.
+
+5. **Seleccionar estrategia de ciclo de vida (OBLIGATORIO)**
    - Preguntar al desarrollador:
      - "Por favor, selecciona la estrategia: **Long** (9 fases completas) o **Short** (3 fases simplificadas)."
-   - Si no hay selección → ir a **Paso 8 (FAIL)**.
+   - Si no hay selección → ir a **Paso 9 (FAIL)**.
    - Registrar la selección en el artefacto `init.md`.
 
-5. **Crear el artefacto `init.md` (OBLIGATORIO)**
+6. **Crear el artefacto `init.md` (OBLIGATORIO)**
    - El artefacto **DEBE** crearse usando **exactamente** la estructura definida en:
      - `templates.init`
    - Todos los campos obligatorios del template **DEBEN** completarse.
+   - El campo `bootstrap.path` **DEBE** apuntar al bundle usado en el paso 2.
    - Incluir el campo `strategy: long | short`.
    - No se permite modificar, omitir ni reinterpretar la estructura del template.
 
-6. Escribir el fichero en:
+7. Escribir el fichero en:
    - `artifacts.candidate.init`
 
-7. Evaluar Gate.
-   - Si Gate FAIL → ir a **Paso 8 (FAIL)**.
+8. Evaluar Gate.
+   - Si Gate FAIL → ir a **Paso 9 (FAIL)**.
    - Si Gate PASS → continuar.
 
-8. FAIL (obligatorio)
+9. FAIL (obligatorio)
    - Declarar `init` como **NO completado**.
    - Explicar exactamente qué requisito falló.
    - Pedir la acción mínima necesaria.
    - **No preguntar por la tarea**.
    - Terminar el workflow en estado bloqueado.
 
-9. PASS (solo si Gate PASS)
+10. PASS (solo si Gate PASS)
     - Preguntar por la tarea:
       - "¿Qué tarea quieres iniciar ahora? Dame un título corto y el objetivo."
     - Una vez recibidos título y objetivo:

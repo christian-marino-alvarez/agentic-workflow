@@ -24,7 +24,7 @@ blocking: true
 
 > [!IMPORTANT]
 > **Constitución activa (OBLIGATORIO)**:
-> - Cargar `constitution.extensio_architecture` antes de iniciar
+> - Cargar `constitution.clean_code` antes de iniciar
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
 
 ## Output (REQUIRED)
@@ -36,8 +36,8 @@ blocking: true
 ## Objetivo (ONLY)
 Crear un informe de **analisis** profundo que:
 - cubra **todos** los acceptance criteria del `task.md`
-- respete la arquitectura de Extensio y sus rules
-- analice el estado real del proyecto (estructura, drivers, core, modulos activos)
+- respete la arquitectura y reglas del proyecto
+- analice el estado real del proyecto (estructura, componentes y areas activas)
 - integre la investigacion aprobada de Fase 1
 - defina agentes, subareas e impacto de la tarea
 - identifique si la tarea requiere crear, modificar o eliminar componentes del sistema
@@ -74,20 +74,12 @@ Crear un informe de **analisis** profundo que:
    - Rellenar secciones segun la tarea concreta.
 
 4. Analizar estado del proyecto e historial de agentes
-   - Revisar estructura, drivers, core y tareas previas.
-   - **OBLIGATORIO**: Leer `.agent/metrics/agents.json` para conocer el desempeño de los agentes propuestos.
-   - Si un agente tiene tendencia negativa o media baja, DEBE proponerse una mejora en su comportamiento o reglas.
+   - Revisar estructura, componentes y tareas previas.
    - Documentar hallazgos en `analysis.md`.
 
 5. Integrar investigacion aprobada
    - Basar alternativas, riesgos y compatibilidad en `research.md`.
    - Complementar con analisis arquitectonico propio.
-
-5.5 **Consultar TODO backlog (OBLIGATORIO)**
-   - Leer `.agent/todo/` para identificar mejoras pendientes.
-   - Evaluar si algún item del backlog impacta en la tarea actual.
-   - Documentar en `analysis.md` sección "TODO Backlog".
-   - Si el directorio está vacío, indicar "Ningún item pendiente".
 
 6. Cobertura de acceptance criteria
    - Mapear **cada acceptance criteria** a su analisis, verificacion y riesgos.
@@ -95,13 +87,8 @@ Crear un informe de **analisis** profundo que:
 7. Definir agentes y subareas
    - Enumerar agentes necesarios.
    - Definir responsabilidades y handoffs.
-   - Identificar si se requiere crear, modificar o eliminar componentes:
-     - drivers
-     - modulos
-     - otros artefactos o integraciones relevantes
-   - Identificar si se requiere crear demo:
-     - justificar la necesidad
-     - impacto en estructura Extensio
+   - Identificar si se requiere crear, modificar o eliminar componentes.
+   - Identificar si se requiere crear demo y su impacto estructural.
 
 8. Solicitar aprobacion del desarrollador (OBLIGATORIO, por consola)
    - El desarrollador **DEBE** emitir una decision binaria:
@@ -153,7 +140,5 @@ Requisitos (todos obligatorios):
    - `task.lifecycle.phases.phase-2-analysis.completed == true`
    - `task.lifecycle.phases.phase-2-analysis.validated_at` no nulo
    - `task.phase.updated_at` no nulo
-7. El análisis incluye sección "TODO Backlog" con consulta a `.agent/todo/`.
-
 Si Gate FAIL:
 - Ejecutar **Paso 10 (FAIL)**.

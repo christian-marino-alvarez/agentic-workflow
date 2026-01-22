@@ -31,7 +31,7 @@ subtask_id: <id>
 ## 3. Decisiones tecnicas
 - Decisiones clave y su justificacion
 - Alternativas consideradas y por que se descartaron
-- Impacto en otros modulos/drivers (si aplica)
+- Impacto en otros componentes (si aplica)
 
 ---
 

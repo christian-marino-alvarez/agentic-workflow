@@ -74,7 +74,7 @@ Para cada agente participante:
 (Repetir por cada agente)
 
 ### 4.2 Cambios técnicos relevantes
-- Nuevos módulos / drivers
+- Nuevos componentes
 - Cambios estructurales
 - APIs afectadas
 - Compatibilidad entre navegadores (si aplica)

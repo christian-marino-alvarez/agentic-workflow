@@ -6,8 +6,8 @@ const outPath = path.join(distRoot, "bootstrap.md");
 
 const files = [
   { rel: "rules/constitution/GEMINI.location.md", alias: "constitution.GEMINI_location" },
-  { rel: "rules/constitution/extensio-architecture.md", alias: "constitution.extensio_architecture" },
   { rel: "rules/constitution/clean-code.md", alias: "constitution.clean_code" },
+  { rel: "rules/constitution/agents-behavior.md", alias: "constitution.agents_behavior" },
 ];
 
 async function readFile(rel, alias) {
@@ -23,9 +23,10 @@ async function build() {
     entries.push(await readFile(entry.rel, entry.alias));
   }
 
-  let bundle = "# BOOTSTRAP (TEST)\n\n";
+  let bundle = "# BOOTSTRAP\n\n";
   bundle += "Este bootstrap contiene las constituciones base.\n";
   bundle += "No es necesario recargarlas durante el init.\n\n";
+  bundle += "Incluye los paths/aliases originales para discovery posterior.\n\n";
   bundle += "## Sistema de indexacion\n";
   bundle += "El sistema usa indices y alias definidos en `.agent/index.md`.\n";
   bundle += "Si necesitas navegar dominios, carga ese index y sigue la cadena:\n";
@@ -43,7 +44,7 @@ async function build() {
 
   await fs.writeFile(outPath, bundle);
   // eslint-disable-next-line no-console
-  console.log(`Bootstrap de pruebas generado en ${outPath}`);
+  console.log(`Bootstrap generado en ${outPath}`);
 }
 
 build().catch((error) => {

@@ -21,7 +21,7 @@ blocking: true
 
 > [!IMPORTANT]
 > **Constitución activa (OBLIGATORIO)**:
-> - Cargar `constitution.extensio_architecture` antes de iniciar
+> - Cargar `constitution.clean_code` antes de iniciar
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
 
 ## Output (REQUIRED)
@@ -79,14 +79,9 @@ Crear un **plan de implementación detallado** para ejecutar el diseño definido
    - Si el analisis requiere crear/modificar/eliminar componentes:
      - definir quien lo ejecuta (agente responsable)
      - definir COMO se hara
-     - definir el skill que el agente usará:
-       - **module-agent** usa `extensio_create_module`
-       - **driver-agent** usa `extensio_create_driver`
-       - **architect-agent** o **qa-agent** usan `extensio_build`
-       - **qa-agent** usa `extensio_test`
+     - definir el tool o skill a usar por alias (si existe) y el motivo
    - Si el analisis requiere crear demo:
-     - definir estructura esperada (alineada con `constitution.extensio_architecture`)
-     - **architect-agent** usa skill `extensio_demo`
+     - definir estructura esperada (alineada con `constitution.clean_code`)
    - Definir el dispatch de dominios (si aplica) en `plan.workflows.*`
    - Definir dispatch secundario (si aplica) en `plan.dispatch[]`
 
@@ -96,7 +91,7 @@ Crear un **plan de implementación detallado** para ejecutar el diseño definido
      - integración
      - end-to-end (si aplica)
    - Indicar tooling obligatorio según:
-     - `constitution.extensio_architecture`
+     - `constitution.clean_code`
    - Relacionar tests con acceptance criteria.
 
 7. Plan de demo (si aplica)
@@ -167,8 +162,7 @@ Requisitos (todos obligatorios):
 6. Si aplica, el plan define `plan.workflows.*` con el dispatch de dominios.
 7. Si aplica, el plan define `plan.dispatch[]` con dispatch secundario.
 8. Si el analisis requiere crear demo, el plan define:
-   - estructura alineada con `constitution.extensio_architecture`
-   - skill obligatorio `skills.extensio_demo`
+   - estructura alineada con `constitution.clean_code`
 9. Existe aprobación explícita del desarrollador:
    - `approval.developer.decision == SI`
 10. `task.md` refleja:

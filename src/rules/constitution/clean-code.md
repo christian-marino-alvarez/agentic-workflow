@@ -1,4 +1,4 @@
-# Clean Code Rules (Extensio)
+# Clean Code Rules
 
 type: rules
 version: 2
@@ -9,13 +9,12 @@ scope: global
 
 ## Purpose
 
-This document defines the **mandatory Clean Code rules** for all source code,
-agents, workflows, drivers, and modules in the Extensio ecosystem.
+This document defines the **mandatory Clean Code rules** for all source code
+and workflows in this project.
 
 These rules are inspired by **Robert C. Martin – Clean Code** and adapted to:
 - TypeScript + ES Modules
-- Browser extension architecture
-- Reactive, modular systems
+- Modular systems
 - Multi-agent workflows
 
 Any code that violates these rules MUST be considered incomplete.
@@ -149,15 +148,15 @@ Any deviation is a violation.
 
 ---
 
-## 8. Drivers (Extensio-Specific)
+## 8. Integration Layers
 
-- Drivers MUST be thin facades.
-- NO business logic inside drivers.
-- Browser-specific adaptations ONLY.
+- Integration layers MUST be thin facades.
+- NO business logic inside adapters or transport layers.
+- Environment-specific adaptations ONLY.
 
 ---
 
-## 9. Modules (Extensio-Specific)
+## 9. Modules
 
 - Modules MUST be domain-focused.
 - Modules MUST communicate ONLY through reactive storage or defined APIs.
@@ -200,6 +199,6 @@ Inspired by:
 - Robert C. Martin – *Clean Code*
 - Robert C. Martin – *Clean Architecture*
 
-Adapted for Extensio.
+Adapted for this project.
 
 This rule set is **binding** when referenced as `INJECTED`.

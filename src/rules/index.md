@@ -49,7 +49,7 @@ Archivos protegidos:
 - `GEMINI.md` (si existe en el repositorio)
 
 **Prohibiciones**:
-- ❌ Ningún agente (module, driver, surface, qa, researcher) puede modificar reglas
+- ❌ Ningún agente (qa, researcher, neo) puede modificar reglas
 - ❌ Ningún agente puede modificar workflows
 - ❌ Ningún agente puede modificar índices
 

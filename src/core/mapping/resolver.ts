@@ -63,7 +63,7 @@ async function resolveCorePathFromDir(startDir: string): Promise<string> {
         }
     }
 
-    throw new Error('No se pudo localizar el core del framework (@cmarino/agentic-workflow). Asegúrate de que el paquete está correctamente instalado.');
+    throw new Error('No se pudo localizar el core del framework (@christianmaf80/agentic-workflow). Asegúrate de que el paquete está correctamente instalado.');
 }
 
 async function resolveCorePathFromPackageRoot(pkgRoot: string): Promise<string> {

@@ -27,12 +27,6 @@ templates:
   task_metrics: .agent/templates/task-metrics.md
   agent_scores: .agent/templates/agent-scores.md
   research: .agent/templates/research.md
-  driver_create: .agent/templates/driver-create.md
-  driver_refactor: .agent/templates/driver-refactor.md
-  driver_delete: .agent/templates/driver-delete.md
-  module_create: .agent/templates/module-create.md
-  module_refactor: .agent/templates/module-refactor.md
-  module_delete: .agent/templates/module-delete.md
   agent_task: .agent/templates/agent-task.md
   todo_item: .agent/templates/todo-item.md
   changelog: .agent/templates/changelog.md

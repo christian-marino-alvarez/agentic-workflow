@@ -70,47 +70,19 @@ task:
         validated_by: null
         validated_at: null
     subflows:
-      drivers:
+      components:
         create:
-          - name: <driver-name>
+          - name: <component-name>
             completed: false
             validated_by: null
             validated_at: null
         refactor:
-          - name: <driver-name>
+          - name: <component-name>
             completed: false
             validated_by: null
             validated_at: null
         delete:
-          - name: <driver-name>
-            completed: false
-            validated_by: null
-            validated_at: null
-      modules:
-        create:
-          - name: <module-name>
-            completed: false
-            validated_by: null
-            validated_at: null
-        refactor:
-          - name: <module-name>
-            completed: false
-            validated_by: null
-            validated_at: null
-        delete:
-          - name: <module-name>
-            completed: false
-            validated_by: null
-            validated_at: null
-      pages:
-        create:
-          - name: <page-name>
-            completed: false
-            validated_by: null
-            validated_at: null
-      shards:
-        create:
-          - name: <shard-name>
+          - name: <component-name>
             completed: false
             validated_by: null
             validated_at: null

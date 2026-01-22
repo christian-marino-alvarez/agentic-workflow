@@ -21,7 +21,7 @@ blocking: true
 
 > [!IMPORTANT]
 > **Constitución activa (OBLIGATORIO)**:
-> - Cargar `constitution.extensio_architecture` antes de iniciar
+> - Cargar `constitution.clean_code` antes de iniciar
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
 
 ## Output (REQUIRED)
@@ -72,7 +72,7 @@ blocking: true
 
 4. Ejecutar testing
    - Ejecutar tests segun la estrategia obligatoria definida en:
-     - `constitution.extensio_architecture`
+     - `constitution.clean_code`
    - Recopilar métricas de coverage y performance si aplica.
 
 5. Crear informe de verificación
@@ -156,7 +156,7 @@ Requisitos (todos obligatorios):
 2. El informe refleja resultados completos y trazables de testing.
 3. El `verification.md` inicia con el prefijo del `qa-agent`.
 4. El informe contiene **evidencia de ejecución de tests**:
-   - Logs de salida de comandos de test (`npm test`, `extensio-cli test`, etc.)
+   - Logs de salida de comandos de test (`npm test`, `pnpm test`, etc.)
    - O screenshots/grabaciones de E2E
    - O justificación documentada si la tarea no requiere tests
 5. Se cumplen los porcentajes de test definidos en el plan (si aplica).

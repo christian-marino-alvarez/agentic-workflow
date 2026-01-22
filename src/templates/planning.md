@@ -28,12 +28,12 @@ Primera linea del documento:
 ```yaml
 plan:
   workflows:
-    drivers:
-      action: create | refactor | delete | none
-      workflow: workflow.drivers.create | workflow.drivers.refactor | workflow.drivers.delete
+    - domain: <domain-name>
+      action: create | refactor | delete | audit | verify | none
+      workflow: <workflow.id>
 
   dispatch:
-    - domain: drivers | modules | core | qa
+    - domain: <domain-name>
       action: create | refactor | delete | audit | verify | none
       workflow: <workflow.id>
 ```
@@ -74,11 +74,11 @@ Mapa claro de agentes ↔ subáreas.
 - Definir quién lo ejecuta.
 - Definir cómo se implementa (pasos y criterios).
 - Definir la mejor herramienta disponible (preferir tools declarados; si no existe, justificar alternativa).
-- Referenciar el tool elegido por alias (p.ej. `mcp_extensio-cli tools`) y el motivo.
+- Referenciar el tool elegido por alias y el motivo.
 
 **Demo (si aplica)**
-- Definir estructura esperada alineada con `constitution.extensio_architecture`.
-- Definir tool obligatorio para generar scaffolding (usar `mcp_extensio-cli tools`).
+- Definir estructura esperada alineada con la arquitectura del proyecto.
+- Definir tool obligatorio para generar scaffolding (si existe).
 
 ---
 
@@ -86,11 +86,11 @@ Mapa claro de agentes ↔ subáreas.
 Cómo se comprobará que la implementación cumple los AC.
 
 - **Unit tests**
-  - Alcance y herramientas (ver `constitution.extensio-architecture`)
+  - Alcance y herramientas
 - **Integration tests**
-  - Flujos cubiertos (ver `constitution.extensio-architecture`)
+  - Flujos cubiertos
 - **E2E / Manual**
-  - Escenarios clave (ver `constitution.extensio-architecture`)
+  - Escenarios clave
 
 **Trazabilidad**
 - Mapeo de tests ↔ acceptance criteria.

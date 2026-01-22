@@ -23,21 +23,20 @@ blocking: true
 
 > [!IMPORTANT]
 > **Constitución activa (OBLIGATORIO)**:
-> - Cargar `constitution.extensio_architecture` antes de iniciar
+> - Cargar `constitution.clean_code` antes de iniciar
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
 
 ## Output (REQUIRED)
 - Crear metricas de la tarea (por agente y global):
   - `.agent/artifacts/<taskId>-<taskTitle>/metrics.md`
-- Actualizar metricas globales (media historica):
-  - `.agent/metrics/agent-scores.md`
+- Registrar puntuaciones por agente:
+  - `.agent/artifacts/<taskId>-<taskTitle>/agent-scores.md`
 - Actualizacion del estado en:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 
 ## Objetivo (ONLY)
 - Valorar objetivamente a cada agente participante.
 - Evaluar la adecuacion del rol y la ejecucion de cada agente.
-- Mantener una media historica de puntuacion por agente y por tarea.
 
 ## Templates (OBLIGATORIOS)
 - Metricas de tarea:
@@ -56,11 +55,11 @@ blocking: true
    - `task.phase.current == aliases.taskcycle-long.phases.phase_7.id`
    - Existe `architect/review.md`
    - Si aplica, existen subtasks por agente
-   - Si falla → ir a **Paso 9 (FAIL)**.
+   - Si falla → ir a **Paso 8 (FAIL)**.
 
 2. Cargar templates
    - Cargar `templates.task_metrics` y `templates.agent_scores`
-   - Si no existen o no se pueden leer → ir a **Paso 9 (FAIL)**.
+   - Si no existen o no se pueden leer → ir a **Paso 8 (FAIL)**.
 
 3. Evaluar agentes
    - Para cada agente participante:
@@ -72,23 +71,17 @@ blocking: true
    - Promedio ponderado de agentes
    - Registrar en `metrics.md`
 
-5. Actualizar metricas globales
-   - Actualizar `agent-scores.md` con:
-     - score de la tarea actual
-     - media historica por agente
+5. Registrar puntuaciones por agente
+   - Actualizar `agent-scores.md` con el score de la tarea actual
 
 6. Solicitar feedback y puntuación obligatoria del desarrollador (por consola)
    - Presentar `metrics.md` al usuario.
    - Solicitar confirmación explícita (SI/NO).
    - Solicitar puntuación del desarrollador (1-10) para CADA agente participante.
    - **GATE OBLIGATORIO**: Sin estas puntuaciones, la tarea NO puede cerrarse.
-   - Si respuesta es NO → ir a **Paso 9 (FAIL)**.
+   - Si respuesta es NO → ir a **Paso 8 (FAIL)**.
 
-7. Actualizar persistencia global
-   - Actualizar el archivo `.agent/metrics/agents.json` con las nuevas puntuaciones.
-   - Calcular la nueva media aplicando la ponderación configurada (las antiguas pesan más).
-
-8. PASS
+7. PASS
    - Registrar validación en `metrics.md`.
    - Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md`:
      - marcar Fase 7 como completada
@@ -100,7 +93,7 @@ blocking: true
 
 ## FAIL (OBLIGATORIO)
 
-9. Declarar Fase 7 como **NO completada**
+8. Declarar Fase 7 como **NO completada**
    - Casos de FAIL:
      - fase incorrecta
      - faltan informes requeridos
@@ -118,7 +111,7 @@ Requisitos (todos obligatorios):
 2. El `metrics.md` inicia con el prefijo del `architect-agent`.
 3. `metrics.md` contiene la validación del desarrollador (`Aprobado: SI`).
 4. `metrics.md` contiene la puntuación del desarrollador (0-5).
-5. Existe `.agent/metrics/agent-scores.md` actualizado.
+5. Existe `.agent/artifacts/<taskId>-<taskTitle>/agent-scores.md` actualizado.
 6. `task.md` refleja:
    - Fase 7 completada
    - `task.phase.current == aliases.taskcycle-long.phases.phase_8.id`
@@ -127,4 +120,4 @@ Requisitos (todos obligatorios):
    - `task.phase.updated_at` no nulo
 
 Si Gate FAIL:
-- Ejecutar **Paso 9 (FAIL)**.
+- Ejecutar **Paso 8 (FAIL)**.

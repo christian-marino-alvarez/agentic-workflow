@@ -14,7 +14,7 @@ Descripción breve y clara de los cambios introducidos por esta tarea.
 
 - **Objetivo de la tarea**:
 - **Impacto principal**:
-- **Áreas afectadas** (módulos, drivers, workflows, etc.):
+- **Áreas afectadas** (componentes, workflows, etc.):
 
 ---
 

@@ -20,8 +20,6 @@ workflows:
   init: .agent/workflows/init.md
   tasklifecycle-long: .agent/workflows/tasklifecycle-long/index.md
   tasklifecycle-short: .agent/workflows/tasklifecycle-short/index.md
-  drivers: .agent/workflows/drivers/index.md
-  modules: .agent/workflows/modules/index.md
 ```
 
 ## Reglas

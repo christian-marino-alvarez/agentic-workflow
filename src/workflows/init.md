@@ -65,13 +65,12 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
    3) `constitution.clean_code`
    - Si alguna falla -> FAIL.
 
-4. Detectar idioma preferido y pedir confirmacion explicita.
-   - Si no hay confirmacion -> ir a **Paso 9 (FAIL)**.
+4. Detectar idioma preferido.
 
 5. **Seleccionar estrategia de ciclo de vida (OBLIGATORIO)**
    - Preguntar al desarrollador:
      - "Por favor, selecciona la estrategia: **Long** (9 fases completas) o **Short** (3 fases simplificadas)."
-   - Si no hay seleccion -> ir a **Paso 9 (FAIL)**.
+   - Si no hay seleccion -> ir a **Paso 10 (FAIL)**.
    - Registrar la seleccion en el artefacto `init.md`.
 
 6. **Crear el artefacto `init.md` (OBLIGATORIO)**
@@ -84,18 +83,19 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
 7. Escribir el fichero en:
    - `artifacts.candidate.init`
 
-8. Evaluar Gate.
-   - Si Gate FAIL -> ir a **Paso 9 (FAIL)**.
+8. Solicitar confirmacion explicita (**YES**) con el resumen de las 4 respuestas.
+9. Evaluar Gate.
+   - Si Gate FAIL -> ir a **Paso 10 (FAIL)**.
    - Si Gate PASS -> continuar.
 
-9. FAIL (obligatorio)
+10. FAIL (obligatorio)
    - Declarar `init` como **NO completado**.
    - Explicar exactamente que requisito fallo.
    - Pedir la accion minima necesaria.
    - **No preguntar por la tarea**.
    - Terminar el workflow en estado bloqueado.
 
-10. PASS (solo si Gate PASS)
+11. PASS (solo si Gate PASS)
     - Preguntar por la tarea:
       - "Que tarea quieres iniciar ahora? Dame un titulo corto y el objetivo."
     - Una vez recibidos titulo y objetivo:

@@ -1,30 +1,26 @@
-# Supplemental Report — <taskId>-<taskTitle>
+# Supplemental Report (Template)
 
-## Agent Identification (MANDATORY)
-First line of the document:
-`<icon> **<agent-name>**: <message>`
-
-## Identification
+## Identificacion
 - id: {{artifact.id}}
 - title: {{artifact.title}}
 - type: supplemental
 - owner: {{artifact.owner}}
 - related_task: {{task.id}}
 
-## Purpose
+## Proposito
 {{artifact.purpose}}
 
-## Context
+## Contexto
 {{artifact.context}}
 
-## Findings / Notes
+## Hallazgos / Notas
 {{artifact.findings}}
 
-## Decisions
+## Decisiones
 {{artifact.decisions}}
 
-## References
+## Referencias
 - {{artifact.references}}
 
-## Related Artifact Links
+## Enlaces a artefactos relacionados
 - {{artifact.related_artifacts}}

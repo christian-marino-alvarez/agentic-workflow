@@ -10,68 +10,68 @@ related_review: .agent/artifacts/<taskId>-<taskTitle>/architect/review.md
 
 # Verification Report — <taskId>-<taskTitle>
 
-## Agent Identification (MANDATORY)
-First line of the document:
-`<icon> **<agent-name>**: <message>`
+## Identificacion del agente (OBLIGATORIA)
+Primera linea del documento:
+`<icono> **<nombre-agente>**: <mensaje>`
 
-## 1. Verification Scope
-- What was verified
-- What was excluded
+## 1. Alcance de verificacion
+- Que se verifico
+- Que quedo fuera
 
 ---
 
-## 2. Executed Tests
-- Unit tests (as per `constitution.project_architecture`)
+## 2. Tests ejecutados
+- Unit tests (segun `constitution.extensio-architecture`)
   - Suites
-  - Result (pass/fail)
-- Integration tests (as per `constitution.project_architecture`, if applicable)
+  - Resultado (pass/fail)
+- Integration tests (segun `constitution.extensio-architecture`, si aplica)
   - Suites
-  - Result (pass/fail)
-- E2E tests (as per `constitution.project_architecture`, if applicable)
+  - Resultado (pass/fail)
+- E2E tests (segun `constitution.extensio-architecture`, si aplica)
   - Suites
-  - Result (pass/fail)
+  - Resultado (pass/fail)
 
 ---
 
-## 3. Coverage and Thresholds
-- Total Coverage (%)
-- Coverage per area (if applicable)
-- Thresholds defined in the plan (met / not met)
+## 3. Coverage y thresholds
+- Coverage total (%)
+- Coverage por area (si aplica)
+- Thresholds definidos en el plan (cumple / no cumple)
 
 ---
 
-## 4. Performance (if applicable)
-- Collected metrics
-- Thresholds (met / not met)
+## 4. Performance (si aplica)
+- Metricas recopiladas
+- Thresholds (cumple / no cumple)
 
 ---
 
-## 5. Evidence
+## 5. Evidencias
 - Logs
-- Test reports
-- Screenshots (if applicable)
+- Reportes de tests
+- Capturas (si aplica)
 
 ---
 
-## 6. Issues
-- Bugs found
-- Severity
-- Status
+## 6. Incidencias
+- Bugs encontrados
+- Severidad
+- Estado
 
 ---
 
 ## 7. Checklist
-- [ ] Verification completed
-- [ ] Testing thresholds met
-- [ ] Ready for Phase 6
+- [ ] Verificacion completada
+- [ ] Thresholds de testing cumplidos
+- [ ] Listo para fase 5
 
 ---
 
-## 8. Developer Approval (MANDATORY)
+## 8. Aprobacion del desarrollador (OBLIGATORIA)
 ```yaml
 approval:
   developer:
-    decision: YES | NO
+    decision: SI | NO
     date: <ISO-8601>
-    comments: <optional>
+    comments: <opcional>
 ```

@@ -2,105 +2,102 @@
 artifact: agent_task
 phase: phase-4-implementation
 owner: {{agent}}
-assigned_to: {{agent}}
-status: blocked | pending_reasoning_approval | in-progress | completed | failed
+status: pending | in-progress | completed | failed
 related_task: {{taskId}}-{{taskTitle}}
-task_id: "{{taskId}}-{{N}}"
+task_number: {{N}}
 ---
 
-################################################################################
-# 🛑 SECURITY BLOCK: TASK NOT ACTIVATED                                        #
-################################################################################
-# Agent {{agent}} has been assigned to this task.                             #
-#                                                                              #
-# FORBIDDEN TO USE WRITING OR EXECUTION TOOLS (run, write, create).            #
-# Required action: Developer must respond with "YES" to activate.              #
-################################################################################
+# Agent Task — {{N}}-{{agent}}-{{taskName}}
 
-# Agent Task — {{taskId}}-{{N}} ({{taskName}})
+## Identificacion del agente (OBLIGATORIA)
+Primera linea del documento:
+`<icono> **<nombre-agente>**: <mensaje>`
 
-## 1. Input (REQUIRED)
-- **Objective**: {{objective}}
-- **Scope**: {{scope}}
-- **Dependencies**: {{dependencies}}
+## Input (REQUIRED)
+- **Objetivo**: {{objective}}
+- **Alcance**: {{scope}}
+- **Dependencias**: {{dependencies}}
 
 ---
 
-## 2. Reasoning (AWAITING ACTIVATION)
+## Reasoning (OBLIGATORIO)
 
 > [!IMPORTANT]
-> The agent **MUST** complete this section AFTER being activated (Gate A) and BEFORE executing (Gate B).
+> El agente **DEBE** completar esta sección ANTES de ejecutar.
+> Documentar el razonamiento mejora la calidad y permite detectar errores temprano.
 
-### Objective Analysis
-- (What exactly is being requested?)
+### Análisis del objetivo
+- ¿Qué se pide exactamente?
+- ¿Hay ambigüedades o dependencias?
 
-### Options Considered
-- **Option A**: (description)
-- **Option B**: (description)
+### Opciones consideradas
+- **Opción A**: (descripción)
+- **Opción B**: (descripción)
+- *(añadir más si aplica)*
 
-### Decision Made
-- **Chosen Option**: (A/B)
-- **Justification**: (why)
+### Decisión tomada
+- Opción elegida: (A/B/...)
+- Justificación: (por qué esta opción)
 
 ---
 
-## 3. Output (REQUIRED)
-- **Deliverables**:
+## Output (REQUIRED)
+- **Entregables**:
   - {{deliverables}}
-- **Required Evidence**:
+- **Evidencia requerida**:
   - {{evidence}}
 
 ---
 
-## 4. Implementation Report
-
-> This section is completed by the assigned agent during execution.
-
-### Changes Made
-- (Modified files, added functions, etc.)
-
-### Technical Decisions
-- (Key decisions and justification)
-
-### Evidence
-- (Logs, screenshots, executed tests)
-
----
-
-## Gate A: Agent Activation (Handover)
-
-The developer **MUST** activate the agent before they can present their reasoning or use tools.
+## Execution
 
 ```yaml
-activation:
-  agent: {{agent}}
-  assigned_by: architect-agent
-  decision: null # YES | NO
-```
-
-## Gate B: Reasoning Approval (Action Plan)
-
-The developer **MUST** approve the reasoning before the agent proceeds with the implementation.
-
-```yaml
-reasoning_approval:
-  agent: {{agent}}
-  decision: null # YES | NO
-```
-
-## Gate C: Results Approval (Closure)
-
-```yaml
-completion:
-  agent: {{agent}}
-  decision: null # YES | NO
+execution:
+  agent: "{{agent}}"
+  status: pending | in-progress | completed | failed
+  started_at: null
+  completed_at: null
 ```
 
 ---
 
-## Contractual Rules (AHRP)
+## Implementation Report
 
-1. **Synchronous Gate A**: Forbidden to use tools without `YES` activation.
-2. **Synchronous Gate B**: Forbidden to modify code without `YES` Reasoning approval.
-3. **Metrics**: Failure of any Gate results in an immediate **Score of 0**.
-4. The assigned agent **CANNOT modify** the Input or Output defined by the architect.
+> Esta sección la completa el agente asignado durante la ejecución.
+
+### Cambios realizados
+- (Archivos modificados, funciones añadidas, etc.)
+
+### Decisiones técnicas
+- (Decisiones clave y justificación)
+
+### Evidencia
+- (Logs, capturas, tests ejecutados)
+
+### Desviaciones del objetivo
+- (Si las hay, justificación)
+
+---
+
+## Gate (REQUIRED)
+
+El desarrollador **DEBE** aprobar esta tarea antes de que el arquitecto asigne la siguiente.
+
+```yaml
+approval:
+  developer:
+    decision: SI | NO
+    date: <ISO-8601>
+    comments: <opcional>
+```
+
+---
+
+## Reglas contractuales
+
+1. Esta tarea **NO puede marcarse como completada** sin Gate PASS (`decision: SI`).
+2. Si Gate FAIL (`decision: NO`):
+   - El arquitecto define acciones correctivas.
+   - Se genera una nueva tarea de corrección si procede.
+3. El agente asignado **NO puede modificar** el Input ni el Output definidos por el arquitecto.
+4. El Gate es **síncrono y bloqueante**: el flujo se detiene hasta obtener respuesta del desarrollador.

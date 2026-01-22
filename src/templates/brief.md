@@ -8,89 +8,89 @@ related_task: <taskId>-<taskTitle>
 
 # Brief — <taskId>-<taskTitle>
 
-## Agent Identification (MANDATORY)
-First line of the document:
-`<icon> **<agent-name>**: <message>`
+## Identificacion del agente (OBLIGATORIA)
+Primera linea del documento:
+`<icono> **<nombre-agente>**: <mensaje>`
 
-## 1. Task Identification
+## 1. Identificación de la tarea
 
-**Title**: <task title>
-**Objective**: <main objective>
-**Strategy**: Short
+**Título**: <título de la tarea>
+**Objetivo**: <objetivo principal>
+**Estrategia**: Short
 
 ---
 
-## 2. The 5 Mandatory Questions (Dynamic)
+## 2. Las 5 Preguntas Obligatorias
 
-| # | Question (formulated by architect) | Answer (from developer) |
-|---|-----------------------------------|-------------------------|
-| 1 | <dynamic question based on task description> | |
-| 2 | <dynamic question based on task description> | |
-| 3 | <dynamic question based on task description> | |
-| 4 | <dynamic question based on task description> | |
-| 5 | <dynamic question based on task description> | |
+| # | Pregunta (formulada por architect) | Respuesta (del desarrollador) |
+|---|-----------------------------------|-------------------------------|
+| 1 | | |
+| 2 | | |
+| 3 | | |
+| 4 | | |
+| 5 | | |
 
 ---
 
 ## 3. Acceptance Criteria
 
-Derived from the previous answers:
+Derivados de las respuestas anteriores:
 
-1. **Scope**: 
-2. **Inputs/Data**: 
-3. **Expected Outputs**: 
-4. **Constraints**: 
-5. **Done Criteria**: 
-
----
-
-## 4. Simplified Analysis
-
-### Current State (As-Is)
-- Affected structure:
-- Known limitations:
-
-### Complexity Evaluation
-
-| Indicator | Status | Comment |
-|-----------|--------|---------|
-| Affects more than 3 packages | ☐ Yes ☐ No | |
-| Requires API research | ☐ Yes ☐ No | |
-| Breaking changes | ☐ Yes ☐ No | |
-| Complex E2E tests | ☐ Yes ☐ No | |
-
-**Complexity Result**: ☐ LOW (continue Short) ☐ HIGH (recommend aborting to Long)
+1. **Alcance**: 
+2. **Entradas/Datos**: 
+3. **Salidas esperadas**: 
+4. **Restricciones**: 
+5. **Criterio de Done**: 
 
 ---
 
-## 5. Implementation Plan
+## 4. Análisis simplificado
 
-### Ordered Steps
+### Estado actual (As-Is)
+- Estructura afectada:
+- Limitaciones conocidas:
 
-1. **Step 1**
-   - Description:
-   - Deliverables:
+### Evaluación de complejidad
 
-2. **Step 2**
-   - Description:
-   - Deliverables:
+| Indicador | Estado | Comentario |
+|-----------|--------|------------|
+| Afecta más de 3 paquetes | ☐ Sí ☐ No | |
+| Requiere investigación APIs | ☐ Sí ☐ No | |
+| Cambios breaking | ☐ Sí ☐ No | |
+| Tests E2E complejos | ☐ Sí ☐ No | |
 
-(Add more steps as needed)
-
-### Planned Verification
-- Test types:
-- Success criteria:
+**Resultado de complejidad**: ☐ BAJA (continuar Short) ☐ ALTA (recomendar abortar a Long)
 
 ---
 
-## 6. Developer Approval (MANDATORY)
+## 5. Plan de implementación
+
+### Pasos ordenados
+
+1. **Paso 1**
+   - Descripción:
+   - Entregables:
+
+2. **Paso 2**
+   - Descripción:
+   - Entregables:
+
+(Añadir más pasos según necesidad)
+
+### Verificación prevista
+- Tipo de tests:
+- Criterios de éxito:
+
+---
+
+## 6. Aprobación del desarrollador (OBLIGATORIA)
 
 ```yaml
 approval:
   developer:
-    decision: YES | NO
+    decision: SI | NO
     date: <ISO-8601>
-    comments: <optional>
+    comments: <opcional>
 ```
 
-> Without approval, this phase CANNOT move to Implementation.
+> Sin aprobación, esta fase NO puede avanzar a Implementation.

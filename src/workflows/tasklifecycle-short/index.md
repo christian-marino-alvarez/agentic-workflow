@@ -1,9 +1,9 @@
 ---
 id: workflow.tasklifecycle-short
 owner: architect-agent
-version: 1.1.0
+version: 1.0.0
 severity: PERMANENT
-description: Orchestrates the simplified (Short) lifecycle of a task starting from a valid init.
+description: Orquesta el ciclo de vida simplificado (Short) de una tarea a partir de un init válido.
 trigger:
   commands: ["tasklifecycle-short", "/tasklifecycle-short"]
 blocking: true
@@ -11,22 +11,18 @@ blocking: true
 
 # WORKFLOW: tasklifecycle-short (Index)
 
-## 0. Role Activation and Prefix (MANDATORY)
-- The `architect-agent` **MUST** begin its intervention by identifying itself.
-- Message: `🏛️ **architect-agent**: Starting Short lifecycle.`
-
-## Required Indexes (MANDATORY)
-This workflow does **NOT** define aliases outside its domain (`taskcycle-short`).
-To use artifacts and templates, global indexes **MUST** be loaded:
+## Índices requeridos (OBLIGATORIO)
+Este workflow **NO** define aliases fuera de su dominio (`taskcycle-short`).
+Para artifacts y templates, **DEBE** cargar índices globales:
 
 - Artifacts index: `.agent/artifacts/index.md`
 - Templates index: `.agent/templates/index.md`
 
-## Domain Aliases: `taskcycle-short` (MANDATORY)
-This workflow defines aliases **only** for the `taskcycle-short` (task lifecycle short) domain.
-There is **one unique namespace** `aliases.taskcycle-short.phases.*` containing:
-- `id`: Phase ID
-- `workflow`: Path to the phase workflow file
+## Aliases del dominio `taskcycle-short` (OBLIGATORIO)
+Este workflow define aliases **solo** del dominio `taskcycle-short` (task lifecycle short).
+Existe **un único namespace** `aliases.taskcycle-short.phases.*` que contiene:
+- `id` de fase
+- `workflow` (path del workflow de la fase)
 
 ## Aliases (YAML)
 ```yaml
@@ -45,23 +41,30 @@ aliases:
 ```
 
 ## Input (REQUIRED)
-- `init` artifact exists with `task.strategy == "short"`.
-- The developer has defined the task title and objective.
+- Existe el artefacto `init` con `task.strategy == "short"`.
+- El desarrollador ha definido título y objetivo de la tarea.
 
 ## Output (REQUIRED)
-- Task candidate with `task.strategy: short`.
+- Task candidate con `task.strategy: short`.
+- Artefactos de cada fase: `brief.md`, `implementation.md`, `closure.md`.
 
-## Objective (ONLY)
-- Execute a simplified 3-phase cycle for low-complexity tasks.
+## Objetivo (ONLY)
+- Ejecutar un ciclo simplificado de 3 fases para tareas de baja complejidad.
+- Mantener la integridad de los gates arquitectónicos.
+- Si se detecta complejidad alta en Brief, ofrecer abortar a Long.
 
-## Pass
-- `artifacts.candidate.task` exists with `task.strategy: short`.
-- All phase workflows for the `taskcycle-short` domain are available.
+## Orden oficial de ejecución de fases
+Las fases del ciclo Short **DEBEN ejecutarse estrictamente en orden**:
+
+1. `aliases.taskcycle-short.phases.short_phase_1.id` (Brief)
+2. `aliases.taskcycle-short.phases.short_phase_2.id` (Implementation)
+3. `aliases.taskcycle-short.phases.short_phase_3.id` (Closure)
 
 ## Gate (REQUIRED)
-Requirements (all mandatory):
-1. `artifacts.candidate.task` exists with `task.strategy: short`.
-2. All phase workflows for the `taskcycle-short` domain are available.
+Requisitos (todos obligatorios):
+1. Existe `artifacts.candidate.task` con `task.strategy: short`.
+2. Están disponibles todos los workflows de fase del dominio `taskcycle-short`.
 
-If Gate FAIL:
-- Block until resolved.
+Si Gate FAIL:
+- Indicar exactamente qué requisito falta.
+- Bloquear hasta resolver.

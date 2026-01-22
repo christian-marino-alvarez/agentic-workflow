@@ -8,36 +8,36 @@ related_task: <taskId>-<taskTitle>
 
 # Closure — <taskId>-<taskTitle>
 
-## Agent Identification (MANDATORY)
-First line of the document:
-`<icon> **<agent-name>**: <message>`
+## Identificacion del agente (OBLIGATORIA)
+Primera linea del documento:
+`<icono> **<nombre-agente>**: <mensaje>`
 
-## 1. Task Summary
+## 1. Resumen de la tarea
 
-**Title**: <title>
-**Strategy**: Short
-**Final Status**: ☐ Completed ☐ Aborted
+**Título**: <título>
+**Estrategia**: Short
+**Estado final**: ☐ Completada ☐ Abortada
 
 ---
 
-## 2. Verification
+## 2. Verificación
 
-### Executed Tests
+### Tests ejecutados
 
-| Type | Command/Method | Result |
-|------|----------------|--------|
+| Tipo | Comando/Método | Resultado |
+|------|----------------|-----------|
 | Unit | | ☐ Pass ☐ Fail ☐ N/A |
 | Integration | | ☐ Pass ☐ Fail ☐ N/A |
 | E2E | | ☐ Pass ☐ Fail ☐ N/A |
 
-### Justification (if no tests)
-<Explain why tests do not apply>
+### Justificación (si no hay tests)
+<Explicar por qué no aplican tests>
 
 ---
 
-## 3. Acceptance Criteria Status
+## 3. Estado de Acceptance Criteria
 
-| AC | Description | Status |
+| AC | Descripción | Estado |
 |----|-------------|--------|
 | 1 | | ☐ ✅ ☐ ❌ |
 | 2 | | ☐ ✅ ☐ ❌ |
@@ -47,41 +47,41 @@ First line of the document:
 
 ---
 
-## 4. Changes Made
+## 4. Cambios realizados
 
-### Modified/Created Files
+### Ficheros modificados/creados
 
-| File | Action | Description |
-|------|--------|-------------|
+| Fichero | Acción | Descripción |
+|---------|--------|-------------|
 | | Created/Modified/Deleted | |
 
-### Commits (if applicable)
+### Commits (si aplica)
 
 ```
-<type>(<scope>): <description>
+<tipo>(<scope>): <descripción>
 ```
 
 ---
 
-## 5. Developer's Final Acceptance (MANDATORY)
+## 5. Aceptación final del desarrollador (OBLIGATORIA)
 
 ```yaml
 approval:
   developer:
-    decision: YES | NO
+    decision: SI | NO
     date: <ISO-8601>
-    comments: <optional>
+    comments: <opcional>
 ```
 
-> Without acceptance, the task CANNOT be marked as completed.
+> Sin aceptación, la tarea NO puede marcarse como completada.
 
 ---
 
-## 6. Final Push (if applicable)
+## 6. Push final (si aplica)
 
 ```yaml
 push:
-  approved: YES | NO
-  branch: <target branch>
+  approved: SI | NO
+  branch: <rama destino>
   date: <ISO-8601>
 ```

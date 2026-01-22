@@ -3,42 +3,30 @@ id: workflows.index
 owner: architect-agent
 version: 1.0.0
 severity: PERMANENT
+description: Índice raíz de workflows del sistema.
 ---
 
-# INDEX — Workflows
+# INDEX — Workflows (Root)
 
-## Agent identification (MANDATORY)
-First line of the document:
-`<icon> **<agent-name>**: <message>`
+## Objetivo
+Este índice define los **workflows raíz** del sistema.
+No lista fases ni workflows internos; solo puntos de entrada principales.
 
-## Objective
-List workflow entry points and indexes for the workflow domain.
+Los workflows que representen un dominio complejo (ej. `tasklifecycle`)
+**DEBEN** tener su propio `index.md` local.
 
-## Input (REQUIRED)
-- None (index).
-
-## Output (REQUIRED)
-- Workflow index updated with current aliases.
-
-## Aliases (YAML)
 ```yaml
 workflows:
   init: .agent/workflows/init.md
-  tasklifecycle_long: .agent/workflows/tasklifecycle-long/index.md
-  tasklifecycle_short: .agent/workflows/tasklifecycle-short/index.md
+  tasklifecycle-long: .agent/workflows/tasklifecycle-long/index.md
+  tasklifecycle-short: .agent/workflows/tasklifecycle-short/index.md
+  drivers: .agent/workflows/drivers/index.md
+  modules: .agent/workflows/modules/index.md
 ```
 
-## Pass
-- Alias list is up to date and valid.
-
-## Gate (REQUIRED)
-Requirements (all mandatory):
-1. This index file exists.
-2. All aliased workflows resolve to valid paths.
-
-If Gate FAIL:
-- Block until resolved.
-
-## Rules
-- Any new workflow entry point MUST be added here.
-- Phase workflows should be listed in their domain indexes (e.g., tasklifecycle-long).
+## Reglas
+- Este índice es **estable y minimalista**.
+- Los workflows NO deben referenciar rutas largas directamente.
+- Las fases **NO deben** declararse en este índice.
+- Para fases o sub-workflows, cargar siempre el `index.md` local del dominio.
+- Si un workflow listado aquí no existe → FAIL.

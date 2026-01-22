@@ -1,29 +1,32 @@
 ---
 id: rules.constitution.index
 owner: architect-agent
-version: 1.0.0
+version: 2.0.0
 severity: PERMANENT
-scope: global
+trigger: always_on
 ---
 
-# INDEX — Constitution
+# INDEX — Rules / Constitution
 
-## Agent identification (MANDATORY)
-First line of the document:
-`<icon> **<agent-name>**: <message>`
-
-## Objective
-List constitution rules and their paths.
+## Objetivo
+Este fichero enumera todas las rules del dominio `constitution`.
+Los workflows y agentes **DEBEN** referenciar estas reglas
+por alias en lugar de rutas directas.
 
 ## Aliases (YAML)
 ```yaml
-constitution:
-  agent_system: .agent/rules/constitution/agent-system.md
-  GEMINI_location: .agent/rules/constitution/GEMINI.location.md
-  project_architecture: .agent/rules/constitution/project-architecture.md
-  clean_code: .agent/rules/constitution/clean-code.md
-  agents_behavior: .agent/rules/constitution/agents-behavior.md
+rules:
+  constitution:
+    GEMINI_location: .agent/rules/constitution/GEMINI.location.md
+    extensio_architecture: .agent/rules/constitution/extensio-architecture.md
+    clean_code: .agent/rules/constitution/clean-code.md
+    drivers: .agent/rules/constitution/drivers.md
+    modules: .agent/rules/constitution/modules.md
+    shards: .agent/rules/constitution/shards.md
+    pages: .agent/rules/constitution/pages.md
+    agents_behavior: .agent/rules/constitution/agents-behavior.md
 ```
 
-## Rules
-- Any new constitution MUST be added here.
+## Reglas
+- Este índice **solo** declara reglas del dominio `constitution`.
+- Cualquier nueva regla del dominio **DEBE** añadirse aquí.

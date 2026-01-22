@@ -8,32 +8,31 @@ related_task: <taskId>-<taskTitle>
 
 # Task Metrics — <taskId>-<taskTitle>
 
-## Agent Identification (MANDATORY)
-First line of the document:
-`<icon> **<agent-name>**: <message>`
+## Identificacion del agente (OBLIGATORIA)
+Primera linea del documento:
+`<icono> **<nombre-agente>**: <mensaje>`
 
-## 1. Evaluated Agents
+## 1. Agentes evaluados
 - Agent A
 - Agent B
 
 ---
 
-## 2. Score per Agent (0-10)
+## 2. Puntuacion por agente (0-10)
 - **Agent A**: score
-  - Justification
+  - Justificacion
 - **Agent B**: score
-  - Justification
+  - Justificacion
 
 ---
 
-## 3. Global Task Score
-- Weighted Average: score
-- **AHRP Compliance**: [YES / NO] (If NO, global score is 0)
-- Observations
+## 3. Puntuacion global de la tarea
+- Promedio ponderado: score
+- Observaciones
 
 ---
 
-## 4. Developer Validation
-- Approved: [YES / NO]
-- Developer Score (0-10): 
-- Comments: 
+## 4. Validación del Desarrollador
+- Aprobado: [SI/NO]
+- Puntuación del desarrollador (0-5): 
+- Comentarios: 

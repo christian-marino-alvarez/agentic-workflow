@@ -8,94 +8,82 @@ related_task: <taskId>-<taskTitle>
 
 # Research Report — <taskId>-<taskTitle>
 
-## Agent Identification (MANDATORY)
-First line of the document:
-`<icon> **<agent-name>**: <message>`
+## Identificacion del agente (OBLIGATORIA)
+Primera linea del documento:
+`<icono> **<nombre-agente>**: <mensaje>`
 
 > [!CAUTION]
-> **PERMANENT RULE**: This document is ONLY for documentation.
-> The researcher-agent documents findings WITHOUT analyzing, WITHOUT recommending, and WITHOUT proposing solutions.
-> Analysis is the responsibility of the architect during Phase 2.
+> **REGLA PERMANENT**: Este documento es SOLO documentación.
+> El researcher-agent documenta hallazgos SIN analizar, SIN recomendar, SIN proponer soluciones.
+> El análisis corresponde a Phase 2.
 
-## 1. Executive Summary
-- Problem researched
-- Research objective
-- Key findings
-
----
-
-## Clarifications (5 Mandatory Questions, Dynamic)
-
-| # | Question (formulated by architect) | Answer (from developer) |
-|---|-----------------------------------|-------------------------|
-| 1 | <dynamic question based on task description> | |
-| 2 | <dynamic question based on task description> | |
-| 3 | <dynamic question based on task description> | |
-| 4 | <dynamic question based on task description> | |
-| 5 | <dynamic question based on task description> | |
+## 1. Resumen ejecutivo
+- Problema investigado
+- Objetivo de la investigacion
+- Principales hallazgos
 
 ---
 
-## 2. Detected Needs
-- Technical requirements identified by the architect-agent
-- Assumptions and limits
+## 2. Necesidades detectadas
+- Requisitos tecnicos identificados por el architect-agent
+- Suposiciones y limites
 
 ---
 
-## 3. Technical Findings
-For each finding:
-- Concept/technology description
-- Current status (stable, experimental, deprecated)
-- Official documentation
-- Known limitations
+## 3. Hallazgos técnicos
+Para cada hallazgo:
+- Descripción del concepto/tecnología
+- Estado actual (estable, experimental, deprecated)
+- Documentación oficial
+- Limitaciones conocidas
 
-> **DO NOT include**: pros/cons, recommendations, or decisions.
-
----
-
-## 4. Relevant Web APIs / WebExtensions
-- API / specification
-- Support status (Chrome/Firefox/Safari)
-- Known restrictions
+> **NO incluir**: pros/contras, recomendaciones, decisiones.
 
 ---
 
-## 5. Multi-browser Compatibility
-- Compatibility table
-- Key differences
-- Mitigation strategies
+## 4. APIs Web / WebExtensions relevantes
+- API / especificacion
+- Estado de soporte (Chrome/Firefox/Safari)
+- Restricciones conocidas
 
 ---
 
-## 6. AI-first Opportunities Detected
-- Patterns or APIs that could enable automation
-- References to relevant documentation
-
-> **DO NOT include**: expected impact or usage recommendations.
-
----
-
-## 7. Identified Risks
-- Risk detected
-- Severity (high/medium/low)
-- Information source
-
-> **DO NOT include**: mitigations (these belong in the analysis).
+## 5. Compatibilidad multi-browser
+- Tabla de compatibilidad
+- Diferencias clave
+- Estrategias de mitigacion
 
 ---
 
-## 8. Sources
-- Links to official docs
-- RFCs / proposals
-- Other resources
+## 6. Oportunidades AI-first detectadas
+- Patrones o APIs que podrían habilitar automatización
+- Referencias a documentación relevante
+
+> **NO incluir**: impacto esperado, recomendaciones de uso.
 
 ---
 
-## 9. Developer Approval (MANDATORY)
+## 7. Riesgos identificados
+- Riesgo detectado
+- Severidad (alta/media/baja)
+- Fuente de la información
+
+> **NO incluir**: mitigaciones (corresponden al análisis).
+
+---
+
+## 8. Fuentes
+- Enlaces a docs oficiales
+- RFCs / propuestas
+- Otros recursos
+
+---
+
+## 9. Aprobacion del desarrollador (OBLIGATORIA)
 ```yaml
 approval:
   developer:
-    decision: YES | NO
+    decision: SI | NO
     date: <ISO-8601>
-    comments: <optional>
+    comments: <opcional>
 ```

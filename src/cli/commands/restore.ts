@@ -6,18 +6,10 @@ export async function restoreCommand() {
     intro('Agentic Workflow Recovery');
 
     const cwd = process.cwd();
-    const backupBaseDir = path.join(cwd, '.backups');
-
-    try {
-        await fs.access(backupBaseDir);
-    } catch {
-        outro('No backups were found in .backups/');
-        return;
-    }
-
-    const backups = await fs.readdir(backupBaseDir);
+    const backups = (await fs.readdir(cwd))
+        .filter((entry) => entry.startsWith('.agent.backup_'));
     if (backups.length === 0) {
-        outro('No backups available.');
+        outro('No backups were found (no .agent.backup_* directories).');
         return;
     }
 
@@ -46,7 +38,7 @@ export async function restoreCommand() {
     const s = spinner();
     s.start('Restoring backup...');
 
-    const backupPath = path.join(backupBaseDir, selectedBackup as string, '.agent');
+    const backupPath = path.join(cwd, selectedBackup as string);
     const targetPath = path.join(cwd, '.agent');
 
     try {

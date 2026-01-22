@@ -9,59 +9,54 @@ subtask_id: <id>
 ---
 
 > [!WARNING]
-> **@deprecated**: This template is obsolete. Use `templates.agent_task` for new tasks.
+> **@deprecated**: Este template está obsoleto. Usar `templates.agent_task` para nuevas tareas.
 
-# Subtask Implementation — <taskId>-<taskTitle>
+# Subtask Implementation Report — <taskId>-<taskTitle> — <agent> — <subtask_id>
 
-## Agent Identification (MANDATORY)
-First line of the document:
-`<icon> **<agent-name>**: <message>`
- — <agent> — <subtask_id>
-
-## 1. Context and Scope
-- Precise subtask description
-- Specific objective
-- Relation to the plan (reference to the exact step)
+## 1. Contexto y alcance
+- Descripcion precisa de la subtask
+- Objetivo especifico
+- Relacion con el plan (referencia a paso exacto)
 
 ---
 
-## 2. Changes Made (Detailed)
-- Touched files (full list)
-- Changes per file (summary per file)
-- Affected APIs/contracts
-- New functions/classes/constants
+## 2. Cambios realizados (detallado)
+- Archivos tocados (lista completa)
+- Cambios por archivo (resumen por archivo)
+- APIs/contratos afectados
+- Nuevas funciones/clases/constantes
 
 ---
 
-## 3. Technical Decisions
-- Key decisions and their justification
-- Alternatives considered and why they were discarded
-- Impact on other modules/drivers (if applicable)
+## 3. Decisiones tecnicas
+- Decisiones clave y su justificacion
+- Alternativas consideradas y por que se descartaron
+- Impacto en otros modulos/drivers (si aplica)
 
 ---
 
-## 4. Testing and Evidence
-- Executed tests (command and scope)
-- Results (pass/fail)
-- Evidence (logs, screenshots, reports)
+## 4. Testing y evidencia
+- Tests ejecutados (comando y alcance)
+- Resultados (pass/fail)
+- Evidencias (logs, capturas, reportes)
 
 ---
 
-## 5. Plan Deviations
-- Detected deviations
-- Reason
-- Corrective action or recorded debt
+## 5. Desviaciones del plan
+- Desviaciones detectadas
+- Motivo
+- Accion correctiva o deuda registrada
 
 ---
 
-## 6. Risks and Pending Validations
-- Open risks
-- Pending validations
+## 6. Riesgos y validaciones pendientes
+- Riesgos abiertos
+- Validaciones pendientes
 
 ---
 
 ## 7. Checklist
-- [ ] Subtask completed
-- [ ] Changes documented
-- [ ] Testing documented
-- [ ] Ready for architect review
+- [ ] Subtask completada
+- [ ] Cambios documentados
+- [ ] Testing documentado
+- [ ] Lista para revision de arquitecto

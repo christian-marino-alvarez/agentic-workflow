@@ -1,9 +1,5 @@
 # init bootstrap
 
-## Agent Identification (MANDATORY)
-First line of the document:
-`<icon> **<agent-name>**: <message>`
-
 - command: {{command}}
 - role.architect: {{architectAgentId}}
 - constitution.loaded.in_context: true
@@ -16,13 +12,6 @@ First line of the document:
 ```yaml
 bootstrap:
   done: true
-language:
-  confirmed: false
-developer:
-  name: ""
-strategy: ""
-task:
-  description: ""
 roles:
   architect: {{architectAgentId}}
 constitution:
@@ -30,4 +19,3 @@ constitution:
     - {{constitutionPaths[0]}}
     - {{constitutionPaths[1]}}
     - {{constitutionPaths[2]}}
-```

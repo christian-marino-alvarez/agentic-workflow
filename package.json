@@ -14,8 +14,8 @@
         "LICENSE"
     ],
     "scripts": {
-        "build": "node scripts/clean-dist.mjs && tsc && npm run copy-assets && node scripts/build-bootstrap.mjs",
-        "copy-assets": "cp -r src/rules src/workflows src/templates src/artifacts dist/",
+        "build": "node scripts/clean-dist.mjs && tsc && npm run copy-assets",
+        "copy-assets": "cp -r src/rules src/workflows src/templates src/artifacts src/skills src/tools src/todo src/metrics dist/ && cp src/index.md dist/index.md",
         "start": "node dist/index.js",
         "publish:npm": "npm publish --registry https://registry.npmjs.org --access public",
         "publish:github": "npm publish --registry https://npm.pkg.github.com"

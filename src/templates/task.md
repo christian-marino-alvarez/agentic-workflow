@@ -1,28 +1,24 @@
 # Task (Template)
 
-## Agent Identification (MANDATORY)
-First line of the document:
-`<icon> **<agent-name>**: <message>`
-
-## Identification
+## Identificación
 - id: {{task.id}}
 - title: {{task.title}}
 - scope: candidate | current
 - owner: architect-agent
 
-## Source
+## Origen
 - created_from:
   - workflow: tasklifecycle
   - source: init / tasklifecycle
   - candidate_path: artifacts.candidate.task
 
-## Task Description
+## Descripción de la tarea
 {{task.description}}
 
-## Objective
+## Objetivo
 {{task.goal}}
 
-## Lifecycle Status (SINGLE SOURCE OF TRUTH)
+## Estado del ciclo de vida (FUENTE ÚNICA DE VERDAD)
 
 ```yaml
 task:
@@ -134,18 +130,18 @@ task:
 
 ---
 
-## 2. Definition and Scope (Contract)
+## 2. Definición y Alcance (Contrato)
 - **Acceptance Criteria**: [acceptance.md](file:///{{task.acceptance_path}})
 - **Alias**: `task.acceptance`
 
 ---
 
-## Contractual Rules
-- This file is the **single source of truth** for the task status.
-- The `task.phase.current` field **ONLY can be modified by `architect-agent`**.
-- The `task.lifecycle.phases.*` field **ONLY can be marked as completed by `architect-agent`**.
-- A phase **cannot be marked as completed** if it is not the current phase.
-- Advancing to the next phase requires:
-  1. Marking the current phase as `completed: true`
-  2. Explicit validation from the architect
-  3. Updating `task.phase.current` to the next phase
+## Reglas contractuales
+- Este fichero es la **fuente única de verdad** del estado de la tarea.
+- El campo `task.phase.current` **SOLO puede ser modificado por `architect-agent`**.
+- El campo `task.lifecycle.phases.*` **SOLO puede ser marcado como completed por `architect-agent`**.
+- Una fase **NO puede marcarse como completed** si no es la fase actual.
+- El avance de fase requiere:
+  1. Marcar la fase actual como `completed: true`
+  2. Validación explícita del architect
+  3. Actualización de `task.phase.current` a la siguiente fase

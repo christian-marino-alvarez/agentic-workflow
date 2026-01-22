@@ -9,22 +9,18 @@ target_branch: <branch-name>
 
 # Changelog — <taskId>-<taskTitle>
 
-## Agent Identification (MANDATORY)
-First line of the document:
-`<icon> **<agent-name>**: <message>`
+## 1. Resumen general
+Descripción breve y clara de los cambios introducidos por esta tarea.
 
-## 1. General Summary
-Short and clear description of the changes introduced by this task.
-
-- **Task Objective**:
-- **Main Impact**:
-- **Affected Areas** (modules, drivers, workflows, etc.):
+- **Objetivo de la tarea**:
+- **Impacto principal**:
+- **Áreas afectadas** (módulos, drivers, workflows, etc.):
 
 ---
 
-## 2. Included Commits
-Full and ordered list of commits performed.
+## 2. Commits incluidos
+Listado completo y ordenado de los commits realizados.
 
 ### Commit 1
 - **Hash**: `<commit-hash>`
-- **Message (Conventional Commit)**:
+- **Mensaje (Conventional Commit)**:

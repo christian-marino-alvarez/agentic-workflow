@@ -4,26 +4,29 @@ trigger: always_on
 
 # GEMINI LOCATION
 
-This repository DOES NOT version `GEMINI.md`.
+Este repositorio NO versiona GEMINI.md.
 
-Google Antigravity loads `GEMINI.md` from the user path (outside the repository).
-Therefore, the agentic system assumes that `GEMINI.md` exists and is accessible on the local machine.
+Google Antigravity carga GEMINI.md desde el path del usuario (fuera del repositorio).
+Por tanto, el sistema agéntico asume que GEMINI.md existe y está accesible en la máquina local.
 
-## Rule
+## Regla
 
-- `GEMINI.md` is PERMANENT and has absolute priority.
-- This file only documents where `GEMINI.md` is located and how it integrates.
-- `GEMINI.md` MUST NOT be copied or duplicated within the repository.
+- GEMINI.md es PERMANENT y tiene prioridad absoluta.
+- Este fichero solo documenta dónde se encuentra GEMINI.md y cómo se integra.
+- No se debe copiar ni duplicar GEMINI.md dentro del repositorio.
 
-## Minimum Requirements
+## Requisitos mínimos
 
-- The developer machine MUST have `GEMINI.md` available in the user path configured for Google Antigravity.
-- If `GEMINI.md` is not available, any task MUST BE BLOCKED until the environment is corrected.
+- La máquina del desarrollador DEBE tener GEMINI.md disponible en el path de usuario
+  configurado para Google Antigravity.
+- Si GEMINI.md no está disponible, cualquier tarea DEBE BLOQUEARSE
+  hasta que el entorno sea corregido.
 
-## Internal Reference
+## Referencia interna
 
-Repository rules reference the global constitution via:
+Las reglas del repositorio referencian la constitución global mediante:
 
-`constitution.GEMINI_location`
+constitution.GEMINI_location
 
-This file acts as the unique versioned anchor point for the external `GEMINI.md` constitution.
+Este fichero actúa como único punto de anclaje versionado
+para la constitución externa GEMINI.md.

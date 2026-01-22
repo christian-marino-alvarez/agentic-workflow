@@ -1,0 +1,106 @@
+{
+    "architect-agent": {
+        "name": "Architect Agent",
+        "role": "architect",
+        "metrics": {
+            "average_score": 7.5,
+            "total_tasks": 4,
+            "trend": "down",
+            "history": [
+                {
+                    "task_id": "15",
+                    "task_title": "sistema-evaluacion-agentes",
+                    "score": 10,
+                    "date": "2026-01-17T08:26:00Z"
+                },
+                {
+                    "task_id": "28",
+                    "task_title": "Agent System Update & Conversion System",
+                    "score": 6,
+                    "date": "2026-01-20T00:23:00Z"
+                }
+            ]
+        }
+    },
+    "researcher-agent": {
+        "name": "Researcher Agent",
+        "role": "researcher",
+        "metrics": {
+            "average_score": 10.0,
+            "total_tasks": 1,
+            "trend": "up",
+            "history": [
+                {
+                    "task_id": "28",
+                    "task_title": "Agent System Update & Conversion System",
+                    "score": 10,
+                    "date": "2026-01-20T00:23:00Z"
+                }
+            ]
+        }
+    },
+    "tooling-agent": {
+        "name": "Tooling Agent",
+        "role": "tooling",
+        "metrics": {
+            "average_score": 10.0,
+            "total_tasks": 1,
+            "trend": "up",
+            "history": [
+                {
+                    "task_id": "28",
+                    "task_title": "Agent System Update & Conversion System",
+                    "score": 10,
+                    "date": "2026-01-20T00:23:00Z"
+                }
+            ]
+        }
+    },
+    "qa-agent": {
+        "name": "QA Agent",
+        "role": "qa",
+        "metrics": {
+            "average_score": 5.0,
+            "total_tasks": 1,
+            "trend": "down",
+            "history": [
+                {
+                    "task_id": "28",
+                    "task_title": "Agent System Update & Conversion System",
+                    "score": 0,
+                    "date": "2026-01-20T00:23:00Z"
+                }
+            ]
+        }
+    },
+    "module-agent": {
+        "name": "Module Agent",
+        "role": "module",
+        "metrics": {
+            "average_score": 0,
+            "total_tasks": 0,
+            "trend": "stable",
+            "history": []
+        }
+    },
+    "driver-agent": {
+        "name": "Driver Agent",
+        "role": "driver",
+        "metrics": {
+            "average_score": 0,
+            "total_tasks": 0,
+            "trend": "stable",
+            "history": []
+        }
+    },
+    "surface-agent": {
+        "name": "Surface Agent",
+        "role": "surface",
+        "metrics": {
+            "average_score": 0,
+            "total_tasks": 0,
+            "trend": "stable",
+            "history": []
+        }
+    }
+}

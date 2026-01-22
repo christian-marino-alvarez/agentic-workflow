@@ -4,22 +4,18 @@ owner: architect-agent
 status: ongoing
 ---
 
-# Agent Scores — <taskId>-<taskTitle>
+# Agent Scores (Global)
 
-## Agent Identification (MANDATORY)
-First line of the document:
-`<icon> **<agent-name>**: <message>`
-
-## 1. Summary per Agent
+## 1. Resumen por agente
 - **Agent A**
   - scores: [taskId-score, ...]
-  - average: value
+  - media: value
 - **Agent B**
   - scores: [taskId-score, ...]
-  - average: value
+  - media: value
 
 ---
 
-## 2. Global Summary
-- Overall Task Average: value
-- Last Update: <ISO-8601>
+## 2. Resumen global
+- Media general de tareas: value
+- Ultima actualizacion: <ISO-8601>

@@ -8,154 +8,154 @@ related_task: <taskId>-<taskTitle>
 
 # Analysis — <taskId>-<taskTitle>
 
-## Agent Identification (MANDATORY)
-First line of the document:
-`<icon> **<agent-name>**: <message>`
+## Identificacion del agente (OBLIGATORIA)
+Primera linea del documento:
+`<icono> **<nombre-agente>**: <mensaje>`
 
-## 1. Executive Summary
-**Problem**
-- Briefly describe the problem the task solves.
+## 1. Resumen ejecutivo
+**Problema**
+- Describe brevemente el problema que resuelve la tarea.
 
-**Objective**
-- Main objective of the task (from `task.md`).
+**Objetivo**
+- Objetivo principal de la tarea (desde `task.md`).
 
-**Success Criteria**
-- What conditions must be met for this analysis to be considered valid
-  (direct reference to acceptance criteria).
+**Criterio de éxito**
+- Qué condiciones deben cumplirse para considerar este análisis válido
+  (referencia directa a acceptance criteria).
 
 ---
 
-## 2. Project State (As-Is)
-Describe the actual state of the project **before implementing anything**.
+## 2. Estado del proyecto (As-Is)
+Describe el estado real del proyecto **antes de implementar nada**.
 
-- **Relevant Structure**
-  - Affected folders, modules, drivers, or areas.
-- **Existing Drivers**
-  - Current state, responsibilities, and limitations.
+- **Estructura relevante**
+  - Carpetas, módulos, drivers o áreas afectadas.
+- **Drivers existentes**
+  - Estado actual, responsabilidades y limitaciones.
 - **Core / Engine / Surfaces**
-  - Which parts of the core are involved (if applicable).
-- **Artifacts / Previous Tasks**
-  - Existing tasks that influence or condition this one.
-- **Detected Limitations**
-  - Technical, structural, or organizational limitations.
+  - Qué partes del core están implicadas (si aplica).
+- **Artifacts / tareas previas**
+  - Tareas existentes que influyen o condicionan esta.
+- **Limitaciones detectadas**
+  - Técnicas, estructurales, organizativas.
 
 ---
 
-## 3. Acceptance Criteria Coverage
-For **each acceptance criteria** defined in `task.md`:
+## 3. Cobertura de Acceptance Criteria
+Para **cada acceptance criteria** definido en `task.md`:
 
 ### AC-X
-- **Interpretation**
-  - how this criterion is understood in the current context.
-- **Verification**
-  - how it will be verified that it is met.
-- **Risks / Ambiguities**
-  - what can fail or what might not be clear.
+- **Interpretación**
+  - Cómo se entiende este criterio en el contexto actual.
+- **Verificación**
+  - Cómo se comprobará que se cumple.
+- **Riesgos / ambigüedades**
+  - Qué puede fallar o no estar claro.
 
-(Repeat for all ACs)
-
----
-
-## 4. Technical Research
-Analysis of possible alternatives and approaches.
-
-- **Alternative A**
-  - Description
-  - Pros
-  - Cons
-- **Alternative B**
-  - Description
-  - Pros
-  - Cons
-
-**Recommended Decision (if applicable)**
-- Preferred approach and justification.
-- If not yet decided, explain why.
+(Repetir para todos los AC)
 
 ---
 
-## 5. Participating Agents
-Explicit list of agents required to execute the task.
+## 4. Research técnico
+Análisis de alternativas y enfoques posibles.
+
+- **Alternativa A**
+  - Descripción
+  - Ventajas
+  - Inconvenientes
+- **Alternativa B**
+  - Descripción
+  - Ventajas
+  - Inconvenientes
+
+**Decisión recomendada (si aplica)**
+- Enfoque preferido y justificación.
+- Si no se decide aún, explicar por qué.
+
+---
+
+## 5. Agentes participantes
+Lista explícita de agentes necesarios para ejecutar la tarea.
 
 - **Agent A**
-  - Responsibilities
-  - Assigned sub-areas
+  - Responsabilidades
+  - Subáreas asignadas
 - **Agent B**
-  - Responsibilities
-  - Assigned sub-areas
+  - Responsabilidades
+  - Subáreas asignadas
 
 **Handoffs**
-- How information or results are transferred between agents.
+- Cómo se transfiere información o resultados entre agentes.
 
-**Required Components**
-- Indicate if creating, modifying, or deleting components (drivers, modules, etc.) is required.
-- Reference the impact and dependency with the implementation plan.
+**Componentes necesarios**
+- Indicar si se requiere crear, modificar o eliminar componentes (drivers, modulos u otros).
+- Referenciar el impacto y la dependencia con el plan de implementacion.
 
-**Demo (if applicable)**
-- Indicate if a demo needs to be created.
-- Justify the need and alignment with `constitution.project_architecture`.
-
----
-
-## 6. Task Impact
-Evaluation of the expected impact if the task is implemented.
-
-- **Architecture**
-  - Expected structural changes.
-- **APIs / Contracts**
-  - Changes to public interfaces (if applicable).
-- **Compatibility**
-  - Risks of breaking changes.
-- **Testing / Verification**
-  - What kind of tests will be necessary.
+**Demo (si aplica)**
+- Indicar si se requiere crear demo.
+- Justificar necesidad y alineacion con `constitution.extensio_architecture`.
 
 ---
 
-## 7. Risks and Mitigations
-- **Risk 1**
-  - Impact
-  - Mitigation
-- **Risk 2**
-  - Impact
-  - Mitigation
+## 6. Impacto de la tarea
+Evaluación del impacto esperado si se implementa la tarea.
+
+- **Arquitectura**
+  - Cambios estructurales previstos.
+- **APIs / contratos**
+  - Cambios en interfaces públicas (si aplica).
+- **Compatibilidad**
+  - Riesgos de breaking changes.
+- **Testing / verificación**
+  - Qué tipo de pruebas serán necesarias.
 
 ---
 
-## 8. Open Questions
-(Only if any exist; ideally empty after Phase 0)
-
-- Question 1
-- Question 2
+## 7. Riesgos y mitigaciones
+- **Riesgo 1**
+  - Impacto
+  - Mitigación
+- **Riesgo 2**
+  - Impacto
+  - Mitigación
 
 ---
 
-## 9. TODO Backlog (Mandatory Consultation)
+## 8. Preguntas abiertas
+(Solo si existen; idealmente vacío tras Fase 0)
+
+- Pregunta 1
+- Pregunta 2
+
+---
+
+## 9. TODO Backlog (Consulta obligatoria)
 
 > [!IMPORTANT]
-> The architect-agent **MUST** consult `.agent/todo/` before completing the analysis.
+> El architect-agent **DEBE** consultar `.agent/todo/` antes de completar el análisis.
 
-**Reference**: `.agent/todo/`
+**Referencia**: `.agent/todo/`
 
-**Current Status**: (empty | N pending items)
+**Estado actual**: (vacío | N items pendientes)
 
-**Items Relevant to this Task**:
-- (List backlog items that impact the current task)
-- (If no relevant items, state "None")
+**Items relevantes para esta tarea**:
+- (Listar items del backlog que impactan en la tarea actual)
+- (Si no hay items relevantes, indicar "Ninguno")
 
-**Impact on Analysis**:
-- (Describe how backlog items affect the proposed alternatives)
+**Impacto en el análisis**:
+- (Describir cómo los items del backlog afectan las alternativas propuestas)
 
 ---
 
-## 10. Approval
-This analysis **requires explicit developer approval**.
+## 10. Aprobación
+Este análisis **requiere aprobación explícita del desarrollador**.
 
 ```yaml
 approval:
   developer:
-    decision: YES | NO
+    decision: SI | NO
     date: <ISO-8601>
-    comments: <optional>
+    comments: <opcional>
 ```
 
-> Without approval, this phase **CANNOT be considered complete** or move to Phase 3.
+> Sin aprobación, esta fase **NO puede darse por completada** ni avanzar a Phase 3.

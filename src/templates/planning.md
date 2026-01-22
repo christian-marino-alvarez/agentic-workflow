@@ -8,23 +8,23 @@ related_task: <taskId>-<taskTitle>
 
 # Implementation Plan — <taskId>-<taskTitle>
 
-## Agent Identification (MANDATORY)
-First line of the document:
-`<icon> **<agent-name>**: <message>`
+## Identificacion del agente (OBLIGATORIA)
+Primera linea del documento:
+`<icono> **<nombre-agente>**: <mensaje>`
 
-## 1. Plan Summary
-- **Context**: brief reminder of the task objective.
-- **Expected Result**: what will be implemented upon completion.
-- **Scope**: what this plan explicitly includes and excludes.
+## 1. Resumen del plan
+- **Contexto**: breve recordatorio del objetivo de la tarea.
+- **Resultado esperado**: qué quedará implementado al finalizar.
+- **Alcance**: qué incluye y qué excluye explícitamente este plan.
 
 ---
 
-## 2. Contractual Inputs
+## 2. Inputs contractuales
 - **Task**: `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 - **Analysis**: `.agent/artifacts/<taskId>-<taskTitle>/analysis.md`
-- **Acceptance Criteria**: explicit reference to relevant ACs.
+- **Acceptance Criteria**: referencia explícita a los AC relevantes.
 
-**Domain Dispatch (MANDATORY if applicable)**
+**Dispatch de dominios (OBLIGATORIO si aplica)**
 ```yaml
 plan:
   workflows:
@@ -40,118 +40,116 @@ plan:
 
 ---
 
-## 3. Implementation Breakdown (Steps)
-Ordered and executable decomposition.
+## 3. Desglose de implementación (pasos)
+Descomposición ordenada y ejecutable.
 
-### Step 1
-- **Description**
-- **Dependencies**
-- **Deliverables**
-- **Responsible Agent**
+### Paso 1
+- **Descripción**
+- **Dependencias**
+- **Entregables**
+- **Agente responsable**
 
-### Step 2
-- (Repeat structure)
+### Paso 2
+- (Repetir estructura)
 
-> Note: indicate order, dependencies, and parallelization if applicable.
+> Nota: indicar orden, dependencias y paralelización si aplica.
 
 ---
 
-## 4. Responsibility Assignment (Agents)
-Clear mapping of agents ↔ sub-areas.
+## 4. Asignación de responsabilidades (Agentes)
+Mapa claro de agentes ↔ subáreas.
 
 - **Architect-Agent**
-  - Responsibilities
+  - Responsabilidades
 - **Implementation-Agent**
-  - Responsibilities
-- **QA / Verification-Agent** (if applicable)
-  - Responsibilities
-- **Other Agents** (if applicable)
+  - Responsabilidades
+- **QA / Verification-Agent** (si aplica)
+  - Responsabilidades
+- **Otros agentes** (si aplica)
 
 **Handoffs**
-- What is delivered, to whom, and when.
+- Qué se entrega, a quién y cuándo.
 
-**Components (if applicable)**
-- Define who executes it.
-- Define how it is implemented (steps and criteria).
-- Define the best available tool (prefer declared tools; if none exist, justify the alternative).
-- Reference the chosen tool by alias (e.g., `mcp_extensio-cli tools`) and the reason.
+**Componentes (si aplica)**
+- Definir quién lo ejecuta.
+- Definir cómo se implementa (pasos y criterios).
+- Definir la mejor herramienta disponible (preferir tools declarados; si no existe, justificar alternativa).
+- Referenciar el tool elegido por alias (p.ej. `mcp_extensio-cli tools`) y el motivo.
 
-**Demo (if applicable)**
-- Define the expected structure aligned with `constitution.project_architecture`.
-- Define the mandatory tool for generating scaffolding (use `mcp_extensio-cli tools`).
+**Demo (si aplica)**
+- Definir estructura esperada alineada con `constitution.extensio_architecture`.
+- Definir tool obligatorio para generar scaffolding (usar `mcp_extensio-cli tools`).
 
 ---
 
-## 5. Testing and Validation Strategy
-How it will be verified that the implementation meets the ACs.
+## 5. Estrategia de testing y validación
+Cómo se comprobará que la implementación cumple los AC.
 
-- **Unit Tests**
-  - Scope and tools (see `constitution.project_architecture`)
-- **Integration Tests**
-  - Covered flows (see `constitution.project_architecture`)
+- **Unit tests**
+  - Alcance y herramientas (ver `constitution.extensio-architecture`)
+- **Integration tests**
+  - Flujos cubiertos (ver `constitution.extensio-architecture`)
 - **E2E / Manual**
-  - Key scenarios (see `constitution.project_architecture`)
+  - Escenarios clave (ver `constitution.extensio-architecture`)
 
-**Traceability**
-- Mapping of tests ↔ acceptance criteria.
-
----
-
-## 6. Demo Plan (if applicable)
-- **Demo Objective**
-- **Scenario(s)**
-- **Example Data**
-- **Demo Success Criteria**
+**Trazabilidad**
+- Mapeo de tests ↔ acceptance criteria.
 
 ---
 
-## 7. Estimations and Implementation Weights
-- **Estimation per Step / Sub-area**
-  - relative effort (low / medium / high or points)
-- **Approximate Timeline** (if applicable)
-- **Assumptions** used for estimating
+## 6. Plan de demo (si aplica)
+- **Objetivo de la demo**
+- **Escenario(s)**
+- **Datos de ejemplo**
+- **Criterios de éxito de la demo**
 
 ---
 
-## 8. Critical Points and Resolution
-Identification of key technical risks.
-
-### Critical Point 1
-- **Risk**
-- **Impact**
-- **Resolution Strategy**
-
-### Critical Point 2
-- (Repeat)
+## 7. Estimaciones y pesos de implementación
+- **Estimación por paso / subárea**
+  - esfuerzo relativo (bajo / medio / alto o puntos)
+- **Timeline aproximado** (si aplica)
+- **Suposiciones** usadas para estimar
 
 ---
 
-## 9. Dependencies and Compatibility
-- **Internal Dependencies**
-- **External Dependencies**
-- **Multi-Browser Compatibility** (if applicable)
+## 8. Puntos críticos y resolución
+Identificación de riesgos técnicos clave.
+
+- **Punto crítico 1**
+  - Riesgo
+  - Impacto
+  - Estrategia de resolución
+- **Punto crítico 2**
+  - (Repetir)
+
+---
+
+## 9. Dependencias y compatibilidad
+- **Dependencias internas**
+- **Dependencias externas**
+- **Compatibilidad entre navegadores** (si aplica)
   - Chrome / Chromium
   - Firefox
   - Safari
-- **Relevant Architectural Constraints**
+- **Restricciones arquitectónicas** relevantes
 
 ---
 
-## 10. Completion Criteria
-Objective conditions to consider the implementation "Done".
+## 10. Criterios de finalización
+Condiciones objetivas para considerar la implementación “Done”.
 
-- Final checklist aligned with acceptance criteria.
-- Mandatory verifications completed.
+- Checklist final alineado con acceptance criteria.
+- Verificaciones obligatorias completadas.
 
 ---
 
-## 11. Developer Approval (MANDATORY)
-This plan **requires explicit and binary approval**.
+## 11. Aprobación del desarrollador (OBLIGATORIA)
+Este plan **requiere aprobación explícita y binaria**.
 
 ```yaml
 approval:
   developer:
-    decision: YES | NO
+    decision: SI | NO
     date: <ISO-8601>
-    comments: <optional>
-```
+    comments: <opcional>

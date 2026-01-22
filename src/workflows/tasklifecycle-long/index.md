@@ -3,7 +3,7 @@ id: workflow.tasklifecycle-long
 owner: architect-agent
 version: 6.0.0
 severity: PERMANENT
-description: Orchestrates the complete (Long) lifecycle of a task starting from a valid init.
+description: Orquesta el ciclo de vida completo (Long) de una tarea a partir de un init válido.
 trigger:
   commands: ["tasklifecycle-long", "/tasklifecycle-long"]
 blocking: true
@@ -11,18 +11,18 @@ blocking: true
 
 # WORKFLOW: tasklifecycle-long (Index)
 
-## Required Indexes (MANDATORY)
-This workflow does **NOT** define aliases outside its domain (`taskcycle-long`).
-To use artifacts and templates, global indexes **MUST** be loaded:
+## Índices requeridos (OBLIGATORIO)
+Este workflow **NO** define aliases fuera de su dominio (`taskcycle-long`).
+Para artifacts y templates, **DEBE** cargar índices globales:
 
 - Artifacts index: `.agent/artifacts/index.md`
 - Templates index: `.agent/templates/index.md`
 
-## Domain Aliases: `taskcycle-long` (MANDATORY)
-This workflow defines aliases **only** for the `taskcycle-long` (task lifecycle long) domain.
-There is **one unique namespace** `aliases.taskcycle-long.phases.*` containing:
-- `id`: Phase ID
-- `workflow`: Path to the phase workflow file
+## Aliases del dominio `taskcycle-long` (OBLIGATORIO)
+Este workflow define aliases **solo** del dominio `taskcycle-long` (task lifecycle long).
+Existe **un único namespace** `aliases.taskcycle-long.phases.*` que contiene:
+- `id` de fase
+- `workflow` (path del workflow de la fase)
 
 ## Aliases (YAML)
 ```yaml
@@ -59,66 +59,66 @@ aliases:
 ```
 
 ## Input (REQUIRED)
-- `init` artifact (bootstrap contract) exists as defined in the **Artifacts index**:
+- Existe el artefacto `init` (contrato de bootstrap) definido en el **Artifacts index**:
   - `artifacts.candidate.init`
-- The `init` artifact **MUST** contain in its YAML block:
-  - `language.value`: Not empty
+- El artefacto `init` **DEBE** contener en su bloque YAML:
+  - `language.value` no vacío
   - `language.confirmed == true`
-- The developer **MUST have responded** to the task prompt in the **PASS step of the `init` workflow**:
-  - Task definition
-  - Task objective
+- El desarrollador **DEBE haber respondido** a la pregunta de la **Sección 8 del workflow `init`**:
+  - definición de la tarea
+  - objetivo de la tarea
 
 ## Output (REQUIRED)
-- Create task candidate (defined in the **Artifacts index**):
+- Crear task candidate (definido en el **Artifacts index**):
   - `artifacts.candidate.task`
-- The `task candidate` file **MUST** exactly follow the template (defined in the **Templates index**):
+- El fichero `task candidate` **DEBE** seguir exactamente el template (definido en el **Templates index**):
   - `templates.task`
 
-## Objective (ONLY)
-- Verify minimum requirements to **start Phase 0** (mandatory inputs).
-- Create the **task candidate** using the contractual template.
-- Verify that phase workflows for the `taskcycle-long` domain exist and can be loaded.
-- If any requirement is missing, **block** and request the minimum action needed to start **Phase 0**.
+## Objetivo (ONLY)
+- Verificar los requisitos mínimos para **iniciar la Fase 0** (inputs obligatorios).
+- Crear el **task candidate** usando el template contractual.
+- Verificar que los workflows de fase del dominio `taskcycle-long` existen y se pueden cargar.
+- Si falta algún requisito, **bloquear** y pedir la acción mínima para poder iniciar la **Fase 0**.
 
-> This workflow does **NOT** track phase completion.
-> Phase validation and advancement is the responsibility of the `architect-agent` within each phase (via its own gate).
+> Este workflow **NO** controla si las fases se han completado.
+> La validación y avance de fase es responsabilidad del `architect-agent` dentro de cada fase (gate propio).
 
-## Dispatch / Routing (MANDATORY)
-- Phase routing **MUST** be based on `task.phase.current`.
-- The active phase **MUST** be mapped to `aliases.taskcycle-long.phases.*.workflow`.
-- If no mapping exists → **FAIL** (invalid phase or corrupt index).
-- Only the `architect-agent` can change `task.phase.current`.
+## Dispatch / Routing (OBLIGATORIO)
+- El routing de fases **DEBE** basarse en `task.phase.current`.
+- La fase activa **DEBE** mapearse a `aliases.taskcycle-long.phases.*.workflow`.
+- Si no existe mapping → **FAIL** (fase inválida o índice corrupto).
+- Solo el `architect-agent` puede cambiar `task.phase.current`.
 
-## Mandatory Steps
-1. Load global indexes:
-   - Load `.agent/artifacts/index.md` and `.agent/templates/index.md`.
-   - If they cannot be loaded → go to **Step 7 (FAIL)**.
+## Pasos obligatorios
+1. Cargar índices globales:
+   - Cargar `.agent/artifacts/index.md` y `.agent/templates/index.md`.
+   - Si no se pueden cargar → ir a **Paso 7 (FAIL)**.
 
-2. Verify input:
-   - Check if `artifacts.candidate.init` exists.
-   - Read its YAML block and validate:
-     - `language.value`: Not empty
+2. Verificar input:
+   - Comprobar que existe `artifacts.candidate.init`.
+   - Leer su bloque YAML y validar:
+     - `language.value` no vacío
      - `language.confirmed == true`
-   - If validation fails → go to **Step 7 (FAIL)**.
+   - Si falla → ir a **Paso 7 (FAIL)**.
 
-3. Load task contractual template:
+3. Cargar el template contractual de task:
    - `templates.task`
-   - If it doesn't exist or cannot be loaded → go to **Step 7 (FAIL)**.
+   - Si no existe o no se puede cargar → ir a **Paso 7 (FAIL)**.
 
-4. Create candidate directory (if missing):
+4. Crear el directorio de candidate (si no existe):
    - `artifacts.candidate.dir`
 
-5. Create task candidate artifact:
-   - Write `artifacts.candidate.task`
-   - Content **MUST** comply with the template (do not omit mandatory keys).
-   - **MUST include** information provided by the developer:
-     - Task description
-     - Task objective
-   - Initialize `task.phase.current` to `aliases.taskcycle-long.phases.phase_0.id`.
-   - If creation/writing fails → go to **Step 7 (FAIL)**.
+5. Crear el artefacto task candidate:
+   - Escribir `artifacts.candidate.task`
+   - El contenido **DEBE** ser conforme al template (sin omitir claves obligatorias).
+   - **DEBE incluir** la información proporcionada por el desarrollador:
+     - descripción de la tarea
+     - objetivo de la tarea
+   - Inicializar `task.phase.current` a `aliases.taskcycle-long.phases.phase_0.id`.
+   - Si no se puede crear/escribir → ir a **Paso 7 (FAIL)**.
 
-6. Verify phase availability (existence/load check only)
-   - Phase workflows **MUST** exist as files (they are not executed here):
+6. Verificar disponibilidad de fases (solo existencia/carga)
+   - Los workflows de fase **DEBEN** existir como ficheros (no se ejecutan aquí):
      - `aliases.taskcycle-long.phases.phase_0.workflow`
      - `aliases.taskcycle-long.phases.phase_1.workflow`
      - `aliases.taskcycle-long.phases.phase_2.workflow`
@@ -128,30 +128,30 @@ aliases:
      - `aliases.taskcycle-long.phases.phase_6.workflow`
      - `aliases.taskcycle-long.phases.phase_7.workflow`
      - `aliases.taskcycle-long.phases.phase_8.workflow`
-   - If any are missing → go to **Step 7 (FAIL)**.
+   - Si falta alguno → ir a **Paso 7 (FAIL)**.
 
-7. FAIL (mandatory)
-   - Declare `tasklifecycle` as **NOT ready to start Phase 0**.
-   - Specify the applicable case(s):
-     - Global indexes not loadable (`.agent/artifacts/index.md` / `.agent/templates/index.md`)
-     - `init` does not exist (`artifacts.candidate.init`)
-     - Language undefined or unconfirmed in `init`
-     - Template inaccessible (`templates.task`)
-     - Could not create `task candidate` (`artifacts.candidate.task`)
-     - One or more phase workflows are missing (`aliases.taskcycle-long.phases.*.workflow`)
-   - Request minimum corrective action:
-     - Run `init` logic
-     - Confirm language
-     - Fix global indexes
-     - Fix permissions/path for candidate creation
-     - Create/restore missing phase workflow
-   - End blocked: until errors are fixed, **Phase 0 cannot begin**.
+7. FAIL (obligatorio)
+   - Declarar `tasklifecycle` como **NO listo para iniciar la Fase 0**.
+   - Indicar exactamente qué caso aplica (uno o más):
+     - índices globales no cargables (`.agent/artifacts/index.md` / `.agent/templates/index.md`)
+     - `init` no existe (`artifacts.candidate.init`)
+     - idioma no definido o no confirmado en `init`
+     - template inaccesible (`templates.task`)
+     - no se pudo crear `task candidate` (`artifacts.candidate.task`)
+     - falta uno o más workflows de fase (`aliases.taskcycle-long.phases.*.workflow`)
+   - Pedir la acción mínima para solventar:
+     - ejecutar `init`
+     - confirmar idioma
+     - corregir índices globales
+     - corregir permisos/ruta para crear el candidate
+     - crear/restaurar el workflow de fase faltante
+   - Terminar bloqueado: hasta solventar errores, **no se puede comenzar la Fase 0**.
 
-## Official Phase Execution Order
-Lifecycle phases **MUST be executed strictly in the established numerical order**.
-Skipping, reordering, or parallelizing phases is not permitted.
+## Orden oficial de ejecución de fases
+Las fases del ciclo de vida **DEBEN ejecutarse estrictamente en el orden numérico establecido**.
+No se permite saltar, reordenar ni paralelizar fases.
 
-Mandatory Order:
+Orden obligatorio:
 0. `aliases.taskcycle-long.phases.phase_0.id`
 1. `aliases.taskcycle-long.phases.phase_1.id`
 2. `aliases.taskcycle-long.phases.phase_2.id`
@@ -162,15 +162,11 @@ Mandatory Order:
 7. `aliases.taskcycle-long.phases.phase_7.id`
 8. `aliases.taskcycle-long.phases.phase_8.id`
 
-## Pass
-- `artifacts.candidate.task` is created from `templates.task`.
-- All required phase workflows exist.
-
 ## Gate (REQUIRED)
-Requirements (all mandatory):
-1. `artifacts.candidate.task` exists.
-2. `artifacts.candidate.task` complies with the `templates.task` template.
-3. All phase workflows listed in Step 6 are available (exist).
+Requisitos (todos obligatorios):
+1. Existe `artifacts.candidate.task`.
+2. `artifacts.candidate.task` cumple el template `templates.task`.
+3. Están disponibles (existencia) todos los workflows de fase listados en el Paso 6.
 
-If Gate FAIL:
-- Execute **Step 7 (FAIL)**.
+Si Gate FAIL:
+- Ejecutar **Paso 7 (FAIL)**.

@@ -7,14 +7,10 @@ severity: PERMANENT
 
 # INDEX — Templates
 
-## Agent Identification (MANDATORY)
-First line of the document:
-`<icon> **<agent-name>**: <message>`
- (Agentic System)
-
-## Objective
-Enumerate the contractual templates of the agentic system.
-Must be referenced via aliases.
+## Objetivo
+Este fichero enumera los **templates contractuales** del sistema.
+Los workflows y agentes **DEBEN** referenciar estas plantillas
+por alias en vez de rutas directas.
 
 ## Aliases (YAML)
 ```yaml
@@ -31,15 +27,22 @@ templates:
   task_metrics: .agent/templates/task-metrics.md
   agent_scores: .agent/templates/agent-scores.md
   research: .agent/templates/research.md
+  driver_create: .agent/templates/driver-create.md
+  driver_refactor: .agent/templates/driver-refactor.md
+  driver_delete: .agent/templates/driver-delete.md
+  module_create: .agent/templates/module-create.md
+  module_refactor: .agent/templates/module-refactor.md
+  module_delete: .agent/templates/module-delete.md
   agent_task: .agent/templates/agent-task.md
   todo_item: .agent/templates/todo-item.md
   changelog: .agent/templates/changelog.md
   supplemental_report: .agent/templates/supplemental-report.md
 
-  # Short Cycle
+  # Templates del ciclo Short
   brief: .agent/templates/brief.md
   closure: .agent/templates/closure.md
 ```
 
-## Rules
-- Any new template **MUST** be added here.
+## Reglas
+- Solo declarar templates contractuales del sistema.
+- Cualquier nuevo template **DEBE** añadirse aquí antes de ser referenciado.

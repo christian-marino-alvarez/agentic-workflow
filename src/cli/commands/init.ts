@@ -100,6 +100,7 @@ async function cleanupLegacyMcpConfig(cwd: string) {
 async function copyCoreToAgent(corePath: string, agentDir: string) {
   const entries = [
     'index.md',
+    'bootstrap.md',
     'rules',
     'workflows',
     'templates',

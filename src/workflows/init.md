@@ -8,14 +8,15 @@ owner: architect-agent
 version: 4.0.0
 severity: PERMANENT
 trigger:
-  commands: ["init", "/init"]
+  commands: ["init", "/init", "/agentic-init"]
 blocking: true
 ---
 
 # WORKFLOW: init
 
 ## Input (REQUIRED)
-- Comando del desarrollador: `init`
+- Comando del desarrollador: `init` o `/agentic-init`
+- Si se desea usar el bundle opcional: `--bootstrap`
 
 ## Objetivo (ONLY)
 - Activar el rol **architect-agent**.

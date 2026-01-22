@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.0-beta.1](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.12.0-beta.1...agentic-workflow-v1.13.0-beta.1) (2026-01-22)
+
+
+### Features
+
+* add optional bootstrap bundle build ([bc14cdc](https://github.com/christian-marino-alvarez/agentic-workflow/commit/bc14cdc0726f89cdf97fc8e28e182421a4f4b9ef))
+
 ## [1.12.0-beta.1](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.11.0-beta.1...agentic-workflow-v1.12.0-beta.1) (2026-01-22)
 
 

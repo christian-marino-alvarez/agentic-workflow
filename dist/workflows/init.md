@@ -53,12 +53,14 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
      1) `.agent/index.md`
      2) `agent.domains.rules.index`
      3) `rules.constitution.index`
+   - **PROHIBIDO** cargar índices de `templates` o `artifacts` durante `init`.
    - Si alguna falla → FAIL.
 
 3. Cargar en contexto las constitutions (en orden):
    1) `constitution.GEMINI_location`
    2) `constitution.clean_code`
    3) `constitution.agents_behavior`
+   - **PROHIBIDO** cargar templates o artifacts en este paso.
    - Si alguna falla → FAIL.
 
 4. Detectar idioma preferido y pedir confirmación explícita.
@@ -113,3 +115,4 @@ Requisitos (todos obligatorios):
 3) El artefacto cumple el template oficial.
 4) Idioma definido y confirmado.
 5) Estrategia seleccionada.
+6) No se cargaron índices fuera del set permitido (solo `.agent/index.md`, `agent.domains.rules.index`, `rules.constitution.index`).

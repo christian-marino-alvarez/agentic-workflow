@@ -15,7 +15,8 @@ program
 program
     .command('init')
     .description('Initialize the agentic system in the current directory')
-    .action(initCommand);
+    .option('--non-interactive', 'Run without prompts (assume YES)')
+    .action((options) => initCommand(options));
 
 program
     .command('create')

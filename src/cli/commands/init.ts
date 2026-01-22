@@ -5,19 +5,22 @@ import { detectAgentSystem } from '../../core/migration/detector.js';
 import { resolveCorePath, resolveInstalledCorePath } from '../../core/mapping/resolver.js';
 import { performBackup } from '../../core/utils/backup.js';
 
-export async function initCommand() {
+export async function initCommand(options: { nonInteractive?: boolean } = {}) {
   intro('Agentic Workflow Initialization');
 
   const cwd = process.cwd();
   const agentDir = path.join(cwd, '.agent');
+  const nonInteractive = Boolean(options.nonInteractive);
 
   // 1. Existing System Detection
   const systemType = await detectAgentSystem(cwd);
 
   if (systemType === 'legacy') {
-    const shouldUpdate = await confirm({
-      message: 'A legacy .agent system has been detected. Do you want to migrate it to the latest portable version?',
-    });
+    const shouldUpdate = nonInteractive
+      ? true
+      : await confirm({
+          message: 'A legacy .agent system has been detected. Do you want to migrate it to the latest portable version?',
+        });
 
     if (!shouldUpdate || typeof shouldUpdate === 'symbol') {
       outro('Initialization cancelled by user.');
@@ -34,9 +37,11 @@ export async function initCommand() {
     }
   } else if (systemType === 'current') {
     note('The system is already updated to the latest version.', 'Information');
-    const reinit = await confirm({
-      message: 'Do you want to force a re-initialization by reference? (A backup will be created)',
-    });
+    const reinit = nonInteractive
+      ? true
+      : await confirm({
+          message: 'Do you want to force a re-initialization by reference? (A backup will be created)',
+        });
     if (!reinit || typeof reinit === 'symbol') {
       outro('Process finished.');
       return;

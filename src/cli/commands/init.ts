@@ -70,6 +70,7 @@ export async function initCommand(options: { nonInteractive?: boolean } = {}) {
     await fs.mkdir(agentDir, { recursive: true });
 
     await scaffoldAgentWorkspace(corePath, agentDir, cwd);
+    await writeAgentsEntry(cwd);
 
     s.stop('Configuration complete.');
 
@@ -295,4 +296,21 @@ artifacts:
     fs.writeFile(path.join(agentDir, 'templates', 'index.md'), templatesIndex),
     fs.writeFile(path.join(agentDir, 'artifacts', 'index.md'), artifactsIndex),
   ]);
+}
+
+async function writeAgentsEntry(cwd: string) {
+  const agentsPath = path.join(cwd, 'AGENTS.md');
+  const content = `# AGENTS
+
+Este fichero es el punto de entrada para asistentes del IDE.
+Solo define el arranque del sistema mediante el workflow \`init\`.
+
+## Arranque (OBLIGATORIO)
+1. Leer \`.agent/index.md\` (root index local).
+2. Cargar el indice de workflows en \`agent.domains.workflows.index\`.
+3. Cargar \`workflows.init\`.
+4. Ejecutar el workflow \`init\` y seguir sus Gates.
+`;
+
+  await fs.writeFile(agentsPath, content);
 }

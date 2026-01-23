@@ -47,6 +47,7 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
 ## Pasos obligatorios
 1. Activar `architect-agent` como rol arquitecto.
    - Mostrar un mensaje único de estado (ej: "Cargando init...") y **no** listar lecturas de ficheros individuales.
+   - En ese mismo mensaje, presentar al architect-agent y dar contexto al desarrollador: rol, objetivo del init y qué información se le pedirá a continuación.
 
 2. Cargar índices mínimos (OBLIGATORIO):
    - Antes de continuar, revisar `.agent/index.md` para comprender dominios, indices y alias.

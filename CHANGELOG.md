@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.17.0-beta.10](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.17.0-beta.9...agentic-workflow-v1.17.0-beta.10) (2026-01-25)
+
+
+### Chores
+
+* release 1.17.0-beta.10
+
 ## [1.17.0-beta.9](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.16.0-beta.9...agentic-workflow-v1.17.0-beta.9) (2026-01-25)
 
 

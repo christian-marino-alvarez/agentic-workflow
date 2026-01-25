@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.15.0-beta.8](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.15.0-beta.7...agentic-workflow-v1.15.0-beta.8) (2026-01-25)
+
+
+### Bug Fixes
+
+* copy core into local .agent during init
+
+### Chores
+
+* remove extension scaffold from src
+
 ## [1.15.0-beta.7](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.14.0-beta.7...agentic-workflow-v1.15.0-beta.7) (2026-01-23)
 
 

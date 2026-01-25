@@ -1,5 +1,5 @@
 ---
-id: workflow.tasklifecycle.phase-2-analysis
+id: workflow.tasklifecycle-long.phase-2-analysis
 description: Fase 2 del ciclo de tarea. Analisis profundo basado en la investigacion previa, cubre acceptance criteria y define agentes, responsabilidades e impacto. Requiere aprobacion del desarrollador.
 owner: architect-agent
 version: 1.0.0

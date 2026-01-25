@@ -1,5 +1,5 @@
 ---
-id: workflow.tasklifecycle.phase-7-evaluation
+id: workflow.tasklifecycle-long.phase-7-evaluation
 description: Fase 7 del ciclo de tarea. Evalua la participacion de los agentes y la ejecucion de la tarea con puntuaciones objetivas.
 owner: architect-agent
 version: 1.0.0

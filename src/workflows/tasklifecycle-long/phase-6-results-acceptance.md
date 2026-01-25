@@ -1,5 +1,5 @@
 ---
-id: workflow.tasklifecycle.phase-6-results-acceptance
+id: workflow.tasklifecycle-long.phase-6-results-acceptance
 description: Fase 6 del ciclo de tarea. Presenta el informe final de resultados y requiere aceptación explícita del desarrollador (SI/NO).
 owner: architect-agent
 version: 1.0.0

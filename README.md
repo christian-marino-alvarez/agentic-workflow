@@ -11,7 +11,7 @@
 ## ✨ Key Features
 
 - **AHRP (Agentic Handover & Reasoning Protocol)**: Enforces a strict Triple-Gate flow for every task (Activation, Reasoning Approval, and Results Acceptance).
-- **Architecture by Reference**: Keeps your project clean by referencing core rules and workflows from `node_modules`.
+- **Local Core Snapshot**: Copies core rules and workflows into `.agent/` so runtime no longer depends on `node_modules` access.
 - **Zero-Tolerance Governance**: Automatic performance penalties for protocol violations.
 - **Standalone & Portable**: Works in any project provided the IDE agent can read Markdown files.
 

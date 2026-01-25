@@ -1,5 +1,5 @@
 ---
-id: workflow.tasklifecycle.phase-0-acceptance-criteria
+id: workflow.tasklifecycle-long.phase-0-acceptance-criteria
 description: Convierte el task candidate en una tarea definitiva. El arquitecto define los acceptance criteria mediante 5 preguntas obligatorias basadas en la tarea y su objetivo, y crea el current task necesario para iniciar el ciclo de vida.
 owner: architect-agent
 version: 1.2.1
@@ -12,7 +12,7 @@ blocking: true
 # WORKFLOW: tasklifecycle.phase-0-acceptance-criteria
 
 ## Input (REQUIRED)
-- Task candidate creado por `workflow.tasklifecycle-long`:
+- Task candidate creado por `workflows.tasklifecycle-long`:
   - `artifacts.candidate.task`
 - El `task.md` candidate **DEBE** incluir:
   - descripción de la tarea

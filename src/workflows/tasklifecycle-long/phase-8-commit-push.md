@@ -1,5 +1,5 @@
 ---
-id: workflow.tasklifecycle.phase-8-commit-push
+id: workflow.tasklifecycle-long.phase-8-commit-push
 description: Fase 8 del ciclo de tarea. Consolida y publica los cambios en la rama destino mediante commits normalizados (Conventional Commits), genera changelog y requiere aprobación explícita del desarrollador antes del push final.
 owner: architect-agent
 version: 1.0.0

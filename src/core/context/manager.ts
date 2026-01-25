@@ -29,11 +29,15 @@ export class ContextManager {
         // Esta es una implementación simplificada que busca en los índices conocidos
         // Para una implementación completa, se requeriría un crawler de YAML
         if (aliasPath.includes('constitution')) {
-            const constitutions = ['GEMINI.location.md', 'project-architecture.md', 'clean-code.md', 'agent-system.md'];
+            const constitutions = [
+                { file: 'GEMINI.location.md', alias: 'constitution.GEMINI_location' },
+                { file: 'clean-code.md', alias: 'constitution.clean_code' },
+                { file: 'agents-behavior.md', alias: 'constitution.agents_behavior' },
+            ];
             for (const c of constitutions) {
-                const p = path.join(this.corePath, 'rules/constitution', c);
+                const p = path.join(this.corePath, 'rules/constitution', c.file);
                 if (await this.exists(p)) {
-                    files.push(await this.readFile(p, `constitution.${c.replace('.md', '')}`));
+                    files.push(await this.readFile(p, c.alias));
                 }
             }
         } else if (aliasPath.includes('roles')) {
@@ -88,8 +92,8 @@ export class ContextManager {
         if (isBootstrap) {
             bundle += "## SIGUIENTES PASOS (DISCOVERY)\n";
             bundle += "El sistema está inicializado. Puedes profundizar en dominios específicos usando:\n";
-            bundle += "- `tool: hydrate_context({ alias: \"agent.core.rules\" })` para cargar todas las reglas.\n";
-            bundle += "- `tool: hydrate_context({ alias: \"agent.core.workflows\" })` para ver procesos disponibles.\n";
+            bundle += "- `tool: hydrate_context({ alias: \"agent.domains.rules.index\" })` para cargar reglas disponibles.\n";
+            bundle += "- `tool: hydrate_context({ alias: \"agent.domains.workflows.index\" })` para ver workflows disponibles.\n";
         }
 
         return bundle;

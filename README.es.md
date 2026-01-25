@@ -11,7 +11,7 @@
 ## ✨ Características Principales
 
 - **Protocolo AHRP (Agentic Handover & Reasoning Protocol)**: Impone un flujo estricto de Triple-Puerta para cada tarea (Activación, Aprobación de Razonamiento y Aceptación de Resultados).
-- **Arquitectura por Referencia**: Mantiene tu proyecto limpio referenciando las reglas y workflows del núcleo desde `node_modules`.
+- **Arquitectura local**: Copia las reglas y workflows del core dentro de `.agent/` para evitar dependencias de acceso continuado a `node_modules`.
 - **Gobernanza de Tolerancia Cero**: Penalizaciones automáticas de rendimiento por violaciones del protocolo.
 - **Independiente y Portátil**: Funciona en cualquier proyecto, siempre que el agente del IDE pueda leer archivos Markdown.
 

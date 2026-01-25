@@ -1,5 +1,5 @@
 ---
-id: workflow.tasklifecycle.phase-5-verification
+id: workflow.tasklifecycle-long.phase-5-verification
 description: Fase 5 del ciclo de tarea. Verifica la implementación con tests (unitarios y E2E si aplica) y reporta métricas y cobertura. NO corrige código; si hay errores, delega una nueva tarea de corrección al agente responsable.
 owner: architect-agent
 version: 1.0.0

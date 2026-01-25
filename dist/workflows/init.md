@@ -100,8 +100,8 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
     - Preguntar por la tarea:
       - "¿Qué tarea quieres iniciar ahora? Dame un título corto y el objetivo."
     - Una vez recibidos título y objetivo:
-      - Si `strategy == "long"` → lanzar `workflow.tasklifecycle-long`
-      - Si `strategy == "short"` → lanzar `workflow.tasklifecycle-short`
+      - Si `strategy == "long"` → lanzar `workflows.tasklifecycle-long`
+      - Si `strategy == "short"` → lanzar `workflows.tasklifecycle-short`
 
 ## Output (REQUIRED)
 - Artefacto creado:

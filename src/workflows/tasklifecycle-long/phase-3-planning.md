@@ -1,5 +1,5 @@
 ---
-id: workflow.tasklifecycle.phase-3-planning
+id: workflow.tasklifecycle-long.phase-3-planning
 description: Fase 3 del ciclo de tarea. Define el plan de implementación basado en el análisis previo, asigna responsabilidades por agente, detalla testing, demo, estimaciones y puntos críticos. Requiere aprobación explícita del desarrollador.
 owner: architect-agent
 version: 1.0.0

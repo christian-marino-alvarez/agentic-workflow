@@ -1,5 +1,5 @@
 ---
-id: workflow.tasklifecycle.phase-4-implementation
+id: workflow.tasklifecycle-long.phase-4-implementation
 description: Fase 4 del ciclo de tarea. Ejecuta la implementación mediante delegación granular de tareas a agentes con Gate de aprobación del desarrollador por cada tarea. Solo avanza si todas las tareas han sido aprobadas.
 owner: architect-agent
 version: 3.0.0

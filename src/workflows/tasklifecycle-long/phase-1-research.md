@@ -1,5 +1,5 @@
 ---
-id: workflow.tasklifecycle.phase-1-research
+id: workflow.tasklifecycle-long.phase-1-research
 description: Fase 1 del ciclo de tarea. Investigacion tecnica exhaustiva de necesidades y alternativas. Requiere aprobacion explicita del desarrollador.
 owner: researcher-agent
 version: 1.0.0

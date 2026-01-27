@@ -74,7 +74,3 @@ This framework is built on the principle of **Maximum Discipline**. Agents are r
 ## 📄 License
 
 ISC License. See [LICENSE](./LICENSE) for details.
-
-
-
-

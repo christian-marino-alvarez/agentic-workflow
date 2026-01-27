@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.18.0-beta.11](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.18.0-beta.10...v1.18.0-beta.11) (2026-01-28)
+
+
+### Refactor
+
+* reestructurar src para extension vscode ([0de9db2](https://github.com/christian-marino-alvarez/agentic-workflow/commit/0de9db2))
+
 ## [1.18.0-beta.10](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.17.0-beta.10...agentic-workflow-v1.18.0-beta.10) (2026-01-25)
 
 

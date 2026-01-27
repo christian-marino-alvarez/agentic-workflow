@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.18.1-beta.10](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.18.0-beta.10...agentic-workflow-v1.18.1-beta.10) (2026-01-27)
+
+
+### Bug Fixes
+
+* remove self-dependency and fix vulnerabilities with overrides ([c21cde3](https://github.com/christian-marino-alvarez/agentic-workflow/commit/c21cde3905623f9731caf12c3d2453a44e3aabd4))
+
 ## [1.18.0](https://github.com/christian-marino-alvarez/agentic-workflow/compare/v1.18.0-beta.11...v1.18.0) (2026-01-28)
 
 ### Features

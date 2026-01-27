@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.18.0](https://github.com/christian-marino-alvarez/agentic-workflow/compare/v1.18.0-beta.11...v1.18.0) (2026-01-28)
+
+### Features
+* **Core**: Stable release with flattened architecture and security hardening.
+* **CLI**: Portable system with `init`, `create`, `restore`, and `clean` commands.
+* **VSCode**: Prepared for VSCode extension integration.
+
 ## [1.18.0-beta.11](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.18.0-beta.10...v1.18.0-beta.11) (2026-01-28)
 
 

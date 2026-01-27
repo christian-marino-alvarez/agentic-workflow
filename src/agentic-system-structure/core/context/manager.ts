@@ -84,7 +84,7 @@ export class ContextManager {
             bundle += `Path: \`file://${file.path}\`\n\n`;
             bundle += "```markdown\n";
             bundle += file.content;
-            if (!file.content.endsWith('\n')) bundle += '\n';
+            if (!file.content.endsWith('\n')) {bundle += '\n';}
             bundle += "```\n\n---\n\n";
         }
 

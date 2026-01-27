@@ -129,7 +129,7 @@ export async function createCommand(type: string, name: string) {
                 message: 'Enter the new name:',
                 placeholder: `custom-${name}`,
                 validate(value) {
-                    if (value.trim().length === 0) return 'Name cannot be empty';
+                    if (value.trim().length === 0) {return 'Name cannot be empty';}
                     return;
                 },
             });
@@ -166,7 +166,7 @@ export async function createCommand(type: string, name: string) {
             const newName = await text({
                 message: 'Enter the new name:',
                 validate(value) {
-                    if (value.trim().length === 0) return 'Required';
+                    if (value.trim().length === 0) {return 'Required';}
                 },
             });
             if (isCancel(newName)) {

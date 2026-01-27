@@ -74,7 +74,7 @@ Para cada agente participante:
 (Repetir por cada agente)
 
 ### 4.2 Cambios técnicos relevantes
-- Nuevos módulos / drivers
+- Nuevos componentes
 - Cambios estructurales
 - APIs afectadas
 - Compatibilidad entre navegadores (si aplica)
@@ -129,20 +129,7 @@ Evaluación definitiva.
 
 ---
 
-## 8. Disciplina y Conformidad AHRP (CRITICAL)
-Evaluación del cumplimiento del protocolo de seguridad y orquestación.
-
-| Gate | Estado | Observaciones |
-| :--- | :--- | :--- |
-| **Gate A (Activación)** | ☐ PASS ☐ FAIL | ¿Se esperó a la firma antes de usar herramientas? |
-| **Gate B (Reasoning)** | ☐ PASS ☐ FAIL | ¿Se aprobó el plan técnico antes de la implementación? |
-| **Conformidad Global** | ☐ SI ☐ NO | |
-
-> **NOTA**: Si la conformidad global es **NO**, la puntuación final de la tarea será **0** automáticamente.
-
----
-
-## 9. Incidencias y desviaciones
+## 8. Incidencias y desviaciones
 Listado consolidado de problemas encontrados durante el ciclo.
 
 - Incidencia:

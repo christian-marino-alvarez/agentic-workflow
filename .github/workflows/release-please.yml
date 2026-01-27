@@ -1,0 +1,39 @@
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+
+jobs:
+  release-please-main:
+    runs-on: ubuntu-latest
+    if: github.ref_name == 'main'
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Release Please
+        uses: googleapis/release-please-action@v4
+        with:
+          config-file: .release-please-config.json
+          manifest-file: .release-please-manifest.json
+          target-branch: main
+          include-component-in-tag: false
+
+  release-please-develop:
+    runs-on: ubuntu-latest
+    if: github.ref_name == 'develop'
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Release Please (beta)
+        uses: googleapis/release-please-action@v4
+        with:
+          config-file: .release-please-config.json
+          manifest-file: .release-please-manifest.json
+          target-branch: develop
+          include-component-in-tag: false

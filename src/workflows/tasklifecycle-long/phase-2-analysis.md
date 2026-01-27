@@ -1,8 +1,8 @@
 ---
-id: workflow.tasklifecycle.phase-2-analysis
+id: workflow.tasklifecycle-long.phase-2-analysis
 description: Fase 2 del ciclo de tarea. Analisis profundo basado en la investigacion previa, cubre acceptance criteria y define agentes, responsabilidades e impacto. Requiere aprobacion del desarrollador.
 owner: architect-agent
-version: 1.1.0
+version: 1.0.0
 severity: PERMANENT
 trigger:
   commands: ["phase2", "phase-2", "analysis"]
@@ -24,7 +24,7 @@ blocking: true
 
 > [!IMPORTANT]
 > **Constitución activa (OBLIGATORIO)**:
-> - Cargar `constitution.extensio_architecture` antes de iniciar
+> - Cargar `constitution.clean_code` antes de iniciar
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
 
 ## Output (REQUIRED)
@@ -36,9 +36,12 @@ blocking: true
 ## Objetivo (ONLY)
 Crear un informe de **analisis** profundo que:
 - cubra **todos** los acceptance criteria del `task.md`
-- respete la arquitectura del proyecto y sus reglas
+- respete la arquitectura y reglas del proyecto
+- analice el estado real del proyecto (estructura, componentes y areas activas)
+- integre la investigacion aprobada de Fase 1
 - defina agentes, subareas e impacto de la tarea
 - identifique si la tarea requiere crear, modificar o eliminar componentes del sistema
+- identificar si la tarea requiere crear una demo y su impacto estructural
 - sirva como **input contractual** para la Fase 3 (Planning)
 
 > Esta fase **NO implementa codigo**.  
@@ -48,17 +51,16 @@ Crear un informe de **analisis** profundo que:
 ## Template (OBLIGATORIO)
 - El informe **DEBE** crearse usando el template:
   - `templates.analysis`
+- El template **NO DEBE** modificarse.
 - Si el template no existe o no se puede cargar → **FAIL**.
 
 ## Pasos obligatorios
-0. **Activación de Rol y Prefijo (OBLIGATORIO)**
-   - El `architect-agent` **DEBE** comenzar su intervención identificándose.
-   - Mensaje: `🏛️ **architect-agent**: Iniciando Phase 2 - Analysis.`
-
+0. Activar `architect-agent` y usar prefijo obligatorio en cada mensaje.
 1. Verificar inputs
    - Existe `.agent/artifacts/<taskId>-<taskTitle>/task.md`
    - Existe `.agent/artifacts/<taskId>-<taskTitle>/researcher/research.md`
    - `task.phase.current == aliases.taskcycle-long.phases.phase_2.id`
+   - El `task.md` contiene acceptance criteria definidos
    - El research esta aprobado por el desarrollador (SI)
    - Si falla → ir a **Paso 10 (FAIL)**.
 
@@ -71,12 +73,13 @@ Crear un informe de **analisis** profundo que:
      - `.agent/artifacts/<taskId>-<taskTitle>/analysis.md`
    - Rellenar secciones segun la tarea concreta.
 
-4. Analizar estado del proyecto
-   - Revisar estructura, drivers, modulos y tareas previas si aplica.
+4. Analizar estado del proyecto e historial de agentes
+   - Revisar estructura, componentes y tareas previas.
    - Documentar hallazgos en `analysis.md`.
 
 5. Integrar investigacion aprobada
    - Basar alternativas, riesgos y compatibilidad en `research.md`.
+   - Complementar con analisis arquitectonico propio.
 
 6. Cobertura de acceptance criteria
    - Mapear **cada acceptance criteria** a su analisis, verificacion y riesgos.
@@ -84,12 +87,14 @@ Crear un informe de **analisis** profundo que:
 7. Definir agentes y subareas
    - Enumerar agentes necesarios.
    - Definir responsabilidades y handoffs.
+   - Identificar si se requiere crear, modificar o eliminar componentes.
+   - Identificar si se requiere crear demo y su impacto estructural.
 
 8. Solicitar aprobacion del desarrollador (OBLIGATORIO, por consola)
    - El desarrollador **DEBE** emitir una decision binaria:
      - **SI** (aprobado)
      - **NO** (rechazado)
-   - registrar en `analysis.md`:
+   - La decision **DEBE** registrarse en `analysis.md` con el formato:
      ```yaml
      approval:
        developer:
@@ -100,29 +105,40 @@ Crear un informe de **analisis** profundo que:
    - Si `decision != SI` → ir a **Paso 10 (FAIL)**.
 
 9. PASS
-   - Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md` (usando prefijo):
+   - Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md`:
      - marcar Fase 2 como completada
      - establecer `task.lifecycle.phases.phase-2-analysis.validated_at = <ISO-8601>`
      - actualizar `task.phase.updated_at = <ISO-8601>`
      - avanzar `task.phase.current = aliases.taskcycle-long.phases.phase_3.id`
+   - Indicar rutas:
+     - `analysis.md`
+     - `task.md` actualizado
 
 ## FAIL (OBLIGATORIO)
-10. Declarar Fase 2 como **NO completada**.
-    - Indicar exactamente que fallo.
+10. Declarar Fase 2 como **NO completada**
+    - Indicar exactamente que fallo:
+      - task inexistente
+      - fase incorrecta
+      - research inexistente o no aprobado
+      - template inexistente
+      - fallo al crear `analysis.md`
+      - aprobacion del desarrollador = NO o inexistente
+    - Pedir la accion minima para solventar
     - Terminar bloqueado: no avanzar de fase.
 
 ## Gate (REQUIRED)
 Requisitos (todos obligatorios):
 1. Existe `.agent/artifacts/<taskId>-<taskTitle>/analysis.md`.
 2. El fichero sigue la estructura del template `templates.analysis`.
-3. Cubre todos los acceptance criteria del `task.md`.
-4. Existe aprobacion explicita del desarrollador registrada en `analysis.md`:
+3. El `analysis.md` inicia con el prefijo del `architect-agent`.
+4. Cubre todos los acceptance criteria del `task.md`.
+5. Existe aprobacion explicita del desarrollador:
    - `approval.developer.decision == SI`
-5. `task.md` refleja timestamps y estado:
+6. `task.md` refleja:
+   - Fase 2 completada
    - `task.phase.current == aliases.taskcycle-long.phases.phase_3.id`
    - `task.lifecycle.phases.phase-2-analysis.completed == true`
    - `task.lifecycle.phases.phase-2-analysis.validated_at` no nulo
    - `task.phase.updated_at` no nulo
-
 Si Gate FAIL:
 - Ejecutar **Paso 10 (FAIL)**.

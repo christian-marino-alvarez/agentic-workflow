@@ -6,18 +6,10 @@ export async function restoreCommand() {
     intro('Agentic Workflow Recovery');
 
     const cwd = process.cwd();
-    const backupBaseDir = path.join(cwd, '.agent-backups');
-
-    try {
-        await fs.access(backupBaseDir);
-    } catch {
-        outro('No se han encontrado copias de seguridad en .agent-backups/');
-        return;
-    }
-
-    const backups = await fs.readdir(backupBaseDir);
+    const backups = (await fs.readdir(cwd))
+        .filter((entry) => entry.startsWith('.agent.backup_'));
     if (backups.length === 0) {
-        outro('No hay backups disponibles.');
+        outro('No backups were found (no .agent.backup_* directories).');
         return;
     }
 
@@ -25,28 +17,28 @@ export async function restoreCommand() {
     const sortedBackups = backups.sort((a, b) => b.localeCompare(a));
 
     const selectedBackup = await select({
-        message: 'Selecciona la copia de seguridad que deseas restaurar:',
+        message: 'Select the backup you want to restore:',
         options: sortedBackups.map(b => ({ value: b, label: b })),
     });
 
     if (typeof selectedBackup === 'symbol') {
-        outro('Operación cancelada.');
+        outro('Operation cancelled.');
         return;
     }
 
     const shouldRestore = await confirm({
-        message: `¿Estás seguro de que deseas restaurar el backup "${selectedBackup}"? Se sobrescribirá la carpeta .agent/ actual.`,
+        message: `Are you sure you want to restore the backup "${selectedBackup}"? The current .agent/ folder will be overwritten.`,
     });
 
     if (!shouldRestore || typeof shouldRestore === 'symbol') {
-        outro('Restauración cancelada.');
+        outro('Restoration cancelled.');
         return;
     }
 
     const s = spinner();
     s.start('Restoring backup...');
 
-    const backupPath = path.join(backupBaseDir, selectedBackup as string, '.agent');
+    const backupPath = path.join(cwd, selectedBackup as string);
     const targetPath = path.join(cwd, '.agent');
 
     try {
@@ -54,11 +46,11 @@ export async function restoreCommand() {
         await fs.rm(targetPath, { recursive: true, force: true });
         await copyRecursive(backupPath, targetPath);
         s.stop('Restoration complete.');
-        outro(`El sistema ha sido restaurado exitosamente desde ${selectedBackup}`);
+        outro(`The system has been successfully restored from ${selectedBackup}`);
     } catch (error) {
         s.stop('Restoration failed.');
         console.error(error);
-        outro('Error durante la restauración.');
+        outro('Error during restoration.');
     }
 }
 

@@ -1,22 +1,53 @@
 {
-    "name": "@cmarino/agentic-workflow",
-    "version": "1.1.0-beta.1",
+    "name": "@christianmaf80/agentic-workflow",
+    "version": "1.18.0",
     "description": "Portable agentic workflow orchestration system with strict identity and gate discipline",
     "type": "module",
-    "main": "dist/index.js",
+    "displayName": "Agentic Workflow VSCode",
+    "main": "./dist/extension.js",
+    "engines": {
+        "vscode": "^1.108.1"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [],
+    "contributes": {
+        "commands": [
+            {
+                "command": "agentic-workflow.helloWorld",
+                "title": "Hello World"
+            }
+        ]
+    },
     "bin": {
-        "agentic-workflow": "./bin/cli.js"
+        "agentic-workflow": "bin/cli.js"
     },
     "files": [
-        "dist",
+        "dist/cli",
+        "dist/core",
+        "dist/rules",
+        "dist/workflows",
+        "dist/templates",
+        "dist/artifacts",
+        "dist/index.md",
         "bin",
         "README.md",
-        "LICENSE"
+        "LICENSE",
+        "RELEASE_PROCESS.md"
     ],
     "scripts": {
-        "build": "tsc && npm run copy-assets",
-        "copy-assets": "cp -r src/rules src/workflows src/templates dist/",
-        "start": "node dist/index.js"
+        "build": "node scripts/clean-dist.mjs && tsc && npm run copy-assets",
+        "copy-assets": "cp -r src/rules src/workflows src/templates src/artifacts dist/ && cp src/index.md dist/index.md",
+        "start": "node dist/index.js",
+        "publish:npm": "npm publish --registry https://registry.npmjs.org --access public",
+        "publish:github": "npm publish --registry https://npm.pkg.github.com",
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "pretest": "npm run compile && npm run lint",
+        "lint": "eslint src",
+        "test": "vscode-test"
     },
     "repository": {
         "type": "git",
@@ -39,12 +70,20 @@
     "license": "ISC",
     "dependencies": {
         "@clack/prompts": "^0.7.0",
-        "@modelcontextprotocol/sdk": "^1.25.2",
         "commander": "^11.1.0",
         "gray-matter": "^4.0.3"
     },
     "devDependencies": {
+        "@types/mocha": "^10.0.10",
         "@types/node": "^20.10.6",
-        "typescript": "^5.3.3"
+        "@types/vscode": "^1.108.1",
+        "@vscode/test-cli": "^0.0.12",
+        "@vscode/test-electron": "^2.5.2",
+        "eslint": "^9.39.2",
+        "typescript": "^5.9.3",
+        "typescript-eslint": "^8.52.0"
+    },
+    "overrides": {
+        "diff": "8.0.3"
     }
 }

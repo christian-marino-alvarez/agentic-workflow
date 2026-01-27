@@ -34,11 +34,7 @@ Todos los agentes DEBEN seguir estrictamente las normas de identificación e int
 roles:
   architect: .agent/rules/roles/architect.md
   qa: .agent/rules/roles/qa.md
-  driver: .agent/rules/roles/driver.md
   researcher: .agent/rules/roles/researcher.md
-  module: .agent/rules/roles/module.md
-  surface: .agent/rules/roles/surface.md
-  tooling: .agent/rules/roles/tooling.md
   neo: .agent/rules/roles/neo.md
 ```
 

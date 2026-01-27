@@ -7,10 +7,6 @@ priority: alta | media | baja
 
 # TODO: <título breve>
 
-## Identificacion del agente (OBLIGATORIA)
-Primera linea del documento:
-`<icono> **<nombre-agente>**: <mensaje>`
-
 ## Origen
 - **Detectado en tarea**: <taskId>-<taskTitle>
 - **Fase**: <phase donde se detectó>

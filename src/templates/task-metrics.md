@@ -28,7 +28,6 @@ Primera linea del documento:
 
 ## 3. Puntuacion global de la tarea
 - Promedio ponderado: score
-- **Conformidad AHRP**: [SI / NO] (Si es NO, el score global es 0)
 - Observaciones
 
 ---

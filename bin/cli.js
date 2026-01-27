@@ -3,7 +3,7 @@ import { Command } from 'commander';
 import { initCommand } from '../dist/cli/commands/init.js';
 import { createCommand } from '../dist/cli/commands/create.js';
 import { restoreCommand } from '../dist/cli/commands/restore.js';
-import { runMcpServer } from '../dist/mcp/server.js';
+import { cleanCommand } from '../dist/cli/commands/clean.js';
 
 const program = new Command();
 
@@ -15,7 +15,8 @@ program
 program
     .command('init')
     .description('Initialize the agentic system in the current directory')
-    .action(initCommand);
+    .option('--non-interactive', 'Run without prompts (assume YES)')
+    .action((options) => initCommand(options));
 
 program
     .command('create')
@@ -25,13 +26,13 @@ program
     .action(createCommand);
 
 program
-    .command('mcp')
-    .description('Start the Model Context Protocol (MCP) server')
-    .action(runMcpServer);
-
-program
     .command('restore')
     .description('Restore the agentic system from a backup')
     .action(restoreCommand);
+
+program
+    .command('clean')
+    .description('Remove legacy configuration files (e.g. MCP)')
+    .action(cleanCommand);
 
 program.parse();

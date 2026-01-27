@@ -73,14 +73,14 @@ Verificación de que la implementación **no rompe** los acceptance criteria def
 ## 5. Coherencia arquitectónica
 Evaluación global del sistema tras la implementación.
 
-- ☐ Respeta arquitectura Extensio
+- ☐ Respeta arquitectura del proyecto
 - ☐ Respeta clean code
 - ☐ No introduce deuda técnica significativa
 - ☐ Mantiene compatibilidad esperada (multi-browser si aplica)
 
 **Observaciones arquitectónicas**
 - Impacto en estructura:
-- Impacto en módulos/drivers:
+- Impacto en componentes:
 - Riesgos introducidos:
 
 ---

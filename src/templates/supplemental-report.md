@@ -1,8 +1,4 @@
-# Supplemental Report — <taskId>-<taskTitle>
-
-## Identificacion del agente (OBLIGATORIA)
-Primera linea del documento:
-`<icono> **<nombre-agente>**: <mensaje>`
+# Supplemental Report (Template)
 
 ## Identificacion
 - id: {{artifact.id}}

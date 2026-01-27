@@ -1,7 +1,7 @@
 node_modules
 dist
 .agent
-.agent-backups
+.agent.backup_*
 .DS_Store
 *.log
 npm-debug.log*

@@ -1,7 +1,7 @@
 import { intro, outro, spinner, note } from '@clack/prompts';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { resolveCorePath } from '../../core/mapping/resolver.js';
+import { resolveCorePath, resolveInstalledCorePath } from '../../core/mapping/resolver.js';
 
 /**
  * Lógica central para la creación de componentes sin dependencias de UI (Clack).
@@ -15,14 +15,14 @@ export async function performCreate(type: string, name: string, force: boolean =
     const targetPath = path.join(targetDir, `${name}.md`);
 
     try {
-        const corePath = await resolveCorePath();
+        const corePath = (await resolveInstalledCorePath(cwd)) ?? await resolveCorePath();
         const coreTypeFolder = type === 'role' ? 'rules/roles' : type === 'workflow' ? 'workflows' : 'templates';
         const reservedPath = path.join(corePath, coreTypeFolder, `${name}.md`);
 
         // 1. Reserved Namespace Check
         try {
             await fs.access(reservedPath);
-            return { success: false, message: `El nombre "${name}" está reservado por el core del framework.` };
+            return { success: false, message: `The name "${name}" is reserved by the core framework.` };
         } catch {
             // Name is free in core
         }
@@ -31,7 +31,7 @@ export async function performCreate(type: string, name: string, force: boolean =
         if (!force) {
             try {
                 await fs.access(targetPath);
-                return { success: false, message: `Ya existe un archivo local con el nombre "${name}" en .agent/${typeFolder}/.`, path: targetPath };
+                return { success: false, message: `A local file named "${name}" already exists in .agent/${typeFolder}/.`, path: targetPath };
             } catch {
                 // Name is free locally or we create it
             }
@@ -53,20 +53,20 @@ scope: project
 
 # ROLE: ${name}-agent
 
-## Identidad
-Eres el **${name}-agent**. Explica aquí tu propósito y especialidad.
+## Identity
+You are the **${name}-agent**. Explain your purpose and specialty here.
 
-## Reglas de ejecución (PERMANENT)
-1. **Identificación Obligatoria**: DEBES iniciar TODAS tus respuestas con el prefijo: \`🤖 **${name}-agent**:\`.
-2. (Añade aquí tus reglas específicas)
+## Execution Rules (PERMANENT)
+1. **Mandatory Identification**: You MUST start ALL your responses with the prefix: \`🤖 **${name}-agent**:\`.
+2. (Add your specific rules here)
 
-## Disciplina Agéntica (PERMANENT)
-1. (Añade aquí tus principios de disciplina)
+## Agentic Discipline (PERMANENT)
+1. (Add your discipline principles here)
 `;
         } else if (type === 'workflow') {
             content = `---
 id: workflow.custom.${name}
-description: Descripción de este workflow personalizado.
+description: Description of this custom workflow.
 owner: architect-agent
 version: 1.0.0
 severity: RECOMMENDED
@@ -75,27 +75,27 @@ severity: RECOMMENDED
 # WORKFLOW: ${name}
 
 ## Input (REQUIRED)
-- Requisitos previos
+- Pre-requisites
 
-## Pasos obligatorios
-1. Paso uno
-2. Paso dos
+## Mandatory Steps
+1. Step one
+2. Step two
 
 ## Output (REQUIRED)
-- Resultado esperado
+- Expected result
 `;
         }
 
         await fs.writeFile(targetPath, content);
-        return { success: true, message: `${name} creado correctamente en .agent/${typeFolder}/`, path: targetPath };
+        return { success: true, message: `${name} created successfully in .agent/${typeFolder}/`, path: targetPath };
 
     } catch (error) {
-        return { success: false, message: `Error durante la creación: ${error instanceof Error ? error.message : String(error)}` };
+        return { success: false, message: `Error during creation: ${error instanceof Error ? error.message : String(error)}` };
     }
 }
 
 /**
- * Comando del CLI con interfaz visual Clack.
+ * CLI Command with Clack visual interface.
  */
 import { select, text, isCancel, cancel } from '@clack/prompts';
 
@@ -105,37 +105,37 @@ export async function createCommand(type: string, name: string) {
     const s = spinner();
     s.start('Validating...');
 
-    // Intentamos crear primero
+    // Try to create first
     let result = await performCreate(type, name);
     s.stop('Validation complete.');
 
-    // Si hay conflicto, gestionamos interactivamente
-    if (!result.success && result.message.includes('reservado')) {
+    // Handle conflicts interactively
+    if (!result.success && result.message.includes('reserved')) {
         const action = await select({
-            message: `El nombre "${name}" está en uso por el CORE. ¿Qué deseas hacer?`,
+            message: `The name "${name}" is in use by the CORE. What do you want to do?`,
             options: [
-                { value: 'rename', label: 'Renombrar (ej: custom-neo)' },
-                { value: 'abort', label: 'Cancelar operación' }
+                { value: 'rename', label: 'Rename (e.g., custom-neo)' },
+                { value: 'abort', label: 'Cancel operation' }
             ],
         });
 
         if (isCancel(action) || action === 'abort') {
-            cancel('Operación cancelada.');
+            cancel('Operation cancelled.');
             return process.exit(0);
         }
 
         if (action === 'rename') {
             const newName = await text({
-                message: 'Introduce el nuevo nombre:',
+                message: 'Enter the new name:',
                 placeholder: `custom-${name}`,
                 validate(value) {
-                    if (value.trim().length === 0) return 'El nombre no puede estar vacío';
+                    if (value.trim().length === 0) {return 'Name cannot be empty';}
                     return;
                 },
             });
 
             if (isCancel(newName)) {
-                cancel('Operación cancelada.');
+                cancel('Operation cancelled.');
                 return process.exit(0);
             }
 
@@ -143,39 +143,34 @@ export async function createCommand(type: string, name: string) {
             result = await performCreate(type, newName as string);
             s.stop('Done.');
         }
-    } else if (!result.success && result.message.includes('Ya existe')) {
+    } else if (!result.success && result.message.includes('already exists')) {
         const action = await select({
-            message: `El archivo local "${name}" ya existe. ¿Qué deseas hacer?`,
+            message: `The local file "${name}" already exists. What do you want to do?`,
             options: [
-                { value: 'overwrite', label: 'Sobrescribir archivo existente' },
-                { value: 'rename', label: 'Renombrar nuevo archivo' },
-                { value: 'abort', label: 'Cancelar' }
+                { value: 'overwrite', label: 'Overwrite existing file' },
+                { value: 'rename', label: 'Rename new file' },
+                { value: 'abort', label: 'Cancel' }
             ],
         });
 
         if (isCancel(action) || action === 'abort') {
-            cancel('Operación cancelada.');
+            cancel('Operation cancelled.');
             return process.exit(0);
         }
 
         if (action === 'overwrite') {
             s.start('Overwriting...');
-            // Forzamos borrado previo (hack simple, idealmente performCreate aceptaría flag force)
-            const targetPath = result.path || ''; // El path venía undefined en error, necesitamos reconstruirlo o pasar flag
-            // Reinvocamos performCreate asumiendo que el usuario ya sabe lo que hace.
-            // Para "force", actualizaremos performCreate o simplemente borramos aquí si tuvieramos el path.
-            // MEJORA: Pasaremos un flag de 'force' a performCreate.
             result = await performCreate(type, name, true);
             s.stop('Done.');
         } else if (action === 'rename') {
             const newName = await text({
-                message: 'Introduce el nuevo nombre:',
+                message: 'Enter the new name:',
                 validate(value) {
-                    if (value.trim().length === 0) return 'Required';
+                    if (value.trim().length === 0) {return 'Required';}
                 },
             });
             if (isCancel(newName)) {
-                cancel('Operación cancelada.');
+                cancel('Operation cancelled.');
                 return process.exit(0);
             }
             s.start('Creating...');
@@ -185,10 +180,10 @@ export async function createCommand(type: string, name: string) {
     }
 
     if (result.success) {
-        note('Recuerda registrarlo en el índice local si deseas usar un alias.', 'Siguiente Paso');
+        note('Remember to register it in the local index if you want to use an alias.', 'Next Step');
         outro(result.message);
     } else {
         note(result.message, 'Error');
-        outro('Proceso finalizado con errores.');
+        outro('Process finished with errors.');
     }
 }

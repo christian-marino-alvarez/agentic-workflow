@@ -4,22 +4,17 @@ owner: architect-agent
 status: ongoing
 ---
 
-# Agent Scores — <taskId>-<taskTitle>
-
-## Identificacion del agente (OBLIGATORIA)
-Primera linea del documento:
-`<icono> **<nombre-agente>**: <mensaje>`
+# Agent Scores
 
 ## 1. Resumen por agente
 - **Agent A**
-  - scores: [taskId-score, ...]
-  - media: value
+  - score: value
+  - notas: <opcional>
 - **Agent B**
-  - scores: [taskId-score, ...]
-  - media: value
+  - score: value
+  - notas: <opcional>
 
 ---
 
-## 2. Resumen global
-- Media general de tareas: value
+## 2. Meta
 - Ultima actualizacion: <ISO-8601>

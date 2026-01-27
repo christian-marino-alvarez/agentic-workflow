@@ -2,49 +2,46 @@
 artifact: agent_task
 phase: phase-4-implementation
 owner: {{agent}}
-assigned_to: {{agent}}
-status: blocked | pending_reasoning_approval | in-progress | completed | failed
+status: pending | in-progress | completed | failed
 related_task: {{taskId}}-{{taskTitle}}
-task_id: "{{taskId}}-{{N}}"
+task_number: {{N}}
 ---
 
-################################################################################
-# 🛑 BLOQUEO DE SEGURIDAD: TAREA NO ACTIVADA                                   #
-################################################################################
-# El agente {{agent}} ha sido asignado para esta tarea.                       #
-#                                                                              #
-# PROHIBIDO USAR HERRAMIENTAS DE ESCRITURA O EJECUCIÓN (run, write, create).   #
-# Acción requerida: Desarrollador debe responder con "SI" para activar.        #
-################################################################################
+# Agent Task — {{N}}-{{agent}}-{{taskName}}
 
-# Agent Task — {{taskId}}-{{N}} ({{taskName}})
+## Identificacion del agente (OBLIGATORIA)
+Primera linea del documento:
+`<icono> **<nombre-agente>**: <mensaje>`
 
-## 1. Input (REQUIRED)
+## Input (REQUIRED)
 - **Objetivo**: {{objective}}
 - **Alcance**: {{scope}}
 - **Dependencias**: {{dependencies}}
 
 ---
 
-## 2. Reasoning (ESPERANDO ACTIVACIÓN)
+## Reasoning (OBLIGATORIO)
 
 > [!IMPORTANT]
-> El agente **DEBE** completar esta sección DESPUÉS de ser activado (Gate A) y ANTES de ejecutar (Gate B).
+> El agente **DEBE** completar esta sección ANTES de ejecutar.
+> Documentar el razonamiento mejora la calidad y permite detectar errores temprano.
 
 ### Análisis del objetivo
-- (¿Qué se pide exactamente?)
+- ¿Qué se pide exactamente?
+- ¿Hay ambigüedades o dependencias?
 
 ### Opciones consideradas
 - **Opción A**: (descripción)
 - **Opción B**: (descripción)
+- *(añadir más si aplica)*
 
 ### Decisión tomada
-- **Opción elegida**: (A/B)
-- **Justificación**: (por qué)
+- Opción elegida: (A/B/...)
+- Justificación: (por qué esta opción)
 
 ---
 
-## 3. Output (REQUIRED)
+## Output (REQUIRED)
 - **Entregables**:
   - {{deliverables}}
 - **Evidencia requerida**:
@@ -52,7 +49,19 @@ task_id: "{{taskId}}-{{N}}"
 
 ---
 
-## 4. Implementation Report
+## Execution
+
+```yaml
+execution:
+  agent: "{{agent}}"
+  status: pending | in-progress | completed | failed
+  started_at: null
+  completed_at: null
+```
+
+---
+
+## Implementation Report
 
 > Esta sección la completa el agente asignado durante la ejecución.
 
@@ -65,42 +74,30 @@ task_id: "{{taskId}}-{{N}}"
 ### Evidencia
 - (Logs, capturas, tests ejecutados)
 
+### Desviaciones del objetivo
+- (Si las hay, justificación)
+
 ---
 
-## Gate A: Activación de Agente (Handover)
+## Gate (REQUIRED)
 
-El desarrollador **DEBE** activar al agente antes de que este pueda presentar su razonamiento o usar herramientas.
-
-```yaml
-activation:
-  agent: {{agent}}
-  assigned_by: architect-agent
-  decision: null # SI | NO
-```
-
-## Gate B: Aprobación de Reasoning (Plan de Acción)
-
-El desarrollador **DEBE** aprobar el razonamiento antes de que el agente proceda con la implementación.
+El desarrollador **DEBE** aprobar esta tarea antes de que el arquitecto asigne la siguiente.
 
 ```yaml
-reasoning_approval:
-  agent: {{agent}}
-  decision: null # SI | NO
-```
-
-## Gate C: Aprobación de Resultados (Cierre)
-
-```yaml
-completion:
-  agent: {{agent}}
-  decision: null # SI | NO
+approval:
+  developer:
+    decision: SI | NO
+    date: <ISO-8601>
+    comments: <opcional>
 ```
 
 ---
 
-## Reglas contractuales (AHRP)
+## Reglas contractuales
 
-1. **Gate A síncrono**: Prohibido usar herramientas sin activación `SI`.
-2. **Gate B síncrono**: Prohibido modificar código sin aprobación de Reasoning `SI`.
-3. **Métricas**: El incumplimiento de cualquier Gate resulta en una **Puntuación de 0** inmediata.
-4. El agente asignado **NO puede modificar** el Input ni el Output definidos por el arquitecto.
+1. Esta tarea **NO puede marcarse como completada** sin Gate PASS (`decision: SI`).
+2. Si Gate FAIL (`decision: NO`):
+   - El arquitecto define acciones correctivas.
+   - Se genera una nueva tarea de corrección si procede.
+3. El agente asignado **NO puede modificar** el Input ni el Output definidos por el arquitecto.
+4. El Gate es **síncrono y bloqueante**: el flujo se detiene hasta obtener respuesta del desarrollador.

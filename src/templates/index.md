@@ -7,14 +7,10 @@ severity: PERMANENT
 
 # INDEX — Templates
 
-## Identificacion del agente (OBLIGATORIA)
-Primera linea del documento:
-`<icono> **<nombre-agente>**: <mensaje>`
- (Agentic System)
-
 ## Objetivo
-Enumerar templates contractuales del sistema agéntico.
-Deben referenciarse por alias.
+Este fichero enumera los **templates contractuales** del sistema.
+Los workflows y agentes **DEBEN** referenciar estas plantillas
+por alias en vez de rutas directas.
 
 ## Aliases (YAML)
 ```yaml
@@ -36,10 +32,11 @@ templates:
   changelog: .agent/templates/changelog.md
   supplemental_report: .agent/templates/supplemental-report.md
 
-  # Ciclo Short
+  # Templates del ciclo Short
   brief: .agent/templates/brief.md
   closure: .agent/templates/closure.md
 ```
 
 ## Reglas
-- Cualquier nuevo template **DEBE** añadirse aquí.
+- Solo declarar templates contractuales del sistema.
+- Cualquier nuevo template **DEBE** añadirse aquí antes de ser referenciado.

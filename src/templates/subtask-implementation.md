@@ -11,12 +11,7 @@ subtask_id: <id>
 > [!WARNING]
 > **@deprecated**: Este template está obsoleto. Usar `templates.agent_task` para nuevas tareas.
 
-# Subtask Implementation — <taskId>-<taskTitle>
-
-## Identificacion del agente (OBLIGATORIA)
-Primera linea del documento:
-`<icono> **<nombre-agente>**: <mensaje>`
- — <agent> — <subtask_id>
+# Subtask Implementation Report — <taskId>-<taskTitle> — <agent> — <subtask_id>
 
 ## 1. Contexto y alcance
 - Descripcion precisa de la subtask
@@ -36,7 +31,7 @@ Primera linea del documento:
 ## 3. Decisiones tecnicas
 - Decisiones clave y su justificacion
 - Alternativas consideradas y por que se descartaron
-- Impacto en otros modulos/drivers (si aplica)
+- Impacto en otros componentes (si aplica)
 
 ---
 

@@ -1,0 +1,71 @@
+name: Publish to npm
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - develop
+      - main
+
+jobs:
+  publish:
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'ci/publish')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Validate package scope
+        run: |
+          NAME=$(node -p "require('./package.json').name")
+          if [ "${NAME}" != "@christianmaf80/agentic-workflow" ]; then
+            echo "Invalid package name: ${NAME}"
+            exit 1
+          fi
+
+      - name: Check if version is published
+        id: version_check
+        run: |
+          NAME=$(node -p "require('./package.json').name")
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view "${NAME}@${VERSION}" --registry https://registry.npmjs.org >/dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Determine dist-tag
+        id: dist_tag
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          if [ "${BASE_REF}" = "develop" ]; then
+            echo "tag=beta" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "${BASE_REF}" = "main" ]; then
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "Unsupported base branch: ${BASE_REF}"
+          exit 1
+
+      - name: Publish
+        if: steps.version_check.outputs.published == 'false'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --registry https://registry.npmjs.org --access public --tag ${{ steps.dist_tag.outputs.tag }}

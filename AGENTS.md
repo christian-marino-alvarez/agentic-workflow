@@ -1,10 +1,10 @@
 # AGENTS
 
-Este fichero ayuda a los agentes de IDE (Cursor, Windsurf) a entender el sistema.
+Este fichero es el punto de entrada para asistentes del IDE.
+Solo define el arranque del sistema mediante el workflow `init`.
 
-## Workflow de Inicialización
-Para comenzar una sesión de trabajo, ejecuta siempre:
-`@.agent/workflows/init.md`
-
-## Reglas
-El sistema sigue reglas estrictas definidas en `.agent/rules/`.
+## Arranque (OBLIGATORIO)
+1. Leer `.agent/index.md` (root index local).
+2. Cargar el indice de workflows en `agent.domains.workflows.index`.
+3. Cargar `workflows.init`.
+4. Ejecutar el workflow `init` y seguir sus Gates.

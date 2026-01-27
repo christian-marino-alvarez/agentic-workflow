@@ -1,7 +1,7 @@
 ---
 id: workflow.tasklifecycle-short
 owner: architect-agent
-version: 1.1.0
+version: 1.0.0
 severity: PERMANENT
 description: Orquesta el ciclo de vida simplificado (Short) de una tarea a partir de un init válido.
 trigger:
@@ -10,10 +10,6 @@ blocking: true
 ---
 
 # WORKFLOW: tasklifecycle-short (Index)
-
-## 0. Activación de Rol y Prefijo (OBLIGATORIO)
-- El `architect-agent` **DEBE** comenzar su intervención identificándose.
-- Mensaje: `🏛️ **architect-agent**: Iniciando ciclo de vida Short.`
 
 ## Índices requeridos (OBLIGATORIO)
 Este workflow **NO** define aliases fuera de su dominio (`taskcycle-short`).
@@ -50,9 +46,19 @@ aliases:
 
 ## Output (REQUIRED)
 - Task candidate con `task.strategy: short`.
+- Artefactos de cada fase: `brief.md`, `implementation.md`, `closure.md`.
 
 ## Objetivo (ONLY)
 - Ejecutar un ciclo simplificado de 3 fases para tareas de baja complejidad.
+- Mantener la integridad de los gates arquitectónicos.
+- Si se detecta complejidad alta en Brief, ofrecer abortar a Long.
+
+## Orden oficial de ejecución de fases
+Las fases del ciclo Short **DEBEN ejecutarse estrictamente en orden**:
+
+1. `aliases.taskcycle-short.phases.short_phase_1.id` (Brief)
+2. `aliases.taskcycle-short.phases.short_phase_2.id` (Implementation)
+3. `aliases.taskcycle-short.phases.short_phase_3.id` (Closure)
 
 ## Gate (REQUIRED)
 Requisitos (todos obligatorios):
@@ -60,4 +66,5 @@ Requisitos (todos obligatorios):
 2. Están disponibles todos los workflows de fase del dominio `taskcycle-short`.
 
 Si Gate FAIL:
+- Indicar exactamente qué requisito falta.
 - Bloquear hasta resolver.

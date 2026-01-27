@@ -64,7 +64,7 @@ aliases:
 - El artefacto `init` **DEBE** contener en su bloque YAML:
   - `language.value` no vacío
   - `language.confirmed == true`
-- El desarrollador **DEBE haber respondido** a la pregunta de la **Sección 8 del workflow `init`**:
+- El desarrollador **DEBE haber respondido** a la pregunta del **Paso 10 (PASS) del workflow `init`**:
   - definición de la tarea
   - objetivo de la tarea
 

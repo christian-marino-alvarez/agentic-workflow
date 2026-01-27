@@ -69,20 +69,21 @@
     "author": "Christian Marino Alvarez",
     "license": "ISC",
     "dependencies": {
-        "@christianmaf80/agentic-workflow": "^1.14.0-beta.7",
         "@clack/prompts": "^0.7.0",
-        "@modelcontextprotocol/sdk": "^1.25.2",
         "commander": "^11.1.0",
         "gray-matter": "^4.0.3"
     },
     "devDependencies": {
-        "@types/node": "^20.10.6",
-        "typescript": "^5.9.3",
-        "@types/vscode": "^1.108.1",
         "@types/mocha": "^10.0.10",
-        "typescript-eslint": "^8.52.0",
-        "eslint": "^9.39.2",
+        "@types/node": "^20.10.6",
+        "@types/vscode": "^1.108.1",
         "@vscode/test-cli": "^0.0.12",
-        "@vscode/test-electron": "^2.5.2"
+        "@vscode/test-electron": "^2.5.2",
+        "eslint": "^9.39.2",
+        "typescript": "^5.9.3",
+        "typescript-eslint": "^8.52.0"
+    },
+    "overrides": {
+        "diff": "8.0.3"
     }
 }

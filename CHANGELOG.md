@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.18.3] (2026-01-28)
+
+### Features
+* **Stable**: Full release following internal protocol.
+
 ## [1.18.1](https://github.com/christian-marino-alvarez/agentic-workflow/compare/v1.18.0-beta.11...v1.18.1) (2026-01-28)
 
 ### Features

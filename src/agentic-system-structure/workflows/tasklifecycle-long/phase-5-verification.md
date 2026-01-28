@@ -13,9 +13,9 @@ blocking: true
 
 ## Input (REQUIRED)
 - Existe el informe de revisión del arquitecto creado en Fase 4:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/architect/review.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/architect/review.md`
 - Existe la current task:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 - El `task.md` **DEBE** reflejar:
   - `task.phase.current == aliases.taskcycle-long.phases.phase_5.id`
 
@@ -26,9 +26,9 @@ blocking: true
 
 ## Output (REQUIRED)
 - Informe detallado de verificación y testing:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/verification.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/verification.md`
 - Actualización del estado en:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 
 ---
 
@@ -77,7 +77,7 @@ blocking: true
 
 5. Crear informe de verificación
    - Crear:
-     - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/verification.md`
+     - `.agent/artifacts/<taskId>-<taskTitle>/verification.md`
    - El informe **DEBE** incluir:
      - resultados de tests (pass/fail)
      - cobertura (porcentaje y scope)
@@ -107,7 +107,7 @@ blocking: true
    - Si `decision != SI` → ir a **Paso 11 (FAIL)**.
 
 8. PASS
-   - Actualizar `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`:
+   - Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md`:
      - marcar Fase 5 como completada
      - establecer `task.lifecycle.phases.phase-5-verification.validated_at = <ISO-8601>`
      - actualizar `task.phase.updated_at = <ISO-8601>`
@@ -140,7 +140,7 @@ Si se detectan errores en tests:
 1. Identificar la tarea de Fase 4 responsable del código fallido.
 2. Identificar el agente que ejecutó esa tarea.
 3. Crear una **nueva tarea de corrección** en:
-   - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/agent-tasks/fix-<N>-<agent>-<issue>.md`
+   - `.agent/artifacts/<taskId>-<taskTitle>/agent-tasks/fix-<N>-<agent>-<issue>.md`
 4. La tarea de corrección **DEBE** usar `templates.agent_task`.
 5. El flujo vuelve a Fase 4 para ejecutar la tarea de corrección.
 6. Solo cuando la corrección pase Gate, se re-ejecuta Fase 5.
@@ -152,7 +152,7 @@ Terminar bloqueado: no avanzar de fase.
 ## Gate (REQUIRED)
 
 Requisitos (todos obligatorios):
-1. Existe `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/verification.md`.
+1. Existe `.agent/artifacts/<taskId>-<taskTitle>/verification.md`.
 2. El informe refleja resultados completos y trazables de testing.
 3. El `verification.md` inicia con el prefijo del `qa-agent`.
 4. El informe contiene **evidencia de ejecución de tests**:

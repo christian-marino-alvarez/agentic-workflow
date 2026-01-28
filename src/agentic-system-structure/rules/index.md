@@ -17,10 +17,10 @@ referenciar estas reglas por alias.
 ```yaml
 rules:
   constitution:
-    index: src/agentic-system-structure/rules/constitution/index.md
+    index: .agent/rules/constitution/index.md
 
   roles:
-    index: src/agentic-system-structure/rules/roles/index.md
+    index: .agent/rules/roles/index.md
 ```
 
 ---
@@ -43,9 +43,9 @@ Referencia completa: `constitution.agents_behavior`
 **Solo el 🏛️ architect-agent puede modificar archivos de reglas.**
 
 Archivos protegidos:
-- `src/agentic-system-structure/rules/**/*.md` (todas las reglas)
-- `src/agentic-system-structure/workflows/**/*.md` (todos los workflows)
-- `src/agentic-system-structure/index.md`
+- `.agent/rules/**/*.md` (todas las reglas)
+- `.agent/workflows/**/*.md` (todos los workflows)
+- `.agent/index.md`
 - `GEMINI.md` (si existe en el repositorio)
 
 **Prohibiciones**:

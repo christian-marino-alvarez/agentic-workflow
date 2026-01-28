@@ -3,7 +3,7 @@
 🏛️ **architect-agent**: Definición de criterios de aceptación para la reestructuración de src y scaffolding de extensión VSCode.
 
 ## 1. Definición Consolidada
-La tarea consiste en transformar la estructura del proyecto actual para convertirlo en una extensión de VSCode. Todo el código fuente actual (`src/`) se moverá a una subcarpeta `src/agentic-system-structure/`. La raíz de `src/` pasará a alojar el código fuente de la nueva extensión (`extension.ts` y archivos relacionados). Se debe garantizar el funcionamiento continuo de los scripts de inicialización existentes adaptándolos a la nueva ruta, y se debe proveer el scaffolding básico de la extensión (Hello World) junto con la configuración necesaria en `package.json` para que sea ejecutable y testeable.
+La tarea consiste en transformar la estructura del proyecto actual para convertirlo en una extensión de VSCode. Todo el código fuente actual (`src/`) se moverá a una subcarpeta `.agent/`. La raíz de `src/` pasará a alojar el código fuente de la nueva extensión (`extension.ts` y archivos relacionados). Se debe garantizar el funcionamiento continuo de los scripts de inicialización existentes adaptándolos a la nueva ruta, y se debe proveer el scaffolding básico de la extensión (Hello World) junto con la configuración necesaria en `package.json` para que sea ejecutable y testeable.
 
 ## 2. Respuestas a Preguntas de Clarificación
 > Esta sección documenta las respuestas del desarrollador a las 5 preguntas formuladas por el architect-agent.
@@ -22,7 +22,7 @@ La tarea consiste en transformar la estructura del proyecto actual para converti
 > Listado de criterios derivados de las respuestas anteriores que deben ser verificados en la Fase 5.
 
 1. Alcance:
-   - Migración completa de archivos actuales de `src/` a `src/agentic-system-structure/`.
+   - Migración completa de archivos actuales de `src/` a `.agent/`.
    - Creación de estructura básica de extensión VSCode en `src/` (`extension.ts`, etc.).
    - Configuración de `package.json` con `engines`, `activationEvents` y `contributes` básicos.
    - Setup de `.vscode/launch.json` y `tasks.json` para debugging de la extensión.

@@ -29,7 +29,7 @@ task_number: 5
 > Documentar el razonamiento mejora la calidad y permite detectar errores temprano.
 
 ### Análisis del objetivo
-- Los scripts antiguos buscan reglas y workflows en `src/rules`, etc. Ahora están en `src/agentic-system-structure/rules`.
+- Los scripts antiguos buscan reglas y workflows en `src/rules`, etc. Ahora están en `.agent/rules`.
 - Si no actualizamos esto, `npm run build` fallará o generará un `dist` incompleto.
 
 ### Opciones consideradas

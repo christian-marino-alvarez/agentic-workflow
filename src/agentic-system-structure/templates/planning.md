@@ -20,8 +20,8 @@ Primera linea del documento:
 ---
 
 ## 2. Inputs contractuales
-- **Task**: `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`
-- **Analysis**: `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/analysis.md`
+- **Task**: `.agent/artifacts/<taskId>-<taskTitle>/task.md`
+- **Analysis**: `.agent/artifacts/<taskId>-<taskTitle>/analysis.md`
 - **Acceptance Criteria**: referencia explícita a los AC relevantes.
 
 **Dispatch de dominios (OBLIGATORIO si aplica)**

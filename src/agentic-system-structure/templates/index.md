@@ -15,26 +15,26 @@ por alias en vez de rutas directas.
 ## Aliases (YAML)
 ```yaml
 templates:
-  task: src/agentic-system-structure/templates/task.md
-  acceptance: src/agentic-system-structure/templates/acceptance.md
-  init: src/agentic-system-structure/templates/init.md
-  analysis: src/agentic-system-structure/templates/analysis.md
-  planning: src/agentic-system-structure/templates/planning.md
-  subtask_implementation: src/agentic-system-structure/templates/subtask-implementation.md
-  review: src/agentic-system-structure/templates/review.md
-  verification: src/agentic-system-structure/templates/verification.md
-  results_acceptance: src/agentic-system-structure/templates/results-acceptance.md
-  task_metrics: src/agentic-system-structure/templates/task-metrics.md
-  agent_scores: src/agentic-system-structure/templates/agent-scores.md
-  research: src/agentic-system-structure/templates/research.md
-  agent_task: src/agentic-system-structure/templates/agent-task.md
-  todo_item: src/agentic-system-structure/templates/todo-item.md
-  changelog: src/agentic-system-structure/templates/changelog.md
-  supplemental_report: src/agentic-system-structure/templates/supplemental-report.md
+  task: .agent/templates/task.md
+  acceptance: .agent/templates/acceptance.md
+  init: .agent/templates/init.md
+  analysis: .agent/templates/analysis.md
+  planning: .agent/templates/planning.md
+  subtask_implementation: .agent/templates/subtask-implementation.md
+  review: .agent/templates/review.md
+  verification: .agent/templates/verification.md
+  results_acceptance: .agent/templates/results-acceptance.md
+  task_metrics: .agent/templates/task-metrics.md
+  agent_scores: .agent/templates/agent-scores.md
+  research: .agent/templates/research.md
+  agent_task: .agent/templates/agent-task.md
+  todo_item: .agent/templates/todo-item.md
+  changelog: .agent/templates/changelog.md
+  supplemental_report: .agent/templates/supplemental-report.md
 
   # Templates del ciclo Short
-  brief: src/agentic-system-structure/templates/brief.md
-  closure: src/agentic-system-structure/templates/closure.md
+  brief: .agent/templates/brief.md
+  closure: .agent/templates/closure.md
 ```
 
 ## Reglas

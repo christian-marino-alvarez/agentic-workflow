@@ -50,9 +50,9 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
    - En ese mismo mensaje, presentar al architect-agent y dar contexto al desarrollador: rol, objetivo del init y qué información se le pedirá a continuación.
 
 2. Cargar índices mínimos (OBLIGATORIO):
-   - Antes de continuar, revisar `src/agentic-system-structure/index.md` para comprender dominios, indices y alias.
+   - Antes de continuar, revisar `.agent/index.md` para comprender dominios, indices y alias.
    - Bootstrap por ruta directa (hardcodeado y único permitido):
-     1) `src/agentic-system-structure/index.md`
+     1) `.agent/index.md`
      2) `agent.domains.rules.index`
      3) `rules.constitution.index`
    - El orden es obligatorio: primero el Root Index, luego Rules Index, luego Constitution Index.
@@ -118,5 +118,5 @@ Requisitos (todos obligatorios):
 3) El artefacto cumple el template oficial.
 4) Idioma definido y confirmado.
 5) Estrategia seleccionada.
-6) No se cargaron índices fuera del set permitido (solo `src/agentic-system-structure/index.md`, `agent.domains.rules.index`, `rules.constitution.index`).
-7) El Root Index `src/agentic-system-structure/index.md` fue cargado antes de cualquier otro índice.
+6) No se cargaron índices fuera del set permitido (solo `.agent/index.md`, `agent.domains.rules.index`, `rules.constitution.index`).
+7) El Root Index `.agent/index.md` fue cargado antes de cualquier otro índice.

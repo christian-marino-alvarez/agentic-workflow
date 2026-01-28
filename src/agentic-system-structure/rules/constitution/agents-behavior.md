@@ -43,13 +43,13 @@ La excepcion solo aplica cuando el formato estandar sea tecnicamente imposible.
 **Solo el 🏛️ architect-agent tiene autoridad para modificar archivos de sistema.**
 
 Archivos protegidos:
-- `src/agentic-system-structure/rules/**/*.md` (Reglas)
-- `src/agentic-system-structure/workflows/**/*.md` (Workflows)
+- `.agent/rules/**/*.md` (Reglas)
+- `.agent/workflows/**/*.md` (Workflows)
 - Indices de sistema (`index.md`)
 - `GEMINI.md`
 
 ### 2.2 Prohibición para Agentes Operativos
-- ❌ **Prohibido**: Que el `qa-agent` o `researcher-agent` modifiquen archivos de la carpeta `src/agentic-system-structure/rules` o `src/agentic-system-structure/workflows`.
+- ❌ **Prohibido**: Que el `qa-agent` o `researcher-agent` modifiquen archivos de la carpeta `.agent/rules` o `.agent/workflows`.
 - ✅ **Permitido**: Proponer cambios en sus informes de tareas para que el `architect-agent` los evalúe y aplique.
 
 ---

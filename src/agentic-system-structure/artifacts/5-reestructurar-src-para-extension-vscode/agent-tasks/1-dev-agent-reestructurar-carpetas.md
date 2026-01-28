@@ -40,7 +40,7 @@ task_number: 1
 
 ## Output (REQUIRED)
 - **Entregables**:
-  - Estructura de carpetas actualizada: `src/agentic-system-structure/` conteniendo el código legacy.
+  - Estructura de carpetas actualizada: `.agent/` conteniendo el código legacy.
 - **Evidencia requerida**:
   - Output de `ls -R src` mostrando la nueva jerarquía.
 

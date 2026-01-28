@@ -16,7 +16,7 @@ related_task: task-20260128-reorganize-structure
 Se ha realizado una reorganización profunda del sistema para mejorar la mantenibilidad y limpieza de la raíz del proyecto.
 
 ### Movimientos Físicos
-- **Sistema de Markdowns**: Se ha consolidado la estructura agéntica en `src/agentic-system-structure/`, moviendo las carpetas `rules`, `workflows`, `templates`, `artifacts` y el archivo `index.md`.
+- **Sistema de Markdowns**: Se ha consolidado la estructura agéntica en `.agent/`, moviendo las carpetas `rules`, `workflows`, `templates`, `artifacts` y el archivo `index.md`.
 - **Backups**: Se han movido todas las carpetas `.agent.backup_*` de la raíz a una nueva carpeta centralizada `.backups/`.
 
 ### Actualización de Referencias
@@ -38,7 +38,7 @@ Se ha realizado una reorganización profunda del sistema para mejorar la manteni
 
 | Criterio | Estado | Verificación |
 |----------|--------|--------------|
-| Carpetas movidas a `src/agentic-system-structure/` | ☑ Cumplido | Verificado mediante `ls`. |
+| Carpetas movidas a `.agent/` | ☑ Cumplido | Verificado mediante `ls`. |
 | Backups movidos a `/.backups/` | ☑ Cumplido | Verificado mediante `ls`. |
 | Scripts de build actualizados | ☑ Cumplido | `npm run build` ejecutado con éxito. |
 | Lógica de backup en código actualizada | ☑ Cumplido | Código en `src/core` modificado. |

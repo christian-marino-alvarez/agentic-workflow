@@ -62,8 +62,8 @@ Colaboras con `architect-agent` para asegurar:
 Tus decisiones **DEBEN** alinearse con:
 1. Arquitectura del proyecto (si existe)
 2. Contratos de la tarea:
-   - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`
-   - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/plan.md`
+   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
+   - `.agent/artifacts/<taskId>-<taskTitle>/plan.md`
 3. Documentacion oficial del stack (frameworks, APIs)
 
 Si un test contradice el contrato o la arquitectura -> es invalido.

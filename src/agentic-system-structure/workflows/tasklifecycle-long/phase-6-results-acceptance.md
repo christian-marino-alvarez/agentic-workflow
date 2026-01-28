@@ -13,9 +13,9 @@ blocking: true
 
 ## Input (REQUIRED)
 - Existe el informe de verificación:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/verification.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/verification.md`
 - Existe la current task:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 - El `task.md` **DEBE** reflejar:
   - `task.phase.current == aliases.taskcycle-long.phases.phase_6.id`
 
@@ -26,11 +26,11 @@ blocking: true
 
 ## Output (REQUIRED)
 - Crear el informe de aceptación de resultados:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/results-acceptance.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/results-acceptance.md`
 - Decisión final del desarrollador (OBLIGATORIA):
   - **SI / NO**
 - Actualización del estado en:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 
 ---
 
@@ -67,7 +67,7 @@ blocking: true
 
 3. Crear informe de resultados
    - Crear:
-     - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/results-acceptance.md`
+     - `.agent/artifacts/<taskId>-<taskTitle>/results-acceptance.md`
    - El informe **DEBE** incluir:
      - resumen de verificación
      - estado final de acceptance criteria
@@ -92,7 +92,7 @@ blocking: true
 
 6. PASS (solo si aceptado)
    - Marcar el informe de resultados como **ACEPTADO**.
-   - Actualizar `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`:
+   - Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md`:
      - marcar Fase 6 como completada
      - establecer `task.lifecycle.phases.phase-6-results-acceptance.validated_at = <ISO-8601>`
      - actualizar `task.phase.updated_at = <ISO-8601>`
@@ -122,7 +122,7 @@ blocking: true
 ## Gate (REQUIRED)
 
 Requisitos (todos obligatorios):
-1. Existe `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/results-acceptance.md`.
+1. Existe `.agent/artifacts/<taskId>-<taskTitle>/results-acceptance.md`.
 2. El informe resume verificación y estado final de acceptance criteria.
 3. El `results-acceptance.md` inicia con el prefijo del `architect-agent`.
 4. Todos los acceptance criteria están marcados como ✅ en el informe.

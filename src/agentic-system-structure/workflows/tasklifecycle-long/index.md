@@ -15,8 +15,8 @@ blocking: true
 Este workflow **NO** define aliases fuera de su dominio (`taskcycle-long`).
 Para artifacts y templates, **DEBE** cargar índices globales:
 
-- Artifacts index: `src/agentic-system-structure/artifacts/index.md`
-- Templates index: `src/agentic-system-structure/templates/index.md`
+- Artifacts index: `.agent/artifacts/index.md`
+- Templates index: `.agent/templates/index.md`
 
 ## Aliases del dominio `taskcycle-long` (OBLIGATORIO)
 Este workflow define aliases **solo** del dominio `taskcycle-long` (task lifecycle long).
@@ -31,31 +31,31 @@ aliases:
     phases:
       phase_0:
         id: phase-0-acceptance-criteria
-        workflow: src/agentic-system-structure/workflows/tasklifecycle-long/phase-0-acceptance-criteria.md
+        workflow: .agent/workflows/tasklifecycle-long/phase-0-acceptance-criteria.md
       phase_1:
         id: phase-1-research
-        workflow: src/agentic-system-structure/workflows/tasklifecycle-long/phase-1-research.md
+        workflow: .agent/workflows/tasklifecycle-long/phase-1-research.md
       phase_2:
         id: phase-2-analysis
-        workflow: src/agentic-system-structure/workflows/tasklifecycle-long/phase-2-analysis.md
+        workflow: .agent/workflows/tasklifecycle-long/phase-2-analysis.md
       phase_3:
         id: phase-3-planning
-        workflow: src/agentic-system-structure/workflows/tasklifecycle-long/phase-3-planning.md
+        workflow: .agent/workflows/tasklifecycle-long/phase-3-planning.md
       phase_4:
         id: phase-4-implementation
-        workflow: src/agentic-system-structure/workflows/tasklifecycle-long/phase-4-implementation.md
+        workflow: .agent/workflows/tasklifecycle-long/phase-4-implementation.md
       phase_5:
         id: phase-5-verification
-        workflow: src/agentic-system-structure/workflows/tasklifecycle-long/phase-5-verification.md
+        workflow: .agent/workflows/tasklifecycle-long/phase-5-verification.md
       phase_6:
         id: phase-6-results-acceptance
-        workflow: src/agentic-system-structure/workflows/tasklifecycle-long/phase-6-results-acceptance.md
+        workflow: .agent/workflows/tasklifecycle-long/phase-6-results-acceptance.md
       phase_7:
         id: phase-7-evaluation
-        workflow: src/agentic-system-structure/workflows/tasklifecycle-long/phase-7-evaluation.md
+        workflow: .agent/workflows/tasklifecycle-long/phase-7-evaluation.md
       phase_8:
         id: phase-8-commit-push
-        workflow: src/agentic-system-structure/workflows/tasklifecycle-long/phase-8-commit-push.md
+        workflow: .agent/workflows/tasklifecycle-long/phase-8-commit-push.md
 ```
 
 ## Input (REQUIRED)
@@ -91,7 +91,7 @@ aliases:
 
 ## Pasos obligatorios
 1. Cargar índices globales:
-   - Cargar `src/agentic-system-structure/artifacts/index.md` y `src/agentic-system-structure/templates/index.md`.
+   - Cargar `.agent/artifacts/index.md` y `.agent/templates/index.md`.
    - Si no se pueden cargar → ir a **Paso 7 (FAIL)**.
 
 2. Verificar input:
@@ -133,7 +133,7 @@ aliases:
 7. FAIL (obligatorio)
    - Declarar `tasklifecycle` como **NO listo para iniciar la Fase 0**.
    - Indicar exactamente qué caso aplica (uno o más):
-     - índices globales no cargables (`src/agentic-system-structure/artifacts/index.md` / `src/agentic-system-structure/templates/index.md`)
+     - índices globales no cargables (`.agent/artifacts/index.md` / `.agent/templates/index.md`)
      - `init` no existe (`artifacts.candidate.init`)
      - idioma no definido o no confirmado en `init`
      - template inaccesible (`templates.task`)

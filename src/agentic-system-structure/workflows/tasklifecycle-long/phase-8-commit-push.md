@@ -13,9 +13,9 @@ blocking: true
 
 ## Input (REQUIRED)
 - Existe el informe de evaluacion de agentes:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/metrics.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/metrics.md`
 - Existe la current task:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 - El `task.md` **DEBE** reflejar:
   - `task.phase.current == aliases.taskcycle-long.phases.phase_8.id`
 
@@ -26,9 +26,9 @@ blocking: true
 
 ## Output (REQUIRED)
 - Crear changelog:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/changelog.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/changelog.md`
 - Actualizacion del estado en:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 
 ## Reglas de commits
 Ejemplos válidos:
@@ -66,7 +66,7 @@ Ejemplos válidos:
 
 4. Generar changelog (OBLIGATORIO)
  - Crear:
-   - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/changelog.md`
+   - `.agent/artifacts/<taskId>-<taskTitle>/changelog.md`
  - El changelog **DEBE** incluir:
    - lista de commits
    - mensaje completo de cada commit
@@ -88,7 +88,7 @@ Ejemplos válidos:
  - Confirmar que el push fue exitoso.
 
 7. PASS
- - Actualizar `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`:
+ - Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md`:
    - marcar Fase 8 como completada
    - establecer `task.lifecycle.phases.phase-8-commit-push.validated_at = <ISO-8601>`
    - actualizar `task.phase.updated_at = <ISO-8601>`
@@ -122,7 +122,7 @@ Ejemplos válidos:
 
 Requisitos (todos obligatorios):
 1. Todos los commits cumplen **Conventional Commits**.
-2. Existe `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/changelog.md`.
+2. Existe `.agent/artifacts/<taskId>-<taskTitle>/changelog.md`.
 3. El desarrollador ha aprobado explícitamente commit y push.
 4. Working tree limpio (`git status` sin cambios).
 5. Los cambios están correctamente subidos a la rama destino.

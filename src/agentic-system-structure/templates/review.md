@@ -4,7 +4,7 @@ phase: phase-4-implementation
 owner: architect-agent
 status: approved | rejected
 related_task: <taskId>-<taskTitle>
-related_plan: src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/plan.md
+related_plan: .agent/artifacts/<taskId>-<taskTitle>/plan.md
 ---
 
 # Architectural Implementation Review — <taskId>-<taskTitle>
@@ -44,7 +44,7 @@ Revisión de las implementaciones individuales.
 
 ### Agente: `<agent-name>`
 - **Subtask document**:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/<agent>/subtask-implementation.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/<agent>/subtask-implementation.md`
 - **Evaluación**:
   - ☐ Cumple el plan
   - ☐ Desviaciones detectadas (detallar abajo)

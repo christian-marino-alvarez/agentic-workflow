@@ -4,8 +4,8 @@ phase: phase-5-verification
 owner: qa-agent
 status: pending | approved | rejected
 related_task: <taskId>-<taskTitle>
-related_plan: src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/plan.md
-related_review: src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/architect/review.md
+related_plan: .agent/artifacts/<taskId>-<taskTitle>/plan.md
+related_review: .agent/artifacts/<taskId>-<taskTitle>/architect/review.md
 ---
 
 # Verification Report — <taskId>-<taskTitle>

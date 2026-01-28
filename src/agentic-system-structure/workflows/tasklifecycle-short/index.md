@@ -15,8 +15,8 @@ blocking: true
 Este workflow **NO** define aliases fuera de su dominio (`taskcycle-short`).
 Para artifacts y templates, **DEBE** cargar índices globales:
 
-- Artifacts index: `src/agentic-system-structure/artifacts/index.md`
-- Templates index: `src/agentic-system-structure/templates/index.md`
+- Artifacts index: `.agent/artifacts/index.md`
+- Templates index: `.agent/templates/index.md`
 
 ## Aliases del dominio `taskcycle-short` (OBLIGATORIO)
 Este workflow define aliases **solo** del dominio `taskcycle-short` (task lifecycle short).
@@ -31,13 +31,13 @@ aliases:
     phases:
       short_phase_1:
         id: short-phase-1-brief
-        workflow: src/agentic-system-structure/workflows/tasklifecycle-short/short-phase-1-brief.md
+        workflow: .agent/workflows/tasklifecycle-short/short-phase-1-brief.md
       short_phase_2:
         id: short-phase-2-implementation
-        workflow: src/agentic-system-structure/workflows/tasklifecycle-short/short-phase-2-implementation.md
+        workflow: .agent/workflows/tasklifecycle-short/short-phase-2-implementation.md
       short_phase_3:
         id: short-phase-3-closure
-        workflow: src/agentic-system-structure/workflows/tasklifecycle-short/short-phase-3-closure.md
+        workflow: .agent/workflows/tasklifecycle-short/short-phase-3-closure.md
 ```
 
 ## Input (REQUIRED)

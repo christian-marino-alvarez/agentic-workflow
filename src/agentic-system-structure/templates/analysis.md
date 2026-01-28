@@ -132,9 +132,9 @@ Evaluación del impacto esperado si se implementa la tarea.
 ## 9. TODO Backlog (Consulta obligatoria)
 
 > [!IMPORTANT]
-> El architect-agent **DEBE** consultar `src/agentic-system-structure/todo/` antes de completar el análisis.
+> El architect-agent **DEBE** consultar `.agent/todo/` antes de completar el análisis.
 
-**Referencia**: `src/agentic-system-structure/todo/`
+**Referencia**: `.agent/todo/`
 
 **Estado actual**: (vacío | N items pendientes)
 

@@ -12,7 +12,7 @@ blocking: true
 # WORKFLOW: tasklifecycle-short.short-phase-2-implementation
 
 ## Input (REQUIRED)
-- Existe brief aprobado: `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/brief.md`
+- Existe brief aprobado: `.agent/artifacts/<taskId>-<taskTitle>/brief.md`
 - task.md refleja `task.phase.current == "short-phase-2-implementation"`
 
 > [!IMPORTANT]
@@ -23,7 +23,7 @@ blocking: true
 
 ## Output (REQUIRED)
 - Código implementado según el plan del brief.
-- Informe de implementación: `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/architect/implementation.md`
+- Informe de implementación: `.agent/artifacts/<taskId>-<taskTitle>/architect/implementation.md`
 - Task actualizado.
 
 ## Objetivo (ONLY)
@@ -41,7 +41,7 @@ blocking: true
 0. Activar `architect-agent` y usar prefijo obligatorio en cada mensaje.
 
 ### 1. Protocolo de Validación Pre-Vuelo (OBLIGATORIO)
-- El agente **DEBE** leer físicamente el artefacto de la fase anterior: `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/brief.md`.
+- El agente **DEBE** leer físicamente el artefacto de la fase anterior: `.agent/artifacts/<taskId>-<taskTitle>/brief.md`.
 - **Citar explícitamente** la decisión del desarrollador (ej: "Aprobado: SI") y el timestamp si existe.
 - Si el archivo no existe o no tiene una marca de aprobación afirmativa, el proceso **DEBE** detenerse inmediatamente (FAIL).
 - Verificar que la fase en `task.md` sea la correcta.
@@ -58,7 +58,7 @@ El architect-agent **DEBE** verificar:
 - Cumplimiento de acceptance criteria.
 
 ### 4. Crear informe de implementación
-- Crear `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/architect/implementation.md`
+- Crear `.agent/artifacts/<taskId>-<taskTitle>/architect/implementation.md`
 - Incluir:
   - Cambios realizados.
   - Ficheros modificados/creados.

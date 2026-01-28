@@ -13,7 +13,7 @@ related_task: task-20260128-reorganize-structure
 
 ## 1. Validación de Objetivos
 Se han cumplido todos los objetivos establecidos en el Brief:
-- **Estructura**: El sistema agéntico reside ahora en `src/agentic-system-structure/`.
+- **Estructura**: El sistema agéntico reside ahora en `.agent/`.
 - **Limpieza**: Los backups históricos se encuentran en `.backups/`.
 - **Integridad**: Los scripts de build y la lógica de negocio (core) han sido actualizados para soportar la nueva estructura.
 

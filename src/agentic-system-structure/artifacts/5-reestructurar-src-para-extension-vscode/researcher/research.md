@@ -24,7 +24,7 @@ related_task: 5-reestructurar-src-para-extension-vscode
 
 ## 2. Necesidades detectadas
 - **Requisitos tecnicos identificados**:
-  - Mover `src/*` actual a `src/agentic-system-structure/`.
+  - Mover `src/*` actual a `.agent/`.
   - Crear `src/extension.ts`.
   - Configurar `package.json` para extensión.
   - Asegurar compatibilidad de scripts de init.

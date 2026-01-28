@@ -25,7 +25,7 @@ blocking: true
 
 ## Output (REQUIRED)
 - Current task (definitiva) con acceptance criteria completos:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 
 ## Template (OBLIGATORIO)
 - La current task **DEBE** crearse usando el template:
@@ -54,7 +54,7 @@ blocking: true
 3. **Calcular `taskId` (OBLIGATORIO – architect)**
    - El `architect-agent` **DEBE** ejecutar el siguiente comando:
      ```bash
-     ls src/agentic-system-structure/artifacts/ | grep -E "^[0-9]" | sort -n | tail -1 | cut -d'-' -f1
+     ls .agent/artifacts/ | grep -E "^[0-9]" | sort -n | tail -1 | cut -d'-' -f1
      ```
    - El output muestra el último taskId (ej: "8")
    - El nuevo `taskId = output + 1` (ej: si output es "8", nuevo taskId es "9")
@@ -90,11 +90,11 @@ blocking: true
 
 7. Crear current task (OBLIGATORIO)
    - Crear el directorio de la tarea (si no existe):
-     - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/`
+     - `.agent/artifacts/<taskId>-<taskTitle>/`
    - Crear el fichero de estado:
-     - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md` (usando `templates.task`)
+     - `.agent/artifacts/<taskId>-<taskTitle>/task.md` (usando `templates.task`)
    - Crear el fichero de aceptación (NUEVO):
-     - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/acceptance.md` (usando `templates.acceptance`)
+     - `.agent/artifacts/<taskId>-<taskTitle>/acceptance.md` (usando `templates.acceptance`)
    - El `task.md` **solo contendrá**:
      - metadatos (id, title, owner, strategy)
      - historial de fases
@@ -149,13 +149,13 @@ blocking: true
 
 Requisitos (todos obligatorios):
 1. Existe el directorio y el fichero de estado:
-   - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`
+   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 2. Existe el artefacto de aceptación:
-   - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/acceptance.md`
+   - `.agent/artifacts/<taskId>-<taskTitle>/acceptance.md`
 3. Ambos siguen sus respectivos templates.
 4. El `acceptance.md` inicia con el prefijo del `architect-agent`.
 5. El `taskId` es secuencial:
-   - Ejecutar: `ls src/agentic-system-structure/artifacts/ | grep -E "^[0-9]" | sort -n | tail -1 | cut -d'-' -f1`
+   - Ejecutar: `ls .agent/artifacts/ | grep -E "^[0-9]" | sort -n | tail -1 | cut -d'-' -f1`
    - El taskId del nuevo directorio debe ser exactamente `output + 1`
 6. El current task incluye acceptance criteria completos y verificables.
 7. Existe aprobacion explicita del desarrollador (por consola) registrada en `acceptance.md`:

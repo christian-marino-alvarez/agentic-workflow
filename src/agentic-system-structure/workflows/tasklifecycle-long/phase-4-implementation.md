@@ -13,9 +13,9 @@ blocking: true
 
 ## Input (REQUIRED)
 - Existe el plan de implementación aprobado:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/plan.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/plan.md`
 - Existe la current task:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 - El `task.md` **DEBE** reflejar:
   - `task.phase.current == aliases.taskcycle-long.phases.phase_4.id`
 
@@ -27,11 +27,11 @@ blocking: true
 
 ## Output (REQUIRED)
 - Por **cada tarea de agente**:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/agent-tasks/<N>-<agent>-<taskName>.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/agent-tasks/<N>-<agent>-<taskName>.md`
 - Informe de revisión del arquitecto:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/architect/review.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/architect/review.md`
 - Actualización del estado en:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 
 ---
 
@@ -69,7 +69,7 @@ blocking: true
 - Leer `plan.md`.
 - Identificar todas las tareas de implementación y sus agentes responsables.
 - Crear (si no existe) el directorio:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/agent-tasks/`
+  - `.agent/artifacts/<taskId>-<taskTitle>/agent-tasks/`
 
 ### 3. Bucle de delegación (SÍNCRONO)
 
@@ -77,7 +77,7 @@ Para cada tarea `N` en el plan:
 
 #### 3.1 Crear fichero de tarea
 - Crear fichero usando `templates.agent_task`:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/agent-tasks/<N>-<agent>-<taskName>.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/agent-tasks/<N>-<agent>-<taskName>.md`
 - Completar:
   - **Input**: Objetivo, Alcance, Dependencias (definidos por el arquitecto)
   - **Output**: Entregables, Evidencia requerida (definidos por el arquitecto)
@@ -120,7 +120,7 @@ Para cada tarea `N` en el plan:
 
 ### 5. Crear informe de revisión arquitectónica (OBLIGATORIO)
 - Crear:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/architect/review.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/architect/review.md`
 - El informe **DEBE**:
   - Usar el template `templates.review`.
   - Listar todas las tareas y su estado de Gate.

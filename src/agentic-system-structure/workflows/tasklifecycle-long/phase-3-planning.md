@@ -13,9 +13,9 @@ blocking: true
 
 ## Input (REQUIRED)
 - Existe el artefacto de análisis creado en Fase 2:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/analysis.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/analysis.md`
 - Existe la current task:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 - El `task.md` **DEBE** reflejar:
   - `task.phase.current == aliases.taskcycle-long.phases.phase_3.id`
 
@@ -26,9 +26,9 @@ blocking: true
 
 ## Output (REQUIRED)
 - Crear el plan de implementación:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/plan.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/plan.md`
 - Actualizar el estado en la current task:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 
 ## Objetivo (ONLY)
 Crear un **plan de implementación detallado** para ejecutar el diseño definido en Fase 2, que:
@@ -54,8 +54,8 @@ Crear un **plan de implementación detallado** para ejecutar el diseño definido
 0. Activar `architect-agent` y usar prefijo obligatorio en cada mensaje.
 
 1. Verificar inputs
-   - Existe `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/analysis.md`
-   - Existe `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`
+   - Existe `.agent/artifacts/<taskId>-<taskTitle>/analysis.md`
+   - Existe `.agent/artifacts/<taskId>-<taskTitle>/task.md`
    - `task.phase.current == aliases.taskcycle-long.phases.phase_3.id`
    - Si falla → ir a **Paso 11 (FAIL)**.
 
@@ -65,7 +65,7 @@ Crear un **plan de implementación detallado** para ejecutar el diseño definido
 
 3. Crear instancia del plan
    - Copiar el template a:
-     - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/plan.md`
+     - `.agent/artifacts/<taskId>-<taskTitle>/plan.md`
    - Rellenar todas las secciones usando `analysis.md` como contrato.
 
 4. Definir pasos de implementación
@@ -118,7 +118,7 @@ Crear un **plan de implementación detallado** para ejecutar el diseño definido
    - Si `decision != SI` → ir a **Paso 11 (FAIL)**.
 
 10. PASS
-    - Actualizar `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`:
+    - Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md`:
       - marcar Fase 3 como completada
       - establecer `task.lifecycle.phases.phase-3-planning.validated_at = <ISO-8601>`
       - actualizar `task.phase.updated_at = <ISO-8601>`
@@ -150,7 +150,7 @@ Crear un **plan de implementación detallado** para ejecutar el diseño definido
 ## Gate (REQUIRED)
 
 Requisitos (todos obligatorios):
-1. Existe `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/plan.md`.
+1. Existe `.agent/artifacts/<taskId>-<taskTitle>/plan.md`.
 2. El plan sigue la estructura del template `templates.planning`.
 3. El `plan.md` inicia con el prefijo del `architect-agent`.
 4. El plan es coherente con `analysis.md`.

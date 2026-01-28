@@ -21,7 +21,7 @@ blocking: true
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
 
 ## Output (REQUIRED)
-- Artefacto de cierre: `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/closure.md`
+- Artefacto de cierre: `.agent/artifacts/<taskId>-<taskTitle>/closure.md`
 - Commits realizados (si aplica).
 - Task completado.
 
@@ -41,7 +41,7 @@ blocking: true
 0. Activar `architect-agent` y usar prefijo obligatorio en cada mensaje.
 
 ### 1. Protocolo de Validación Pre-Vuelo (OBLIGATORIO)
-- El agente **DEBE** leer físicamente el informe de implementación aprobado: `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/architect/implementation.md`.
+- El agente **DEBE** leer físicamente el informe de implementación aprobado: `.agent/artifacts/<taskId>-<taskTitle>/architect/implementation.md`.
 - **Citar explícitamente** la decisión de aprobación (ej: "Estado: APROBADO").
 - Si el informe no existe o no está aprobado, el proceso **DEBE** detenerse inmediatamente (FAIL).
 - Verificar que la fase en `task.md` sea la correcta.

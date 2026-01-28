@@ -21,8 +21,8 @@ blocking: true
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
 
 ## Output (REQUIRED)
-- Artefacto: `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/brief.md`
-- Artefacto: `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/acceptance.md` (NUEVO)
+- Artefacto: `.agent/artifacts/<taskId>-<taskTitle>/brief.md`
+- Artefacto: `.agent/artifacts/<taskId>-<taskTitle>/acceptance.md` (NUEVO)
 - Task actualizado con fase actual = `short-phase-1-brief`
 
 ## Objetivo (ONLY)

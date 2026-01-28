@@ -13,9 +13,9 @@ blocking: true
 
 ## Input (REQUIRED)
 - Existe la current task creada en Fase 0:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 - Existe el informe de investigacion aprobado:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/researcher/research.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/researcher/research.md`
 - El `task.md` **DEBE** incluir:
   - descripcion
   - objetivo
@@ -29,9 +29,9 @@ blocking: true
 
 ## Output (REQUIRED)
 - Crear el artefacto de analisis **a partir del template**:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/analysis.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/analysis.md`
 - Actualizar el estado en la current task:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 
 ## Objetivo (ONLY)
 Crear un informe de **analisis** profundo que:
@@ -57,8 +57,8 @@ Crear un informe de **analisis** profundo que:
 ## Pasos obligatorios
 0. Activar `architect-agent` y usar prefijo obligatorio en cada mensaje.
 1. Verificar inputs
-   - Existe `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`
-   - Existe `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/researcher/research.md`
+   - Existe `.agent/artifacts/<taskId>-<taskTitle>/task.md`
+   - Existe `.agent/artifacts/<taskId>-<taskTitle>/researcher/research.md`
    - `task.phase.current == aliases.taskcycle-long.phases.phase_2.id`
    - El `task.md` contiene acceptance criteria definidos
    - El research esta aprobado por el desarrollador (SI)
@@ -70,7 +70,7 @@ Crear un informe de **analisis** profundo que:
 
 3. Crear instancia de analysis
    - Copiar el template a:
-     - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/analysis.md`
+     - `.agent/artifacts/<taskId>-<taskTitle>/analysis.md`
    - Rellenar secciones segun la tarea concreta.
 
 4. Analizar estado del proyecto e historial de agentes
@@ -105,7 +105,7 @@ Crear un informe de **analisis** profundo que:
    - Si `decision != SI` → ir a **Paso 10 (FAIL)**.
 
 9. PASS
-   - Actualizar `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`:
+   - Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md`:
      - marcar Fase 2 como completada
      - establecer `task.lifecycle.phases.phase-2-analysis.validated_at = <ISO-8601>`
      - actualizar `task.phase.updated_at = <ISO-8601>`
@@ -128,7 +128,7 @@ Crear un informe de **analisis** profundo que:
 
 ## Gate (REQUIRED)
 Requisitos (todos obligatorios):
-1. Existe `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/analysis.md`.
+1. Existe `.agent/artifacts/<taskId>-<taskTitle>/analysis.md`.
 2. El fichero sigue la estructura del template `templates.analysis`.
 3. El `analysis.md` inicia con el prefijo del `architect-agent`.
 4. Cubre todos los acceptance criteria del `task.md`.

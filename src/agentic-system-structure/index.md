@@ -18,7 +18,7 @@ y dónde está el `index.md` de cada dominio.
 - Los alias permiten referenciar ficheros sin rutas absolutas y ayudan a recordar
   que ya se cargo un fichero y su ruta exacta.
 - Para acceder a un fichero, el LLM debe seguir la cadena:
-  `src/agentic-system-structure/index.md` -> `dominio/index.md` -> alias -> ruta real.
+  `.agent/index.md` -> `dominio/index.md` -> alias -> ruta real.
 
 ## Aliases (YAML)
 ```yaml
@@ -27,16 +27,16 @@ agent:
 
   domains:
     workflows:
-      index: src/agentic-system-structure/workflows/index.md
+      index: .agent/workflows/index.md
 
     artifacts:
-      index: src/agentic-system-structure/artifacts/index.md
+      index: .agent/artifacts/index.md
 
     templates:
-      index: src/agentic-system-structure/templates/index.md
+      index: .agent/templates/index.md
 
     rules:
-      index: src/agentic-system-structure/rules/index.md
+      index: .agent/rules/index.md
 
 ```
 

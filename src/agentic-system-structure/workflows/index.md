@@ -17,9 +17,9 @@ Los workflows que representen un dominio complejo (ej. `tasklifecycle`)
 
 ```yaml
 workflows:
-  init: src/agentic-system-structure/workflows/init.md
-  tasklifecycle-long: src/agentic-system-structure/workflows/tasklifecycle-long/index.md
-  tasklifecycle-short: src/agentic-system-structure/workflows/tasklifecycle-short/index.md
+  init: .agent/workflows/init.md
+  tasklifecycle-long: .agent/workflows/tasklifecycle-long/index.md
+  tasklifecycle-short: .agent/workflows/tasklifecycle-short/index.md
 ```
 
 ## Reglas

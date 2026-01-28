@@ -13,7 +13,7 @@ blocking: true
 
 ## Input (REQUIRED)
 - Existe la current task:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 - El `task.md` **DEBE** reflejar:
   - `task.phase.current == aliases.taskcycle-long.phases.phase_1.id`
 - El `task.md` **DEBE** incluir:
@@ -28,9 +28,9 @@ blocking: true
 
 ## Output (REQUIRED)
 - Research report (obligatorio, generado por researcher-agent):
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/researcher/research.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/researcher/research.md`
 - Actualizacion del estado en la current task:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 
 ## Objetivo (ONLY)
 - Investigar necesidades tecnicas detectadas para la tarea.
@@ -82,8 +82,8 @@ blocking: true
    **Prefijo obligatorio del researcher-agent**: `🔬 **researcher-agent**:`
    
    El `researcher-agent` **DEBE**:
-   - Crear el directorio: `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/researcher/`
-   - Crear el informe: `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/researcher/research.md`
+   - Crear el directorio: `.agent/artifacts/<taskId>-<taskTitle>/researcher/`
+   - Crear el informe: `.agent/artifacts/<taskId>-<taskTitle>/researcher/research.md`
    - Seguir estrictamente el template `templates.research`
    - Cubrir todos los puntos obligatorios:
      - alternativas tecnicas y APIs relevantes
@@ -109,7 +109,7 @@ blocking: true
    - Si `decision != SI` → ir a **Paso 8 (FAIL)**.
 
 5. PASS
-   - Actualizar `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`:
+   - Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md`:
      - marcar Fase 1 como completada
      - establecer `task.lifecycle.phases.phase-1-research.validated_at = <ISO-8601>`
      - actualizar `task.phase.updated_at = <ISO-8601>`
@@ -134,7 +134,7 @@ blocking: true
 ## Gate (REQUIRED)
 
 Requisitos (todos obligatorios):
-1. Existe `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/researcher/research.md`.
+1. Existe `.agent/artifacts/<taskId>-<taskTitle>/researcher/research.md`.
 2. El informe sigue la estructura del template `templates.research`.
 3. El `research.md` inicia con el prefijo del `researcher-agent`.
 4. El informe **DEBE** haber sido creado por el `researcher-agent`, **NO** por el `architect-agent`.

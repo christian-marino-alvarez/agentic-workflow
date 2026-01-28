@@ -32,10 +32,10 @@ Todos los agentes DEBEN seguir estrictamente las normas de identificación e int
 ## Aliases (YAML)
 ```yaml
 roles:
-  architect: src/agentic-system-structure/rules/roles/architect.md
-  qa: src/agentic-system-structure/rules/roles/qa.md
-  researcher: src/agentic-system-structure/rules/roles/researcher.md
-  neo: src/agentic-system-structure/rules/roles/neo.md
+  architect: .agent/rules/roles/architect.md
+  qa: .agent/rules/roles/qa.md
+  researcher: .agent/rules/roles/researcher.md
+  neo: .agent/rules/roles/neo.md
 ```
 
 ## Reglas

@@ -15,10 +15,10 @@ related_task: 5-reestructurar-src-para-extension-vscode
 El proyecto actual tiene una estructura de paquete npm estándar en `src/`. Se requiere transformar el repositorio en una extensión de VSCode sin perder la funcionalidad del sistema agéntico existente.
 
 **Objetivo**
-Mover todo el código actual de `src/` a `src/agentic-system-structure/` y establecer la raíz de `src/` como el hogar de la nueva extensión de VSCode, generando su scaffolding mediante Yeoman (`yo code`) pero adaptado manualmente para respetar la estructura híbrida.
+Mover todo el código actual de `src/` a `.agent/` y establecer la raíz de `src/` como el hogar de la nueva extensión de VSCode, generando su scaffolding mediante Yeoman (`yo code`) pero adaptado manualmente para respetar la estructura híbrida.
 
 **Criterio de éxito**
-- Estructura de carpetas: `src/agentic-system-structure/` contiene el legacy, `src/extension.ts` es el entry point.
+- Estructura de carpetas: `.agent/` contiene el legacy, `src/extension.ts` es el entry point.
 - Scripts de build/init antiguos siguen funcionando (adaptados).
 - La extensión "Hello World" funciona en modo debug.
 - `package.json` unifica las dependencias del sistema agéntico y de la extensión.
@@ -42,7 +42,7 @@ Mover todo el código actual de `src/` a `src/agentic-system-structure/` y estab
 ## 3. Cobertura de Acceptance Criteria
 
 ### AC-1: Estructura de Carpetas
-- **Interpretación**: Mover `src/*` (salvo node_modules si hubiera) a `src/agentic-system-structure/`.
+- **Interpretación**: Mover `src/*` (salvo node_modules si hubiera) a `.agent/`.
 - **Verificación**: `ls -R src` muestra la nueva subcarpeta y `extension.ts` en raíz.
 - **Riesgos**: Imports relativos dentro del sistema agéntico deberían mantenerse igual (relativos entre sí), pero imports absolutos o desde scripts externos fallarán.
 

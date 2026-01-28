@@ -4,9 +4,9 @@ phase: phase-6-results-acceptance
 owner: architect-agent
 status: pending | approved | rejected
 related_task: <taskId>-<taskTitle>
-related_plan: src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/plan.md
-related_review: src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/architect/review.md
-related_verification: src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/verification.md
+related_plan: .agent/artifacts/<taskId>-<taskTitle>/plan.md
+related_review: .agent/artifacts/<taskId>-<taskTitle>/architect/review.md
+related_verification: .agent/artifacts/<taskId>-<taskTitle>/verification.md
 ---
 
 # Final Results Report — <taskId>-<taskTitle>

@@ -129,7 +129,7 @@ plan:
 - **Punto crítico 1**: `package.json` corrupto tras merge manual.
   - *Mitigación*: Backup previo de `package.json`. Validación JSON estricta tras edición.
 - **Punto crítico 2**: `tsconfig.json` incompatible (legacy vs extension).
-  - *Mitigación*: Intentar configuración única permisiva. Si falla, separar `tsconfig.json` (raíz) y `src/agentic-system-structure/tsconfig.json`.
+  - *Mitigación*: Intentar configuración única permisiva. Si falla, separar `tsconfig.json` (raíz) y `.agent/tsconfig.json`.
 
 ---
 

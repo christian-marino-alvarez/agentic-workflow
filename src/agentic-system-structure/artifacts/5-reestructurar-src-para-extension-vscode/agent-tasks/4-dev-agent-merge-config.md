@@ -72,7 +72,7 @@ execution:
 
 ### Decisiones técnicas
 - Se modificó el comando de ejemplo a `agentic-workflow.helloWorld`.
-- Se actualizó el script `copy-assets` dentro de `package.json` para reflejar la nueva ruta `src/agentic-system-structure/`.
+- Se actualizó el script `copy-assets` dentro de `package.json` para reflejar la nueva ruta `.agent/`.
 
 ### Evidencia
 - `npm install` ejecutado sin errores.

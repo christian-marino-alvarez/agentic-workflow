@@ -13,11 +13,11 @@ blocking: true
 
 ## Input (REQUIRED)
 - Existe el informe de implementacion por agente (si aplica):
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/<agent>/subtask-implementation.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/<agent>/subtask-implementation.md`
 - Existe el informe de revision del arquitecto:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/architect/review.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/architect/review.md`
 - Existe la current task:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 - El `task.md` **DEBE** reflejar:
   - `task.phase.current == aliases.taskcycle-long.phases.phase_7.id`
 
@@ -28,11 +28,11 @@ blocking: true
 
 ## Output (REQUIRED)
 - Crear metricas de la tarea (por agente y global):
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/metrics.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/metrics.md`
 - Registrar puntuaciones por agente:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/agent-scores.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/agent-scores.md`
 - Actualizacion del estado en:
-  - `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`
+  - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 
 ## Objetivo (ONLY)
 - Valorar objetivamente a cada agente participante.
@@ -83,7 +83,7 @@ blocking: true
 
 7. PASS
    - Registrar validación en `metrics.md`.
-   - Actualizar `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/task.md`:
+   - Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md`:
      - marcar Fase 7 como completada
      - establecer `task.lifecycle.phases.phase-7-evaluation.validated_at = <ISO-8601>`
      - actualizar `task.phase.updated_at = <ISO-8601>`
@@ -107,11 +107,11 @@ blocking: true
 ## Gate (REQUIRED)
 
 Requisitos (todos obligatorios):
-1. Existe `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/metrics.md`.
+1. Existe `.agent/artifacts/<taskId>-<taskTitle>/metrics.md`.
 2. El `metrics.md` inicia con el prefijo del `architect-agent`.
 3. `metrics.md` contiene la validación del desarrollador (`Aprobado: SI`).
 4. `metrics.md` contiene la puntuación del desarrollador (0-5).
-5. Existe `src/agentic-system-structure/artifacts/<taskId>-<taskTitle>/agent-scores.md` actualizado.
+5. Existe `.agent/artifacts/<taskId>-<taskTitle>/agent-scores.md` actualizado.
 6. `task.md` refleja:
    - Fase 7 completada
    - `task.phase.current == aliases.taskcycle-long.phases.phase_8.id`

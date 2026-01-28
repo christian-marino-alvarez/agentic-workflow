@@ -19,8 +19,8 @@ export async function initCommand(options: { nonInteractive?: boolean } = {}) {
     const shouldUpdate = nonInteractive
       ? true
       : await confirm({
-          message: 'A legacy .agent system has been detected. Do you want to migrate it to the latest portable version?',
-        });
+        message: 'A legacy .agent system has been detected. Do you want to migrate it to the latest portable version?',
+      });
 
     if (!shouldUpdate || typeof shouldUpdate === 'symbol') {
       outro('Initialization cancelled by user.');
@@ -40,8 +40,8 @@ export async function initCommand(options: { nonInteractive?: boolean } = {}) {
     const reinit = nonInteractive
       ? true
       : await confirm({
-          message: 'Do you want to force a re-initialization? (A backup will be created)',
-        });
+        message: 'Do you want to force a re-initialization? (A backup will be created)',
+      });
     if (!reinit || typeof reinit === 'symbol') {
       outro('Process finished.');
       return;
@@ -71,6 +71,7 @@ export async function initCommand(options: { nonInteractive?: boolean } = {}) {
 
     await scaffoldAgentWorkspace(corePath, agentDir);
     await writeAgentsEntry(cwd);
+    await fs.mkdir(path.join(cwd, '.backups'), { recursive: true });
 
     s.stop('Configuration complete.');
 
@@ -119,7 +120,7 @@ Este fichero es el punto de entrada para asistentes del IDE.
 Solo define el arranque del sistema mediante el workflow \`init\`.
 
 ## Arranque (OBLIGATORIO)
-1. Leer \`.agent/index.md\` (root index local).
+1. Leer \`src/agentic-system-structure/index.md\` (root index local).
 2. Cargar el indice de workflows en \`agent.domains.workflows.index\`.
 3. Cargar \`workflows.init\`.
 4. Ejecutar el workflow \`init\` y seguir sus Gates.

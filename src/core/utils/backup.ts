@@ -6,8 +6,9 @@ import path from 'node:path';
  */
 export async function performBackup(cwd: string): Promise<string> {
     const agentDir = path.join(cwd, '.agent');
+    const backupsContainer = path.join(cwd, '.backups');
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const backupDir = path.join(cwd, `.agent.backup_${timestamp}`);
+    const backupDir = path.join(backupsContainer, `.agent.backup_${timestamp}`);
 
     // Check if .agent exists
     try {

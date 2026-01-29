@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.18.4-beta.18] (2026-01-29)
+
+### Documentation
+* **README**: Add instructions for bootstrapping the system via chat command.
+
 ## [1.18.4-beta.17] (2026-01-29)
 
 ### Identity

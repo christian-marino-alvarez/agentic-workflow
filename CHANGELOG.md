@@ -1,10 +1,15 @@
 # Changelog
 
+## [1.18.4-beta.1] (2026-01-29)
+
+### Refactor
+* **Structure**: Reorganize agentic system structure and centralize backups.
+* **CLI**: Update `init` command for new structure and standard `.agent` paths.
+* **VSCode**: Update extension name and activation events.
+
 ## [1.18.2-beta.10](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.18.1-beta.10...agentic-workflow-v1.18.2-beta.10) (2026-01-28)
 
-
 ### Bug Fixes
-
 * restore standard .agent paths for customer installation ([555dce5](https://github.com/christian-marino-alvarez/agentic-workflow/commit/555dce5a8c4c35421f8dd381c4c44da52b58f98c))
 
 ## [1.18.3] (2026-01-28)

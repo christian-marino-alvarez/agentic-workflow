@@ -40,7 +40,7 @@ Referencia completa: `constitution.agents_behavior`
 **Severidad**: PERMANENT  
 **Alcance**: Todos los agentes
 
-**Solo el 🧭 architect-agent puede modificar archivos de reglas.**
+**Solo el 🏛️ architect-agent puede modificar archivos de reglas.**
 
 Archivos protegidos:
 - `.agent/rules/**/*.md` (todas las reglas)

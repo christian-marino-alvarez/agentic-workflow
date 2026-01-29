@@ -67,6 +67,4 @@ jobs:
 
       - name: Publish
         if: steps.version_check.outputs.published == 'false'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --registry https://registry.npmjs.org --access public --tag ${{ steps.dist_tag.outputs.tag }}
+        run: npm publish --registry https://registry.npmjs.org --access public --tag ${{ steps.dist_tag.outputs.tag }} --provenance

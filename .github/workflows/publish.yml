@@ -22,7 +22,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          registry-url: "https://registry.npmjs.org"
 
       - name: Install
         run: npm ci
@@ -64,9 +63,7 @@ jobs:
           fi
           echo "Unsupported base branch: ${BASE_REF}"
           exit 1
-      - name: Who am I
-        if: steps.version_check.outputs.published == 'false'
-        run: npm whoami
+
       - name: Publish
         if: steps.version_check.outputs.published == 'false'
-        run: npm publish --registry https://registry.npmjs.org --access public --tag ${{ steps.dist_tag.outputs.tag }} --provenance
+        run: npm publish --provenance --access public --tag ${{ steps.dist_tag.outputs.tag }}

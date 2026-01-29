@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.19.0-beta.10](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.18.4-beta.10...agentic-workflow-v1.19.0-beta.10) (2026-01-29)
+
+
+### Features
+
+* **identity:** add premium SVG icons and update identity rules ([2e4460b](https://github.com/christian-marino-alvarez/agentic-workflow/commit/2e4460b00d048f26a7c0ed1cf6ca1130952277bd))
+
+
+### Bug Fixes
+
+* **identity:** revert to standard markdown-compatible icons ([a6df583](https://github.com/christian-marino-alvarez/agentic-workflow/commit/a6df583cbe9acd6eef322019d8f66a51b186abe5))
+
 ## [1.18.4-beta.10](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.18.3-beta.10...agentic-workflow-v1.18.4-beta.10) (2026-01-29)
 
 ### CI/CD

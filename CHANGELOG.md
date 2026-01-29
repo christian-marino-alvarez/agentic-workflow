@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.18.4-beta.1] (2026-01-29)
+
+### Refactor
+* **Structure**: Reorganize agentic system structure and centralize backups.
+* **CLI**: Update `init` command for new structure and standard `.agent` paths.
+* **VSCode**: Update extension name and activation events.
+
 ## [1.18.3] (2026-01-28)
 
 ### Features

@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.18.4-beta.2] (2026-01-29)
+
+### CI/CD
+* **Publishing**: Enable OIDC and Trusted Publishing for npm.
+
 ## [1.18.4-beta.1] (2026-01-29)
 
 ### Refactor

@@ -1,6 +1,6 @@
 {
     "name": "@christianmaf80/agentic-workflow",
-    "version": "1.18.4-beta.10",
+    "version": "1.18.4-beta.11",
     "description": "Portable agentic workflow orchestration system with strict identity and gate discipline",
     "type": "module",
     "displayName": "Agentic Workflow VSCode",

@@ -21,6 +21,14 @@
 npm install @christianmaf80/agentic-workflow
 ```
 
+## 🤖 Start with AI Assist
+
+If you are using this framework with an AI coding assistant (like Cursor, Windsurf, or Copilot), you can bootstrap the entire system directly from the chat:
+
+> **You:** "Please run the `init` command for agentic-workflow"
+
+The agent will use its terminal tools to set up the environment, create the `.agent` structure, and prepare the project for governed cycles without you typing a single command.
+
 ## 🛠️ CLI Commands
 
 ### `init`

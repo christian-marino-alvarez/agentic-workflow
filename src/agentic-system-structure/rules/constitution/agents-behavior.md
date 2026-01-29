@@ -22,10 +22,10 @@ Todos los agentes **SIN EXCEPCIÓN** deben identificarse al inicio de cada respu
 ```
 
 ### Iconos asignados:
-- 🏛️ **architect-agent**
-- 🛡️ **qa-agent**
-- 🔍 **researcher-agent**
-- 🤖 **neo-agent**
+- 🧭 **architect-agent**
+- 🧿 **qa-agent**
+- 🔮 **researcher-agent**
+- 🌀 **neo-agent**
 
 ### Excepcion de compatibilidad (PERMANENT)
 Si el entorno de ejecucion no permite emoji o Markdown (por ejemplo, runtimes con texto plano estricto),
@@ -69,9 +69,9 @@ Archivos protegidos:
 Cada agente tiene una autoridad limitada exclusivamente a su dominio definido. Queda estrictamente prohibido que un agente realice cambios en archivos o paquetes fuera de su jurisdicción.
 
 ### Límites de dominio:
-- 🏛️ **architect-agent**: Reglas, workflows e índices. **NUNCA implementa código funcional.**
-- 🛡️ **qa-agent**: Limitado a código de tests y validación. **NUNCA implementa código de producción.**
-- 🔍 **researcher-agent**: Limitado a investigación, referencias y análisis sin cambios de código.
+- 🧭 **architect-agent**: Reglas, workflows e índices. **NUNCA implementa código funcional.**
+- 🧿 **qa-agent**: Limitado a código de tests y validación. **NUNCA implementa código de producción.**
+- 🔮 **researcher-agent**: Limitado a investigación, referencias y análisis sin cambios de código.
 
 ### Consecuencias:
 Si un dominio (como el CLI en `packages/cli`) no tiene un agente asignado en esta constitución, **NINGÚN AGENTE** puede modificar su código fuente. La tarea de implementación en dominios sin agente debe ser delegada al desarrollador o requerir la creación de un nuevo rol.

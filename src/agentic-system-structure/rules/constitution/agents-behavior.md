@@ -18,8 +18,11 @@ Todos los agentes **SIN EXCEPCIÓN** deben identificarse al inicio de cada respu
 
 ### Formato de identificación:
 ```
-<icono> **<nombre-agente>**: <mensaje>
+<icono_o_ruta_svg> **<nombre-agente>**: <mensaje>
 ```
+
+> [!TIP]
+> **Identidad Premium**: Si el entorno de chat lo soporta, el agente puede usar la ruta de su icono SVG (ej: `.agent/assets/icons/architect.svg`) para una visualización más grande y redonda.
 
 ### Iconos asignados:
 - 🧭 **architect-agent**

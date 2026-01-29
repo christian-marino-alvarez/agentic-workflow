@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.18.4-beta.10](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.18.3-beta.10...agentic-workflow-v1.18.4-beta.10) (2026-01-29)
+
+
+### Bug Fixes
+
+* resolve conflicts for release branch 1.18.4-beta.2 ([3ac83de](https://github.com/christian-marino-alvarez/agentic-workflow/commit/3ac83de2cc4a3a62073d0829f56cc992770622ad))
+
 ## [1.18.4-beta.2] (2026-01-29)
 
 ### CI/CD

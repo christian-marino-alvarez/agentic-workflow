@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.18.4-beta.10](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.18.3-beta.10...agentic-workflow-v1.18.4-beta.10) (2026-01-29)
+
+### CI/CD
+* **Trusted Publishing**: Fully migrate to OIDC and Provenance.
+* **Release**: Synchronize release-please with manual releases.
+
 ## [1.18.4-beta.3] (2026-01-29)
 
 ### CI/CD

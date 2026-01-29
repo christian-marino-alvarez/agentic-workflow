@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.18.4-beta.3] (2026-01-29)
+
+### CI/CD
+* **Trusted Publishing**: Fully migrate to OIDC and Provenance.
+
 ## [1.18.4-beta.2] (2026-01-29)
 
 ### CI/CD

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.19.0-beta.12] (2026-01-30)
+
+### CI/CD
+* **Publish**: Prepare beta release via ci/publish workflow.
+
+
 ## [1.19.0-beta.10](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.18.4-beta.10...agentic-workflow-v1.19.0-beta.10) (2026-01-29)
 
 ### Features

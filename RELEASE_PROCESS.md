@@ -19,15 +19,6 @@ The project uses GitHub Actions for automated releases to npm.
      - Merges to `develop` -> `beta` tag.
      - Merges to `main` -> `latest` tag.
    - If validations pass, it publishes the package to npm.
-
-### Beta Tag Publishing (Alternative)
-1. **Tag trigger**:
-   - Creating a `beta` tag triggers the `publish-beta.yml` workflow.
-2. **Behavior**:
-   - Installs dependencies, builds, validates package name, checks if the version is already published.
-   - Publishes to npm with dist-tag `beta`.
-
-
 ### Manual Steps for Release
 1. Update version: `npm version prerelease --preid=beta` (or appropriate semver command).
 2. Update `CHANGELOG.md`.

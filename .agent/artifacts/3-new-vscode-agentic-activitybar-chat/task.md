@@ -1,8 +1,8 @@
 # Task (Template)
 
 ## Identificación
-- id: task-20260130-reagrupar-dist-agent-structure
-- title: Reagrupar dist en agent-structure
+- id: 3
+- title: new-vscode-agentic-activitybar-chat
 - scope: candidate | current
 - owner: architect-agent
 
@@ -13,62 +13,62 @@
   - candidate_path: artifacts.candidate.task
 
 ## Descripción de la tarea
-Reorganizar la salida de build para que la estructura agentic quede bajo `dist/agent-structure/`, manteniendo `dist/extension/` como carpeta separada.
+Crear un nuevo proyecto `vscode-agentic` al mismo nivel que `agentic-workflow`, con un icono en Activity Bar que abre una vista con chat nativo (Chat Participant API) y un panel inferior (webview) para sesion, tareas y estadisticas.
 
 ## Objetivo
-Dejar `dist/agent-structure/` con los artefactos de estructura y mantener `dist/extension/` intacto, ajustando el copiado/build según sea necesario.
+Base funcional de extension VS Code con Chat Participant y panel inferior en sidebar, con respuesta mock y estructura lista para evolucionar.
 
 ## Estado del ciclo de vida (FUENTE ÚNICA DE VERDAD)
 
 ```yaml
 task:
-  id: "task-20260130-reagrupar-dist-agent-structure"
-  title: "Reagrupar dist en agent-structure"
-  strategy: "short"  # long | short
+  id: "3"
+  title: "new-vscode-agentic-activitybar-chat"
+  strategy: "long"  # long | short
   artifacts:
     supplemental: []
   phase:
-    current: "completed"
+    current: "phase-8-commit-push"
     validated_by: "architect-agent"
-    updated_at: "2026-01-30T00:00:00Z"
+    updated_at: "2026-01-25T13:37:12Z"
   lifecycle:
     phases:
       phase-0-acceptance-criteria:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-01-25T11:29:04Z"
       phase-1-research:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-01-25T11:32:00Z"
       phase-2-analysis:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-01-25T11:33:45Z"
       phase-3-planning:
         completed: false
         validated_by: null
         validated_at: null
       phase-4-implementation:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-01-25T11:49:46Z"
       phase-5-verification:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-01-25T11:53:00Z"
       phase-6-results-acceptance:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-01-25T11:54:10Z"
       phase-7-evaluation:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-01-25T13:35:15Z"
       phase-8-commit-push:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-01-25T13:37:12Z"
     subflows:
       components:
         create:
@@ -87,23 +87,23 @@ task:
             validated_by: null
             validated_at: null
       short-phase-1-brief:
-        completed: true
-        validated_by: architect-agent
-        validated_at: "2026-01-30T00:00:00Z"
+        completed: false
+        validated_by: null
+        validated_at: null
       short-phase-2-implementation:
-        completed: true
-        validated_by: architect-agent
-        validated_at: "2026-01-30T00:00:00Z"
+        completed: false
+        validated_by: null
+        validated_at: null
       short-phase-3-closure:
-        completed: true
-        validated_by: architect-agent
-        validated_at: "2026-01-30T00:00:00Z"
+        completed: false
+        validated_by: null
+        validated_at: null
 ```
 
 ---
 
 ## 2. Definición y Alcance (Contrato)
-- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/task-20260130-reagrupar-dist-agent-structure/acceptance.md)
+- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/3-new-vscode-agentic-activitybar-chat/acceptance.md)
 - **Alias**: `task.acceptance`
 
 ---

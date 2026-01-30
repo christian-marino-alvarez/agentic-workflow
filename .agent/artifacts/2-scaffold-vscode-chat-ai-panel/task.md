@@ -1,8 +1,8 @@
 # Task (Template)
 
 ## Identificación
-- id: task-20260130-reagrupar-dist-agent-structure
-- title: Reagrupar dist en agent-structure
+- id: 2
+- title: scaffold-vscode-chat-ai-panel
 - scope: candidate | current
 - owner: architect-agent
 
@@ -13,42 +13,42 @@
   - candidate_path: artifacts.candidate.task
 
 ## Descripción de la tarea
-Reorganizar la salida de build para que la estructura agentic quede bajo `dist/agent-structure/`, manteniendo `dist/extension/` como carpeta separada.
+Migrar la extension de VS Code desde `src/extension` al root de `agentic-workflow`, dejando un unico `package.json` en el root, con `src/` y `out/` en root, y manteniendo el scaffold de Chat Participant y panel inferior.
 
 ## Objetivo
-Dejar `dist/agent-structure/` con los artefactos de estructura y mantener `dist/extension/` intacto, ajustando el copiado/build según sea necesario.
+Extension integrada en el root del repo, con el scaffold de Chat Participant funcionando, sin dependencias duplicadas ni rutas rotas.
 
 ## Estado del ciclo de vida (FUENTE ÚNICA DE VERDAD)
 
 ```yaml
 task:
-  id: "task-20260130-reagrupar-dist-agent-structure"
-  title: "Reagrupar dist en agent-structure"
-  strategy: "short"  # long | short
+  id: "2"
+  title: "scaffold-vscode-chat-ai-panel"
+  strategy: "long"  # long | short
   artifacts:
     supplemental: []
   phase:
-    current: "completed"
+    current: "phase-4-implementation"
     validated_by: "architect-agent"
-    updated_at: "2026-01-30T00:00:00Z"
+    updated_at: "2026-01-25T11:18:56Z"
   lifecycle:
     phases:
       phase-0-acceptance-criteria:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-01-25T11:01:15Z"
       phase-1-research:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-01-25T11:12:44Z"
       phase-2-analysis:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-01-25T11:16:44Z"
       phase-3-planning:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-01-25T11:18:56Z"
       phase-4-implementation:
         completed: false
         validated_by: null
@@ -87,23 +87,23 @@ task:
             validated_by: null
             validated_at: null
       short-phase-1-brief:
-        completed: true
-        validated_by: architect-agent
-        validated_at: "2026-01-30T00:00:00Z"
+        completed: false
+        validated_by: null
+        validated_at: null
       short-phase-2-implementation:
-        completed: true
-        validated_by: architect-agent
-        validated_at: "2026-01-30T00:00:00Z"
+        completed: false
+        validated_by: null
+        validated_at: null
       short-phase-3-closure:
-        completed: true
-        validated_by: architect-agent
-        validated_at: "2026-01-30T00:00:00Z"
+        completed: false
+        validated_by: null
+        validated_at: null
 ```
 
 ---
 
 ## 2. Definición y Alcance (Contrato)
-- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/task-20260130-reagrupar-dist-agent-structure/acceptance.md)
+- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/2-scaffold-vscode-chat-ai-panel/acceptance.md)
 - **Alias**: `task.acceptance`
 
 ---

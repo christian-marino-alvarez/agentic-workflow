@@ -1,8 +1,8 @@
 # Task (Template)
 
 ## Identificación
-- id: task-20260130-reagrupar-dist-agent-structure
-- title: Reagrupar dist en agent-structure
+- id: {{task.id}}
+- title: {{task.title}}
 - scope: candidate | current
 - owner: architect-agent
 
@@ -13,24 +13,24 @@
   - candidate_path: artifacts.candidate.task
 
 ## Descripción de la tarea
-Reorganizar la salida de build para que la estructura agentic quede bajo `dist/agent-structure/`, manteniendo `dist/extension/` como carpeta separada.
+{{task.description}}
 
 ## Objetivo
-Dejar `dist/agent-structure/` con los artefactos de estructura y mantener `dist/extension/` intacto, ajustando el copiado/build según sea necesario.
+{{task.goal}}
 
 ## Estado del ciclo de vida (FUENTE ÚNICA DE VERDAD)
 
 ```yaml
 task:
-  id: "task-20260130-reagrupar-dist-agent-structure"
-  title: "Reagrupar dist en agent-structure"
-  strategy: "short"  # long | short
+  id: "{{task.id}}"
+  title: "{{task.title}}"
+  strategy: "{{task.strategy}}"  # long | short
   artifacts:
     supplemental: []
   phase:
-    current: "completed"
+    current: "phase-0-acceptance-criteria"
     validated_by: "architect-agent"
-    updated_at: "2026-01-30T00:00:00Z"
+    updated_at: "{{timestamp}}"
   lifecycle:
     phases:
       phase-0-acceptance-criteria:
@@ -87,23 +87,23 @@ task:
             validated_by: null
             validated_at: null
       short-phase-1-brief:
-        completed: true
-        validated_by: architect-agent
-        validated_at: "2026-01-30T00:00:00Z"
+        completed: false
+        validated_by: null
+        validated_at: null
       short-phase-2-implementation:
-        completed: true
-        validated_by: architect-agent
-        validated_at: "2026-01-30T00:00:00Z"
+        completed: false
+        validated_by: null
+        validated_at: null
       short-phase-3-closure:
-        completed: true
-        validated_by: architect-agent
-        validated_at: "2026-01-30T00:00:00Z"
+        completed: false
+        validated_by: null
+        validated_at: null
 ```
 
 ---
 
 ## 2. Definición y Alcance (Contrato)
-- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/task-20260130-reagrupar-dist-agent-structure/acceptance.md)
+- **Acceptance Criteria**: [acceptance.md](file:///{{task.acceptance_path}})
 - **Alias**: `task.acceptance`
 
 ---

@@ -2,7 +2,7 @@
 artifact: closure
 phase: short-phase-3-closure
 owner: architect-agent
-status: draft
+status: approved
 related_task: task-20260130-rol-vscode-Crear rol especifico para extensiones VS Code
 ---
 

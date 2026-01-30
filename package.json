@@ -14,10 +14,12 @@
     "dist/templates",
     "dist/artifacts",
     "dist/index.md",
+    "dist/extension",
     "bin",
     "README.md",
     "LICENSE",
-    "RELEASE_PROCESS.md"
+    "RELEASE_PROCESS.md",
+    "media"
   ],
   "scripts": {
     "build": "node scripts/clean-dist.mjs && tsc && npm run copy-assets",
@@ -60,9 +62,41 @@
     "@types/node": "^20.10.6",
     "eslint": "^9.39.2",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.52.0"
+    "typescript-eslint": "^8.52.0",
+    "@types/vscode": "^1.108.1"
   },
   "overrides": {
     "diff": "8.0.3"
+  },
+  "displayName": "Agentic Workflow",
+  "main": "./dist/extension/extension.js",
+  "engines": {
+    "vscode": "^1.108.2"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:mainView"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "main",
+          "title": "Agent Chat",
+          "icon": "media/agent-chat.svg"
+        }
+      ]
+    },
+    "views": {
+      "main": [
+        {
+          "id": "mainView",
+          "name": "Agent Chat",
+          "icon": "media/agent-chat.svg"
+        }
+      ]
+    }
   }
 }

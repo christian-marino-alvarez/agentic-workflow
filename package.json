@@ -29,7 +29,8 @@
         {
           "id": "mainView",
           "name": "Agent Chat",
-          "icon": "media/agent-chat.svg"
+          "icon": "media/agent-chat.svg",
+          "type": "webview"
         }
       ]
     }

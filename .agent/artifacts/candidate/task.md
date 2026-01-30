@@ -1,8 +1,8 @@
 # Task (Template)
 
 ## Identificación
-- id: task-20260130-reagrupar-dist-agent-structure
-- title: Reagrupar dist en agent-structure
+- id: task-20260130-fix-mainview-provider
+- title: No hay proveedor de datos para mainView
 - scope: candidate | current
 - owner: architect-agent
 
@@ -13,17 +13,17 @@
   - candidate_path: artifacts.candidate.task
 
 ## Descripción de la tarea
-Reorganizar la salida de build para que la estructura agentic quede bajo `dist/agent-structure/`, manteniendo `dist/extension/` como carpeta separada.
+La vista `mainView` muestra el mensaje de que no hay proveedor de datos registrado. Debe registrarse correctamente el `WebviewViewProvider` para que la vista renderice el contenido esperado.
 
 ## Objetivo
-Dejar `dist/agent-structure/` con los artefactos de estructura y mantener `dist/extension/` intacto, ajustando el copiado/build según sea necesario.
+Al abrir `mainView` desde la Activity Bar, se debe registrar el proveedor y mostrar el webview con el HTML base ("Hello world"), sin el mensaje de ausencia de proveedor.
 
 ## Estado del ciclo de vida (FUENTE ÚNICA DE VERDAD)
 
 ```yaml
 task:
-  id: "task-20260130-reagrupar-dist-agent-structure"
-  title: "Reagrupar dist en agent-structure"
+  id: "task-20260130-fix-mainview-provider"
+  title: "No hay proveedor de datos para mainView"
   strategy: "short"  # long | short
   artifacts:
     supplemental: []
@@ -103,7 +103,7 @@ task:
 ---
 
 ## 2. Definición y Alcance (Contrato)
-- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/task-20260130-reagrupar-dist-agent-structure/acceptance.md)
+- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/task-20260130-fix-mainview-provider/acceptance.md)
 - **Alias**: `task.acceptance`
 
 ---

@@ -1,8 +1,8 @@
 # Task (Template)
 
 ## Identificación
-- id: task-20260130-extension-vscode-webview
-- title: Crear extensión VS Code con webview en activity bar
+- id: {{task.id}}
+- title: {{task.title}}
 - scope: candidate | current
 - owner: architect-agent
 
@@ -13,24 +13,24 @@
   - candidate_path: artifacts.candidate.task
 
 ## Descripción de la tarea
-Crear una extensión de VS Code dentro de `src` que cargue un webview en un panel de la activity bar mediante un icono. Debe ser compatible con la última versión estable de VS Code. Las vistas estarán jerarquizadas en `src/extension/views` con un patrón `index.ts` en ESM que exporte cada view creada.
+{{task.description}}
 
 ## Objetivo
-Implementar la base de la extensión con una vista en activity bar y estructura de vistas exportadas por `src/extension/views/index.ts`, compatible con la última versión estable de VS Code.
+{{task.goal}}
 
 ## Estado del ciclo de vida (FUENTE ÚNICA DE VERDAD)
 
 ```yaml
 task:
-  id: "task-20260130-extension-vscode-webview"
-  title: "Crear extensión VS Code con webview en activity bar"
-  strategy: "long"  # long | short
+  id: "{{task.id}}"
+  title: "{{task.title}}"
+  strategy: "{{task.strategy}}"  # long | short
   artifacts:
     supplemental: []
   phase:
     current: "phase-0-acceptance-criteria"
     validated_by: "architect-agent"
-    updated_at: "2026-01-30T15:51:57Z"
+    updated_at: "{{timestamp}}"
   lifecycle:
     phases:
       phase-0-acceptance-criteria:
@@ -86,12 +86,24 @@ task:
             completed: false
             validated_by: null
             validated_at: null
+      short-phase-1-brief:
+        completed: false
+        validated_by: null
+        validated_at: null
+      short-phase-2-implementation:
+        completed: false
+        validated_by: null
+        validated_at: null
+      short-phase-3-closure:
+        completed: false
+        validated_by: null
+        validated_at: null
 ```
 
 ---
 
 ## 2. Definición y Alcance (Contrato)
-- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/task-20260130-extension-vscode-webview/acceptance.md)
+- **Acceptance Criteria**: [acceptance.md](file:///{{task.acceptance_path}})
 - **Alias**: `task.acceptance`
 
 ---

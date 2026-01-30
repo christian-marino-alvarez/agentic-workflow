@@ -1,8 +1,8 @@
 # Task (Template)
 
 ## Identificación
-- id: task-20260130-extension-vscode-webview
-- title: Crear extensión VS Code con webview en activity bar
+- id: 3
+- title: new-vscode-agentic-activitybar-chat
 - scope: candidate | current
 - owner: architect-agent
 
@@ -13,62 +13,62 @@
   - candidate_path: artifacts.candidate.task
 
 ## Descripción de la tarea
-Crear una extensión de VS Code dentro de `src` que cargue un webview en un panel de la activity bar mediante un icono. Debe ser compatible con la última versión estable de VS Code. Las vistas estarán jerarquizadas en `src/extension/views` con un patrón `index.ts` en ESM que exporte cada view creada.
+Crear un nuevo proyecto `vscode-agentic` al mismo nivel que `agentic-workflow`, con un icono en Activity Bar que abre una vista con chat nativo (Chat Participant API) y un panel inferior (webview) para sesion, tareas y estadisticas.
 
 ## Objetivo
-Implementar la base de la extensión con una vista en activity bar y estructura de vistas exportadas por `src/extension/views/index.ts`, compatible con la última versión estable de VS Code.
+Base funcional de extension VS Code con Chat Participant y panel inferior en sidebar, con respuesta mock y estructura lista para evolucionar.
 
 ## Estado del ciclo de vida (FUENTE ÚNICA DE VERDAD)
 
 ```yaml
 task:
-  id: "task-20260130-extension-vscode-webview"
-  title: "Crear extensión VS Code con webview en activity bar"
+  id: "3"
+  title: "new-vscode-agentic-activitybar-chat"
   strategy: "long"  # long | short
   artifacts:
     supplemental: []
   phase:
-    current: "phase-0-acceptance-criteria"
+    current: "phase-8-commit-push"
     validated_by: "architect-agent"
-    updated_at: "2026-01-30T15:51:57Z"
+    updated_at: "2026-01-25T13:37:12Z"
   lifecycle:
     phases:
       phase-0-acceptance-criteria:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-01-25T11:29:04Z"
       phase-1-research:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-01-25T11:32:00Z"
       phase-2-analysis:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-01-25T11:33:45Z"
       phase-3-planning:
         completed: false
         validated_by: null
         validated_at: null
       phase-4-implementation:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-01-25T11:49:46Z"
       phase-5-verification:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-01-25T11:53:00Z"
       phase-6-results-acceptance:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-01-25T11:54:10Z"
       phase-7-evaluation:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-01-25T13:35:15Z"
       phase-8-commit-push:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-01-25T13:37:12Z"
     subflows:
       components:
         create:
@@ -86,12 +86,24 @@ task:
             completed: false
             validated_by: null
             validated_at: null
+      short-phase-1-brief:
+        completed: false
+        validated_by: null
+        validated_at: null
+      short-phase-2-implementation:
+        completed: false
+        validated_by: null
+        validated_at: null
+      short-phase-3-closure:
+        completed: false
+        validated_by: null
+        validated_at: null
 ```
 
 ---
 
 ## 2. Definición y Alcance (Contrato)
-- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/task-20260130-extension-vscode-webview/acceptance.md)
+- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/3-new-vscode-agentic-activitybar-chat/acceptance.md)
 - **Alias**: `task.acceptance`
 
 ---

@@ -9,11 +9,7 @@
   "files": [
     "dist/cli",
     "dist/core",
-    "dist/rules",
-    "dist/workflows",
-    "dist/templates",
-    "dist/artifacts",
-    "dist/index.md",
+    "dist/agent",
     "dist/extension",
     "bin",
     "README.md",
@@ -23,7 +19,7 @@
   ],
   "scripts": {
     "build": "node scripts/clean-dist.mjs && tsc && npm run copy-assets",
-    "copy-assets": "cp -r src/agentic-system-structure/rules src/agentic-system-structure/workflows src/agentic-system-structure/templates src/agentic-system-structure/artifacts dist/ && cp src/agentic-system-structure/index.md dist/index.md",
+    "copy-assets": "mkdir -p dist/agent && cp -r src/agentic-system-structure/rules src/agentic-system-structure/workflows src/agentic-system-structure/templates src/agentic-system-structure/artifacts dist/agent/ && cp src/agentic-system-structure/index.md dist/agent/index.md",
     "start": "node dist/index.js",
     "publish:npm": "npm publish --registry https://registry.npmjs.org --access public",
     "publish:github": "npm publish --registry https://npm.pkg.github.com",

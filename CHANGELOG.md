@@ -8,6 +8,11 @@
 ### Bug Fixes
 * **identity:** revert to standard markdown-compatible icons ([a6df583](https://github.com/christian-marino-alvarez/agentic-workflow/commit/a6df583cbe9acd6eef322019d8f66a51b186abe5))
 
+## [1.18.4-beta.18] (2026-01-29)
+
+### Documentation
+* **README**: Add instructions for bootstrapping the system via chat command.
+
 ## [1.18.4-beta.17] (2026-01-29)
 
 ### Identity

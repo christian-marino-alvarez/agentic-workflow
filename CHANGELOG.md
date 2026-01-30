@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.20.1](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.20.0...agentic-workflow-v1.20.1) (2026-01-30)
+
+
+### Bug Fixes
+
+* **extension:** render mainView webview ([84d8a0c](https://github.com/christian-marino-alvarez/agentic-workflow/commit/84d8a0c2b148b43b63c11817d30221d58a46add1))
+* **extension:** render mainView webview ([eba8643](https://github.com/christian-marino-alvarez/agentic-workflow/commit/eba864391126f2f518d6083c2b8931573b5c9b53))
+
 ## [1.20.0](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.19.1...agentic-workflow-v1.20.0) (2026-01-30)
 
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.19.1-beta.10](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.19.0-beta.10...agentic-workflow-v1.19.1-beta.10) (2026-01-30)
+
+
+### Bug Fixes
+
+* **cli:** handle null backup on reinit ([61fb7a5](https://github.com/christian-marino-alvarez/agentic-workflow/commit/61fb7a55496f435f75c0f93ef36278650cdfd3f1))
+* **cli:** handle null backup on reinit ([19fd617](https://github.com/christian-marino-alvarez/agentic-workflow/commit/19fd617b30406c4447a6bbf03bbd3d5f2ecc863d))
+
 ## [1.19.0-beta.13] (2026-01-30)
 
 ### Bug Fixes

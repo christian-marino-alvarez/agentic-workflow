@@ -1,5 +1,79 @@
 # Changelog
 
+## [1.19.1] (2026-01-30)
+
+### Features
+* **VSCode**: Activity bar view with webview scaffold and icon.
+* **Distribution**: Agent markdown assets moved under `dist/agent` and mirror `src/agent` removed.
+
+### Fixes
+* **Core**: Resolver updated to locate agent assets in `dist/agent`.
+
+## [1.19.1-beta.10](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.19.0-beta.10...agentic-workflow-v1.19.1-beta.10) (2026-01-30)
+
+
+### Bug Fixes
+
+* **cli:** handle null backup on reinit ([61fb7a5](https://github.com/christian-marino-alvarez/agentic-workflow/commit/61fb7a55496f435f75c0f93ef36278650cdfd3f1))
+* **cli:** handle null backup on reinit ([19fd617](https://github.com/christian-marino-alvarez/agentic-workflow/commit/19fd617b30406c4447a6bbf03bbd3d5f2ecc863d))
+
+## [1.19.0-beta.13] (2026-01-30)
+
+### Bug Fixes
+* **cli:** handle null backup result during re-initialization.
+
+## [1.19.0-beta.12] (2026-01-30)
+
+### CI/CD
+* **Publish**: Prepare beta release via ci/publish workflow.
+
+
+## [1.19.0-beta.10](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.18.4-beta.10...agentic-workflow-v1.19.0-beta.10) (2026-01-29)
+
+### Features
+* **identity:** add premium SVG icons and update identity rules ([2e4460b](https://github.com/christian-marino-alvarez/agentic-workflow/commit/2e4460b00d048f26a7c0ed1cf6ca1130952277bd))
+
+### Bug Fixes
+* **identity:** revert to standard markdown-compatible icons ([a6df583](https://github.com/christian-marino-alvarez/agentic-workflow/commit/a6df583cbe9acd6eef322019d8f66a51b186abe5))
+
+## [1.18.4-beta.18] (2026-01-29)
+
+### Documentation
+* **README**: Add instructions for bootstrapping the system via chat command.
+
+## [1.18.4-beta.17] (2026-01-29)
+
+### Identity
+* **Icons**: Revert to standard markdown-compatible icons (🏛️, 🛡️, 🔍, 🤖) for maximum chat compatibility.
+
+## [1.18.4-beta.10](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.18.3-beta.10...agentic-workflow-v1.18.4-beta.10) (2026-01-29)
+
+### CI/CD
+* **Trusted Publishing**: Fully migrate to OIDC and Provenance.
+* **Release**: Synchronize release-please with manual releases.
+
+## [1.18.4-beta.3] (2026-01-29)
+
+### CI/CD
+* **Trusted Publishing**: Fully migrate to OIDC and Provenance.
+
+## [1.18.4-beta.2] (2026-01-29)
+
+### CI/CD
+* **Publishing**: Enable OIDC and Trusted Publishing for npm.
+
+## [1.18.4-beta.1] (2026-01-29)
+
+### Refactor
+* **Structure**: Reorganize agentic system structure and centralize backups.
+* **CLI**: Update `init` command for new structure and standard `.agent` paths.
+* **VSCode**: Update extension name and activation events.
+
+## [1.18.2-beta.10](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.18.1-beta.10...agentic-workflow-v1.18.2-beta.10) (2026-01-28)
+
+### Bug Fixes
+* restore standard .agent paths for customer installation ([555dce5](https://github.com/christian-marino-alvarez/agentic-workflow/commit/555dce5a8c4c35421f8dd381c4c44da52b58f98c))
+
 ## [1.18.3] (2026-01-28)
 
 ### Features

@@ -51,13 +51,42 @@ async function resolveCorePathFromDir(startDir: string): Promise<string> {
     const maxRetries = 5;
 
     for (let i = 0; i < maxRetries; i++) {
-        const potentialRulesPath = path.join(currentDir, 'rules');
-        const potentialWorkflowsPath = path.join(currentDir, 'workflows');
+        const legacyRoot = {
+            root: currentDir,
+            rules: path.join(currentDir, 'rules'),
+            workflows: path.join(currentDir, 'workflows'),
+        };
+        const agentStructureRoot = {
+            root: path.join(currentDir, 'agent'),
+            rules: path.join(currentDir, 'agent', 'rules'),
+            workflows: path.join(currentDir, 'agent', 'workflows'),
+        };
+        const agenticStructureRoot = {
+            root: path.join(currentDir, 'agentic-system-structure'),
+            rules: path.join(currentDir, 'agentic-system-structure', 'rules'),
+            workflows: path.join(currentDir, 'agentic-system-structure', 'workflows'),
+        };
 
         try {
-            await fs.access(potentialRulesPath);
-            await fs.access(potentialWorkflowsPath);
-            return currentDir; // Encontrado
+            await fs.access(legacyRoot.rules);
+            await fs.access(legacyRoot.workflows);
+            return legacyRoot.root;
+        } catch {
+            // keep checking other variants
+        }
+
+        try {
+            await fs.access(agentStructureRoot.rules);
+            await fs.access(agentStructureRoot.workflows);
+            return agentStructureRoot.root;
+        } catch {
+            // keep checking other variants
+        }
+
+        try {
+            await fs.access(agenticStructureRoot.rules);
+            await fs.access(agenticStructureRoot.workflows);
+            return agenticStructureRoot.root;
         } catch {
             currentDir = path.dirname(currentDir);
         }
@@ -67,7 +96,13 @@ async function resolveCorePathFromDir(startDir: string): Promise<string> {
 }
 
 async function resolveCorePathFromPackageRoot(pkgRoot: string): Promise<string> {
-    const candidates = [pkgRoot, path.join(pkgRoot, 'dist'), path.join(pkgRoot, 'src')];
+    const candidates = [
+        pkgRoot,
+        path.join(pkgRoot, 'dist'),
+        path.join(pkgRoot, 'dist', 'agent'),
+        path.join(pkgRoot, 'src'),
+        path.join(pkgRoot, 'src', 'agentic-system-structure'),
+    ];
     for (const candidate of candidates) {
         try {
             const rulesPath = path.join(candidate, 'rules');

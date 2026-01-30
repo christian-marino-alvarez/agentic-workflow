@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.19.1] (2026-01-30)
+
+### Features
+* **VSCode**: Activity bar view with webview scaffold and icon.
+* **Distribution**: Agent markdown assets moved under `dist/agent` and mirror `src/agent` removed.
+
+### Fixes
+* **Core**: Resolver updated to locate agent assets in `dist/agent`.
+
 ## [1.19.1-beta.10](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.19.0-beta.10...agentic-workflow-v1.19.1-beta.10) (2026-01-30)
 
 

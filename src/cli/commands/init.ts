@@ -49,7 +49,11 @@ export async function initCommand(options: { nonInteractive?: boolean } = {}) {
     const sBackup = spinner();
     sBackup.start('Creating backup...');
     const resultBackup = await performBackup(cwd);
-    sBackup.stop(`Backup created at: ${path.relative(cwd, resultBackup)}`);
+    if (resultBackup) {
+      sBackup.stop(`Backup created at: ${path.relative(cwd, resultBackup)}`);
+    } else {
+      sBackup.stop('No backup was required.');
+    }
   }
 
   // 2. Cleanup Legacy Files (Enforce Purity)

@@ -39,7 +39,7 @@ function createNonce(): string {
 
 function renderHtml(): string {
   const nonce = createNonce();
-  return baseHtml.replace('__NONCE__', nonce);
+  return baseHtml.replace(/__NONCE__/g, nonce);
 }
 
 export class MainChatView implements WebviewViewProvider {

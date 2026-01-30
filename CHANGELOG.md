@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.19.0-beta.13] (2026-01-30)
+
+### Bug Fixes
+* **cli:** handle null backup result during re-initialization.
+
 ## [1.19.0-beta.12] (2026-01-30)
 
 ### CI/CD

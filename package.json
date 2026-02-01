@@ -12,9 +12,24 @@
     "Other"
   ],
   "activationEvents": [
-    "onView:mainView"
+    "onView:chatView",
+    "onView:historyView",
+    "onView:workflowView",
+    "onView:keyView",
+    "onCommand:agenticWorkflow.setOpenAIKey",
+    "onCommand:agenticWorkflow.clearOpenAIKey"
   ],
   "contributes": {
+    "commands": [
+      {
+        "command": "agenticWorkflow.setOpenAIKey",
+        "title": "Agentic: Set OpenAI API Key"
+      },
+      {
+        "command": "agenticWorkflow.clearOpenAIKey",
+        "title": "Agentic: Clear OpenAI API Key"
+      }
+    ],
     "viewsContainers": {
       "activitybar": [
         {
@@ -27,10 +42,29 @@
     "views": {
       "main": [
         {
-          "id": "mainView",
+          "id": "chatView",
           "name": "Agent Chat",
           "icon": "media/agent-chat.svg",
-          "type": "webview"
+          "type": "webview",
+          "when": "agenticWorkflow.hasKey"
+        },
+        {
+          "id": "historyView",
+          "name": "History",
+          "type": "webview",
+          "when": "agenticWorkflow.hasKey"
+        },
+        {
+          "id": "workflowView",
+          "name": "Workflows",
+          "type": "webview",
+          "when": "agenticWorkflow.hasKey"
+        },
+        {
+          "id": "keyView",
+          "name": "Setup",
+          "type": "webview",
+          "when": "true"
         }
       ]
     }
@@ -50,13 +84,14 @@
     "media"
   ],
   "scripts": {
-    "build": "node scripts/clean-dist.mjs && tsc && npm run copy-assets",
+    "build": "node scripts/clean-dist.mjs && tsc && npm run copy-assets && npm run copy-view-assets",
     "copy-assets": "mkdir -p dist/agent && cp -r src/agentic-system-structure/rules src/agentic-system-structure/workflows src/agentic-system-structure/templates src/agentic-system-structure/artifacts dist/agent/ && cp src/agentic-system-structure/index.md dist/agent/index.md",
+    "copy-view-assets": "rm -rf dist/extension/views/chat/web dist/extension/views/history/web dist/extension/views/workflow/web && mkdir -p dist/extension/views && cp -R src/extension/views/chat/web dist/extension/views/chat/ && cp -R src/extension/views/history/web dist/extension/views/history/ && cp -R src/extension/views/workflow/web dist/extension/views/workflow/",
     "start": "node dist/index.js",
     "publish:npm": "npm publish --registry https://registry.npmjs.org --access public",
     "publish:github": "npm publish --registry https://npm.pkg.github.com",
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
+    "compile": "tsc -p ./ && npm run copy-view-assets",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
@@ -85,7 +120,9 @@
   "dependencies": {
     "@clack/prompts": "^0.7.0",
     "commander": "^11.1.0",
-    "gray-matter": "^4.0.3"
+    "gray-matter": "^4.0.3",
+    "lit": "^3.2.0",
+    "openai": "^6.17.0"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",

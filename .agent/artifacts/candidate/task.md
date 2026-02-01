@@ -1,8 +1,8 @@
 # Task (Template)
 
 ## Identificación
-- id: task-20260130-fix-mainview-provider
-- title: No hay proveedor de datos para mainView
+- id: task-20260130-chatkit-mainview
+- title: Integrar ChatKit en mainView
 - scope: candidate | current
 - owner: architect-agent
 
@@ -13,58 +13,58 @@
   - candidate_path: artifacts.candidate.task
 
 ## Descripción de la tarea
-La vista `mainView` muestra el mensaje de que no hay proveedor de datos registrado. Debe registrarse correctamente el `WebviewViewProvider` para que la vista renderice el contenido esperado.
+Integrar OpenAI ChatKit en `mainView` con un ejemplo básico funcional en VS Code, usando backend local en el extension host y agentes dinámicos para el rol Neo.
 
 ## Objetivo
-Al abrir `mainView` desde la Activity Bar, se debe registrar el proveedor y mostrar el webview con el HTML base ("Hello world"), sin el mensaje de ausencia de proveedor.
+Mostrar un ChatKit embebido en `mainView` con un botón “Test” que dispare el mensaje “Hello I am the first agent called Neo”, usando un agente dinámico (gpt-5) creado por sesión y con contexto de rol/constitución.
 
 ## Estado del ciclo de vida (FUENTE ÚNICA DE VERDAD)
 
 ```yaml
 task:
-  id: "task-20260130-fix-mainview-provider"
-  title: "No hay proveedor de datos para mainView"
-  strategy: "short"  # long | short
+  id: "task-20260130-chatkit-mainview"
+  title: "Integrar ChatKit en mainView"
+  strategy: "long"  # long | short
   artifacts:
     supplemental: []
   phase:
-    current: "completed"
+    current: "phase-8-commit-push"
     validated_by: "architect-agent"
-    updated_at: "2026-01-30T00:00:00Z"
+    updated_at: "2026-02-01T11:35:00Z"
   lifecycle:
     phases:
       phase-0-acceptance-criteria:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: architect-agent
+        validated_at: "2026-01-30T00:00:00Z"
       phase-1-research:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: architect-agent
+        validated_at: "2026-01-30T00:00:00Z"
       phase-2-analysis:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: architect-agent
+        validated_at: "2026-01-30T00:00:00Z"
       phase-3-planning:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: architect-agent
+        validated_at: "2026-01-30T00:00:00Z"
       phase-4-implementation:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: architect-agent
+        validated_at: "2026-02-01T11:16:00Z"
       phase-5-verification:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: architect-agent
+        validated_at: "2026-02-01T11:20:30Z"
       phase-6-results-acceptance:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: architect-agent
+        validated_at: "2026-02-01T11:25:00Z"
       phase-7-evaluation:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: architect-agent
+        validated_at: "2026-02-01T11:35:00Z"
       phase-8-commit-push:
         completed: false
         validated_by: null
@@ -87,23 +87,23 @@ task:
             validated_by: null
             validated_at: null
       short-phase-1-brief:
-        completed: true
-        validated_by: architect-agent
-        validated_at: "2026-01-30T00:00:00Z"
+        completed: false
+        validated_by: null
+        validated_at: null
       short-phase-2-implementation:
-        completed: true
-        validated_by: architect-agent
-        validated_at: "2026-01-30T00:00:00Z"
+        completed: false
+        validated_by: null
+        validated_at: null
       short-phase-3-closure:
-        completed: true
-        validated_by: architect-agent
-        validated_at: "2026-01-30T00:00:00Z"
+        completed: false
+        validated_by: null
+        validated_at: null
 ```
 
 ---
 
 ## 2. Definición y Alcance (Contrato)
-- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/task-20260130-fix-mainview-provider/acceptance.md)
+- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/task-20260130-chatkit-mainview/acceptance.md)
 - **Alias**: `task.acceptance`
 
 ---

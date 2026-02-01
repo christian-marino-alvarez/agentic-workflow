@@ -20,6 +20,8 @@ constitution:
   clean_code: .agent/rules/constitution/clean-code.md
   agents_behavior: .agent/rules/constitution/agents-behavior.md
   vscode_extensions: .agent/rules/constitution/vscode-extensions.md
+  class_oriented: .agent/rules/constitution/class-oriented.md
+  external_html: .agent/rules/constitution/external-html.md
 ```
 
 ## Reglas

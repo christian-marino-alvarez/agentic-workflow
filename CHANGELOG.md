@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.22.0-beta.0](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.21.0-beta.3...agentic-workflow-v1.22.0-beta.0) (2026-02-02)
+
+### Features
+
+* **runtime:** add headless runtime engine with MCP governance, state persistence, and event stream.
+* **cli:** support `init --start-mcp` to launch the MCP server after initialization.
+* **testing:** add MCP smoke test script for end-to-end validation.
+
+### Bug Fixes
+
+* **workflows:** quote init workflow description for valid YAML parsing.
+* **package:** include `dist/runtime` in npm files and keep CLI entrypoint aligned to runtime distribution.
+
+### Maintenance
+
+* **templates:** add front-matter and migrate agentic-system-structure markdowns for consistent parsing.
+
 ## [1.21.0-beta.3](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.21.0-beta.2...agentic-workflow-v1.21.0-beta.3) (2026-02-02)
 
 ### Bug Fixes

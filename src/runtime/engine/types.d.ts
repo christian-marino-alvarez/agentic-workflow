@@ -8,7 +8,8 @@ export type RuntimeEventType =
   | 'phase_updated'
   | 'run_completed'
   | 'error'
-  | 'chat_message';
+  | 'chat_message'
+  | 'log';
 
 export type RuntimeStatus = 'idle' | 'running' | 'completed' | 'failed';
 

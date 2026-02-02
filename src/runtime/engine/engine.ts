@@ -32,6 +32,7 @@ export class RuntimeEngine {
     await this.emitEvent('run_started', normalized, workflow);
     await this.emitEvent('workflow_loaded', normalized, workflow);
     await this.emitEvent('context_resolved', normalized, workflow);
+    await this.log('info', 'Workflow context resolved', { workflowId: workflow.id, runId: state.runId });
 
     for (const step of normalized.steps) {
       if (step.status === 'completed') {
@@ -41,22 +42,26 @@ export class RuntimeEngine {
     }
 
     const completed = this.withStatus(normalized, 'completed');
+    await this.log('info', 'Workflow execution completed', { runId: state.runId });
     await this.persistState(completed, workflow, 'run_completed');
     return completed;
   }
 
   private async runStep(step: RuntimeStepState, state: RuntimeState, workflow: WorkflowMeta): Promise<void> {
     const running = this.withStepStatus(state, step.id, 'running');
+    await this.log('info', `Starting step execution: ${step.id}`, { stepId: step.id });
     await this.persistState(running, workflow, 'step_started', step.id);
     try {
       await this.executeStep(step.id, running, workflow);
     } catch (error) {
       const failed = this.withStatus(running, 'failed');
+      await this.log('error', `Step execution failed: ${step.id}`, { stepId: step.id, error: String(error) });
       await this.emitError(failed, workflow, error);
       await this.persistState(failed, workflow, 'state_persisted');
       throw error;
     }
     const completed = this.withStepStatus(running, step.id, 'completed');
+    await this.log('info', `Step execution completed: ${step.id}`, { stepId: step.id });
     await this.persistState(completed, workflow, 'step_completed', step.id);
   }
 
@@ -98,6 +103,34 @@ export class RuntimeEngine {
     const payload = { error: error instanceof Error ? error.message : String(error) };
     const event = this.buildEvent('error', state, workflow, undefined, payload);
     await this.dependencies.emitter.emit(event);
+  }
+
+  private async log(level: 'info' | 'warn' | 'error' | 'debug', message: string, data?: Record<string, unknown>): Promise<void> {
+    const event = this.buildEvent('log', { runId: 'system' } as RuntimeState, { id: 'system' } as WorkflowMeta, undefined, {
+      level,
+      message,
+      data
+    });
+    // Fix: minimal mock state for system logs if real state is not available contextually here
+    // In a real implementation we would want access to current state, but this helper is generic.
+    // For now, we rely on the payload.
+
+    // Actually, let's use a simpler approach. We need to pass state/workflow to buildEvent.
+    // However, log() is called from methods where we HAVE state.
+    // But to keep signature simple, let's just emit raw event manually here or refine signature.
+
+    // Better: let's change signature to accept nothing and use a generic builder, 
+    // OR just emit the event directly since we are inside the class.
+
+    // Wait, buildEvent requires state and workflow.
+    // Let's manually construct the log event to avoid circular dependencies or complex signatures
+    // for this simple logging feature.
+    await this.dependencies.emitter.emit({
+      type: 'log',
+      timestamp: new Date().toISOString(),
+      runId: 'system', // or passed in data
+      payload: { level, message, ...data }
+    });
   }
 
   private buildEvent(

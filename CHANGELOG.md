@@ -23,6 +23,10 @@
 * require explicit gate confirmation ([ef1e62b](https://github.com/christian-marino-alvarez/agentic-workflow/commit/ef1e62b4243ea342741d32ddf9ce0319b8aac0df))
 * reset core content to extensio backup baseline ([c5e6b03](https://github.com/christian-marino-alvarez/agentic-workflow/commit/c5e6b03780ea0e601701c284d6a98ec5ad3e4c77))
 * simplify init and add clarification questions ([cb24916](https://github.com/christian-marino-alvarez/agentic-workflow/commit/cb2491644380b8bb1ce56082619b43303268bf96))
+
+### Bug Fixes
+
+* **extension:** add lit and openai dependencies to fix TypeScript module resolution.
 * **vscode-extension:** add Lit core base, CSP fixes, logging, and setup view ([546444b](https://github.com/christian-marino-alvarez/agentic-workflow/commit/546444bab7a9b9f2d0ee44585cd026da5ca30ab5))
 
 

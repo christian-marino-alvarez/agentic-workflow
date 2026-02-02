@@ -85,7 +85,9 @@
   "dependencies": {
     "@clack/prompts": "^0.7.0",
     "commander": "^11.1.0",
-    "gray-matter": "^4.0.3"
+    "gray-matter": "^4.0.3",
+    "lit": "^3.3.2",
+    "openai": "^6.17.0"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",

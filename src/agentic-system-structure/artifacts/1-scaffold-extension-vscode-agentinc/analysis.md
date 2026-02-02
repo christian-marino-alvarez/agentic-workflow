@@ -1,3 +1,9 @@
+---
+kind: artifact
+name: analysis
+source: agentic-system-structure
+---
+
 🏛️ **architect-agent**: Analisis inicial para scaffold de extension VS Code.
 
 ---

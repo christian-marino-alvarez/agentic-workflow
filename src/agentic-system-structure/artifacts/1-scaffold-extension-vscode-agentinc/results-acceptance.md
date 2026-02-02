@@ -1,3 +1,9 @@
+---
+kind: artifact
+name: results-acceptance
+source: agentic-system-structure
+---
+
 🏛️ **architect-agent**: Informe final de resultados preparado.
 
 ---

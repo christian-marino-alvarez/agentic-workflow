@@ -1,3 +1,9 @@
+---
+kind: artifact
+name: acceptance
+source: agentic-system-structure
+---
+
 🏛️ **architect-agent**: Acceptance criteria definidos para scaffold vscode-agentinc.
 
 # Acceptance Criteria — 1-scaffold-extension-vscode-agentinc

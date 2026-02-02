@@ -1,3 +1,9 @@
+---
+kind: template
+name: init
+source: agentic-system-structure
+---
+
 # init bootstrap
 
 - command: {{command}}

@@ -1,5 +1,5 @@
 ---
-description: Workflow obligatorio de setup: carga constitutions base y define el idioma de conversación y la estrategia Long/Short.
+description: "Workflow obligatorio de setup: carga constitutions base y define el idioma de conversación y la estrategia Long/Short."
 ---
 
 ---

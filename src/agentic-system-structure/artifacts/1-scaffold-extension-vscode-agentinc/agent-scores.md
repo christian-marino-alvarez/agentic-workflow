@@ -1,3 +1,9 @@
+---
+kind: artifact
+name: agent-scores
+source: agentic-system-structure
+---
+
 🏛️ **architect-agent**: Actualizacion de puntuaciones por agente.
 
 ---

@@ -1,10 +1,10 @@
 {
   "name": "@christianmaf80/agentic-workflow",
-  "version": "1.22.0-beta.3",
+  "version": "1.22.0-beta.4",
   "description": "Portable agentic workflow orchestration system with strict identity and gate discipline",
   "type": "module",
   "displayName": "Agentic Workflow",
-  "main": "./dist/extension/extension.js",
+  "main": "./dist/cli/index.js",
   "engines": {
     "vscode": "^1.108.2"
   },
@@ -43,12 +43,11 @@
     "dist/core",
     "dist/infrastructure",
     "dist/agent",
-    "dist/extension",
+    "dist/runtime",
     "bin",
     "README.md",
     "LICENSE",
-    "RELEASE_PROCESS.md",
-    "media"
+    "RELEASE_PROCESS.md"
   ],
   "scripts": {
     "build": "node scripts/clean-dist.mjs && tsc -p tsconfig.build.json && npm run copy-assets",

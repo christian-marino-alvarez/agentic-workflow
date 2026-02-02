@@ -1,15 +1,15 @@
 ---
-id: {{task.id}}
-title: {{task.title}}
+id: 8
+title: create-agentic-runtime-cli-first-as-the-single-execution-engine
 owner: architect-agent
-strategy: {{task.strategy}}
+strategy: long
 ---
 
 # Task (Template)
 
 ## Identificación
-- id: {{task.id}}
-- title: {{task.title}}
+- id: 8
+- title: create-agentic-runtime-cli-first-as-the-single-execution-engine
 - scope: candidate | current
 - owner: architect-agent
 
@@ -20,62 +20,62 @@ strategy: {{task.strategy}}
   - candidate_path: artifacts.candidate.task
 
 ## Descripción de la tarea
-{{task.description}}
+Construir un runtime headless CLI-first que ejecute workflows existentes, resuelva contexto y ciclo de vida de tareas, ejecute pasos reales, persista estado fuera de memoria y emita eventos/logs para una UI futura.
 
 ## Objetivo
-{{task.goal}}
+Implementar un runtime CLI-first, sin UI, gobernado por MCP, que ejecute workflows existentes, gestione el ciclo de vida con persistencia externa, asigne tareas por owner de agente y permita chat (Codex/antigravity) vía MCP; excluyendo la extensión de distribución.
 
 ## Estado del ciclo de vida (FUENTE ÚNICA DE VERDAD)
 
 ```yaml
 task:
-  id: "{{task.id}}"
-  title: "{{task.title}}"
-  strategy: "{{task.strategy}}"  # long | short
+  id: "8"
+  title: "create-agentic-runtime-cli-first-as-the-single-execution-engine"
+  strategy: "long"  # long | short
   artifacts:
     supplemental: []
   phase:
-    current: "phase-0-acceptance-criteria"
+    current: "phase-8-commit-push"
     validated_by: "architect-agent"
-    updated_at: "{{timestamp}}"
+    updated_at: "2026-02-02T16:55:00+01:00"
   lifecycle:
     phases:
       phase-0-acceptance-criteria:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-02-02T08:27:11Z"
       phase-1-research:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-02-02T08:38:45Z"
       phase-2-analysis:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-02-02T08:44:15Z"
       phase-3-planning:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-02-02T08:55:35Z"
       phase-4-implementation:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-02-02T13:58:38Z"
       phase-5-verification:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-02-02T14:03:09Z"
       phase-6-results-acceptance:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-02-02T14:08:50Z"
       phase-7-evaluation:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-02-02T14:11:44Z"
       phase-8-commit-push:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-02-02T16:55:00+01:00"
     subflows:
       components:
         create:
@@ -110,7 +110,7 @@ task:
 ---
 
 ## 2. Definición y Alcance (Contrato)
-- **Acceptance Criteria**: [acceptance.md](file:///{{task.acceptance_path}})
+- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/8-create-agentic-runtime-cli-first-as-the-single-execution-engine/acceptance.md)
 - **Alias**: `task.acceptance`
 
 ---

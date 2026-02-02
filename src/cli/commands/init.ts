@@ -7,13 +7,15 @@ import {
   resolveInstalledCorePath
 } from '../../infrastructure/mapping/resolver.js';
 import { performBackup } from '../../infrastructure/utils/backup.js';
+import { startRuntimeMcpServer } from '../../runtime/mcp/server.js';
 
-export async function initCommand(options: { nonInteractive?: boolean } = {}) {
+export async function initCommand(options: { nonInteractive?: boolean; startMcp?: boolean } = {}) {
   intro('Agentic Workflow Initialization');
 
   const cwd = process.cwd();
   const agentDir = path.join(cwd, '.agent');
   const nonInteractive = Boolean(options.nonInteractive);
+  const startMcp = Boolean(options.startMcp);
 
   // 1. Existing System Detection
   const systemType = await detectAgentSystem(cwd);
@@ -85,6 +87,11 @@ export async function initCommand(options: { nonInteractive?: boolean } = {}) {
     note(`Core copied from: ${corePath}\nLocal .agent created with full core files.`, 'Installed');
 
     outro('Agentic System initialized successfully.');
+
+    if (startMcp) {
+      note('Starting MCP server (foreground)...', 'MCP');
+      await startRuntimeMcpServer();
+    }
 
   } catch (error) {
     s.stop('Initialization failed.');

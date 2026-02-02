@@ -1,3 +1,9 @@
+---
+kind: artifact
+name: task
+source: agentic-system-structure
+---
+
 # Task: Reestructurar src para Extensión VSCode
 
 ## Identificación

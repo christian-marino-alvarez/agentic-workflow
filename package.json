@@ -1,6 +1,6 @@
 {
   "name": "@christianmaf80/agentic-workflow",
-  "version": "1.22.0-beta.6",
+  "version": "1.22.0-beta.7",
   "description": "Portable agentic workflow orchestration system with strict identity and gate discipline",
   "type": "module",
   "displayName": "Agentic Workflow",
@@ -97,7 +97,8 @@
     "@vscode/test-electron": "^2.5.2",
     "eslint": "^9.39.2",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.52.0"
+    "typescript-eslint": "^8.52.0",
+    "vitest": "^4.0.18"
   },
   "overrides": {
     "diff": "8.0.3"

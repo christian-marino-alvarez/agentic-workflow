@@ -5,7 +5,7 @@ import matter from 'gray-matter';
 import { RuntimeEmitter } from '../engine/emitter.js';
 import { loadWorkflows, resolvePhaseWorkflow } from '../engine/workflow-loader.js';
 import { loadTask, resolveWorkflowsRoot } from '../engine/task-loader.js';
-import { runRuntime, resumeRuntime } from '../engine/service.js';
+import { runRuntime, resumeRuntime, stepRuntime } from '../engine/service.js';
 import type { RuntimeEvent } from '../engine/types.js';
 import { Logger } from '../engine/logger.js';
 
@@ -72,6 +72,10 @@ async function dispatchRequest(request: McpRequest): Promise<unknown> {
       return handleEmitEvent(request.params ?? {});
     case 'runtime.chat':
       return handleChat(request.params ?? {});
+    case 'runtime.next_step':
+      return handleNextStep(request.params ?? {});
+    case 'runtime.complete_step':
+      return handleCompleteStep(request.params ?? {});
     case 'debug_read_logs':
       return handleDebugReadLogs(request.params ?? {});
     default:
@@ -109,10 +113,41 @@ async function handleResume(params: Record<string, unknown>): Promise<unknown> {
   return { status: 'ok', runId: result.runId, phase: result.phase };
 }
 
+async function handleNextStep(params: Record<string, unknown>): Promise<unknown> {
+  const taskPath = ensureString(params.taskPath, 'taskPath');
+  const agent = ensureString(params.agent, 'agent');
+  const statePath = getOptionalString(params.statePath);
+  const eventsPath = getOptionalString(params.eventsPath);
+  const result = await stepRuntime({
+    taskPath,
+    agent,
+    statePath,
+    eventsPath,
+    stdoutEvents: false
+  });
+  return { status: 'ok', runId: result.runId, phase: result.phase, step: result.steps.find(s => s.status === 'completed' || s.status === 'failed') };
+}
+
+async function handleCompleteStep(params: Record<string, unknown>): Promise<unknown> {
+  return { status: 'ok', message: 'Step completion acknowledged (logic pending specific requirement).' };
+}
+
 async function handleGetState(params: Record<string, unknown>): Promise<unknown> {
   const statePath = ensureString(params.statePath, 'statePath');
-  const raw = await fs.readFile(path.resolve(statePath), 'utf-8');
-  return JSON.parse(raw);
+  const rawState = await fs.readFile(path.resolve(statePath), 'utf-8');
+  const state = JSON.parse(rawState);
+
+  // Enrich with task content
+  let taskContent = '';
+  try {
+    if (state.taskPath) {
+      taskContent = await fs.readFile(state.taskPath, 'utf-8');
+    }
+  } catch (e) {
+    // Ignore if task file not found
+  }
+
+  return { ...state, taskContent };
 }
 
 async function handleListWorkflows(params: Record<string, unknown>): Promise<unknown> {

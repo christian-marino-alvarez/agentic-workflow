@@ -3,6 +3,7 @@ import type { RuntimeEvent, RuntimeEventType, RuntimeState, RuntimeStepState } f
 import type { WorkflowMeta } from './workflow-loader.js';
 import { RuntimeEmitter } from './emitter.js';
 import { StateStore } from './state-store.js';
+import { Logger } from './logger.js';
 
 export interface RuntimeExecutionContext {
   state: RuntimeState;
@@ -106,29 +107,13 @@ export class RuntimeEngine {
   }
 
   private async log(level: 'info' | 'warn' | 'error' | 'debug', message: string, data?: Record<string, unknown>): Promise<void> {
-    const event = this.buildEvent('log', { runId: 'system' } as RuntimeState, { id: 'system' } as WorkflowMeta, undefined, {
-      level,
-      message,
-      data
-    });
-    // Fix: minimal mock state for system logs if real state is not available contextually here
-    // In a real implementation we would want access to current state, but this helper is generic.
-    // For now, we rely on the payload.
+    Logger.getInstance().log(level, 'Engine', message, data);
 
-    // Actually, let's use a simpler approach. We need to pass state/workflow to buildEvent.
-    // However, log() is called from methods where we HAVE state.
-    // But to keep signature simple, let's just emit raw event manually here or refine signature.
-
-    // Better: let's change signature to accept nothing and use a generic builder, 
-    // OR just emit the event directly since we are inside the class.
-
-    // Wait, buildEvent requires state and workflow.
-    // Let's manually construct the log event to avoid circular dependencies or complex signatures
-    // for this simple logging feature.
+    // Also emit event for back-compat or specialized event stream
     await this.dependencies.emitter.emit({
       type: 'log',
       timestamp: new Date().toISOString(),
-      runId: 'system', // or passed in data
+      runId: 'system',
       payload: { level, message, ...data }
     });
   }

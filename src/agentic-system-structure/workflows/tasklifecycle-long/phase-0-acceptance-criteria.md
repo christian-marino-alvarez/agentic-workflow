@@ -126,7 +126,7 @@ blocking: true
     - Establecer `task.lifecycle.phases.phase-0-acceptance-criteria.validated_at = <ISO-8601>`.
     - Actualizar `task.phase.updated_at = <ISO-8601>`.
     - Actualizar el estado:
-      - `task.phase.current = aliases.taskcycle-long.phases.phase_1.id`
+      - `task.phase.current = aliases.tasklifecycle-long.phases.phase_1.id`
    - Esta actualización **NO es automática** y **NO puede ser inferida**.
    - Hasta que este cambio no se refleje en el `task.md`, **no se puede iniciar la Fase 1**.
 
@@ -162,7 +162,7 @@ Requisitos (todos obligatorios):
    - `approval.developer.decision == SI`
 8. El `architect-agent` ha marcado explícitamente:
    - la Fase 0 como completada
-   - `task.phase.current == aliases.taskcycle-long.phases.phase_1.id`
+   - `task.phase.current == aliases.tasklifecycle-long.phases.phase_1.id`
 9. `task.md` refleja timestamp y estado:
    - `task.lifecycle.phases.phase-0-acceptance-criteria.completed == true`
    - `task.lifecycle.phases.phase-0-acceptance-criteria.validated_at` no nulo

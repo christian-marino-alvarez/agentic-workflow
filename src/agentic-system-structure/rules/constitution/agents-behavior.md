@@ -46,7 +46,6 @@ Archivos protegidos:
 - `.agent/rules/**/*.md` (Reglas)
 - `.agent/workflows/**/*.md` (Workflows)
 - Indices de sistema (`index.md`)
-- `GEMINI.md`
 
 ### 2.2 Prohibición para Agentes Operativos
 - ❌ **Prohibido**: Que el `qa-agent` o `researcher-agent` modifiquen archivos de la carpeta `.agent/rules` o `.agent/workflows`.

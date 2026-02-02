@@ -17,7 +17,7 @@ blocking: true
 - Existe la current task:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 - El `task.md` **DEBE** reflejar:
-  - `task.phase.current == aliases.taskcycle-long.phases.phase_5.id`
+  - `task.phase.current == aliases.tasklifecycle-long.phases.phase_5.id`
 
 > [!IMPORTANT]
 > **Constitución activa (OBLIGATORIO)**:
@@ -63,7 +63,7 @@ blocking: true
 2. Verificar inputs
    - Existe `architect/review.md`
    - Existe `task.md`
-   - `task.phase.current == aliases.taskcycle-long.phases.phase_5.id`
+   - `task.phase.current == aliases.tasklifecycle-long.phases.phase_5.id`
    - Si falla → ir a **Paso 11 (FAIL)**.
 
 3. Cargar template de verificación
@@ -112,7 +112,7 @@ blocking: true
      - establecer `task.lifecycle.phases.phase-5-verification.validated_at = <ISO-8601>`
      - actualizar `task.phase.updated_at = <ISO-8601>`
      - avanzar:
-       - `task.phase.current = aliases.taskcycle-long.phases.phase_6.id`
+       - `task.phase.current = aliases.tasklifecycle-long.phases.phase_6.id`
    - Indicar rutas:
      - `verification.md`
      - `task.md` actualizado
@@ -164,7 +164,7 @@ Requisitos (todos obligatorios):
    - `approval.developer.decision == SI`
 7. `task.md` refleja:
    - Fase 5 completada
-   - `task.phase.current == aliases.taskcycle-long.phases.phase_6.id`
+   - `task.phase.current == aliases.tasklifecycle-long.phases.phase_6.id`
    - `task.lifecycle.phases.phase-5-verification.completed == true`
    - `task.lifecycle.phases.phase-5-verification.validated_at` no nulo
    - `task.phase.updated_at` no nulo

@@ -30,7 +30,6 @@ export class ContextManager {
         // Para una implementación completa, se requeriría un crawler de YAML
         if (aliasPath.includes('constitution')) {
             const constitutions = [
-                { file: 'GEMINI.location.md', alias: 'constitution.GEMINI_location' },
                 { file: 'clean-code.md', alias: 'constitution.clean_code' },
                 { file: 'agents-behavior.md', alias: 'constitution.agents_behavior' },
             ];

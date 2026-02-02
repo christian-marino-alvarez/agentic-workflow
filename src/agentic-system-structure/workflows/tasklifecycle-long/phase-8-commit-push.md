@@ -17,7 +17,7 @@ blocking: true
 - Existe la current task:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 - El `task.md` **DEBE** reflejar:
-  - `task.phase.current == aliases.taskcycle-long.phases.phase_8.id`
+  - `task.phase.current == aliases.tasklifecycle-long.phases.phase_8.id`
 
 > [!IMPORTANT]
 > **Constitución activa (OBLIGATORIO)**:
@@ -49,7 +49,7 @@ Ejemplos válidos:
 1. Verificar inputs
  - Existe `metrics.md` y contiene `Aprobado: SI`.
  - Existe `task.md`.
- - `task.phase.current == aliases.taskcycle-long.phases.phase_8.id`
+ - `task.phase.current == aliases.tasklifecycle-long.phases.phase_8.id`
  - Si falla → ir a **Paso 10 (FAIL)**.
 
 2. Preparar commits

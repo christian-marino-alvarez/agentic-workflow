@@ -17,7 +17,7 @@ blocking: true
 - Existe la current task:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 - El `task.md` **DEBE** reflejar:
-  - `task.phase.current == aliases.taskcycle-long.phases.phase_4.id`
+  - `task.phase.current == aliases.tasklifecycle-long.phases.phase_4.id`
 
 > [!IMPORTANT]
 > **Constitución activa (OBLIGATORIO)**:
@@ -62,7 +62,7 @@ blocking: true
 ### 1. Verificar inputs
 - Existe `plan.md` aprobado.
 - Existe `task.md`.
-- `task.phase.current == aliases.taskcycle-long.phases.phase_4.id`.
+- `task.phase.current == aliases.tasklifecycle-long.phases.phase_4.id`.
 - Si falla → ir a **Paso 10 (FAIL)**.
 
 ### 2. Extraer tareas del plan
@@ -146,7 +146,7 @@ Para cada tarea `N` en el plan:
   - Establecer `task.lifecycle.phases.phase-4-implementation.validated_at = <ISO-8601>`.
   - Actualizar `task.phase.updated_at = <ISO-8601>`.
   - Avanzar:
-    - `task.phase.current = aliases.taskcycle-long.phases.phase_5.id`
+    - `task.phase.current = aliases.tasklifecycle-long.phases.phase_5.id`
 - Indicar rutas:
   - Directorio `agent-tasks/`
   - `architect/review.md`
@@ -185,7 +185,7 @@ Requisitos (todos obligatorios):
 7. La implementación es coherente con el `plan.md`.
 8. `task.md` refleja:
    - Fase 4 completada
-   - `task.phase.current == aliases.taskcycle-long.phases.phase_5.id`
+   - `task.phase.current == aliases.tasklifecycle-long.phases.phase_5.id`
    - `task.lifecycle.phases.phase-4-implementation.completed == true`
    - `task.lifecycle.phases.phase-4-implementation.validated_at` no nulo
    - `task.phase.updated_at` no nulo

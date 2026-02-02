@@ -27,7 +27,7 @@ export async function resolveInstalledCorePath(cwd: string = process.cwd()): Pro
         const directNodeModules = path.join(
             cwd,
             'node_modules',
-            '@christian-marino-alvarez',
+            '@christianmaf80',
             'agentic-workflow'
         );
         try {
@@ -38,7 +38,7 @@ export async function resolveInstalledCorePath(cwd: string = process.cwd()): Pro
         }
 
         const requireFromCwd = createRequire(path.join(cwd, 'package.json'));
-        const pkgPath = requireFromCwd.resolve('@christian-marino-alvarez/agentic-workflow/package.json');
+        const pkgPath = requireFromCwd.resolve('@christianmaf80/agentic-workflow/package.json');
         const pkgRoot = path.dirname(pkgPath);
         return await resolveCorePathFromPackageRoot(pkgRoot);
     } catch {

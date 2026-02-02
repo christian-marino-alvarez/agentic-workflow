@@ -15,7 +15,7 @@ blocking: true
 - Existe la current task:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 - El `task.md` **DEBE** reflejar:
-  - `task.phase.current == aliases.taskcycle-long.phases.phase_1.id`
+  - `task.phase.current == aliases.tasklifecycle-long.phases.phase_1.id`
 - El `task.md` **DEBE** incluir:
   - descripcion
   - objetivo
@@ -59,7 +59,7 @@ blocking: true
 
 1. Verificar inputs (architect-agent)
    - Existe `task.md`
-   - `task.phase.current == aliases.taskcycle-long.phases.phase_1.id`
+   - `task.phase.current == aliases.tasklifecycle-long.phases.phase_1.id`
    - `task.md` contiene acceptance criteria
    - Si falla → ir a **Paso 8 (FAIL)**.
 
@@ -113,7 +113,7 @@ blocking: true
      - marcar Fase 1 como completada
      - establecer `task.lifecycle.phases.phase-1-research.validated_at = <ISO-8601>`
      - actualizar `task.phase.updated_at = <ISO-8601>`
-     - avanzar `task.phase.current = aliases.taskcycle-long.phases.phase_2.id`
+     - avanzar `task.phase.current = aliases.tasklifecycle-long.phases.phase_2.id`
 
 ---
 
@@ -145,7 +145,7 @@ Requisitos (todos obligatorios):
 7. El informe **NO contiene** análisis, recomendaciones ni valoraciones.
 8. `task.md` refleja:
    - Fase 1 completada
-   - `task.phase.current == aliases.taskcycle-long.phases.phase_2.id`
+   - `task.phase.current == aliases.tasklifecycle-long.phases.phase_2.id`
    - `task.lifecycle.phases.phase-1-research.completed == true`
    - `task.lifecycle.phases.phase-1-research.validated_at` no nulo
    - `task.phase.updated_at` no nulo

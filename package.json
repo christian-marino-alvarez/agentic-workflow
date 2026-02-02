@@ -1,6 +1,6 @@
 {
   "name": "@christianmaf80/agentic-workflow",
-  "version": "1.19.1-beta.11",
+  "version": "1.20.2-beta.1",
   "description": "Portable agentic workflow orchestration system with strict identity and gate discipline",
   "type": "module",
   "displayName": "Agentic Workflow",
@@ -11,29 +11,10 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onView:mainView"
+  ],
   "contributes": {
-    "commands": [
-      {
-        "command": "agenticWorkflow.setOpenAIKey",
-        "title": "Agentic: Set OpenAI API Key"
-      },
-      {
-        "command": "agenticWorkflow.clearOpenAIKey",
-        "title": "Agentic: Clear OpenAI API Key"
-      }
-    ],
-    "configuration": {
-      "type": "object",
-      "title": "Agentic Workflow",
-      "properties": {
-        "agenticWorkflow.experimentalNextViews": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable experimental next-generation view architecture."
-        }
-      }
-    },
     "viewsContainers": {
       "activitybar": [
         {
@@ -46,29 +27,10 @@
     "views": {
       "main": [
         {
-          "id": "chatView",
+          "id": "mainView",
           "name": "Agent Chat",
           "icon": "media/agent-chat.svg",
-          "type": "webview",
-          "when": "agenticWorkflow.hasKey"
-        },
-        {
-          "id": "historyView",
-          "name": "History",
-          "type": "webview",
-          "when": "agenticWorkflow.hasKey"
-        },
-        {
-          "id": "workflowView",
-          "name": "Workflows",
-          "type": "webview",
-          "when": "agenticWorkflow.hasKey"
-        },
-        {
-          "id": "keyView",
-          "name": "Setup",
-          "type": "webview",
-          "when": "true"
+          "type": "webview"
         }
       ]
     }
@@ -88,14 +50,13 @@
     "media"
   ],
   "scripts": {
-    "build": "node scripts/clean-dist.mjs && tsc && npm run bundle-webviews && npm run copy-assets",
-    "bundle-webviews": "node scripts/bundle-webviews.mjs",
+    "build": "node scripts/clean-dist.mjs && tsc && npm run copy-assets",
     "copy-assets": "mkdir -p dist/agent && cp -r src/agentic-system-structure/rules src/agentic-system-structure/workflows src/agentic-system-structure/templates src/agentic-system-structure/artifacts dist/agent/ && cp src/agentic-system-structure/index.md dist/agent/index.md",
     "start": "node dist/index.js",
     "publish:npm": "npm publish --registry https://registry.npmjs.org --access public",
     "publish:github": "npm publish --registry https://npm.pkg.github.com",
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./ && npm run bundle-webviews",
+    "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
@@ -124,9 +85,7 @@
   "dependencies": {
     "@clack/prompts": "^0.7.0",
     "commander": "^11.1.0",
-    "gray-matter": "^4.0.3",
-    "lit": "^3.2.0",
-    "openai": "^6.17.0"
+    "gray-matter": "^4.0.3"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
@@ -134,7 +93,6 @@
     "@types/vscode": "^1.108.1",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
-    "esbuild": "^0.25.0",
     "eslint": "^9.39.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.52.0"

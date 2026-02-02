@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.20.2-beta.1](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.20.1...agentic-workflow-v1.20.2-beta.1) (2026-02-02)
+
+### Refactor
+* **agent:** remove GEMINI constitution references and normalize tasklifecycle alias namespace.
+
+### Bug Fixes
+* **cli:** resolve installed core using @christianmaf80 scope.
+
 ## [1.20.1](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.20.0...agentic-workflow-v1.20.1) (2026-01-30)
 
 

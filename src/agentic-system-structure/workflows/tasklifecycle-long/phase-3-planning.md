@@ -17,7 +17,7 @@ blocking: true
 - Existe la current task:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 - El `task.md` **DEBE** reflejar:
-  - `task.phase.current == aliases.taskcycle-long.phases.phase_3.id`
+  - `task.phase.current == aliases.tasklifecycle-long.phases.phase_3.id`
 
 > [!IMPORTANT]
 > **Constitución activa (OBLIGATORIO)**:
@@ -56,7 +56,7 @@ Crear un **plan de implementación detallado** para ejecutar el diseño definido
 1. Verificar inputs
    - Existe `.agent/artifacts/<taskId>-<taskTitle>/analysis.md`
    - Existe `.agent/artifacts/<taskId>-<taskTitle>/task.md`
-   - `task.phase.current == aliases.taskcycle-long.phases.phase_3.id`
+   - `task.phase.current == aliases.tasklifecycle-long.phases.phase_3.id`
    - Si falla → ir a **Paso 11 (FAIL)**.
 
 2. Cargar template de planificación
@@ -122,7 +122,7 @@ Crear un **plan de implementación detallado** para ejecutar el diseño definido
       - marcar Fase 3 como completada
       - establecer `task.lifecycle.phases.phase-3-planning.validated_at = <ISO-8601>`
       - actualizar `task.phase.updated_at = <ISO-8601>`
-      - avanzar `task.phase.current = aliases.taskcycle-long.phases.phase_4.id`
+      - avanzar `task.phase.current = aliases.tasklifecycle-long.phases.phase_4.id`
     - Indicar rutas finales:
       - `plan.md`
       - `task.md` actualizado
@@ -167,7 +167,7 @@ Requisitos (todos obligatorios):
    - `approval.developer.decision == SI`
 10. `task.md` refleja:
    - Fase 3 completada
-   - `task.phase.current == aliases.taskcycle-long.phases.phase_4.id`
+   - `task.phase.current == aliases.tasklifecycle-long.phases.phase_4.id`
    - `task.lifecycle.phases.phase-3-planning.completed == true`
    - `task.lifecycle.phases.phase-3-planning.validated_at` no nulo
    - `task.phase.updated_at` no nulo

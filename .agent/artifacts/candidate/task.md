@@ -1,8 +1,8 @@
 # Task (Template)
 
 ## Identificación
-- id: task-20260130-fix-mainview-provider
-- title: No hay proveedor de datos para mainView
+- id: task-20260201-restructure-views-architecture
+- title: Reestructurar arquitectura de vistas Lit
 - scope: candidate | current
 - owner: architect-agent
 
@@ -13,42 +13,42 @@
   - candidate_path: artifacts.candidate.task
 
 ## Descripción de la tarea
-La vista `mainView` muestra el mensaje de que no hay proveedor de datos registrado. Debe registrarse correctamente el `WebviewViewProvider` para que la vista renderice el contenido esperado.
+Reestructurar la arquitectura actual de vistas Lit para que cada vista registre su propio dominio, encapsule listeners y comunicación con servidor, y exponga un ciclo de vida con logging consistente.
 
 ## Objetivo
-Al abrir `mainView` desde la Activity Bar, se debe registrar el proveedor y mostrar el webview con el HTML base ("Hello world"), sin el mensaje de ausencia de proveedor.
+Eliminar factories en registro de views, mover registro al constructor de cada vista (recibiendo context), normalizar ciclo de vida con logs por vista y encapsular comunicación con servidor dentro del dominio de cada vista mediante un método público en el lifecycle.
 
 ## Estado del ciclo de vida (FUENTE ÚNICA DE VERDAD)
 
 ```yaml
 task:
-  id: "task-20260130-fix-mainview-provider"
-  title: "No hay proveedor de datos para mainView"
-  strategy: "short"  # long | short
+  id: "task-20260201-restructure-views-architecture"
+  title: "Reestructurar arquitectura de vistas Lit"
+  strategy: "long"  # long | short
   artifacts:
     supplemental: []
   phase:
-    current: "completed"
+    current: "phase-4-implementation"
     validated_by: "architect-agent"
-    updated_at: "2026-01-30T00:00:00Z"
+    updated_at: "2026-02-01T12:40:00Z"
   lifecycle:
     phases:
       phase-0-acceptance-criteria:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: architect-agent
+        validated_at: "2026-02-01T11:46:00Z"
       phase-1-research:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: architect-agent
+        validated_at: "2026-02-01T12:05:30Z"
       phase-2-analysis:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: architect-agent
+        validated_at: "2026-02-01T12:30:00Z"
       phase-3-planning:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: architect-agent
+        validated_at: "2026-02-01T12:40:00Z"
       phase-4-implementation:
         completed: false
         validated_by: null
@@ -87,23 +87,23 @@ task:
             validated_by: null
             validated_at: null
       short-phase-1-brief:
-        completed: true
-        validated_by: architect-agent
-        validated_at: "2026-01-30T00:00:00Z"
+        completed: false
+        validated_by: null
+        validated_at: null
       short-phase-2-implementation:
-        completed: true
-        validated_by: architect-agent
-        validated_at: "2026-01-30T00:00:00Z"
+        completed: false
+        validated_by: null
+        validated_at: null
       short-phase-3-closure:
-        completed: true
-        validated_by: architect-agent
-        validated_at: "2026-01-30T00:00:00Z"
+        completed: false
+        validated_by: null
+        validated_at: null
 ```
 
 ---
 
 ## 2. Definición y Alcance (Contrato)
-- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/task-20260130-fix-mainview-provider/acceptance.md)
+- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/task-20260201-restructure-views-architecture/acceptance.md)
 - **Alias**: `task.acceptance`
 
 ---

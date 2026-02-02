@@ -1,9 +1,12 @@
 import { intro, outro, spinner, confirm, note } from '@clack/prompts';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { detectAgentSystem } from '../../core/migration/detector.js';
-import { resolveCorePath, resolveInstalledCorePath } from '../../core/mapping/resolver.js';
-import { performBackup } from '../../core/utils/backup.js';
+import { detectAgentSystem } from '../../infrastructure/migration/detector.js';
+import {
+  resolveCorePath,
+  resolveInstalledCorePath
+} from '../../infrastructure/mapping/resolver.js';
+import { performBackup } from '../../infrastructure/utils/backup.js';
 
 export async function initCommand(options: { nonInteractive?: boolean } = {}) {
   intro('Agentic Workflow Initialization');

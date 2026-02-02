@@ -12,22 +12,22 @@ blocking: true
 # WORKFLOW: tasklifecycle-long (Index)
 
 ## Índices requeridos (OBLIGATORIO)
-Este workflow **NO** define aliases fuera de su dominio (`taskcycle-long`).
+Este workflow **NO** define aliases fuera de su dominio (`tasklifecycle-long`).
 Para artifacts y templates, **DEBE** cargar índices globales:
 
 - Artifacts index: `.agent/artifacts/index.md`
 - Templates index: `.agent/templates/index.md`
 
-## Aliases del dominio `taskcycle-long` (OBLIGATORIO)
-Este workflow define aliases **solo** del dominio `taskcycle-long` (task lifecycle long).
-Existe **un único namespace** `aliases.taskcycle-long.phases.*` que contiene:
+## Aliases del dominio `tasklifecycle-long` (OBLIGATORIO)
+Este workflow define aliases **solo** del dominio `tasklifecycle-long` (task lifecycle long).
+Existe **un único namespace** `aliases.tasklifecycle-long.phases.*` que contiene:
 - `id` de fase
 - `workflow` (path del workflow de la fase)
 
 ## Aliases (YAML)
 ```yaml
 aliases:
-  taskcycle-long:
+  tasklifecycle-long:
     phases:
       phase_0:
         id: phase-0-acceptance-criteria
@@ -77,7 +77,7 @@ aliases:
 ## Objetivo (ONLY)
 - Verificar los requisitos mínimos para **iniciar la Fase 0** (inputs obligatorios).
 - Crear el **task candidate** usando el template contractual.
-- Verificar que los workflows de fase del dominio `taskcycle-long` existen y se pueden cargar.
+- Verificar que los workflows de fase del dominio `tasklifecycle-long` existen y se pueden cargar.
 - Si falta algún requisito, **bloquear** y pedir la acción mínima para poder iniciar la **Fase 0**.
 
 > Este workflow **NO** controla si las fases se han completado.
@@ -85,7 +85,7 @@ aliases:
 
 ## Dispatch / Routing (OBLIGATORIO)
 - El routing de fases **DEBE** basarse en `task.phase.current`.
-- La fase activa **DEBE** mapearse a `aliases.taskcycle-long.phases.*.workflow`.
+- La fase activa **DEBE** mapearse a `aliases.tasklifecycle-long.phases.*.workflow`.
 - Si no existe mapping → **FAIL** (fase inválida o índice corrupto).
 - Solo el `architect-agent` puede cambiar `task.phase.current`.
 
@@ -114,20 +114,20 @@ aliases:
    - **DEBE incluir** la información proporcionada por el desarrollador:
      - descripción de la tarea
      - objetivo de la tarea
-   - Inicializar `task.phase.current` a `aliases.taskcycle-long.phases.phase_0.id`.
+   - Inicializar `task.phase.current` a `aliases.tasklifecycle-long.phases.phase_0.id`.
    - Si no se puede crear/escribir → ir a **Paso 7 (FAIL)**.
 
 6. Verificar disponibilidad de fases (solo existencia/carga)
    - Los workflows de fase **DEBEN** existir como ficheros (no se ejecutan aquí):
-     - `aliases.taskcycle-long.phases.phase_0.workflow`
-     - `aliases.taskcycle-long.phases.phase_1.workflow`
-     - `aliases.taskcycle-long.phases.phase_2.workflow`
-     - `aliases.taskcycle-long.phases.phase_3.workflow`
-     - `aliases.taskcycle-long.phases.phase_4.workflow`
-     - `aliases.taskcycle-long.phases.phase_5.workflow`
-     - `aliases.taskcycle-long.phases.phase_6.workflow`
-     - `aliases.taskcycle-long.phases.phase_7.workflow`
-     - `aliases.taskcycle-long.phases.phase_8.workflow`
+     - `aliases.tasklifecycle-long.phases.phase_0.workflow`
+     - `aliases.tasklifecycle-long.phases.phase_1.workflow`
+     - `aliases.tasklifecycle-long.phases.phase_2.workflow`
+     - `aliases.tasklifecycle-long.phases.phase_3.workflow`
+     - `aliases.tasklifecycle-long.phases.phase_4.workflow`
+     - `aliases.tasklifecycle-long.phases.phase_5.workflow`
+     - `aliases.tasklifecycle-long.phases.phase_6.workflow`
+     - `aliases.tasklifecycle-long.phases.phase_7.workflow`
+     - `aliases.tasklifecycle-long.phases.phase_8.workflow`
    - Si falta alguno → ir a **Paso 7 (FAIL)**.
 
 7. FAIL (obligatorio)
@@ -138,7 +138,7 @@ aliases:
      - idioma no definido o no confirmado en `init`
      - template inaccesible (`templates.task`)
      - no se pudo crear `task candidate` (`artifacts.candidate.task`)
-     - falta uno o más workflows de fase (`aliases.taskcycle-long.phases.*.workflow`)
+     - falta uno o más workflows de fase (`aliases.tasklifecycle-long.phases.*.workflow`)
    - Pedir la acción mínima para solventar:
      - ejecutar `init`
      - confirmar idioma
@@ -152,15 +152,15 @@ Las fases del ciclo de vida **DEBEN ejecutarse estrictamente en el orden numéri
 No se permite saltar, reordenar ni paralelizar fases.
 
 Orden obligatorio:
-0. `aliases.taskcycle-long.phases.phase_0.id`
-1. `aliases.taskcycle-long.phases.phase_1.id`
-2. `aliases.taskcycle-long.phases.phase_2.id`
-3. `aliases.taskcycle-long.phases.phase_3.id`
-4. `aliases.taskcycle-long.phases.phase_4.id`
-5. `aliases.taskcycle-long.phases.phase_5.id`
-6. `aliases.taskcycle-long.phases.phase_6.id`
-7. `aliases.taskcycle-long.phases.phase_7.id`
-8. `aliases.taskcycle-long.phases.phase_8.id`
+0. `aliases.tasklifecycle-long.phases.phase_0.id`
+1. `aliases.tasklifecycle-long.phases.phase_1.id`
+2. `aliases.tasklifecycle-long.phases.phase_2.id`
+3. `aliases.tasklifecycle-long.phases.phase_3.id`
+4. `aliases.tasklifecycle-long.phases.phase_4.id`
+5. `aliases.tasklifecycle-long.phases.phase_5.id`
+6. `aliases.tasklifecycle-long.phases.phase_6.id`
+7. `aliases.tasklifecycle-long.phases.phase_7.id`
+8. `aliases.tasklifecycle-long.phases.phase_8.id`
 
 ## Gate (REQUIRED)
 Requisitos (todos obligatorios):

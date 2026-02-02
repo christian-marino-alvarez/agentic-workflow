@@ -19,7 +19,7 @@ blocking: true
 - Existe la current task:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 - El `task.md` **DEBE** reflejar:
-  - `task.phase.current == aliases.taskcycle-long.phases.phase_7.id`
+  - `task.phase.current == aliases.tasklifecycle-long.phases.phase_7.id`
 
 > [!IMPORTANT]
 > **Constitución activa (OBLIGATORIO)**:
@@ -52,7 +52,7 @@ blocking: true
 
 1. Verificar inputs
    - Existe `task.md`
-   - `task.phase.current == aliases.taskcycle-long.phases.phase_7.id`
+   - `task.phase.current == aliases.tasklifecycle-long.phases.phase_7.id`
    - Existe `architect/review.md`
    - Si aplica, existen subtasks por agente
    - Si falla → ir a **Paso 8 (FAIL)**.
@@ -87,7 +87,7 @@ blocking: true
      - marcar Fase 7 como completada
      - establecer `task.lifecycle.phases.phase-7-evaluation.validated_at = <ISO-8601>`
      - actualizar `task.phase.updated_at = <ISO-8601>`
-     - avanzar `task.phase.current = aliases.taskcycle-long.phases.phase_8.id`
+     - avanzar `task.phase.current = aliases.tasklifecycle-long.phases.phase_8.id`
 
 ---
 
@@ -114,7 +114,7 @@ Requisitos (todos obligatorios):
 5. Existe `.agent/artifacts/<taskId>-<taskTitle>/agent-scores.md` actualizado.
 6. `task.md` refleja:
    - Fase 7 completada
-   - `task.phase.current == aliases.taskcycle-long.phases.phase_8.id`
+   - `task.phase.current == aliases.tasklifecycle-long.phases.phase_8.id`
    - `task.lifecycle.phases.phase-7-evaluation.completed == true`
    - `task.lifecycle.phases.phase-7-evaluation.validated_at` no nulo
    - `task.phase.updated_at` no nulo

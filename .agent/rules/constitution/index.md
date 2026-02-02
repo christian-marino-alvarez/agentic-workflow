@@ -16,10 +16,12 @@ por alias en lugar de rutas directas.
 ## Aliases (YAML)
 ```yaml
 constitution:
-  GEMINI_location: .agent/rules/constitution/GEMINI.location.md
   clean_code: .agent/rules/constitution/clean-code.md
   agents_behavior: .agent/rules/constitution/agents-behavior.md
   vscode_extensions: .agent/rules/constitution/vscode-extensions.md
+  class_oriented: .agent/rules/constitution/class-oriented.md
+  external_html: .agent/rules/constitution/external-html.md
+  lit_decorators: .agent/rules/constitution/lit-decorators.md
 ```
 
 ## Reglas

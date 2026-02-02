@@ -29,23 +29,70 @@ export class RuntimeEngine {
   }
 
   public async run(state: RuntimeState, workflow: WorkflowMeta): Promise<RuntimeState> {
-    const normalized = this.ensureSteps(state);
-    await this.emitEvent('run_started', normalized, workflow);
-    await this.emitEvent('workflow_loaded', normalized, workflow);
-    await this.emitEvent('context_resolved', normalized, workflow);
-    await this.log('info', 'Workflow context resolved', { workflowId: workflow.id, runId: state.runId });
+    let currentState = this.ensureSteps(state);
 
-    for (const step of normalized.steps) {
-      if (step.status === 'completed') {
-        continue;
-      }
-      await this.runStep(step, normalized, workflow);
+    // Initial emit only if just starting
+    if (currentState.status === 'idle') {
+      await this.emitEvent('run_started', currentState, workflow);
+      await this.emitEvent('workflow_loaded', currentState, workflow);
+      await this.emitEvent('context_resolved', currentState, workflow);
+      await this.log('info', 'Workflow context resolved', { workflowId: workflow.id, runId: currentState.runId });
     }
 
-    const completed = this.withStatus(normalized, 'completed');
-    await this.log('info', 'Workflow execution completed', { runId: state.runId });
-    await this.persistState(completed, workflow, 'run_completed');
-    return completed;
+    // Run loop
+    while (true) {
+      if (currentState.status === 'completed' || currentState.status === 'failed') {
+        break;
+      }
+
+      const nextStep = currentState.steps.find(s => s.status !== 'completed');
+      if (!nextStep) {
+        // All steps completed
+        currentState = this.withStatus(currentState, 'completed');
+        await this.log('info', 'Workflow execution completed', { runId: currentState.runId });
+        await this.persistState(currentState, workflow, 'run_completed');
+        break;
+      }
+
+      // Execute single step
+      currentState = await this.step(currentState, workflow);
+    }
+
+    return currentState;
+  }
+
+  public async step(state: RuntimeState, workflow: WorkflowMeta): Promise<RuntimeState> {
+    const normalized = this.ensureSteps(state);
+    const step = normalized.steps.find(s => s.status !== 'completed');
+
+    if (!step) {
+      // Nothing to do, already done
+      return normalized;
+    }
+
+    try {
+      await this.runStep(step, normalized, workflow);
+      // Reload state after step execution to ensure we return the latest mutation
+      // In this in-memory implementation, 'normalized' was mutated by runStep wrappers? 
+      // No, runStep calls withStepStatus which returns NEW state but runStep returns void.
+      // Wait, original implementations of runStep mutated state?
+      // Let's check the original runStep signature. It takes state but calls this.executeStep.
+
+      // REFACTOR NOTICE: The original runStep was assuming it was running inside the loop and managing state persistence internally.
+      // But it didn't return the new state to the caller of run().
+      // We need to fetch the latest state from the store because persistence happens inside runStep.
+
+      const latestState = await this.dependencies.stateStore.load();
+      if (!latestState) throw new Error('State lost during step execution');
+      return latestState;
+
+    } catch (error) {
+      // Error handling is done inside runStep (emitError, persist failed state)
+      // We just need to return the failed state
+      const failedState = await this.dependencies.stateStore.load();
+      if (!failedState) throw new Error('State lost during step failure');
+      return failedState;
+    }
   }
 
   private async runStep(step: RuntimeStepState, state: RuntimeState, workflow: WorkflowMeta): Promise<void> {

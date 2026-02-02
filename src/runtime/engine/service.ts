@@ -93,6 +93,38 @@ export async function resumeRuntime(options: RuntimeExecutionOptions): Promise<R
   return engine.run(state, workflow);
 }
 
+export async function stepRuntime(options: RuntimeExecutionOptions): Promise<RuntimeState> {
+  const taskPath = path.resolve(options.taskPath);
+  const task = await loadTask(taskPath);
+  ensureOwner(task.owner, options.agent);
+
+  const statePath = resolveStatePath(taskPath, options.statePath);
+  const store = new StateStore(statePath);
+  const state = await store.load();
+  if (!state) {
+    throw new Error('No persisted state found to resume.');
+  }
+
+  if (state.taskPath !== taskPath) {
+    throw new Error('State does not match the provided task path.');
+  }
+
+  const workflowsRoot = resolveWorkflowsRoot(path.dirname(taskPath));
+  const mapping = await resolvePhaseWorkflow(workflowsRoot, state.phase);
+  if (!mapping) {
+    throw new Error(`No workflow mapping found for phase ${state.phase}.`);
+  }
+
+  const workflow = { id: mapping.phaseId, path: mapping.workflowPath };
+  const emitter = new RuntimeEmitter({
+    eventsPath: options.eventsPath,
+    stdout: options.stdoutEvents ?? true
+  });
+  const engine = new RuntimeEngine({ emitter, stateStore: store });
+  Logger.info('Service', 'Runtime stepping execution', { runId: state.runId, taskId: task.id });
+  return engine.step(state, workflow);
+}
+
 function resolveStatePath(taskPath: string, override?: string): string {
   if (override) {
     return path.resolve(override);

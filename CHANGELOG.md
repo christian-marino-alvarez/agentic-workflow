@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.23.0-beta.3](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.22.0-beta.3...agentic-workflow-v1.23.0-beta.3) (2026-02-02)
+
+
+### Features
+
+* **runtime:** add MCP-governed engine ([f712346](https://github.com/christian-marino-alvarez/agentic-workflow/commit/f7123464487f849072fac3d2cf00d0aa5df52d08))
+
 ## [1.22.0-beta.4](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.22.0-beta.3...agentic-workflow-v1.22.0-beta.4) (2026-02-02)
 
 ### Features

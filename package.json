@@ -1,6 +1,6 @@
 {
   "name": "@christianmaf80/agentic-workflow",
-  "version": "1.21.0-beta.1",
+  "version": "1.21.0-beta.2",
   "description": "Portable agentic workflow orchestration system with strict identity and gate discipline",
   "type": "module",
   "displayName": "Agentic Workflow",
@@ -50,7 +50,7 @@
     "media"
   ],
   "scripts": {
-    "build": "node scripts/clean-dist.mjs && tsc && npm run copy-assets",
+    "build": "node scripts/clean-dist.mjs && tsc -p tsconfig.build.json && npm run copy-assets",
     "copy-assets": "mkdir -p dist/agent && cp -r src/agentic-system-structure/rules src/agentic-system-structure/workflows src/agentic-system-structure/templates src/agentic-system-structure/artifacts dist/agent/ && cp src/agentic-system-structure/index.md dist/agent/index.md",
     "start": "node dist/index.js",
     "publish:npm": "npm publish --registry https://registry.npmjs.org --access public",
@@ -85,7 +85,9 @@
   "dependencies": {
     "@clack/prompts": "^0.7.0",
     "commander": "^11.1.0",
-    "gray-matter": "^4.0.3"
+    "gray-matter": "^4.0.3",
+    "lit": "^3.3.2",
+    "openai": "^6.17.0"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",

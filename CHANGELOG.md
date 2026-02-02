@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.22.0-beta.6](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.22.0-beta.5...agentic-workflow-v1.22.0-beta.6) (2026-02-02)
+
+### Features
+
+* **runtime:** re-trigger release for logging features.
+
 ## [1.22.0-beta.5](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.22.0-beta.4...agentic-workflow-v1.22.0-beta.5) (2026-02-02)
 
 ### Features

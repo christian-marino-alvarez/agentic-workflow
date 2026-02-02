@@ -1,3 +1,9 @@
+---
+kind: artifact
+name: 4-qa-agent-verify-build
+source: agentic-system-structure
+---
+
 🛡️ **qa-agent**: Tarea asignada para verificacion de build y comando.
 
 ---

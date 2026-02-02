@@ -1,3 +1,10 @@
+---
+id: {{task.id}}
+title: {{task.title}}
+owner: architect-agent
+strategy: {{task.strategy}}
+---
+
 # Task (Template)
 
 ## Identificación

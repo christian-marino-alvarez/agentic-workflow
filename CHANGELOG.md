@@ -7,6 +7,7 @@
 
 ### Bug Fixes
 * **cli:** resolve installed core using @christianmaf80 scope.
+* **extension:** include lit and openai dependencies for webview builds.
 
 ## [1.20.1](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.20.0...agentic-workflow-v1.20.1) (2026-01-30)
 

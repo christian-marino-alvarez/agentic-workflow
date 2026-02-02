@@ -27,6 +27,7 @@
 ### Bug Fixes
 
 * **extension:** add lit and openai dependencies to fix TypeScript module resolution.
+* **build:** exclude VSCode extension from `npm run build`.
 * **vscode-extension:** add Lit core base, CSP fixes, logging, and setup view ([546444b](https://github.com/christian-marino-alvarez/agentic-workflow/commit/546444bab7a9b9f2d0ee44585cd026da5ca30ab5))
 
 

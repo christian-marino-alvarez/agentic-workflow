@@ -50,7 +50,7 @@
     "media"
   ],
   "scripts": {
-    "build": "node scripts/clean-dist.mjs && tsc && npm run copy-assets",
+    "build": "node scripts/clean-dist.mjs && tsc -p tsconfig.build.json && npm run copy-assets",
     "copy-assets": "mkdir -p dist/agent && cp -r src/agentic-system-structure/rules src/agentic-system-structure/workflows src/agentic-system-structure/templates src/agentic-system-structure/artifacts dist/agent/ && cp src/agentic-system-structure/index.md dist/agent/index.md",
     "start": "node dist/index.js",
     "publish:npm": "npm publish --registry https://registry.npmjs.org --access public",

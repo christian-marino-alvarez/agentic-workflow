@@ -18,6 +18,7 @@ por alias en lugar de rutas directas.
 constitution:
   clean_code: .agent/rules/constitution/clean-code.md
   agents_behavior: .agent/rules/constitution/agents-behavior.md
+  runtime_integration: .agent/rules/constitution/runtime-integration.md
 ```
 
 ## Reglas

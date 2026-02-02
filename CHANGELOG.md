@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.22.0-beta.5](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.22.0-beta.4...agentic-workflow-v1.22.0-beta.5) (2026-02-02)
+
+### Features
+
+* **runtime:** add structured logging via log event.
+
 ## [1.22.0-beta.4](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.22.0-beta.3...agentic-workflow-v1.22.0-beta.4) (2026-02-02)
 
 ### Features

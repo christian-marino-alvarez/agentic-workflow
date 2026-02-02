@@ -22,6 +22,7 @@ constitution:
   vscode_extensions: .agent/rules/constitution/vscode-extensions.md
   class_oriented: .agent/rules/constitution/class-oriented.md
   external_html: .agent/rules/constitution/external-html.md
+  lit_decorators: .agent/rules/constitution/lit-decorators.md
 ```
 
 ## Reglas

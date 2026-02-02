@@ -1,8 +1,8 @@
 # Task (Template)
 
 ## Identificación
-- id: task-20260130-chatkit-mainview
-- title: Integrar ChatKit en mainView
+- id: task-20260201-restructure-views-architecture
+- title: Reestructurar arquitectura de vistas Lit
 - scope: candidate | current
 - owner: architect-agent
 
@@ -13,62 +13,62 @@
   - candidate_path: artifacts.candidate.task
 
 ## Descripción de la tarea
-Integrar OpenAI ChatKit en `mainView` con un ejemplo básico funcional en VS Code, usando backend local en el extension host y agentes dinámicos para el rol Neo.
+Reestructurar la arquitectura actual de vistas Lit para que cada vista registre su propio dominio, encapsule listeners y comunicación con servidor, y exponga un ciclo de vida con logging consistente.
 
 ## Objetivo
-Mostrar un ChatKit embebido en `mainView` con un botón “Test” que dispare el mensaje “Hello I am the first agent called Neo”, usando un agente dinámico (gpt-5) creado por sesión y con contexto de rol/constitución.
+Eliminar factories en registro de views, mover registro al constructor de cada vista (recibiendo context), normalizar ciclo de vida con logs por vista y encapsular comunicación con servidor dentro del dominio de cada vista mediante un método público en el lifecycle.
 
 ## Estado del ciclo de vida (FUENTE ÚNICA DE VERDAD)
 
 ```yaml
 task:
-  id: "task-20260130-chatkit-mainview"
-  title: "Integrar ChatKit en mainView"
+  id: "task-20260201-restructure-views-architecture"
+  title: "Reestructurar arquitectura de vistas Lit"
   strategy: "long"  # long | short
   artifacts:
     supplemental: []
   phase:
-    current: "phase-8-commit-push"
+    current: "phase-4-implementation"
     validated_by: "architect-agent"
-    updated_at: "2026-02-01T11:40:00Z"
+    updated_at: "2026-02-01T12:40:00Z"
   lifecycle:
     phases:
       phase-0-acceptance-criteria:
         completed: true
         validated_by: architect-agent
-        validated_at: "2026-01-30T00:00:00Z"
+        validated_at: "2026-02-01T11:46:00Z"
       phase-1-research:
         completed: true
         validated_by: architect-agent
-        validated_at: "2026-01-30T00:00:00Z"
+        validated_at: "2026-02-01T12:05:30Z"
       phase-2-analysis:
         completed: true
         validated_by: architect-agent
-        validated_at: "2026-01-30T00:00:00Z"
+        validated_at: "2026-02-01T12:30:00Z"
       phase-3-planning:
         completed: true
         validated_by: architect-agent
-        validated_at: "2026-01-30T00:00:00Z"
+        validated_at: "2026-02-01T12:40:00Z"
       phase-4-implementation:
-        completed: true
-        validated_by: architect-agent
-        validated_at: "2026-02-01T11:16:00Z"
+        completed: false
+        validated_by: null
+        validated_at: null
       phase-5-verification:
-        completed: true
-        validated_by: architect-agent
-        validated_at: "2026-02-01T11:20:30Z"
+        completed: false
+        validated_by: null
+        validated_at: null
       phase-6-results-acceptance:
-        completed: true
-        validated_by: architect-agent
-        validated_at: "2026-02-01T11:25:00Z"
+        completed: false
+        validated_by: null
+        validated_at: null
       phase-7-evaluation:
-        completed: true
-        validated_by: architect-agent
-        validated_at: "2026-02-01T11:35:00Z"
+        completed: false
+        validated_by: null
+        validated_at: null
       phase-8-commit-push:
-        completed: true
-        validated_by: architect-agent
-        validated_at: "2026-02-01T11:40:00Z"
+        completed: false
+        validated_by: null
+        validated_at: null
     subflows:
       components:
         create:
@@ -103,7 +103,7 @@ task:
 ---
 
 ## 2. Definición y Alcance (Contrato)
-- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/task-20260130-chatkit-mainview/acceptance.md)
+- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/task-20260201-restructure-views-architecture/acceptance.md)
 - **Alias**: `task.acceptance`
 
 ---

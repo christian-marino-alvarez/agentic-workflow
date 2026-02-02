@@ -11,14 +11,7 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onView:chatView",
-    "onView:historyView",
-    "onView:workflowView",
-    "onView:keyView",
-    "onCommand:agenticWorkflow.setOpenAIKey",
-    "onCommand:agenticWorkflow.clearOpenAIKey"
-  ],
+  "activationEvents": [],
   "contributes": {
     "commands": [
       {
@@ -30,6 +23,17 @@
         "title": "Agentic: Clear OpenAI API Key"
       }
     ],
+    "configuration": {
+      "type": "object",
+      "title": "Agentic Workflow",
+      "properties": {
+        "agenticWorkflow.experimentalNextViews": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable experimental next-generation view architecture."
+        }
+      }
+    },
     "viewsContainers": {
       "activitybar": [
         {
@@ -83,15 +87,15 @@
     "RELEASE_PROCESS.md",
     "media"
   ],
-  "scripts": {
-    "build": "node scripts/clean-dist.mjs && tsc && npm run copy-assets && npm run copy-view-assets",
+    "scripts": {
+    "build": "node scripts/clean-dist.mjs && tsc && npm run bundle-webviews && npm run copy-assets",
+    "bundle-webviews": "node scripts/bundle-webviews.mjs",
     "copy-assets": "mkdir -p dist/agent && cp -r src/agentic-system-structure/rules src/agentic-system-structure/workflows src/agentic-system-structure/templates src/agentic-system-structure/artifacts dist/agent/ && cp src/agentic-system-structure/index.md dist/agent/index.md",
-    "copy-view-assets": "rm -rf dist/extension/views/chat/web dist/extension/views/history/web dist/extension/views/workflow/web && mkdir -p dist/extension/views && cp -R src/extension/views/chat/web dist/extension/views/chat/ && cp -R src/extension/views/history/web dist/extension/views/history/ && cp -R src/extension/views/workflow/web dist/extension/views/workflow/",
     "start": "node dist/index.js",
     "publish:npm": "npm publish --registry https://registry.npmjs.org --access public",
     "publish:github": "npm publish --registry https://npm.pkg.github.com",
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./ && npm run copy-view-assets",
+    "compile": "tsc -p ./ && npm run bundle-webviews",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
@@ -130,6 +134,7 @@
     "@types/vscode": "^1.108.1",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
+    "esbuild": "^0.25.0",
     "eslint": "^9.39.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.52.0"

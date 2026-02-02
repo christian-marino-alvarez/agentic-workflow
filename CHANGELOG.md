@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.21.0-beta.3](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.21.0-beta.2...agentic-workflow-v1.21.0-beta.3) (2026-02-02)
+
+### Bug Fixes
+
+* **package:** include dist/infrastructure in npm files to fix init on beta installs.
+
 ## [1.21.0-beta.2](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.21.0-beta.1...agentic-workflow-v1.21.0-beta.2) (2026-02-02)
 
 ### Bug Fixes

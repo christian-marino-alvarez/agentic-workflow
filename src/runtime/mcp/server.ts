@@ -7,6 +7,7 @@ import { loadWorkflows, resolvePhaseWorkflow } from '../engine/workflow-loader.j
 import { loadTask, resolveWorkflowsRoot } from '../engine/task-loader.js';
 import { runRuntime, resumeRuntime } from '../engine/service.js';
 import type { RuntimeEvent } from '../engine/types.js';
+import { Logger } from '../engine/logger.js';
 
 interface McpRequest {
   id: string | number;
@@ -71,6 +72,8 @@ async function dispatchRequest(request: McpRequest): Promise<unknown> {
       return handleEmitEvent(request.params ?? {});
     case 'runtime.chat':
       return handleChat(request.params ?? {});
+    case 'debug_read_logs':
+      return handleDebugReadLogs(request.params ?? {});
     default:
       throw new Error(`Unknown method: ${request.method}`);
   }
@@ -168,6 +171,9 @@ async function handleChat(params: Record<string, unknown>): Promise<unknown> {
   const eventsPath = getOptionalString(params.eventsPath);
   const message = ensureString(params.message, 'message');
   const role = getOptionalString(params.role) ?? 'user';
+
+  Logger.info('Runtime', `Chat message received from ${role}`, { message });
+
   const emitter = new RuntimeEmitter({ eventsPath, stdout: false });
   await emitter.emit({
     type: 'chat_message',
@@ -176,6 +182,11 @@ async function handleChat(params: Record<string, unknown>): Promise<unknown> {
     payload: { role, content: message }
   });
   return { status: 'ok' };
+}
+
+async function handleDebugReadLogs(params: Record<string, unknown>): Promise<unknown> {
+  const limit = typeof params.limit === 'number' ? params.limit : 100;
+  return Logger.getInstance().getLogs(limit);
 }
 
 function ensureString(value: unknown, name: string): string {

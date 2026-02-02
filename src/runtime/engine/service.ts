@@ -3,6 +3,7 @@ import path from 'node:path';
 import { RuntimeEmitter } from './emitter.js';
 import { RuntimeEngine } from './engine.js';
 import { StateStore } from './state-store.js';
+import { Logger } from './logger.js';
 import { loadTask, resolveWorkflowsRoot } from './task-loader.js';
 import { resolvePhaseWorkflow } from './workflow-loader.js';
 import type { RuntimeState } from './types.js';
@@ -50,7 +51,15 @@ export async function runRuntime(options: RuntimeExecutionOptions): Promise<Runt
   });
   const store = new StateStore(statePath);
   const engine = new RuntimeEngine({ emitter, stateStore: store });
-  return engine.run(state, workflow);
+  Logger.info('Service', 'Runtime starting execution', { runId, taskPath, agent: options.agent });
+  try {
+    const result = await engine.run(state, workflow);
+    Logger.info('Service', 'Runtime execution finished', { runId, status: result.status });
+    return result;
+  } catch (error) {
+    Logger.error('Service', 'Runtime execution failed', { runId, error: String(error) });
+    throw error;
+  }
 }
 
 export async function resumeRuntime(options: RuntimeExecutionOptions): Promise<RuntimeState> {

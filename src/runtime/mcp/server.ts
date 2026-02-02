@@ -27,6 +27,7 @@ interface GateResult {
 }
 
 export async function startRuntimeMcpServer(): Promise<void> {
+  Logger.info('MCP', 'Server started via stdio transport. Waiting for JSON-RPC messages...');
   const rl = readline.createInterface({ input: process.stdin, crlfDelay: Infinity });
   for await (const line of rl) {
     const trimmed = line.trim();
@@ -41,6 +42,7 @@ async function handleRequest(line: string): Promise<void> {
   let request: McpRequest;
   try {
     request = JSON.parse(line) as McpRequest;
+    Logger.debug('MCP', 'Received request', { id: request.id, method: request.method });
   } catch (error) {
     writeResponse({ id: 'unknown', error: { message: 'Invalid JSON request.' } });
     return;
@@ -236,6 +238,7 @@ function getOptionalString(value: unknown): string | undefined {
 }
 
 function writeResponse(response: McpResponse): void {
+  Logger.debug('MCP', 'Sending response', { id: response.id, error: !!response.error });
   process.stdout.write(`${JSON.stringify(response)}\n`);
 }
 

@@ -1,3 +1,9 @@
+---
+kind: artifact
+name: 2-dev-agent-manifest-command
+source: agentic-system-structure
+---
+
 🧑‍💻 **dev-agent**: Tarea asignada para revisar manifesto y comando minimo.
 
 ---

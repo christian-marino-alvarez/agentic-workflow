@@ -1,10 +1,10 @@
 {
   "name": "@christianmaf80/agentic-workflow",
-  "version": "1.19.1",
+  "version": "1.22.0-beta.7",
   "description": "Portable agentic workflow orchestration system with strict identity and gate discipline",
   "type": "module",
   "displayName": "Agentic Workflow",
-  "main": "./dist/extension/extension.js",
+  "main": "./dist/cli/index.js",
   "engines": {
     "vscode": "^1.108.2"
   },
@@ -29,7 +29,8 @@
         {
           "id": "mainView",
           "name": "Agent Chat",
-          "icon": "media/agent-chat.svg"
+          "icon": "media/agent-chat.svg",
+          "type": "webview"
         }
       ]
     }
@@ -40,16 +41,16 @@
   "files": [
     "dist/cli",
     "dist/core",
+    "dist/infrastructure",
     "dist/agent",
-    "dist/extension",
+    "dist/runtime",
     "bin",
     "README.md",
     "LICENSE",
-    "RELEASE_PROCESS.md",
-    "media"
+    "RELEASE_PROCESS.md"
   ],
   "scripts": {
-    "build": "node scripts/clean-dist.mjs && tsc && npm run copy-assets",
+    "build": "node scripts/clean-dist.mjs && tsc -p tsconfig.build.json && npm run copy-assets",
     "copy-assets": "mkdir -p dist/agent && cp -r src/agentic-system-structure/rules src/agentic-system-structure/workflows src/agentic-system-structure/templates src/agentic-system-structure/artifacts dist/agent/ && cp src/agentic-system-structure/index.md dist/agent/index.md",
     "start": "node dist/index.js",
     "publish:npm": "npm publish --registry https://registry.npmjs.org --access public",
@@ -84,7 +85,9 @@
   "dependencies": {
     "@clack/prompts": "^0.7.0",
     "commander": "^11.1.0",
-    "gray-matter": "^4.0.3"
+    "gray-matter": "^4.0.3",
+    "lit": "^3.3.2",
+    "openai": "^6.17.0"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
@@ -94,7 +97,8 @@
     "@vscode/test-electron": "^2.5.2",
     "eslint": "^9.39.2",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.52.0"
+    "typescript-eslint": "^8.52.0",
+    "vitest": "^4.0.18"
   },
   "overrides": {
     "diff": "8.0.3"

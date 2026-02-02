@@ -38,7 +38,7 @@ Derivados de las respuestas anteriores:
 1. **Alcance**: Reubicación de carpetas `rules`, `workflows`, `templates`, `artifacts` e `index.md` de `src/` a `.agent/`. Consolidación de `.agent.backup_*` en `/.backups/`.
 2. **Entradas/Datos**: Ficheros actuales en `src/` y carpetas de backup en raíz.
 3. **Salidas esperadas**: Nueva estructura de directorios funcional y coherente, con scripts y referencias actualizadas.
-4. **Restricciones**: No modificar el código lógico en `src/cli`, `src/core`, `src/test` ni `src/extension.ts`.
+4. **Restricciones**: No modificar el código lógico en `src/cli`, `src/infrastructure`, `src/test` ni `src/extension.ts`.
 5. **Criterio de Done**: Estructura movida, `.backups` consolidado, `init` funcional y build exitosa sin errores de paths.
 
 ---

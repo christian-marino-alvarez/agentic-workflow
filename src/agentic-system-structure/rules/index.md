@@ -46,7 +46,6 @@ Archivos protegidos:
 - `.agent/rules/**/*.md` (todas las reglas)
 - `.agent/workflows/**/*.md` (todos los workflows)
 - `.agent/index.md`
-- `GEMINI.md` (si existe en el repositorio)
 
 **Prohibiciones**:
 - ❌ Ningún agente (qa, researcher, neo) puede modificar reglas

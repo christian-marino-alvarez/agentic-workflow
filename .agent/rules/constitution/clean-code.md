@@ -179,6 +179,11 @@ Any deviation is a violation.
 - Hidden side effects are forbidden.
 - Deterministic behavior is mandatory.
 
+## 11.1 TypeScript Compile Gate (MANDATORY)
+
+- `npm run compile` MUST succeed before any phase gate can be approved.
+- If compile fails, the phase is considered **BLOCKED** until fixed.
+
 ---
 
 ## 12. Clean Code Gate

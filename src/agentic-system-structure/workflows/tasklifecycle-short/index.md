@@ -12,22 +12,22 @@ blocking: true
 # WORKFLOW: tasklifecycle-short (Index)
 
 ## Índices requeridos (OBLIGATORIO)
-Este workflow **NO** define aliases fuera de su dominio (`taskcycle-short`).
+Este workflow **NO** define aliases fuera de su dominio (`tasklifecycle-short`).
 Para artifacts y templates, **DEBE** cargar índices globales:
 
 - Artifacts index: `.agent/artifacts/index.md`
 - Templates index: `.agent/templates/index.md`
 
-## Aliases del dominio `taskcycle-short` (OBLIGATORIO)
-Este workflow define aliases **solo** del dominio `taskcycle-short` (task lifecycle short).
-Existe **un único namespace** `aliases.taskcycle-short.phases.*` que contiene:
+## Aliases del dominio `tasklifecycle-short` (OBLIGATORIO)
+Este workflow define aliases **solo** del dominio `tasklifecycle-short` (task lifecycle short).
+Existe **un único namespace** `aliases.tasklifecycle-short.phases.*` que contiene:
 - `id` de fase
 - `workflow` (path del workflow de la fase)
 
 ## Aliases (YAML)
 ```yaml
 aliases:
-  taskcycle-short:
+  tasklifecycle-short:
     phases:
       short_phase_1:
         id: short-phase-1-brief
@@ -56,14 +56,14 @@ aliases:
 ## Orden oficial de ejecución de fases
 Las fases del ciclo Short **DEBEN ejecutarse estrictamente en orden**:
 
-1. `aliases.taskcycle-short.phases.short_phase_1.id` (Brief)
-2. `aliases.taskcycle-short.phases.short_phase_2.id` (Implementation)
-3. `aliases.taskcycle-short.phases.short_phase_3.id` (Closure)
+1. `aliases.tasklifecycle-short.phases.short_phase_1.id` (Brief)
+2. `aliases.tasklifecycle-short.phases.short_phase_2.id` (Implementation)
+3. `aliases.tasklifecycle-short.phases.short_phase_3.id` (Closure)
 
 ## Gate (REQUIRED)
 Requisitos (todos obligatorios):
 1. Existe `artifacts.candidate.task` con `task.strategy: short`.
-2. Están disponibles todos los workflows de fase del dominio `taskcycle-short`.
+2. Están disponibles todos los workflows de fase del dominio `tasklifecycle-short`.
 
 Si Gate FAIL:
 - Indicar exactamente qué requisito falta.

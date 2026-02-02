@@ -1,3 +1,9 @@
+---
+kind: rule
+name: clean-code
+source: agentic-system-structure
+---
+
 # Clean Code Rules
 
 type: rules

@@ -5,8 +5,8 @@
 - constitution.loaded.in_context: true
 
 ## Constitution (load order)
-1. .agent/rules/constitution/GEMINI.location.md
-2. .agent/rules/constitution/clean-code.md
+1. .agent/rules/constitution/clean-code.md
+2. .agent/rules/constitution/agents-behavior.md
 3. .agent/rules/constitution/agents-behavior.md
 
 ```yaml
@@ -16,11 +16,11 @@ roles:
   architect: architect-agent
 constitution:
   loaded:
-    - .agent/rules/constitution/GEMINI.location.md
     - .agent/rules/constitution/clean-code.md
+    - .agent/rules/constitution/agents-behavior.md
     - .agent/rules/constitution/agents-behavior.md
 language:
   value: español
   confirmed: true
-strategy: short
+strategy: long
 ```

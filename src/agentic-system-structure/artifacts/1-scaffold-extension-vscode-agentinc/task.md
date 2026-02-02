@@ -1,3 +1,9 @@
+---
+kind: artifact
+name: task
+source: agentic-system-structure
+---
+
 # Task (Template)
 
 ## Identificacion

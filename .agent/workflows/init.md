@@ -1,5 +1,5 @@
 ---
-description: Workflow obligatorio de setup: verifica GEMINI.location, carga constitutions base y define el idioma de conversación y la estrategia Long/Short.
+description: "Workflow obligatorio de setup: carga constitutions base y define el idioma de conversación y la estrategia Long/Short."
 ---
 
 ---
@@ -60,9 +60,8 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
    - Si alguna falla → FAIL.
 
 3. Cargar en contexto las constitutions (en orden):
-   1) `constitution.GEMINI_location`
-   2) `constitution.clean_code`
-   3) `constitution.agents_behavior`
+   1) `constitution.clean_code`
+   2) `constitution.agents_behavior`
    - **PROHIBIDO** cargar templates o artifacts en este paso.
    - Si alguna falla → FAIL.
 

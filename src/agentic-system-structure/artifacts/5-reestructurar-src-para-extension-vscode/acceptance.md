@@ -1,3 +1,9 @@
+---
+kind: artifact
+name: acceptance
+source: agentic-system-structure
+---
+
 # Acceptance Criteria — 5-reestructurar-src-para-extension-vscode
 
 🏛️ **architect-agent**: Definición de criterios de aceptación para la reestructuración de src y scaffolding de extensión VSCode.

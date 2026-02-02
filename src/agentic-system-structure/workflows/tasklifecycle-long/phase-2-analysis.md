@@ -20,7 +20,7 @@ blocking: true
   - descripcion
   - objetivo
   - acceptance criteria definidos
-  - `task.phase.current == aliases.taskcycle-long.phases.phase_2.id`
+  - `task.phase.current == aliases.tasklifecycle-long.phases.phase_2.id`
 
 > [!IMPORTANT]
 > **Constitución activa (OBLIGATORIO)**:
@@ -59,7 +59,7 @@ Crear un informe de **analisis** profundo que:
 1. Verificar inputs
    - Existe `.agent/artifacts/<taskId>-<taskTitle>/task.md`
    - Existe `.agent/artifacts/<taskId>-<taskTitle>/researcher/research.md`
-   - `task.phase.current == aliases.taskcycle-long.phases.phase_2.id`
+   - `task.phase.current == aliases.tasklifecycle-long.phases.phase_2.id`
    - El `task.md` contiene acceptance criteria definidos
    - El research esta aprobado por el desarrollador (SI)
    - Si falla → ir a **Paso 10 (FAIL)**.
@@ -109,7 +109,7 @@ Crear un informe de **analisis** profundo que:
      - marcar Fase 2 como completada
      - establecer `task.lifecycle.phases.phase-2-analysis.validated_at = <ISO-8601>`
      - actualizar `task.phase.updated_at = <ISO-8601>`
-     - avanzar `task.phase.current = aliases.taskcycle-long.phases.phase_3.id`
+     - avanzar `task.phase.current = aliases.tasklifecycle-long.phases.phase_3.id`
    - Indicar rutas:
      - `analysis.md`
      - `task.md` actualizado
@@ -136,7 +136,7 @@ Requisitos (todos obligatorios):
    - `approval.developer.decision == SI`
 6. `task.md` refleja:
    - Fase 2 completada
-   - `task.phase.current == aliases.taskcycle-long.phases.phase_3.id`
+   - `task.phase.current == aliases.tasklifecycle-long.phases.phase_3.id`
    - `task.lifecycle.phases.phase-2-analysis.completed == true`
    - `task.lifecycle.phases.phase-2-analysis.validated_at` no nulo
    - `task.phase.updated_at` no nulo

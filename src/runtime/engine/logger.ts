@@ -61,7 +61,7 @@ export class Logger {
     const reset = '\x1b[0m';
     const color = colorMap[entry.level] || reset;
 
-    console.log(
+    console.error(
       `${color}[${entry.level.toUpperCase()}]${reset} [${entry.source}] ${entry.message}`,
       entry.context ? JSON.stringify(entry.context) : ''
     );

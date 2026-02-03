@@ -45,6 +45,12 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
     - Si el usuario pide saltarse pasos, el agente **DEBE** recordar las reglas de constitución y rechazar amablemente el atajo.
 
 ## Pasos obligatorios
+0. **Verificar Trazabilidad (OBLIGATORIO)**:
+   - Antes de cualquier acción, emitir un mensaje de chat o evento vía MCP (`runtime_chat` o `runtime_emit_event`).
+   - El agente **DEBE** confirmar que la herramienta respondió correctamente.
+   - **PROHIBICIÓN ESTRICTA**: No se permite consolidar este paso con la creación de artefactos en una misma respuesta. El agente debe esperar la confirmación del sistema o del usuario antes de proceder al paso 1.
+   - Si las herramientas MCP no están disponibles → ir a **Paso 9 (FAIL)**, a menos que el desarrollador autorice explícitamente el fallback.
+
 1. Activar `architect-agent` como rol arquitecto.
    - Mostrar un mensaje único de estado (ej: "Cargando init...") y **no** listar lecturas de ficheros individuales.
    - En ese mismo mensaje, presentar al architect-agent y dar contexto al desarrollador: rol, objetivo del init y qué información se le pedirá a continuación.
@@ -79,6 +85,7 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
      - `templates.init`
    - Todos los campos obligatorios del template **DEBEN** completarse.
    - Incluir el campo `strategy: long | short`.
+   - **REQUISITO DE TRAZABILIDAD**: Incluir una confirmación explícita de que el Paso 0 (MCP) fue ejecutado correctamente.
    - No se permite modificar, omitir ni reinterpretar la estructura del template.
 
 7. Escribir el fichero en:
@@ -114,8 +121,10 @@ Requisitos (todos obligatorios):
    - `language.value` no vacío
    - `language.confirmed == true`
    - `strategy` es "long" o "short"
+   - **`traceability.verified == true`** (Confirma cumplimiento del Paso 0)
 3) El artefacto cumple el template oficial.
 4) Idioma definido y confirmado.
 5) Estrategia seleccionada.
-6) No se cargaron índices fuera del set permitido (solo `.agent/index.md`, `agent.domains.rules.index`, `rules.constitution.index`).
-7) El Root Index `.agent/index.md` fue cargado antes de cualquier otro índice.
+6) **Trazabilidad confirmada**: El agente ha verificado la disponibilidad de herramientas MCP antes de la creación del artefacto.
+7) No se cargaron índices fuera del set permitido (solo `.agent/index.md`, `agent.domains.rules.index`, `rules.constitution.index`).
+8) El Root Index `.agent/index.md` fue cargado antes de cualquier otro índice.

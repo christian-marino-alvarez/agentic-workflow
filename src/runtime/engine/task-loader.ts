@@ -33,7 +33,7 @@ export async function loadTask(taskPath: string): Promise<TaskRecord> {
   const task = yaml.task ?? {};
   const id = task.id ?? meta.id ?? '';
   const title = task.title ?? meta.title ?? '';
-  const phase = task.phase?.current ?? '';
+  const phase = task.phase?.current ?? (meta as any).phase?.current ?? (meta as any)['phase.current'] ?? '';
   const owner = meta.owner ?? extractOwner(raw) ?? '';
 
   if (!id || !title || !phase || !owner) {

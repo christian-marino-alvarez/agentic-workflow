@@ -159,7 +159,10 @@ Antes de solicitar el gate de aprobación, el agente **DEBE**:
 - Confirmar que la implementación cumple todas las constituciones cargadas
 - Documentar cualquier desviación justificada
 
-### 8.4 Consecuencias
+### 8.4 Trazabilidad Primero (PERMANENT - CRITICAL)
+Antes de iniciar cualquier workflow o modificar archivos de sistema, el agente **DEBE** emitir un evento o mensaje vía MCP (`runtime_chat`) para confirmar que el sistema de trazabilidad está activo. Si no hay respuesta del runtime, se debe informar al desarrollador inmediatamente.
+
+### 8.5 Consecuencias
 Si un agente incumple una regla constitucional:
 - El gate **DEBE** ser rechazado
 - El agente debe corregir antes de reintentar

@@ -23,6 +23,7 @@ blocking: true
 > **Constitución activa (OBLIGATORIO)**:
 > - Cargar `constitution.clean_code` antes de iniciar
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
+> - Cargar `constitution.runtime_integration` para trazabilidad MCP
 
 ## Output (REQUIRED)
 - Crear changelog:
@@ -73,6 +74,10 @@ Ejemplos válidos:
    - resumen funcional del cambio
 
 5. Solicitar aprobación del desarrollador (OBLIGATORIA, por consola)
+5.1 **Auditoría Pre-Gate (OBLIGATORIO)**:
+- Antes del push, el `architect-agent` **DEBE** usar `runtime.validate_gate`.
+- El agente **DEBE** usar `debug_read_logs` para confirmar el changelog y los hashes de commit.
+- Estrictamente **PROHIBIDO** consolidar este paso.
  - El desarrollador **DEBE** aprobar explícitamente:
    - el contenido de los commits
    - el push a la rama destino
@@ -91,6 +96,8 @@ Ejemplos válidos:
  - Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md`:
    - marcar Fase 8 como completada
    - establecer `task.lifecycle.phases.phase-8-commit-push.validated_at = <ISO-8601>`
+   - establecer `task.lifecycle.phases.phase-8-commit-push.runtime_validated = true`
+   - establecer `task.lifecycle.phases.phase-8-commit-push.validation_id = <ID de runtime>`
    - actualizar `task.phase.updated_at = <ISO-8601>`
    - marcar la tarea como **técnicamente cerrada**
  - Indicar:
@@ -126,12 +133,10 @@ Requisitos (todos obligatorios):
 3. El desarrollador ha aprobado explícitamente commit y push.
 4. Working tree limpio (`git status` sin cambios).
 5. Los cambios están correctamente subidos a la rama destino.
-6. `task.md` refleja:
- - Fase 8 completada
- - Tarea cerrada técnicamente
- - `task.lifecycle.phases.phase-8-commit-push.completed == true`
- - `task.lifecycle.phases.phase-8-commit-push.validated_at` no nulo
- - `task.phase.updated_at` no nulo
+6. **Auditoría de Runtime**: El agente ha ejecutado `runtime.validate_gate` y el resultado es PASS.
+7. **Trazabilidad de Logs**: Los logs (`debug_read_logs`) confirman el push exitoso.
+8. `task.md` refleja fase completada y datos de validación de runtime.
+9. `task.md` refleja timestamp y estado.
 
 Si Gate FAIL:
 - Ejecutar **Paso 10 (FAIL)**.

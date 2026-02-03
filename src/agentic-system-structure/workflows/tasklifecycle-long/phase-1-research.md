@@ -25,6 +25,7 @@ blocking: true
 > **Constitución activa (OBLIGATORIO)**:
 > - Cargar `constitution.clean_code` antes de iniciar
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
+> - **Activar `skill.runtime-governance`** (Para validación de gate y trazabilidad)
 
 ## Output (REQUIRED)
 - Research report (obligatorio, generado por researcher-agent):
@@ -149,6 +150,7 @@ Requisitos (todos obligatorios):
    - `task.lifecycle.phases.phase-1-research.completed == true`
    - `task.lifecycle.phases.phase-1-research.validated_at` no nulo
    - `task.phase.updated_at` no nulo
+6. **Gobernanza verificada**: El historial de logs muestra la secuencia de herramientas MCP definida en `skill.runtime-governance`.
 
 Si Gate FAIL:
 - Ejecutar **Paso 8 (FAIL)**.

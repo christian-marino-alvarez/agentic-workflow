@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.22.0-beta.8](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.22.0-beta.7...agentic-workflow-v1.22.0-beta.8) (2026-02-03)
+
+### Features
+
+* **governance:** introduce modular "Governance Skills" (e.g., `skill.runtime-governance`) to encapsulate MCP traceability and auditing rules.
+* **cli:** add support for creating system skills via `create skill <name>` command.
+* **cli:** allow automatic creation of skill subdirectories and `SKILL.md` templates.
+* **documentation:** comprehensive update of English and Spanish READMEs including domain indexing and lifecycle details.
+* **architecture:** formalize Skills domain with dedicated indexing for alias-based loading.
+
+### Bug Fixes
+
+* **runtime:** fix task-loader inconsistency to correctly parse `phase.current` from both YAML frontmatter and internal blocks.
+* **workflows:** synchronize `src/` core workflows with MCP traceability requirements and governance skill references.
+
 ## [1.22.0-beta.6](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.22.0-beta.5...agentic-workflow-v1.22.0-beta.6) (2026-02-02)
 
 ### Features

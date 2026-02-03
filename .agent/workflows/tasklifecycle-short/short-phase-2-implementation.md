@@ -19,6 +19,7 @@ blocking: true
 > **Constitución activa (OBLIGATORIO)**:
 > - Cargar `constitution.clean_code` antes de iniciar
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
+> - Cargar `constitution.runtime_integration` para trazabilidad MCP
 > - Cargar constituciones específicas del dominio según la tarea
 
 ## Output (REQUIRED)
@@ -65,24 +66,18 @@ El architect-agent **DEBE** verificar:
   - Decisiones técnicas.
   - Estado: APROBADO | RECHAZADO.
 
-### 5. Solicitar aprobacion del desarrollador (OBLIGATORIA, por consola)
-- El desarrollador **DEBE** aprobar la implementacion:
-  - **SI** → aprobado
-  - **NO** → rechazado
-- Registrar la decision en `architect/implementation.md`:
-  ```yaml
-  approval:
-    developer:
-      decision: SI | NO
-      date: <ISO-8601>
-      comments: <opcional>
-  ```
-- Si `decision != SI` → **FAIL**.
+### 5. Solicitar aprobación del desarrollador (OBLIGATORIA, por consola)
+5.1 **Auditoría Pre-Gate (OBLIGATORIO)**:
+- Antes de solicitar la aprobación, el `architect-agent` **DEBE** usar `runtime.validate_gate` para la fase actual.
+- El agente **DEBE** usar `debug_read_logs` para confirmar la ejecución de la implementación y la creación del informe.
+- Estrictamente **PROHIBIDO** consolidar este paso con la solicitud de aprobación en una misma respuesta.
 
 ### 6. PASS (solo si APROBADO)
 - Actualizar task.md:
   - Marcar fase como completada.
   - Establecer `task.lifecycle.phases.short-phase-2-implementation.validated_at = <ISO-8601>`.
+  - Establecer `task.lifecycle.phases.short-phase-2-implementation.runtime_validated = true`.
+  - Establecer `task.lifecycle.phases.short-phase-2-implementation.validation_id = <ID de runtime>`.
   - Actualizar `task.phase.updated_at = <ISO-8601>`.
   - Avanzar a `short-phase-3-closure`.
 
@@ -93,10 +88,12 @@ Requisitos (todos obligatorios):
 1. Implementación coherente con brief.
 2. El `architect/implementation.md` inicia con el prefijo del `architect-agent`.
 3. Existe informe de implementación con estado APROBADO.
-4. Existe aprobacion explicita del desarrollador registrada en `architect/implementation.md`:
+4. **Auditoría de Runtime**: El agente ha ejecutado `runtime.validate_gate` y el resultado es PASS.
+5. **Trazabilidad de Logs**: Los logs (`debug_read_logs`) confirman la implementación y revisión arquitectónica.
+6. Existe aprobación explícita del desarrollador registrada en `architect/implementation.md`:
    - `approval.developer.decision == SI`
-5. task.md refleja fase completada.
-6. task.md refleja timestamp y estado:
+7. task.md refleja fase completada y datos de validación de runtime.
+8. task.md refleja timestamp y estado:
    - `task.lifecycle.phases.short-phase-2-implementation.completed == true`
    - `task.lifecycle.phases.short-phase-2-implementation.validated_at` no nulo
    - `task.phase.updated_at` no nulo

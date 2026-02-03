@@ -49,32 +49,41 @@ export interface PhaseMapping {
 }
 
 export async function resolvePhaseWorkflow(workflowsRoot: string, phaseId: string): Promise<PhaseMapping | null> {
-  const indexPath = path.join(workflowsRoot, 'tasklifecycle-long', 'index.md');
-  const raw = await fs.readFile(indexPath, 'utf-8');
-  const { data } = matter(raw);
-  const phases = extractPhases(data) ?? extractPhases(extractYamlBlock(raw));
-  if (!phases || typeof phases !== 'object') {
-    return null;
-  }
-  for (const phaseKey of Object.keys(phases)) {
-    const phase = phases[phaseKey];
-    if (phase?.id === phaseId && typeof phase.workflow === 'string') {
-      const workflowPath = resolveWorkflowPath(workflowsRoot, phase.workflow);
-      return {
-        phaseId,
-        workflowPath
-      };
+  const strategies = ['tasklifecycle-long', 'tasklifecycle-short'];
+
+  for (const strategy of strategies) {
+    try {
+      const indexPath = path.join(workflowsRoot, strategy, 'index.md');
+      const raw = await fs.readFile(indexPath, 'utf-8');
+      const { data } = matter(raw);
+      const phases = extractPhases(data, strategy) ?? extractPhases(extractYamlBlock(raw), strategy);
+
+      if (phases && typeof phases === 'object') {
+        for (const phaseKey of Object.keys(phases)) {
+          const phase = phases[phaseKey];
+          if (phase?.id === phaseId && typeof phase.workflow === 'string') {
+            const workflowPath = resolveWorkflowPath(workflowsRoot, phase.workflow);
+            return {
+              phaseId,
+              workflowPath
+            };
+          }
+        }
+      }
+    } catch (error) {
+      // Index for strategy might not exist or be unreadable, skip
+      continue;
     }
   }
   return null;
 }
 
-function extractPhases(source: unknown): Record<string, any> | null {
+function extractPhases(source: unknown, strategy: string): Record<string, any> | null {
   if (!source || typeof source !== 'object') {
     return null;
   }
   const aliases = (source as Record<string, any>).aliases;
-  const phases = aliases?.['tasklifecycle-long']?.phases;
+  const phases = aliases?.[strategy]?.phases;
   return phases && typeof phases === 'object' ? phases : null;
 }
 

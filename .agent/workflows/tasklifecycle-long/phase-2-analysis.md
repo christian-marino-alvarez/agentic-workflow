@@ -26,6 +26,7 @@ blocking: true
 > **Constitución activa (OBLIGATORIO)**:
 > - Cargar `constitution.clean_code` antes de iniciar
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
+> - Cargar `constitution.runtime_integration` para trazabilidad MCP
 
 ## Output (REQUIRED)
 - Crear el artefacto de analisis **a partir del template**:
@@ -90,26 +91,20 @@ Crear un informe de **analisis** profundo que:
    - Identificar si se requiere crear, modificar o eliminar componentes.
    - Identificar si se requiere crear demo y su impacto estructural.
 
-8. Solicitar aprobacion del desarrollador (OBLIGATORIO, por consola)
-   - El desarrollador **DEBE** emitir una decision binaria:
-     - **SI** (aprobado)
-     - **NO** (rechazado)
-   - La decision **DEBE** registrarse en `analysis.md` con el formato:
-     ```yaml
-     approval:
-       developer:
-         decision: SI | NO
-         date: <ISO-8601>
-         comments: <opcional>
-     ```
-   - Si `decision != SI` → ir a **Paso 10 (FAIL)**.
+8. Solicitar aprobación del desarrollador (OBLIGATORIO, por consola)
+8.1 **Auditoría Pre-Gate (OBLIGATORIO)**:
+- Antes de solicitar la aprobación, el `architect-agent` **DEBE** usar `runtime.validate_gate` para la fase actual.
+- El agente **DEBE** usar `debug_read_logs` para confirmar el análisis de cobertura de AC.
+- Estrictamente **PROHIBIDO** consolidar este paso con la solicitud de aprobación.
 
 9. PASS
-   - Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md`:
-     - marcar Fase 2 como completada
-     - establecer `task.lifecycle.phases.phase-2-analysis.validated_at = <ISO-8601>`
-     - actualizar `task.phase.updated_at = <ISO-8601>`
-     - avanzar `task.phase.current = aliases.tasklifecycle-long.phases.phase_3.id`
+- Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md`:
+  - marcar Fase 2 como completada
+  - establecer `task.lifecycle.phases.phase-2-analysis.validated_at = <ISO-8601>`
+  - establecer `task.lifecycle.phases.phase-2-analysis.runtime_validated = true`
+  - establecer `task.lifecycle.phases.phase-2-analysis.validation_id = <ID de runtime>`
+  - actualizar `task.phase.updated_at = <ISO-8601>`
+  - avanzar `task.phase.current = aliases.tasklifecycle-long.phases.phase_3.id`
    - Indicar rutas:
      - `analysis.md`
      - `task.md` actualizado
@@ -132,13 +127,11 @@ Requisitos (todos obligatorios):
 2. El fichero sigue la estructura del template `templates.analysis`.
 3. El `analysis.md` inicia con el prefijo del `architect-agent`.
 4. Cubre todos los acceptance criteria del `task.md`.
-5. Existe aprobacion explicita del desarrollador:
+5. **Auditoría de Runtime**: El agente ha ejecutado `runtime.validate_gate` y el resultado es PASS.
+6. **Trazabilidad de Logs**: Los logs (`debug_read_logs`) confirman la profundidad del análisis de componentes e impacto.
+7. Existe aprobacion explicita del desarrollador:
    - `approval.developer.decision == SI`
-6. `task.md` refleja:
-   - Fase 2 completada
-   - `task.phase.current == aliases.tasklifecycle-long.phases.phase_3.id`
-   - `task.lifecycle.phases.phase-2-analysis.completed == true`
-   - `task.lifecycle.phases.phase-2-analysis.validated_at` no nulo
-   - `task.phase.updated_at` no nulo
+8. `task.md` refleja fase completada y datos de validación de runtime.
+9. `task.md` refleja timestamp y estado.
 Si Gate FAIL:
 - Ejecutar **Paso 10 (FAIL)**.

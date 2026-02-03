@@ -23,6 +23,7 @@ blocking: true
 > **Constitución activa (OBLIGATORIO)**:
 > - Cargar `constitution.clean_code` antes de iniciar
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
+> - Cargar `constitution.runtime_integration` para trazabilidad MCP
 > - Cargar constituciones específicas del dominio según la tarea
 
 ## Output (REQUIRED)
@@ -128,22 +129,17 @@ Para cada tarea `N` en el plan:
   - Listar problemas detectados (si existen).
 
 ### 6. Gate final del desarrollador (OBLIGATORIO, por consola)
-- Solicitar confirmación global:
-  - "Todas las tareas han sido ejecutadas y aprobadas. ¿Confirmas que la Fase 4 está completa? (SI/NO)"
-- Registrar en `architect/review.md`:
-  ```yaml
-  final_approval:
-    developer:
-      decision: SI | NO
-      date: <ISO-8601>
-      comments: <opcional>
-  ```
-- Si `decision != SI` → ir a **Paso 10 (FAIL)**.
+6.1 **Auditoría Pre-Gate (OBLIGATORIO)**:
+- Antes de solicitar la confirmación global, el `architect-agent` **DEBE** usar `runtime.validate_gate`.
+- El agente **DEBE** usar `debug_read_logs` para confirmar que todas las subtasks fueron cerradas.
+- Estrictamente **PROHIBIDO** consolidar este paso.
 
 ### 7. PASS (solo si Gate final aprobado)
 - El `architect-agent` **DEBE**:
   - Marcar Fase 4 como completada en `task.md`.
   - Establecer `task.lifecycle.phases.phase-4-implementation.validated_at = <ISO-8601>`.
+  - Establecer `task.lifecycle.phases.phase-4-implementation.runtime_validated = true`.
+  - Establecer `task.lifecycle.phases.phase-4-implementation.validation_id = <ID de runtime>`.
   - Actualizar `task.phase.updated_at = <ISO-8601>`.
   - Avanzar:
     - `task.phase.current = aliases.tasklifecycle-long.phases.phase_5.id`
@@ -181,14 +177,12 @@ Requisitos (todos obligatorios):
 3. Existe `architect/review.md`.
 4. El `architect/review.md` inicia con el prefijo del `architect-agent`.
 5. Cada `agent-tasks/*.md` inicia con el prefijo del agente correspondiente.
-6. El informe de revisión tiene Gate final PASS.
-7. La implementación es coherente con el `plan.md`.
-8. `task.md` refleja:
-   - Fase 4 completada
-   - `task.phase.current == aliases.tasklifecycle-long.phases.phase_5.id`
-   - `task.lifecycle.phases.phase-4-implementation.completed == true`
-   - `task.lifecycle.phases.phase-4-implementation.validated_at` no nulo
-   - `task.phase.updated_at` no nulo
+6. **Auditoría de Runtime**: El agente ha ejecutado `runtime.validate_gate` y el resultado es PASS.
+7. **Trazabilidad de Logs**: Los logs (`debug_read_logs`) confirman la ejecución granular de la implementación.
+8. El informe de revisión tiene Gate final PASS.
+9. La implementación es coherente con el `plan.md`.
+10. `task.md` refleja fase completada y datos de validación de runtime.
+11. `task.md` refleja timestamp y estado.
 
 Si Gate FAIL:
 - Ejecutar **Paso 10 (FAIL)**.

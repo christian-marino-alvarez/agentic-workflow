@@ -24,6 +24,14 @@ Existe **un único namespace** `aliases.tasklifecycle-long.phases.*` que contien
 - `id` de fase
 - `workflow` (path del workflow de la fase)
 
+> [!IMPORTANT]
+> **Trazabilidad Runtime (OBLIGATORIO)**:
+> Para garantizar la transparencia y el logging, este workflow **DEBE** ejecutarse a través de:
+> - `runtime_run`: Para iniciar la tarea o retomar tras un reinicio.
+> - `runtime_advance_phase`: Para avanzar de fase tras aprobación del desarrollador.
+> - `runtime_chat`: Para comunicaciones durante el ciclo.
+> Saltar estas herramientas invalida la auditoría de la sesión.
+
 ## Aliases (YAML)
 ```yaml
 aliases:

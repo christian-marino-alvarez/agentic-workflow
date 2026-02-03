@@ -23,6 +23,7 @@ blocking: true
 > **Constitución activa (OBLIGATORIO)**:
 > - Cargar `constitution.clean_code` antes de iniciar
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
+> - Cargar `constitution.runtime_integration` para trazabilidad MCP
 
 ## Output (REQUIRED)
 - Crear el informe de aceptación de resultados:
@@ -76,28 +77,22 @@ blocking: true
    - El `architect-agent` **DEBE** presentar el informe `results-acceptance.md`.
    - Resolver dudas sin modificar alcance ni resultados documentados.
 
-5. Solicitar aceptación final del desarrollador (OBLIGATORIA, por consola)
-   - El desarrollador **DEBE** emitir una decisión binaria:
-     - **SI** → acepta los resultados
-     - **NO** → no acepta los resultados
-   - Registrar la decisión en `results-acceptance.md`:
-     ```yaml
-     approval:
-       developer:
-         decision: SI | NO
-         date: <ISO-8601>
-         comments: <opcional>
-     ```
-   - Si `decision != SI` → ir a **Paso 10 (FAIL)**.
+5. Solicitar aprobación del desarrollador (OBLIGATORIA, por consola)
+5.1 **Auditoría Pre-Gate (OBLIGATORIO)**:
+- Antes de la aceptación final, el `architect-agent` **DEBE** usar `runtime.validate_gate`.
+- El agente **DEBE** usar `debug_read_logs` para confirmar que los AC están verificados.
+- Estrictamente **PROHIBIDO** consolidar este paso.
 
 6. PASS (solo si aceptado)
-   - Marcar el informe de resultados como **ACEPTADO**.
-   - Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md`:
-     - marcar Fase 6 como completada
-     - establecer `task.lifecycle.phases.phase-6-results-acceptance.validated_at = <ISO-8601>`
-     - actualizar `task.phase.updated_at = <ISO-8601>`
-     - avanzar:
-       - `task.phase.current = aliases.tasklifecycle-long.phases.phase_7.id`
+- Marcar el informe de resultados como **ACEPTADO**.
+- Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md`:
+  - marcar Fase 6 como completada
+  - establecer `task.lifecycle.phases.phase-6-results-acceptance.validated_at = <ISO-8601>`
+  - establecer `task.lifecycle.phases.phase-6-results-acceptance.runtime_validated = true`
+  - establecer `task.lifecycle.phases.phase-6-results-acceptance.validation_id = <ID de runtime>`
+  - actualizar `task.phase.updated_at = <ISO-8601>`
+  - avanzar:
+    - `task.phase.current = aliases.tasklifecycle-long.phases.phase_7.id`
    - Indicar rutas:
      - `results-acceptance.md`
      - `task.md` actualizado
@@ -126,14 +121,12 @@ Requisitos (todos obligatorios):
 2. El informe resume verificación y estado final de acceptance criteria.
 3. El `results-acceptance.md` inicia con el prefijo del `architect-agent`.
 4. Todos los acceptance criteria están marcados como ✅ en el informe.
-5. Existe aceptación final explícita del desarrollador (por consola):
+5. **Auditoría de Runtime**: El agente ha ejecutado `runtime.validate_gate` y el resultado es PASS.
+6. **Trazabilidad de Logs**: Los logs (`debug_read_logs`) confirman la presentación formal de resultados.
+7. Existe aceptación final explícita del desarrollador (por consola):
    - `approval.developer.decision == SI`
-6. `task.md` refleja:
-  - Fase 6 completada
-  - `task.phase.current == aliases.tasklifecycle-long.phases.phase_7.id`
-  - `task.lifecycle.phases.phase-6-results-acceptance.completed == true`
-  - `task.lifecycle.phases.phase-6-results-acceptance.validated_at` no nulo
-  - `task.phase.updated_at` no nulo
+8. `task.md` refleja fase completada y datos de validación de runtime.
+9. `task.md` refleja timestamp y estado.
 
 Si Gate FAIL:
 - Ejecutar **Paso 10 (FAIL)**.

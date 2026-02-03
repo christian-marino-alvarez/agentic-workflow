@@ -5,7 +5,7 @@ import matter from 'gray-matter';
 import { RuntimeEmitter } from '../engine/emitter.js';
 import { loadWorkflows, resolvePhaseWorkflow } from '../engine/workflow-loader.js';
 import { loadTask, resolveWorkflowsRoot } from '../engine/task-loader.js';
-import { runRuntime, resumeRuntime } from '../engine/service.js';
+import { runRuntime, resumeRuntime, stepRuntime } from '../engine/service.js';
 import type { RuntimeEvent } from '../engine/types.js';
 import { Logger } from '../engine/logger.js';
 
@@ -16,10 +16,84 @@ interface McpRequest {
 }
 
 interface McpResponse {
+  jsonrpc: '2.0';
   id: string | number;
   result?: unknown;
-  error?: { message: string };
+  error?: { code: number; message: string };
 }
+
+const MCP_TOOLS = [
+  {
+    name: 'runtime_run',
+    description: 'Start a new workflow runtime execution',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        taskPath: { type: 'string', description: 'Path to task.md file' },
+        agent: { type: 'string', description: 'Agent identifier' }
+      },
+      required: ['taskPath', 'agent']
+    }
+  },
+  {
+    name: 'runtime_chat',
+    description: 'Send a chat message to the runtime',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', description: 'Chat message content' },
+        role: { type: 'string', description: 'Message role (user/assistant)' }
+      },
+      required: ['message']
+    }
+  },
+  {
+    name: 'runtime_list_workflows',
+    description: 'List available workflows',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        workflowsRoot: { type: 'string', description: 'Path to workflows directory' }
+      },
+      required: ['workflowsRoot']
+    }
+  },
+  {
+    name: 'runtime_validate_gate',
+    description: 'Validate a workflow gate',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        taskPath: { type: 'string' },
+        agent: { type: 'string' },
+        expectedPhase: { type: 'string' }
+      },
+      required: ['taskPath', 'agent']
+    }
+  },
+  {
+    name: 'runtime_advance_phase',
+    description: 'Advance to the next workflow phase',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        taskPath: { type: 'string' },
+        agent: { type: 'string' }
+      },
+      required: ['taskPath', 'agent']
+    }
+  },
+  {
+    name: 'debug_read_logs',
+    description: 'Read runtime debug logs',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        limit: { type: 'number', description: 'Max logs to return' }
+      }
+    }
+  }
+];
 
 interface GateResult {
   valid: boolean;
@@ -27,6 +101,7 @@ interface GateResult {
 }
 
 export async function startRuntimeMcpServer(): Promise<void> {
+  Logger.info('MCP', 'Server started via stdio transport. Waiting for JSON-RPC messages...');
   const rl = readline.createInterface({ input: process.stdin, crlfDelay: Infinity });
   for await (const line of rl) {
     const trimmed = line.trim();
@@ -41,21 +116,37 @@ async function handleRequest(line: string): Promise<void> {
   let request: McpRequest;
   try {
     request = JSON.parse(line) as McpRequest;
+    Logger.debug('MCP', 'Received request', { id: request.id, method: request.method });
   } catch (error) {
-    writeResponse({ id: 'unknown', error: { message: 'Invalid JSON request.' } });
+    writeResponse({ jsonrpc: '2.0', id: 'unknown', error: { code: -32700, message: 'Invalid JSON request.' } });
+    return;
+  }
+
+  // Notifications (no id) don't require a response
+  if (request.id === undefined || request.id === null) {
+    Logger.debug('MCP', 'Received notification, no response needed', { method: request.method });
     return;
   }
 
   try {
     const result = await dispatchRequest(request);
-    writeResponse({ id: request.id, result });
+    writeResponse({ jsonrpc: '2.0', id: request.id, result });
   } catch (error) {
-    writeResponse({ id: request.id, error: { message: formatError(error) } });
+    Logger.error('MCP', `Request failed: ${request.method}`, { id: request.id, error: formatError(error) });
+    writeResponse({ jsonrpc: '2.0', id: request.id, error: { code: -32603, message: formatError(error) } });
   }
 }
 
 async function dispatchRequest(request: McpRequest): Promise<unknown> {
   switch (request.method) {
+    // MCP Standard Protocol
+    case 'initialize':
+      return handleInitialize();
+    case 'tools/list':
+      return handleToolsList();
+    case 'tools/call':
+      return handleToolsCall(request.params ?? {});
+    // Runtime-specific methods (via tools/call)
     case 'runtime.run':
       return handleRun(request.params ?? {});
     case 'runtime.resume':
@@ -72,10 +163,54 @@ async function dispatchRequest(request: McpRequest): Promise<unknown> {
       return handleEmitEvent(request.params ?? {});
     case 'runtime.chat':
       return handleChat(request.params ?? {});
+    case 'runtime.next_step':
+      return handleNextStep(request.params ?? {});
+    case 'runtime.complete_step':
+      return handleCompleteStep(request.params ?? {});
     case 'debug_read_logs':
       return handleDebugReadLogs(request.params ?? {});
     default:
       throw new Error(`Unknown method: ${request.method}`);
+  }
+}
+
+function handleInitialize(): unknown {
+  return {
+    protocolVersion: '2024-11-05',
+    capabilities: {
+      tools: {}
+    },
+    serverInfo: {
+      name: 'agentic-workflow',
+      version: '1.0.0'
+    }
+  };
+}
+
+function handleToolsList(): unknown {
+  return { tools: MCP_TOOLS };
+}
+
+async function handleToolsCall(params: Record<string, unknown>): Promise<unknown> {
+  const toolName = ensureString(params.name, 'name');
+  const args = (params.arguments ?? {}) as Record<string, unknown>;
+
+  switch (toolName) {
+    case 'runtime_run':
+      return handleRun(args);
+    case 'runtime_chat':
+      return handleChat(args);
+    case 'runtime_list_workflows':
+      return handleListWorkflows(args);
+    case 'runtime_validate_gate':
+      return handleValidateGate(args);
+    case 'runtime_advance_phase':
+      return handleAdvancePhase(args);
+    case 'debug_read_logs':
+      return handleDebugReadLogs(args);
+    default:
+      Logger.error('MCP', `Unknown tool called: ${toolName}`);
+      throw new Error(`Unknown tool: ${toolName}`);
   }
 }
 
@@ -84,6 +219,9 @@ async function handleRun(params: Record<string, unknown>): Promise<unknown> {
   const agent = ensureString(params.agent, 'agent');
   const statePath = getOptionalString(params.statePath);
   const eventsPath = getOptionalString(params.eventsPath);
+
+  Logger.info('MCP', `Tool called: runtime_run`, { taskPath, agent });
+
   const result = await runRuntime({
     taskPath,
     agent,
@@ -91,7 +229,15 @@ async function handleRun(params: Record<string, unknown>): Promise<unknown> {
     eventsPath,
     stdoutEvents: false
   });
-  return { status: 'ok', runId: result.runId, phase: result.phase };
+
+  return {
+    content: [
+      {
+        type: 'text',
+        text: JSON.stringify({ status: 'ok', runId: result.runId, phase: result.phase })
+      }
+    ]
+  };
 }
 
 async function handleResume(params: Record<string, unknown>): Promise<unknown> {
@@ -109,35 +255,102 @@ async function handleResume(params: Record<string, unknown>): Promise<unknown> {
   return { status: 'ok', runId: result.runId, phase: result.phase };
 }
 
+async function handleNextStep(params: Record<string, unknown>): Promise<unknown> {
+  const taskPath = ensureString(params.taskPath, 'taskPath');
+  const agent = ensureString(params.agent, 'agent');
+  const statePath = getOptionalString(params.statePath);
+  const eventsPath = getOptionalString(params.eventsPath);
+  const result = await stepRuntime({
+    taskPath,
+    agent,
+    statePath,
+    eventsPath,
+    stdoutEvents: false
+  });
+  return { status: 'ok', runId: result.runId, phase: result.phase, step: result.steps.find(s => s.status === 'completed' || s.status === 'failed') };
+}
+
+async function handleCompleteStep(params: Record<string, unknown>): Promise<unknown> {
+  return { status: 'ok', message: 'Step completion acknowledged (logic pending specific requirement).' };
+}
+
 async function handleGetState(params: Record<string, unknown>): Promise<unknown> {
   const statePath = ensureString(params.statePath, 'statePath');
-  const raw = await fs.readFile(path.resolve(statePath), 'utf-8');
-  return JSON.parse(raw);
+  const rawState = await fs.readFile(path.resolve(statePath), 'utf-8');
+  const state = JSON.parse(rawState);
+
+  // Enrich with task content
+  let taskContent = '';
+  try {
+    if (state.taskPath) {
+      taskContent = await fs.readFile(state.taskPath, 'utf-8');
+    }
+  } catch (e) {
+    // Ignore if task file not found
+  }
+
+  return { ...state, taskContent };
 }
 
 async function handleListWorkflows(params: Record<string, unknown>): Promise<unknown> {
   const workflowsRoot = ensureString(params.workflowsRoot, 'workflowsRoot');
-  return loadWorkflows(workflowsRoot);
+  Logger.info('MCP', `Tool called: runtime_list_workflows`, { workflowsRoot });
+  const workflows = await loadWorkflows(workflowsRoot);
+  return {
+    content: [
+      {
+        type: 'text',
+        text: JSON.stringify(workflows)
+      }
+    ]
+  };
 }
 
-async function handleValidateGate(params: Record<string, unknown>): Promise<GateResult> {
+async function handleValidateGate(params: Record<string, unknown>): Promise<unknown> {
   const taskPath = ensureString(params.taskPath, 'taskPath');
   const agent = ensureString(params.agent, 'agent');
   const expectedPhase = getOptionalString(params.expectedPhase);
+
+  Logger.info('MCP', `Tool called: runtime_validate_gate`, { taskPath, agent, expectedPhase });
+
   const task = await loadTask(taskPath);
   if (task.owner !== agent) {
-    return { valid: false, reason: 'Agent mismatch.' };
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({ valid: false, reason: 'Agent mismatch.' })
+        }
+      ]
+    };
   }
   if (expectedPhase && task.phase !== expectedPhase) {
-    return { valid: false, reason: `Phase mismatch. Current: ${task.phase}.` };
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({ valid: false, reason: `Phase mismatch. Current: ${task.phase}.` })
+        }
+      ]
+    };
   }
-  return { valid: true };
+  return {
+    content: [
+      {
+        type: 'text',
+        text: JSON.stringify({ valid: true })
+      }
+    ]
+  };
 }
 
 async function handleAdvancePhase(params: Record<string, unknown>): Promise<unknown> {
   const taskPath = ensureString(params.taskPath, 'taskPath');
   const agent = ensureString(params.agent, 'agent');
   const eventsPath = getOptionalString(params.eventsPath);
+
+  Logger.info('MCP', `Tool called: runtime_advance_phase`, { taskPath, agent });
+
   const task = await loadTask(taskPath);
   if (task.owner !== agent) {
     throw new Error('Agent mismatch.');
@@ -153,7 +366,15 @@ async function handleAdvancePhase(params: Record<string, unknown>): Promise<unkn
     phase: nextPhase,
     payload: { previousPhase: task.phase }
   });
-  return { status: 'ok', previousPhase: task.phase, currentPhase: nextPhase, updatedAt: updated.updatedAt };
+
+  return {
+    content: [
+      {
+        type: 'text',
+        text: JSON.stringify({ status: 'ok', previousPhase: task.phase, currentPhase: nextPhase, updatedAt: updated.updatedAt })
+      }
+    ]
+  };
 }
 
 async function handleEmitEvent(params: Record<string, unknown>): Promise<unknown> {
@@ -181,12 +402,28 @@ async function handleChat(params: Record<string, unknown>): Promise<unknown> {
     runId: 'chat',
     payload: { role, content: message }
   });
-  return { status: 'ok' };
+
+  return {
+    content: [
+      {
+        type: 'text',
+        text: JSON.stringify({ status: 'ok' })
+      }
+    ]
+  };
 }
 
 async function handleDebugReadLogs(params: Record<string, unknown>): Promise<unknown> {
   const limit = typeof params.limit === 'number' ? params.limit : 100;
-  return Logger.getInstance().getLogs(limit);
+  const logs = Logger.getInstance().getLogs(limit);
+  return {
+    content: [
+      {
+        type: 'text',
+        text: JSON.stringify(logs, null, 2)
+      }
+    ]
+  };
 }
 
 function ensureString(value: unknown, name: string): string {
@@ -201,6 +438,7 @@ function getOptionalString(value: unknown): string | undefined {
 }
 
 function writeResponse(response: McpResponse): void {
+  Logger.debug('MCP', 'Sending response', { id: response.id, error: !!response.error });
   process.stdout.write(`${JSON.stringify(response)}\n`);
 }
 
@@ -209,32 +447,48 @@ function formatError(error: unknown): string {
 }
 
 async function resolveNextPhase(workflowsRoot: string, currentPhase: string): Promise<string> {
-  const indexPath = path.join(workflowsRoot, 'tasklifecycle-long', 'index.md');
-  const raw = await fs.readFile(indexPath, 'utf-8');
-  const match = raw.match(/```yaml\n([\s\S]*?)```/);
-  if (!match) {
-    throw new Error('Missing workflow index YAML block.');
-  }
-  const yaml = match[1];
-  const data = matter(`---\n${yaml}\n---`).data as Record<string, unknown>;
-  const phases = (data.aliases as Record<string, any> | undefined)?.['tasklifecycle-long']?.phases;
-  if (!phases || typeof phases !== 'object') {
-    throw new Error('Invalid workflow index structure.');
-  }
-  const phaseIds = Object.entries(phases)
-    .sort(([a], [b]) => parseInt(a.split('_')[1] ?? '0', 10) - parseInt(b.split('_')[1] ?? '0', 10))
-    .map(([, value]) => {
-      const id = (value as { id?: string }).id;
-      if (!id) {
-        throw new Error('Phase entry missing id.');
+  const strategies = ['tasklifecycle-long', 'tasklifecycle-short'];
+
+  for (const strategy of strategies) {
+    try {
+      const indexPath = path.join(workflowsRoot, strategy, 'index.md');
+      const raw = await fs.readFile(indexPath, 'utf-8');
+      const match = raw.match(/```yaml\n([\s\S]*?)```/);
+      if (!match) {
+        continue;
       }
-      return id;
-    });
-  const index = phaseIds.indexOf(currentPhase);
-  if (index === -1 || index === phaseIds.length - 1) {
-    throw new Error('No next phase available.');
+
+      const yaml = match[1];
+      const data = matter(`---\n${yaml}\n---`).data as Record<string, unknown>;
+      const phases = (data.aliases as Record<string, any> | undefined)?.[strategy]?.phases;
+
+      if (!phases || typeof phases !== 'object') {
+        continue;
+      }
+
+      const phaseIds = Object.entries(phases)
+        .sort(([a], [b]) => {
+          const aNum = parseInt(a.split('_').pop() ?? '0', 10);
+          const bNum = parseInt(b.split('_').pop() ?? '0', 10);
+          return aNum - bNum;
+        })
+        .map(([, value]) => {
+          const id = (value as { id?: string }).id;
+          if (!id) {
+            throw new Error('Phase entry missing id.');
+          }
+          return id;
+        });
+
+      const index = phaseIds.indexOf(currentPhase);
+      if (index !== -1 && index < phaseIds.length - 1) {
+        return phaseIds[index + 1];
+      }
+    } catch (error) {
+      continue;
+    }
   }
-  return phaseIds[index + 1];
+  throw new Error(`No next phase found after ${currentPhase} in any known strategy.`);
 }
 
 async function updateTaskPhase(taskPath: string, currentPhase: string, nextPhase: string, agent: string): Promise<{ updatedAt: string }> {

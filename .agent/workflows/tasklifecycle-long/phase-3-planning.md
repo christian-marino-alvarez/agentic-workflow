@@ -23,6 +23,7 @@ blocking: true
 > **Constitución activa (OBLIGATORIO)**:
 > - Cargar `constitution.clean_code` antes de iniciar
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
+> - Cargar `constitution.runtime_integration` para trazabilidad MCP
 
 ## Output (REQUIRED)
 - Crear el plan de implementación:
@@ -104,25 +105,19 @@ Crear un **plan de implementación detallado** para ejecutar el diseño definido
    - Explicar cómo se resolverán
 
 9. Solicitar aprobación del desarrollador (OBLIGATORIO, por consola)
-   - El desarrollador **DEBE** emitir una decisión binaria:
-     - **SI** (aprobado)
-     - **NO** (rechazado)
-   - Registrar la decisión en `plan.md`:
-     ```yaml
-     approval:
-       developer:
-         decision: SI | NO
-         date: <ISO-8601>
-         comments: <opcional>
-     ```
-   - Si `decision != SI` → ir a **Paso 11 (FAIL)**.
+9.1 **Auditoría Pre-Gate (OBLIGATORIO)**:
+- Antes de solicitar la aprobación, el `architect-agent` **DEBE** usar `runtime.validate_gate` para el plan.
+- El agente **DEBE** usar `debug_read_logs` para confirmar la definición del dispatch y testing.
+- Estrictamente **PROHIBIDO** consolidar este paso.
 
 10. PASS
-    - Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md`:
-      - marcar Fase 3 como completada
-      - establecer `task.lifecycle.phases.phase-3-planning.validated_at = <ISO-8601>`
-      - actualizar `task.phase.updated_at = <ISO-8601>`
-      - avanzar `task.phase.current = aliases.tasklifecycle-long.phases.phase_4.id`
+- Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md`:
+  - marcar Fase 3 como completada
+  - establecer `task.lifecycle.phases.phase-3-planning.validated_at = <ISO-8601>`
+  - establecer `task.lifecycle.phases.phase-3-planning.runtime_validated = true`
+  - establecer `task.lifecycle.phases.phase-3-planning.validation_id = <ID de runtime>`
+  - actualizar `task.phase.updated_at = <ISO-8601>`
+  - avanzar `task.phase.current = aliases.tasklifecycle-long.phases.phase_4.id`
     - Indicar rutas finales:
       - `plan.md`
       - `task.md` actualizado
@@ -163,14 +158,12 @@ Requisitos (todos obligatorios):
 7. Si aplica, el plan define `plan.dispatch[]` con dispatch secundario.
 8. Si el analisis requiere crear demo, el plan define:
    - estructura alineada con `constitution.clean_code`
-9. Existe aprobación explícita del desarrollador:
+9. **Auditoría de Runtime**: El agente ha ejecutado `runtime.validate_gate` y el resultado es PASS.
+10. **Trazabilidad de Logs**: Los logs (`debug_read_logs`) confirman la asignación detallada de responsabilidades.
+11. Existe aprobación explícita del desarrollador:
    - `approval.developer.decision == SI`
-10. `task.md` refleja:
-   - Fase 3 completada
-   - `task.phase.current == aliases.tasklifecycle-long.phases.phase_4.id`
-   - `task.lifecycle.phases.phase-3-planning.completed == true`
-   - `task.lifecycle.phases.phase-3-planning.validated_at` no nulo
-   - `task.phase.updated_at` no nulo
+12. `task.md` refleja fase completada y datos de validación de runtime.
+13. `task.md` refleja timestamp e integridad.
 
 Si Gate FAIL:
 - Ejecutar **Paso 11 (FAIL)**.

@@ -11,8 +11,9 @@
 ## ✨ Key Features
 
 - **AHRP (Agentic Handover & Reasoning Protocol)**: Enforces a strict Triple-Gate flow for every task (Activation, Reasoning Approval, and Results Acceptance).
+- **Runtime Governance & MCP**: Deep integration with an MCP server for lifecycle tracking, gate validation, and tamper-proof logging.
+- **Agentic Skills**: Modular capabilities for agents, including localized and specialized governance skills (e.g., `skill.runtime-governance`).
 - **Local Core Snapshot**: Copies core rules and workflows into `.agent/` so runtime no longer depends on `node_modules` access.
-- **Zero-Tolerance Governance**: Automatic performance penalties for protocol violations.
 - **Standalone & Portable**: Works in any project provided the IDE agent can read Markdown files.
 
 ## 📦 Installation
@@ -40,28 +41,69 @@ Initializes the agentic system in the current directory.
 npx agentic-workflow init
 ```
 
-### `create <role|workflow> <name>`
-Scaffolds a new custom component.
+### `create <role|workflow|skill> <name>`
+Scaffolds a new project-specific component.
 - **role**: Creates a new agent role with mandatory identification rules.
 - **workflow**: Creates a custom work cycle template.
+- **skill**: Creates a new modular skill with its own `SKILL.md` template.
 ```bash
 npx agentic-workflow create role neo
 ```
 
 ### `restore`
 Recovers the `.agent/` configuration from a previous backup.
-- Backups are stored as `.agent.backup_<timestamp>` in the project root.
-- Allows selecting versions before a destructive change.
 ```bash
 npx agentic-workflow restore
 ```
+
+### `clean`
+Removes legacy or temporary configuration files (e.g., outdated MCP setups).
+```bash
+npx agentic-workflow clean
+```
+
+### `mcp`
+Starts the local MCP Runtime server (stdio mode).
+```bash
+npx agentic-workflow mcp
+```
+
+### `register-mcp`
+Automatically registers the local server in the Antigravity/Gemini config.
+```bash
+npx agentic-workflow register-mcp
+```
+
+## ⚙️ Advanced Configuration
+
+### MCP Runtime Integration
+The system relies on an MCP server to track the workflow state. To connect it with your IDE assistant (like Antigravity):
+1. Run `npx agentic-workflow register-mcp`.
+2. Ensure `mcp_config.json` (or equivalent) points to the local CLI binary.
+3. The Runtime logs are stored in `agentic-runtime.log` for debugging.
 
 ## 🧠 Core Concepts
 
 ### Lifecycles
 The framework supports two main workflows depending on task complexity:
-1. **Long Lifecycle (9 Phases)**: For complex features requiring Research, Analysis, Planning, and formal Architectural Review.
-2. **Short Lifecycle (3 Phases)**: For quick fixes or simple updates, merging Acceptance, Implementation, and Closure.
+
+#### 1. Long Lifecycle (9 Phases)
+Designed for complex features, architectural changes, or tasks with high risk. It ensures maximum reasoning before a single line of code is written.
+- **Phase 0: Acceptance Criteria**: Eliminates ambiguity by defining exactly what success looks like.
+- **Phase 1: Research**: Context gathering. Necessary to understand existing code or external APIs.
+- **Phase 2: Analysis**: Impact evaluation. Identifies risks and architectural constraints.
+- **Phase 3: Planning**: Detailed implementation plan. Crucial for developer alignment before execution.
+- **Phase 4: Implementation**: The actual coding process.
+- **Phase 5: Verification**: Rigorous testing and validation of the implemented changes.
+- **Phase 6: Results Acceptance**: Final developer sign-off on the delivered value.
+- **Phase 7: Evaluation**: Retrospective on the agent's performance and process efficiency.
+- **Phase 8: Commit & Push**: Safely persisting the changes to the repository.
+
+#### 2. Short Lifecycle (3 Phases)
+Optimized for quick fixes, simple documentation updates, or low-risk changes.
+- **Phase 1: Brief**: Merges Acceptance, Analysis, and Planning into a single step for speed.
+- **Phase 2: Implementation**: Combined coding and verification.
+- **Phase 3: Closure**: Results acceptance and final cleanup.
 
 ### AHRP Protocol
 Every agent task follows the **Agentic Handover & Reasoning Protocol**:
@@ -72,12 +114,14 @@ Every agent task follows the **Agentic Handover & Reasoning Protocol**:
 ### Architecture by Install
 To ensure stability, the framework's core logic (rules and workflows) is installed into your project's `.agent` folder. This provides a clean, local copy that can be extended without touching the published package.
 
-## ⚖️ Governance
+### Domain Indexing System
+The system uses a **Cascading Indexing Architecture** for absolute traceability:
+1. **Root Index** (`.agent/index.md`): Declares the entry points for all system domains (rules, workflows, templates, skills, artifacts).
+2. **Domain Indexes**: Each folder contains its own `index.md` where files are assigned **aliases**.
+3. **Reference Model**: Agents never use absolute paths. They resolve references through the alias system (e.g., `skill.runtime-governance` → `.agent/skills/runtime-governance/SKILL.md`), ensuring that logic can be moved or updated without breaking workflows.
 
-This framework is built on the principle of **Maximum Discipline**. Agents are required to:
-1. Identify themselves with a mandatory prefix.
-2. Submit a reasoning plan before any modification.
-3. Obtain explicit developer approval (`YES`) for every transition.
+### Runtime Accountability
+All lifecycle transitions are recorded through a dedicated MCP Runtime. Actions performed without a corresponding "Governance Trace" (MCP logs) are considered invalid and subject to reversal.
 
 ## 📄 License
 

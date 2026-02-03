@@ -85,10 +85,12 @@
   "dependencies": {
     "@christianmaf80/agentic-workflow": "^1.26.0-beta.4",
     "@clack/prompts": "^0.7.0",
+    "@modelcontextprotocol/sdk": "^1.25.3",
     "commander": "^11.1.0",
     "gray-matter": "^4.0.3",
     "lit": "^3.3.2",
-    "openai": "^6.17.0"
+    "openai": "^6.17.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",

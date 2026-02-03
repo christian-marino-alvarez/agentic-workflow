@@ -1,5 +1,23 @@
 # Changelog
 
+<## [1.24.0-beta.3](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.23.0-beta.3...agentic-workflow-v1.24.0-beta.3) (2026-02-03)
+
+### Features
+
+* **cli:** add register-mcp command for Antigravity and Codex integration ([a249a41](https://github.com/christian-marino-alvarez/agentic-workflow/commit/a249a412233fc14026b99c04b01eb771d796ddef))
+* **constitution:** add runtime_integration constitution for MCP workflow integration ([fb7adf8](https://github.com/christian-marino-alvarez/agentic-workflow/commit/fb7adf875951dce53747f60ece03982397cef6b5))
+* **governance:** release v1.22.0-beta.8 ([3834bb4](https://github.com/christian-marino-alvarez/agentic-workflow/commit/3834bb4593dcdb32f65ccb3b98c9f6da692296a0))
+* **governance:** release v1.22.0-beta.8 - introduce modular skills system and runtime hardening ([f4458fa](https://github.com/christian-marino-alvarez/agentic-workflow/commit/f4458fa25357eb3202e3d464f601946e3818018e))
+* implement global runtime logging and verification ([340fa95](https://github.com/christian-marino-alvarez/agentic-workflow/commit/340fa954b3f2b0e6fe7aa417a4f32c92b8d9650f))
+* **mcp:** add runtime.next_step and runtime.get_state endpoints ([958e246](https://github.com/christian-marino-alvarez/agentic-workflow/commit/958e246b902ce1974a5abb29cceb80f394f48d67))
+* Runtime Global Logging Implementation ([38110f4](https://github.com/christian-marino-alvarez/agentic-workflow/commit/38110f4a0fd4f0b15e67b69b86c639b3870841ff))
+* **runtime:** expose next_step and implement granular execution service ([84c9af7](https://github.com/christian-marino-alvarez/agentic-workflow/commit/84c9af77bfa04d994942ab78281ed728d30cf55f))
+
+### Bug Fixes
+
+* **runtime:** add visible logging to MCP server startup and request handling ([077907a](https://github.com/christian-marino-alvarez/agentic-workflow/commit/077907aa0f2400c3c5607cf43b34fcefb6d38b3d))
+* **runtime:** redirect engine logs to stderr to protect MCP stdout protocol ([50756d8](https://github.com/christian-marino-alvarez/agentic-workflow/commit/50756d8a8ab9bb88e0854f71f2ac9605aea6641c))
+
 ## [1.22.0-beta.9](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.22.0-beta.8...agentic-workflow-v1.22.0-beta.9) (2026-02-03)
 
 ### Maintenance

@@ -9,6 +9,8 @@ import { runRuntime, resumeRuntime, stepRuntime } from '../engine/service.js';
 import type { RuntimeEvent } from '../engine/types.js';
 import { Logger } from '../engine/logger.js';
 
+// TODO(milos, 2026-02-03): Evaluate migration to @modelcontextprotocol/sdk after runtime_advance_phase guards stabilize.
+
 interface McpRequest {
   id: string | number;
   method: string;
@@ -78,7 +80,8 @@ const MCP_TOOLS = [
       type: 'object',
       properties: {
         taskPath: { type: 'string' },
-        agent: { type: 'string' }
+        agent: { type: 'string' },
+        expectedPhase: { type: 'string' }
       },
       required: ['taskPath', 'agent']
     }
@@ -169,6 +172,8 @@ async function dispatchRequest(request: McpRequest): Promise<unknown> {
       return handleCompleteStep(request.params ?? {});
     case 'debug_read_logs':
       return handleDebugReadLogs(request.params ?? {});
+    case 'resources/list':
+      return handleResourcesList();
     case 'resources/templates/list':
       return handleTemplatesList();
     default:
@@ -203,17 +208,41 @@ async function handleTemplatesList(): Promise<unknown> {
   const raw = await fs.readFile(indexPath, 'utf-8');
   const match = raw.match(/```yaml\n([\s\S]*?)```/);
   if (!match) {
-    return { templates: [] };
+    throw new Error('No pude listar templates: index.md corrupto o sin bloque YAML.');
   }
   const yaml = match[1];
   const data = matter(`---\n${yaml}\n---`).data as Record<string, any>;
-  const templates = (data.templates as Record<string, string> | undefined) ?? {};
+  const templates = data.templates as Record<string, string> | undefined;
+  if (!templates || typeof templates !== 'object') {
+    throw new Error('No pude listar templates: bloque YAML sin "templates".');
+  }
   const items = Object.entries(templates).map(([alias, templatePath]) => ({
     id: alias,
     path: templatePath,
     absolutePath: path.resolve(workspaceRoot, templatePath)
   }));
   return { templates: items };
+}
+
+async function handleResourcesList(): Promise<unknown> {
+  const workspaceRoot = await findWorkspaceRoot(collectWorkspaceCandidates());
+  if (!workspaceRoot) {
+    throw new Error('No pude listar resources: no se encontró ".agent/" desde el cwd actual.');
+  }
+
+  const resourcesRoot = path.join(workspaceRoot, 'src', 'agentic-system-structure');
+  const entries = await fs.readdir(resourcesRoot, { withFileTypes: true });
+  const items = entries
+    .filter((entry) => entry.name !== '.' && entry.name !== '..')
+    .map((entry) => ({
+      id: entry.name,
+      path: path.join('src', 'agentic-system-structure', entry.name),
+      absolutePath: path.join(resourcesRoot, entry.name),
+      type: entry.isDirectory() ? 'directory' : 'file'
+    }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+
+  return { resources: items };
 }
 
 async function handleToolsCall(params: Record<string, unknown>): Promise<unknown> {
@@ -377,16 +406,63 @@ async function handleAdvancePhase(params: Record<string, unknown>): Promise<unkn
   const taskPath = ensureString(params.taskPath, 'taskPath');
   const agent = ensureString(params.agent, 'agent');
   const eventsPath = getOptionalString(params.eventsPath);
+  const expectedPhase = getOptionalString(params.expectedPhase);
 
-  Logger.info('MCP', `Tool called: runtime_advance_phase`, { taskPath, agent });
+  Logger.info('MCP', `Tool called: runtime_advance_phase`, { taskPath, agent, expectedPhase: expectedPhase ?? null });
 
   const resolved = await resolveTaskPath(taskPath);
   const task = await loadTask(resolved.resolvedPath);
   if (task.owner !== agent) {
     throw new Error('Agent mismatch.');
   }
+  if (expectedPhase && task.phase !== expectedPhase) {
+    Logger.warn('MCP', 'runtime_advance_phase expectedPhase mismatch; no phase update', {
+      expectedPhase,
+      taskPhase: task.phase,
+      taskId: task.id
+    });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({
+            status: 'warning',
+            warning: 'expectedPhase mismatch; task phase retained',
+            previousPhase: task.phase,
+            currentPhase: task.phase,
+            updatedAt: null
+          })
+        }
+      ]
+    };
+  }
   const workflowsRoot = resolveWorkflowsRoot(path.dirname(resolved.resolvedPath));
-  const nextPhase = await resolveNextPhase(workflowsRoot, task.phase);
+  let nextPhase: string;
+  try {
+    nextPhase = await resolveNextPhase(workflowsRoot, task.phase, task.strategy);
+  } catch (error) {
+    const warning = formatError(error);
+    Logger.warn('MCP', 'runtime_advance_phase could not resolve next phase; no phase update', {
+      taskPhase: task.phase,
+      taskId: task.id,
+      strategy: task.strategy ?? null,
+      warning
+    });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({
+            status: 'warning',
+            warning,
+            previousPhase: task.phase,
+            currentPhase: task.phase,
+            updatedAt: null
+          })
+        }
+      ]
+    };
+  }
   const updated = await updateTaskPhase(resolved.resolvedPath, task.phase, nextPhase, agent);
   const emitter = new RuntimeEmitter({ eventsPath, stdout: false });
   await emitter.emit({
@@ -557,8 +633,26 @@ function formatError(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-async function resolveNextPhase(workflowsRoot: string, currentPhase: string): Promise<string> {
-  const strategies = ['tasklifecycle-long', 'tasklifecycle-short'];
+function normalizeStrategy(strategy?: string): string | null {
+  if (!strategy) {
+    return null;
+  }
+  const normalized = strategy.trim().toLowerCase();
+  if (normalized === 'short') {
+    return 'tasklifecycle-short';
+  }
+  if (normalized === 'long') {
+    return 'tasklifecycle-long';
+  }
+  if (normalized === 'tasklifecycle-short' || normalized === 'tasklifecycle-long') {
+    return normalized;
+  }
+  return null;
+}
+
+async function resolveNextPhase(workflowsRoot: string, currentPhase: string, strategy?: string): Promise<string> {
+  const normalizedStrategy = normalizeStrategy(strategy);
+  const strategies = normalizedStrategy ? [normalizedStrategy] : ['tasklifecycle-long', 'tasklifecycle-short'];
 
   for (const strategy of strategies) {
     try {
@@ -595,11 +689,14 @@ async function resolveNextPhase(workflowsRoot: string, currentPhase: string): Pr
       if (index !== -1 && index < phaseIds.length - 1) {
         return phaseIds[index + 1];
       }
+      if (normalizedStrategy === 'tasklifecycle-short' && currentPhase === 'phase-0-acceptance-criteria' && phaseIds.length > 0) {
+        return phaseIds[0];
+      }
     } catch (error) {
       continue;
     }
   }
-  throw new Error(`No next phase found after ${currentPhase} in any known strategy.`);
+  throw new Error(`No next phase found after ${currentPhase} in strategy ${normalizedStrategy ?? 'any'}.`);
 }
 
 async function updateTaskPhase(taskPath: string, currentPhase: string, nextPhase: string, agent: string): Promise<{ updatedAt: string }> {

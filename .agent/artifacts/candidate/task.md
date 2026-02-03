@@ -1,6 +1,6 @@
 ---
-id: 20260203-1
-title: init-path-fix
+id: 20260203-5
+title: mcp-resources-templates-list
 owner: architect-agent
 strategy: short
 ---
@@ -8,8 +8,8 @@ strategy: short
 # Task (Template)
 
 ## Identificacion
-- id: 20260203-1
-- title: init-path-fix
+- id: 20260203-5
+- title: mcp-resources-templates-list
 - scope: candidate | current
 - owner: architect-agent
 
@@ -20,24 +20,24 @@ strategy: short
   - candidate_path: artifacts.candidate.task
 
 ## Descripcion de la tarea
-Aplicar fix para resolver correctamente el init.
+Implementar soporte para resources/templates/list en el servidor MCP.
 
 ## Objetivo
-Hacer que init resuelva el path correctamente (desde cwd o usando una ruta absoluta consistente).
+Responder al metodo resources/templates/list con el listado de templates existentes.
 
 ## Estado del ciclo de vida (FUENTE UNICA DE VERDAD)
 
 ```yaml
 task:
-  id: "20260203-1"
-  title: "init-path-fix"
+  id: "20260203-5"
+  title: "mcp-resources-templates-list"
   strategy: "short"  # long | short
   artifacts:
     supplemental: []
   phase:
     current: "short-phase-3-closure"
     validated_by: "architect-agent"
-    updated_at: "2026-02-03T12:23:13Z"
+    updated_at: "2026-02-03T13:39:50.210Z"
   lifecycle:
     phases:
       phase-0-acceptance-criteria:
@@ -98,19 +98,37 @@ task:
       short-phase-1-brief:
         completed: true
         validated_by: "architect-agent"
-        validated_at: "2026-02-03T11:57:50Z"
+        validated_at: "2026-02-03T13:37:30Z"
         runtime_validated: true
-        validation_id: "gate-20260203-1-short-1"
+        validation_id: "gate-20260203-5-short-1"
       short-phase-2-implementation:
         completed: true
         validated_by: "architect-agent"
-        validated_at: "2026-02-03T12:18:53Z"
+        validated_at: "2026-02-03T13:39:50Z"
         runtime_validated: true
-        validation_id: "gate-20260203-1-short-2b"
+        validation_id: "gate-20260203-5-short-2"
       short-phase-3-closure:
         completed: true
         validated_by: "architect-agent"
-        validated_at: "2026-02-03T12:23:13Z"
+        validated_at: "2026-02-03T13:41:47Z"
         runtime_validated: true
-        validation_id: "gate-20260203-1-short-3"
+        validation_id: "gate-20260203-5-short-3"
 ```
+
+---
+
+## 2. Definicion y Alcance (Contrato)
+- **Acceptance Criteria**: [acceptance.md](file:///{{task.acceptance_path}})
+- **Alias**: `task.acceptance`
+
+---
+
+## Reglas contractuales
+- Este fichero es la **fuente unica de verdad** del estado de la tarea.
+- El campo `task.phase.current` **SOLO puede ser modificado por `architect-agent`**.
+- El campo `task.lifecycle.phases.*` **SOLO puede ser marcado como completed por `architect-agent`**.
+- Una fase **NO puede marcarse como completed** si no es la fase actual.
+- El avance de fase requiere:
+  1. Marcar la fase actual como `completed: true`
+  2. Validacion explicita del architect
+  3. Actualizacion de `task.phase.current` a la siguiente fase

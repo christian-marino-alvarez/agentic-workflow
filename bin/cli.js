@@ -12,7 +12,7 @@ const program = new Command();
 program
   .name('agentic-workflow')
   .description('Portable agentic orchestration system')
-  .version('1.22.0-beta.9');
+  .version('1.24.0-beta.3');
 
 program
   .command('init')

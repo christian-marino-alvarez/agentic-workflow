@@ -9,8 +9,6 @@ import { runRuntime, resumeRuntime, stepRuntime } from '../engine/service.js';
 import type { RuntimeEvent } from '../engine/types.js';
 import { Logger } from '../engine/logger.js';
 
-// TODO(milos, 2026-02-03): Evaluate migration to @modelcontextprotocol/sdk after runtime_advance_phase guards stabilize.
-
 interface McpRequest {
   id: string | number;
   method: string;

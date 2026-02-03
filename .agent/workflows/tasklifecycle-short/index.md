@@ -37,6 +37,9 @@ Existe **un único namespace** `aliases.tasklifecycle-short.phases.*` que contie
 aliases:
   tasklifecycle-short:
     phases:
+      init:
+        id: init
+        workflow: .agent/workflows/init.md
       short_phase_1:
         id: short-phase-1-brief
         workflow: .agent/workflows/tasklifecycle-short/short-phase-1-brief.md

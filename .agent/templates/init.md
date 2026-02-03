@@ -1,3 +1,10 @@
+---
+id: task.init
+title: Initialization
+owner: {{architectAgentId}}
+phase:
+  current: init
+---
 # init bootstrap
 
 - command: {{command}}
@@ -19,3 +26,14 @@ constitution:
     - {{constitutionPaths[0]}}
     - {{constitutionPaths[1]}}
     - {{constitutionPaths[2]}}
+language:
+  value: {{language}}
+  confirmed: {{languageConfirmed}}
+strategy: {{strategy}}
+traceability:
+  verified: {{traceabilityVerified}}
+  mcp_tool: {{traceabilityTool}}
+  response: {{traceabilityResponse}}
+  timestamp: {{traceabilityTimestamp}}
+runtime:
+  started: {{runtimeStarted}}

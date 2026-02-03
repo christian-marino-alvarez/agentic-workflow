@@ -1,3 +1,10 @@
+---
+id: task.init
+title: Initialization
+owner: architect-agent
+phase:
+  current: init
+---
 # init bootstrap
 
 - command: /init
@@ -7,6 +14,7 @@
 ## Constitution (load order)
 1. .agent/rules/constitution/clean-code.md
 2. .agent/rules/constitution/agents-behavior.md
+3. .agent/rules/constitution/runtime-integration.md
 
 ```yaml
 bootstrap:
@@ -15,8 +23,9 @@ roles:
   architect: architect-agent
 constitution:
   loaded:
-    - constitution.clean_code
-    - constitution.agents_behavior
+    - .agent/rules/constitution/clean-code.md
+    - .agent/rules/constitution/agents-behavior.md
+    - .agent/rules/constitution/runtime-integration.md
 language:
   value: español
   confirmed: true
@@ -25,5 +34,7 @@ traceability:
   verified: true
   mcp_tool: runtime_chat
   response: "status: ok"
-  timestamp: "2026-02-03T08:21:09+01:00"
+  timestamp: "2026-02-03T11:08:23Z"
+runtime:
+  started: true
 ```

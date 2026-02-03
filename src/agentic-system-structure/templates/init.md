@@ -1,9 +1,10 @@
 ---
-kind: template
-name: init
-source: agentic-system-structure
+id: task.init
+title: Initialization
+owner: {{architectAgentId}}
+phase:
+  current: init
 ---
-
 # init bootstrap
 
 - command: {{command}}

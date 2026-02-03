@@ -1,12 +1,11 @@
 # Changelog
 
-## [1.25.3-beta.5](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.25.3-beta.4...agentic-workflow-v1.25.3-beta.5) (2026-02-03)
+## [1.25.3-beta.6](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.25.3-beta.5...agentic-workflow-v1.25.3-beta.6) (2026-02-03)
 
 ### Bug Fixes
 
-* **workflows:** enforce runtime traceability requirements in init and align metadata.
-* **templates:** extend init template with language/strategy/traceability fields.
-* **tasklifecycle-short:** ensure init workflow is resolvable in short lifecycle mapping.
+* **templates:** propagate init template traceability fields into dist artifacts.
+* **tasklifecycle-short:** ensure init workflow mapping is available in core snapshot.
 
 ## [1.25.2-beta.5](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.25.2-beta.4...agentic-workflow-v1.25.2-beta.5) (2026-02-03)
 

@@ -26,3 +26,14 @@ constitution:
     - {{constitutionPaths[0]}}
     - {{constitutionPaths[1]}}
     - {{constitutionPaths[2]}}
+language:
+  value: {{language}}
+  confirmed: {{languageConfirmed}}
+strategy: {{strategy}}
+traceability:
+  verified: {{traceabilityVerified}}
+  mcp_tool: {{traceabilityTool}}
+  response: {{traceabilityResponse}}
+  timestamp: {{traceabilityTimestamp}}
+runtime:
+  started: {{runtimeStarted}}

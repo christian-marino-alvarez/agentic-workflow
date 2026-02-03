@@ -27,14 +27,14 @@ constitution:
     - .agent/rules/constitution/agents-behavior.md
     - .agent/rules/constitution/runtime-integration.md
 language:
-  value: espanol
+  value: Español
   confirmed: true
 strategy: short
 traceability:
   verified: true
   mcp_tool: runtime_chat
   response: '{"status":"ok"}'
-  timestamp: 2026-02-03T11:49:31Z
+  timestamp: 2026-02-03T17:12:39Z
 runtime:
   started: true
 ```

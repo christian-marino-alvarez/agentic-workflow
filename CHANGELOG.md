@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.26.1-beta.4](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.26.0-beta.4...agentic-workflow-v1.26.1-beta.4) (2026-02-03)
+
+
+### Bug Fixes
+
+* **mcp:** resolve init paths and list templates ([722266c](https://github.com/christian-marino-alvarez/agentic-workflow/commit/722266c3257cf64844ffa78b916c2eb773c92acb))
+
 ## [1.26.0-beta.4](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.25.4-beta.4...agentic-workflow-v1.26.0-beta.4) (2026-02-03)
 
 

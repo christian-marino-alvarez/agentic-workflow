@@ -1,43 +1,43 @@
 ---
-id: task-20260203-publicar-cambios-beta
-title: Publicar cambios y beta nueva
+id: 20260203-1
+title: init-path-fix
 owner: architect-agent
 strategy: short
 ---
 
 # Task (Template)
 
-## Identificación
-- id: task-20260203-publicar-cambios-beta
-- title: Publicar cambios y beta nueva
+## Identificacion
+- id: 20260203-1
+- title: init-path-fix
 - scope: candidate | current
 - owner: architect-agent
 
 ## Origen
 - created_from:
-  - workflow: tasklifecycle-short
-  - source: init
+  - workflow: tasklifecycle
+  - source: init / tasklifecycle
   - candidate_path: artifacts.candidate.task
 
-## Descripción de la tarea
-Publicar los cambios realizados en la rama actual y crear una nueva versión beta.
+## Descripcion de la tarea
+Aplicar fix para resolver correctamente el init.
 
 ## Objetivo
-Validar que los cambios están correctos, añadirlos, versionar una nueva beta y publicar.
+Hacer que init resuelva el path correctamente (desde cwd o usando una ruta absoluta consistente).
 
-## Estado del ciclo de vida (FUENTE ÚNICA DE VERDAD)
+## Estado del ciclo de vida (FUENTE UNICA DE VERDAD)
 
 ```yaml
 task:
-  id: "task-20260203-publicar-cambios-beta"
-  title: "Publicar cambios y beta nueva"
+  id: "20260203-1"
+  title: "init-path-fix"
   strategy: "short"  # long | short
   artifacts:
     supplemental: []
   phase:
     current: "short-phase-3-closure"
     validated_by: "architect-agent"
-    updated_at: "2026-02-03T11:29:15Z"
+    updated_at: "2026-02-03T12:23:13Z"
   lifecycle:
     phases:
       phase-0-acceptance-criteria:
@@ -98,37 +98,19 @@ task:
       short-phase-1-brief:
         completed: true
         validated_by: "architect-agent"
-        validated_at: "2026-02-03T11:17:41Z"
+        validated_at: "2026-02-03T11:57:50Z"
         runtime_validated: true
-        validation_id: "runtime.validate_gate@2026-02-03T11:17:41Z"
+        validation_id: "gate-20260203-1-short-1"
       short-phase-2-implementation:
         completed: true
         validated_by: "architect-agent"
-        validated_at: "2026-02-03T11:24:01Z"
+        validated_at: "2026-02-03T12:18:53Z"
         runtime_validated: true
-        validation_id: "runtime.validate_gate@2026-02-03T11:23:17Z"
+        validation_id: "gate-20260203-1-short-2b"
       short-phase-3-closure:
         completed: true
         validated_by: "architect-agent"
-        validated_at: "2026-02-03T11:29:15Z"
+        validated_at: "2026-02-03T12:23:13Z"
         runtime_validated: true
-        validation_id: "runtime.validate_gate@2026-02-03T11:24:53Z"
+        validation_id: "gate-20260203-1-short-3"
 ```
-
----
-
-## 2. Definición y Alcance (Contrato)
-- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/task-20260203-publicar-cambios-beta/acceptance.md)
-- **Alias**: `task.acceptance`
-
----
-
-## Reglas contractuales
-- Este fichero es la **fuente única de verdad** del estado de la tarea.
-- El campo `task.phase.current` **SOLO puede ser modificado por `architect-agent`**.
-- El campo `task.lifecycle.phases.*` **SOLO puede ser marcado como completed por `architect-agent`**.
-- Una fase **NO puede marcarse como completed** si no es la fase actual.
-- El avance de fase requiere:
-  1. Marcar la fase actual como `completed: true`
-  2. Validación explícita del architect
-  3. Actualización de `task.phase.current` a la siguiente fase

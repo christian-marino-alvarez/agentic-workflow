@@ -7,7 +7,7 @@ phase:
 ---
 # init bootstrap
 
-- command: /init
+- command: init
 - role.architect: architect-agent
 - constitution.loaded.in_context: true
 
@@ -27,14 +27,14 @@ constitution:
     - .agent/rules/constitution/agents-behavior.md
     - .agent/rules/constitution/runtime-integration.md
 language:
-  value: español
+  value: espanol
   confirmed: true
 strategy: short
 traceability:
   verified: true
   mcp_tool: runtime_chat
-  response: "status: ok"
-  timestamp: "2026-02-03T11:08:23Z"
+  response: '{"status":"ok"}'
+  timestamp: 2026-02-03T11:49:31Z
 runtime:
   started: true
 ```

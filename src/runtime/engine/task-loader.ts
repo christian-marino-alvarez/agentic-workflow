@@ -7,18 +7,21 @@ export interface TaskRecord {
   title: string;
   owner: string;
   phase: string;
+  strategy?: string;
 }
 
 interface TaskMeta {
   id?: string;
   title?: string;
   owner?: string;
+  strategy?: string;
 }
 
 interface TaskYaml {
   task?: {
     id?: string;
     title?: string;
+    strategy?: string;
     phase?: {
       current?: string;
     };
@@ -36,12 +39,13 @@ export async function loadTask(taskPath: string): Promise<TaskRecord> {
   const title = task.title ?? meta.title ?? '';
   const phase = task.phase?.current ?? (meta as any).phase?.current ?? (meta as any)['phase.current'] ?? '';
   const owner = meta.owner ?? extractOwner(raw) ?? '';
+  const strategy = task.strategy ?? meta.strategy ?? '';
 
   if (!id || !title || !phase || !owner) {
     throw new Error('Task file missing required fields (id/title/owner/phase.current).');
   }
 
-  return { id, title, owner, phase };
+  return { id, title, owner, phase, strategy: strategy || undefined };
 }
 
 export function resolveWorkflowsRoot(projectRoot: string): string {

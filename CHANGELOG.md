@@ -1,7 +1,13 @@
 # Changelog
 
-## [1.25.4-beta.3](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.25.3-beta.3...agentic-workflow-v1.25.4-beta.3) (2026-02-03)
+## [1.25.4-beta.4](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.25.4-beta.3...agentic-workflow-v1.25.4-beta.4) (2026-02-03)
 
+### Bug Fixes
+
+* **templates:** propagate init template traceability fields into dist artifacts.
+* **tasklifecycle-short:** ensure init workflow mapping is available in core snapshot.
+
+## [1.25.4-beta.3](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.25.3-beta.3...agentic-workflow-v1.25.4-beta.3) (2026-02-03)
 
 ### Bug Fixes
 
@@ -9,12 +15,6 @@
 * **release:** prepare 1.25.3-beta.5 ([a9b820e](https://github.com/christian-marino-alvarez/agentic-workflow/commit/a9b820e10cbcb8f91db4adccd62c7b62a43d2b99))
 
 ## [1.25.3-beta.5](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.25.3-beta.4...agentic-workflow-v1.25.3-beta.5) (2026-02-03)
-
-### Bug Fixes
-
-* **workflows:** enforce runtime traceability requirements in init and align metadata.
-* **templates:** extend init template with language/strategy/traceability fields.
-* **tasklifecycle-short:** ensure init workflow is resolvable in short lifecycle mapping.
 
 ## [1.25.2-beta.5](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.25.2-beta.4...agentic-workflow-v1.25.2-beta.5) (2026-02-03)
 
@@ -174,7 +174,6 @@
 * resolve conflicts for release-please PR 43 ([af4c7f9](https://github.com/christian-marino-alvarez/agentic-workflow/commit/af4c7f9fb6a1e1277e2adfa60b422886dac04594))
 * resolve merge conflicts in CHANGELOG and package files ([089de5c](https://github.com/christian-marino-alvarez/agentic-workflow/commit/089de5ce34fdf29f8e7048dc1714b91b09c5fb76))
 * restore standard .agent paths for customer installation ([555dce5](https://github.com/christian-marino-alvarez/agentic-workflow/commit/555dce5a8c4c35421f8dd381c4c44da52b58f98c))
->>>>>>> origin/develop
 
 ## [1.21.0-beta.3](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.21.0-beta.2...agentic-workflow-v1.21.0-beta.3) (2026-02-02)
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.22.0-beta.9](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.22.0-beta.8...agentic-workflow-v1.22.0-beta.9) (2026-02-03)
+
+### Maintenance
+
+* **cli:** align static version string in `bin/cli.js` with `package.json`.
+
 ## [1.22.0-beta.8](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.22.0-beta.7...agentic-workflow-v1.22.0-beta.8) (2026-02-03)
 
 ### Features

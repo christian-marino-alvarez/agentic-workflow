@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.25.4-beta.3](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.25.3-beta.3...agentic-workflow-v1.25.4-beta.3) (2026-02-03)
+
+
+### Bug Fixes
+
+* **release:** prepare 1.25.3-beta.5 ([ac187f0](https://github.com/christian-marino-alvarez/agentic-workflow/commit/ac187f0ee65ad655d4fb7ef3620b205271a2f282))
+* **release:** prepare 1.25.3-beta.5 ([a9b820e](https://github.com/christian-marino-alvarez/agentic-workflow/commit/a9b820e10cbcb8f91db4adccd62c7b62a43d2b99))
+
 ## [1.25.3-beta.5](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.25.3-beta.4...agentic-workflow-v1.25.3-beta.5) (2026-02-03)
 
 ### Bug Fixes

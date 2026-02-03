@@ -1,9 +1,6 @@
 ---
-description: "Workflow obligatorio de setup: carga constitutions base y define el idioma de conversación y la estrategia Long/Short."
----
-
----
 id: workflow.init
+description: "Workflow obligatorio de setup: carga constitutions base y define el idioma de conversación y la estrategia Long/Short."
 owner: architect-agent
 version: 4.0.0
 severity: PERMANENT
@@ -11,6 +8,7 @@ trigger:
   commands: ["init", "/init", "/agentic-init"]
 blocking: true
 ---
+
 
 # WORKFLOW: init
 

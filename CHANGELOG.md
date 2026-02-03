@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.25.2-beta.5](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.25.2-beta.4...agentic-workflow-v1.25.2-beta.5) (2026-02-03)
+
+### Bug Fixes
+
+* **workflows:** fix double frontmatter issue in `init.md` causing runtime failures.
+
 <## [1.24.0-beta.3](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.23.0-beta.3...agentic-workflow-v1.24.0-beta.3) (2026-02-03)
 
 ### Features

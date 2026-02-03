@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.27.0-beta.4](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.26.1-beta.4...agentic-workflow-v1.27.0-beta.4) (2026-02-03)
+
+
+### Features
+
+* **mcp:** add resources list endpoints ([f35d8a6](https://github.com/christian-marino-alvarez/agentic-workflow/commit/f35d8a6dfbe081be7377228a1e261637f4315aff))
+* **mcp:** add resources list endpoints ([d75307f](https://github.com/christian-marino-alvarez/agentic-workflow/commit/d75307f1b70e14a9cde84e886a914826a0933410))
+
 ## [1.26.1-beta.4](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.26.0-beta.4...agentic-workflow-v1.26.1-beta.4) (2026-02-03)
 
 

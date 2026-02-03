@@ -493,7 +493,8 @@ async function resolveNextPhase(workflowsRoot: string, currentPhase: string): Pr
 
 async function updateTaskPhase(taskPath: string, currentPhase: string, nextPhase: string, agent: string): Promise<{ updatedAt: string }> {
   const timestamp = new Date().toISOString();
-  const raw = await fs.readFile(taskPath, 'utf-8');
+  const resolvedPath = path.resolve(taskPath);
+  const raw = await fs.readFile(resolvedPath, 'utf-8');
   const lines = raw.split('\n');
   let inYaml = false;
   let activePhase: string | null = null;
@@ -542,6 +543,6 @@ async function updateTaskPhase(taskPath: string, currentPhase: string, nextPhase
       lines[i] = `        validated_at: "${timestamp}"`;
     }
   }
-  await fs.writeFile(taskPath, lines.join('\n'));
+  await fs.writeFile(resolvedPath, lines.join('\n'));
   return { updatedAt: timestamp };
 }

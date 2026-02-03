@@ -26,7 +26,8 @@ interface TaskYaml {
 }
 
 export async function loadTask(taskPath: string): Promise<TaskRecord> {
-  const raw = await fs.readFile(taskPath, 'utf-8');
+  const resolvedPath = path.resolve(taskPath);
+  const raw = await fs.readFile(resolvedPath, 'utf-8');
   const { data, content } = matter(raw);
   const meta = data as TaskMeta;
   const yaml = extractYamlBlock(content) as TaskYaml;

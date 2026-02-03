@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -13,8 +15,11 @@ export class Logger {
   private static instance: Logger;
   private buffer: LogEntry[] = [];
   private readonly MAX_LOGS = 1000;
+  private logFile: string;
 
-  private constructor() { }
+  private constructor() {
+    this.logFile = '/Users/milos/Documents/workspace/agentic-workflow/agentic-runtime.log';
+  }
 
   public static getInstance(): Logger {
     if (!Logger.instance) {
@@ -41,6 +46,18 @@ export class Logger {
 
     // Console output for human readability
     this.printToConsole(entry);
+
+    // Persistent file logging for external tailing
+    this.appendToFile(entry);
+  }
+
+  private appendToFile(entry: LogEntry): void {
+    const logLine = `[${entry.timestamp}] [${entry.level.toUpperCase()}] [${entry.source}] ${entry.message} ${entry.context ? JSON.stringify(entry.context) : ''}\n`;
+    try {
+      fs.appendFileSync(this.logFile, logLine);
+    } catch (e) {
+      // Ignored to avoid cascading failures if disk is full or read-only
+    }
   }
 
   public getLogs(limit: number = 100): LogEntry[] {

@@ -23,7 +23,7 @@ program
 
 program
   .command('create')
-  .argument('<type>', 'The type of element to create (role, workflow)')
+  .argument('<type>', 'The type of element to create (role, workflow, skill)')
   .argument('<name>', 'The name for the new element')
   .description('Scaffold a new project-specific element')
   .action(createCommand);

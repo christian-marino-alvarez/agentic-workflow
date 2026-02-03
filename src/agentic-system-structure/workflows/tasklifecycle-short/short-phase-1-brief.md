@@ -19,6 +19,7 @@ blocking: true
 > **Constitución activa (OBLIGATORIO)**:
 > - Cargar `constitution.clean_code` antes de iniciar
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
+> - **Activar `skill.runtime-governance`** (Para validación de gate y trazabilidad por el Architect)
 
 ## Output (REQUIRED)
 - Artefacto: `.agent/artifacts/<taskId>-<taskTitle>/brief.md`
@@ -102,6 +103,7 @@ Requisitos (todos obligatorios):
    - `task.lifecycle.phases.short-phase-1-brief.completed == true`
    - `task.lifecycle.phases.short-phase-1-brief.validated_at` no nulo
    - `task.phase.updated_at` no nulo
+8. **Gobernanza verificada**: El historial de logs muestra la secuencia de herramientas MCP definida en `skill.runtime-governance`.
 
 Si Gate FAIL:
 - Indicar qué requisito falta.

@@ -7,7 +7,6 @@
 ## Constitution (load order)
 1. .agent/rules/constitution/clean-code.md
 2. .agent/rules/constitution/agents-behavior.md
-3. .agent/rules/constitution/vscode-extensions.md
 
 ```yaml
 bootstrap:
@@ -18,9 +17,8 @@ constitution:
   loaded:
     - .agent/rules/constitution/clean-code.md
     - .agent/rules/constitution/agents-behavior.md
-    - .agent/rules/constitution/vscode-extensions.md
 language:
-  value: "es"
+  value: es
   confirmed: true
-strategy: "long"
+strategy: short
 ```

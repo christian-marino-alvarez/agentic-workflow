@@ -40,6 +40,15 @@ Cuando cualquier agente ejecute un workflow del sistema (`init`, `tasklifecycle-
 3. Durante la ejecución:
    → Usar `runtime.emit_event` para eventos significativos
    → Usar `runtime.get_state` para consultar estado si es necesario
+
+### 1.3 Regla de Nulidad (Bypass Detection)
+Cualquier acción técnica de cambio de estado (creación de artefactos, avance de fase) realizada sin una llamada correspondiente registrada en el Runtime MCP será considerada **nula e inválida**. 
+- La "Huella Digital de Gobernanza" (logs de `validate_gate` y `advance_phase`) generada mediante el **Skill de Gobernanza** es el único comprobante legal de cumplimiento de proceso.
+
+### 1.4 Skill de Gobernanza (Mejor Práctica)
+El uso del `skill.runtime-governance` es la **mejor práctica y el método obligatorio** para el `architect-agent`. 
+- **Por qué**: Centraliza la complejidad técnica de las herramientas MCP y permite auditorías reactivas consistentes sin sobrecargar los archivos de workflow.
+- **Invocación**: Los workflows deben simplemente invocar la acción de control, y el Arquitecto debe proveer el "Cómo" mediante este Skill exclusivo.
 ```
 
 ---

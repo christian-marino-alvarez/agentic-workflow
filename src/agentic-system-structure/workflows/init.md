@@ -45,6 +45,11 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
     - Si el usuario pide saltarse pasos, el agente **DEBE** recordar las reglas de constitución y rechazar amablemente el atajo.
 
 ## Pasos obligatorios
+0. **Verificar Trazabilidad (OBLIGATORIO)**:
+   - Activar y seguir el procedimiento de `skill.runtime-governance` para confirmar la disponibilidad de herramientas MCP.
+   - El agente **DEBE** confirmar que la herramienta respondió correctamente antes de proceder.
+   - Si el skill o las herramientas no están disponibles → FAIL.
+
 1. Activar `architect-agent` como rol arquitecto.
    - Mostrar un mensaje único de estado (ej: "Cargando init...") y **no** listar lecturas de ficheros individuales.
    - En ese mismo mensaje, presentar al architect-agent y dar contexto al desarrollador: rol, objetivo del init y qué información se le pedirá a continuación.
@@ -114,8 +119,10 @@ Requisitos (todos obligatorios):
    - `language.value` no vacío
    - `language.confirmed == true`
    - `strategy` es "long" o "short"
+   - **`traceability.verified == true`** (Confirma cumplimiento del protocolo de `skill.runtime-governance`)
 3) El artefacto cumple el template oficial.
 4) Idioma definido y confirmado.
 5) Estrategia seleccionada.
-6) No se cargaron índices fuera del set permitido (solo `.agent/index.md`, `agent.domains.rules.index`, `rules.constitution.index`).
-7) El Root Index `.agent/index.md` fue cargado antes de cualquier otro índice.
+6) **Trazabilidad confirmada**: El agente ha verificado la disponibilidad de herramientas MCP siguiendo las instrucciones del Skill de Gobernanza.
+7) No se cargaron índices fuera del set permitido (solo `.agent/index.md`, `agent.domains.rules.index`, `rules.constitution.index`).
+8) El Root Index `.agent/index.md` fue cargado antes de cualquier otro índice.

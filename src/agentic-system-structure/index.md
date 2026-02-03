@@ -38,6 +38,9 @@ agent:
     rules:
       index: .agent/rules/index.md
 
+    skills:
+      index: .agent/skills/index.md
+
 ```
 
 ## Reglas

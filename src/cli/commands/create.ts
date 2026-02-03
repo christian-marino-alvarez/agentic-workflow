@@ -11,41 +11,47 @@ import {
  * Útil para ser llamada desde el CLI o desde un servidor MCP.
  */
 export async function performCreate(type: string, name: string, force: boolean = false): Promise<{ success: boolean; message: string; path?: string }> {
-    const cwd = process.cwd();
-    const agentDir = path.join(cwd, '.agent');
-    const typeFolder = type === 'role' ? 'rules/roles' : type === 'workflow' ? 'workflows' : 'tools';
-    const targetDir = path.join(agentDir, typeFolder);
-    const targetPath = path.join(targetDir, `${name}.md`);
+  const cwd = process.cwd();
+  const agentDir = path.join(cwd, '.agent');
+  const typeFolder = type === 'role' ? 'rules/roles' :
+    type === 'workflow' ? 'workflows' :
+      type === 'skill' ? `skills/${name}` :
+        'tools';
+  const targetDir = path.join(agentDir, typeFolder);
+  const targetPath = type === 'skill' ? path.join(targetDir, 'SKILL.md') : path.join(targetDir, `${name}.md`);
 
+  try {
+    const corePath = (await resolveInstalledCorePath(cwd)) ?? await resolveCorePath();
+    const coreTypeFolder = type === 'role' ? 'rules/roles' :
+      type === 'workflow' ? 'workflows' :
+        type === 'skill' ? 'skills' :
+          'templates';
+    const reservedPath = type === 'skill' ? path.join(corePath, coreTypeFolder, name) : path.join(corePath, coreTypeFolder, `${name}.md`);
+
+    // 1. Reserved Namespace Check
     try {
-        const corePath = (await resolveInstalledCorePath(cwd)) ?? await resolveCorePath();
-        const coreTypeFolder = type === 'role' ? 'rules/roles' : type === 'workflow' ? 'workflows' : 'templates';
-        const reservedPath = path.join(corePath, coreTypeFolder, `${name}.md`);
+      await fs.access(reservedPath);
+      return { success: false, message: `The name "${name}" is reserved by the core framework.` };
+    } catch {
+      // Name is free in core
+    }
 
-        // 1. Reserved Namespace Check
-        try {
-            await fs.access(reservedPath);
-            return { success: false, message: `The name "${name}" is reserved by the core framework.` };
-        } catch {
-            // Name is free in core
-        }
+    // 2. Local Existence Check
+    if (!force) {
+      try {
+        await fs.access(targetPath);
+        return { success: false, message: `A local file named "${name}" already exists in .agent/${typeFolder}/.`, path: targetPath };
+      } catch {
+        // Name is free locally or we create it
+      }
+    }
 
-        // 2. Local Existence Check
-        if (!force) {
-            try {
-                await fs.access(targetPath);
-                return { success: false, message: `A local file named "${name}" already exists in .agent/${typeFolder}/.`, path: targetPath };
-            } catch {
-                // Name is free locally or we create it
-            }
-        }
+    // 3. Create Scaffolding
+    await fs.mkdir(targetDir, { recursive: true });
 
-        // 3. Create Scaffolding
-        await fs.mkdir(targetDir, { recursive: true });
-
-        let content = '';
-        if (type === 'role') {
-            content = `---
+    let content = '';
+    if (type === 'role') {
+      content = `---
 id: role.${name}-agent
 type: rule
 owner: architect-agent
@@ -66,8 +72,8 @@ You are the **${name}-agent**. Explain your purpose and specialty here.
 ## Agentic Discipline (PERMANENT)
 1. (Add your discipline principles here)
 `;
-        } else if (type === 'workflow') {
-            content = `---
+    } else if (type === 'workflow') {
+      content = `---
 id: workflow.custom.${name}
 description: Description of this custom workflow.
 owner: architect-agent
@@ -87,14 +93,32 @@ severity: RECOMMENDED
 ## Output (REQUIRED)
 - Expected result
 `;
-        }
+    } else if (type === 'skill') {
+      content = `# SKILL: ${name}
 
-        await fs.writeFile(targetPath, content);
-        return { success: true, message: `${name} created successfully in .agent/${typeFolder}/`, path: targetPath };
+> [!NOTE]
+> Define the identity and rules for this system skill.
 
-    } catch (error) {
-        return { success: false, message: `Error during creation: ${error instanceof Error ? error.message : String(error)}` };
+## Objective
+Explain what this skill enables the agent to do.
+
+## 1. Capabilities
+- (List technical capabilities here)
+
+## 2. Execution Rules
+1. (Add mandatory rules for using this skill)
+
+## 3. Best Practices
+- (Add usage recommendations)
+`;
     }
+
+    await fs.writeFile(targetPath, content);
+    return { success: true, message: `${name} created successfully in .agent/${typeFolder}/`, path: targetPath };
+
+  } catch (error) {
+    return { success: false, message: `Error during creation: ${error instanceof Error ? error.message : String(error)}` };
+  }
 }
 
 /**
@@ -103,90 +127,90 @@ severity: RECOMMENDED
 import { select, text, isCancel, cancel } from '@clack/prompts';
 
 export async function createCommand(type: string, name: string) {
-    intro(`Creating New ${type}: ${name}`);
+  intro(`Creating New ${type}: ${name}`);
 
-    const s = spinner();
-    s.start('Validating...');
+  const s = spinner();
+  s.start('Validating...');
 
-    // Try to create first
-    let result = await performCreate(type, name);
-    s.stop('Validation complete.');
+  // Try to create first
+  let result = await performCreate(type, name);
+  s.stop('Validation complete.');
 
-    // Handle conflicts interactively
-    if (!result.success && result.message.includes('reserved')) {
-        const action = await select({
-            message: `The name "${name}" is in use by the CORE. What do you want to do?`,
-            options: [
-                { value: 'rename', label: 'Rename (e.g., custom-neo)' },
-                { value: 'abort', label: 'Cancel operation' }
-            ],
-        });
+  // Handle conflicts interactively
+  if (!result.success && result.message.includes('reserved')) {
+    const action = await select({
+      message: `The name "${name}" is in use by the CORE. What do you want to do?`,
+      options: [
+        { value: 'rename', label: 'Rename (e.g., custom-neo)' },
+        { value: 'abort', label: 'Cancel operation' }
+      ],
+    });
 
-        if (isCancel(action) || action === 'abort') {
-            cancel('Operation cancelled.');
-            return process.exit(0);
-        }
-
-        if (action === 'rename') {
-            const newName = await text({
-                message: 'Enter the new name:',
-                placeholder: `custom-${name}`,
-                validate(value) {
-                    if (value.trim().length === 0) {return 'Name cannot be empty';}
-                    return;
-                },
-            });
-
-            if (isCancel(newName)) {
-                cancel('Operation cancelled.');
-                return process.exit(0);
-            }
-
-            s.start('Creating with new name...');
-            result = await performCreate(type, newName as string);
-            s.stop('Done.');
-        }
-    } else if (!result.success && result.message.includes('already exists')) {
-        const action = await select({
-            message: `The local file "${name}" already exists. What do you want to do?`,
-            options: [
-                { value: 'overwrite', label: 'Overwrite existing file' },
-                { value: 'rename', label: 'Rename new file' },
-                { value: 'abort', label: 'Cancel' }
-            ],
-        });
-
-        if (isCancel(action) || action === 'abort') {
-            cancel('Operation cancelled.');
-            return process.exit(0);
-        }
-
-        if (action === 'overwrite') {
-            s.start('Overwriting...');
-            result = await performCreate(type, name, true);
-            s.stop('Done.');
-        } else if (action === 'rename') {
-            const newName = await text({
-                message: 'Enter the new name:',
-                validate(value) {
-                    if (value.trim().length === 0) {return 'Required';}
-                },
-            });
-            if (isCancel(newName)) {
-                cancel('Operation cancelled.');
-                return process.exit(0);
-            }
-            s.start('Creating...');
-            result = await performCreate(type, newName as string);
-            s.stop('Done.');
-        }
+    if (isCancel(action) || action === 'abort') {
+      cancel('Operation cancelled.');
+      return process.exit(0);
     }
 
-    if (result.success) {
-        note('Remember to register it in the local index if you want to use an alias.', 'Next Step');
-        outro(result.message);
-    } else {
-        note(result.message, 'Error');
-        outro('Process finished with errors.');
+    if (action === 'rename') {
+      const newName = await text({
+        message: 'Enter the new name:',
+        placeholder: `custom-${name}`,
+        validate(value) {
+          if (value.trim().length === 0) { return 'Name cannot be empty'; }
+          return;
+        },
+      });
+
+      if (isCancel(newName)) {
+        cancel('Operation cancelled.');
+        return process.exit(0);
+      }
+
+      s.start('Creating with new name...');
+      result = await performCreate(type, newName as string);
+      s.stop('Done.');
     }
+  } else if (!result.success && result.message.includes('already exists')) {
+    const action = await select({
+      message: `The local file "${name}" already exists. What do you want to do?`,
+      options: [
+        { value: 'overwrite', label: 'Overwrite existing file' },
+        { value: 'rename', label: 'Rename new file' },
+        { value: 'abort', label: 'Cancel' }
+      ],
+    });
+
+    if (isCancel(action) || action === 'abort') {
+      cancel('Operation cancelled.');
+      return process.exit(0);
+    }
+
+    if (action === 'overwrite') {
+      s.start('Overwriting...');
+      result = await performCreate(type, name, true);
+      s.stop('Done.');
+    } else if (action === 'rename') {
+      const newName = await text({
+        message: 'Enter the new name:',
+        validate(value) {
+          if (value.trim().length === 0) { return 'Required'; }
+        },
+      });
+      if (isCancel(newName)) {
+        cancel('Operation cancelled.');
+        return process.exit(0);
+      }
+      s.start('Creating...');
+      result = await performCreate(type, newName as string);
+      s.stop('Done.');
+    }
+  }
+
+  if (result.success) {
+    note('Remember to register it in the local index if you want to use an alias.', 'Next Step');
+    outro(result.message);
+  } else {
+    note(result.message, 'Error');
+    outro('Process finished with errors.');
+  }
 }

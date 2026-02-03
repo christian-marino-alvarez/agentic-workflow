@@ -22,6 +22,7 @@ blocking: true
 > **Constitución activa (OBLIGATORIO)**:
 > - Cargar `constitution.clean_code` antes de iniciar
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
+> - **Activar `skill.runtime-governance`** (Uso exclusivo del Architect para validación y trazabilidad)
 
 ## Output (REQUIRED)
 - Current task (definitiva) con acceptance criteria completos:
@@ -39,7 +40,11 @@ blocking: true
 - Registrar los acceptance criteria dentro del fichero de current task.
 
 ## Pasos obligatorios
-0. Activar `architect-agent` y usar prefijo obligatorio en cada mensaje.
+0. **Verificar Gobernanza (OBLIGATORIO)**:
+   - Activar `skill.runtime-governance`.
+   - Ejecutar el procedimiento de trazabilidad inicial (Paso 0 del Skill).
+   - El agente **DEBE** confirmar que el sistema de logs está activo antes de proceder.
+   - Usar prefijo obligatorio en cada mensaje.
 1. Cargar y leer el task candidate:
    - `artifacts.candidate.task`
    - Extraer:
@@ -121,6 +126,10 @@ blocking: true
 
 9. PASS
    - Informar que la Fase 0 está completada correctamente.
+   - Seguimiento del protocolo de cierre en `skill.runtime-governance`:
+     - Llamar `runtime.validate_gate` para verificar integridad.
+     - Solicitar aprobación final al usuario.
+     - Llamar `runtime.advance_phase` tras el "SI".
    - El `architect-agent` **DEBE realizar explícitamente** las siguientes acciones:
     - Marcar la Fase 0 como completada en el `task.md`.
     - Establecer `task.lifecycle.phases.phase-0-acceptance-criteria.validated_at = <ISO-8601>`.
@@ -168,6 +177,7 @@ Requisitos (todos obligatorios):
    - `task.lifecycle.phases.phase-0-acceptance-criteria.validated_at` no nulo
    - `task.phase.updated_at` no nulo
 10. Las 5 preguntas obligatorias fueron realizadas y respondidas por el desarrollador.
+11. **Gobernanza verificada**: El historial de logs muestra la secuencia de herramientas MCP definida en `skill.runtime-governance`.
 
 Si Gate FAIL:
 - Ejecutar **FAIL**.

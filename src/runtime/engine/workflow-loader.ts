@@ -75,6 +75,17 @@ export async function resolvePhaseWorkflow(workflowsRoot: string, phaseId: strin
       continue;
     }
   }
+
+  // Fallback: search for a workflow whose ID matches phaseId in the workflowsRoot
+  const allWorkflows = await loadWorkflows(workflowsRoot);
+  const globalWorkflow = allWorkflows.find(w => w.id === phaseId || w.id === `workflow.${phaseId}`);
+  if (globalWorkflow) {
+    return {
+      phaseId,
+      workflowPath: globalWorkflow.path
+    };
+  }
+
   return null;
 }
 

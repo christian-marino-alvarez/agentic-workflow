@@ -169,6 +169,8 @@ async function dispatchRequest(request: McpRequest): Promise<unknown> {
       return handleCompleteStep(request.params ?? {});
     case 'debug_read_logs':
       return handleDebugReadLogs(request.params ?? {});
+    case 'resources/templates/list':
+      return handleTemplatesList();
     default:
       throw new Error(`Unknown method: ${request.method}`);
   }
@@ -189,6 +191,29 @@ function handleInitialize(): unknown {
 
 function handleToolsList(): unknown {
   return { tools: MCP_TOOLS };
+}
+
+async function handleTemplatesList(): Promise<unknown> {
+  const workspaceRoot = await findWorkspaceRoot(collectWorkspaceCandidates());
+  if (!workspaceRoot) {
+    throw new Error('No pude listar templates: no se encontró ".agent/" desde el cwd actual.');
+  }
+
+  const indexPath = path.join(workspaceRoot, '.agent', 'templates', 'index.md');
+  const raw = await fs.readFile(indexPath, 'utf-8');
+  const match = raw.match(/```yaml\n([\s\S]*?)```/);
+  if (!match) {
+    return { templates: [] };
+  }
+  const yaml = match[1];
+  const data = matter(`---\n${yaml}\n---`).data as Record<string, any>;
+  const templates = (data.templates as Record<string, string> | undefined) ?? {};
+  const items = Object.entries(templates).map(([alias, templatePath]) => ({
+    id: alias,
+    path: templatePath,
+    absolutePath: path.resolve(workspaceRoot, templatePath)
+  }));
+  return { templates: items };
 }
 
 async function handleToolsCall(params: Record<string, unknown>): Promise<unknown> {
@@ -222,8 +247,11 @@ async function handleRun(params: Record<string, unknown>): Promise<unknown> {
 
   Logger.info('MCP', `Tool called: runtime_run`, { taskPath, agent });
 
+  const resolved = await resolveTaskPath(taskPath);
+  await ensureInitTaskFile(resolved.resolvedPath, resolved.workspaceRoot);
+
   const result = await runRuntime({
-    taskPath,
+    taskPath: resolved.resolvedPath,
     agent,
     statePath,
     eventsPath,
@@ -313,7 +341,8 @@ async function handleValidateGate(params: Record<string, unknown>): Promise<unkn
 
   Logger.info('MCP', `Tool called: runtime_validate_gate`, { taskPath, agent, expectedPhase });
 
-  const task = await loadTask(taskPath);
+  const resolved = await resolveTaskPath(taskPath);
+  const task = await loadTask(resolved.resolvedPath);
   if (task.owner !== agent) {
     return {
       content: [
@@ -351,13 +380,14 @@ async function handleAdvancePhase(params: Record<string, unknown>): Promise<unkn
 
   Logger.info('MCP', `Tool called: runtime_advance_phase`, { taskPath, agent });
 
-  const task = await loadTask(taskPath);
+  const resolved = await resolveTaskPath(taskPath);
+  const task = await loadTask(resolved.resolvedPath);
   if (task.owner !== agent) {
     throw new Error('Agent mismatch.');
   }
-  const workflowsRoot = resolveWorkflowsRoot(path.dirname(taskPath));
+  const workflowsRoot = resolveWorkflowsRoot(path.dirname(resolved.resolvedPath));
   const nextPhase = await resolveNextPhase(workflowsRoot, task.phase);
-  const updated = await updateTaskPhase(taskPath, task.phase, nextPhase, agent);
+  const updated = await updateTaskPhase(resolved.resolvedPath, task.phase, nextPhase, agent);
   const emitter = new RuntimeEmitter({ eventsPath, stdout: false });
   await emitter.emit({
     type: 'phase_updated',
@@ -424,6 +454,87 @@ async function handleDebugReadLogs(params: Record<string, unknown>): Promise<unk
       }
     ]
   };
+}
+
+const WORKSPACE_ENV_VARS = ['PWD', 'INIT_CWD', 'AGENTIC_WORKSPACE', 'WORKSPACE'];
+
+async function resolveTaskPath(taskPath: string): Promise<{ resolvedPath: string; workspaceRoot: string | null }> {
+  if (path.isAbsolute(taskPath)) {
+    const workspaceRoot = await findWorkspaceRoot([path.dirname(taskPath)]);
+    return { resolvedPath: taskPath, workspaceRoot };
+  }
+
+  const candidateRoots = collectWorkspaceCandidates();
+  const workspaceRoot = await findWorkspaceRoot(candidateRoots);
+  if (!workspaceRoot) {
+    const subject = taskPath.includes('init.md') ? 'el init' : 'el taskPath';
+    throw new Error(`No pude resolver ${subject}: no se encontró ".agent/" desde el cwd actual. Ejecuta el comando desde el workspace o pasa una ruta absoluta.`);
+  }
+
+  return { resolvedPath: path.resolve(workspaceRoot, taskPath), workspaceRoot };
+}
+
+async function ensureInitTaskFile(taskPath: string, workspaceRoot: string | null): Promise<void> {
+  if (!isInitTaskPath(taskPath)) {
+    return;
+  }
+  const exists = await fileExists(taskPath);
+  if (exists) {
+    return;
+  }
+  if (!workspaceRoot) {
+    throw new Error('No se pudo resolver el workspace para crear init.md desde template.');
+  }
+  const templatePath = path.join(workspaceRoot, '.agent', 'templates', 'init.md');
+  const template = await fs.readFile(templatePath, 'utf-8');
+  await fs.mkdir(path.dirname(taskPath), { recursive: true });
+  await fs.writeFile(taskPath, template);
+}
+
+function collectWorkspaceCandidates(): string[] {
+  const candidates = [process.cwd(), ...WORKSPACE_ENV_VARS.map((key) => process.env[key])]
+    .filter((value): value is string => Boolean(value));
+  return Array.from(new Set(candidates.map((candidate) => path.resolve(candidate))));
+}
+
+async function findWorkspaceRoot(candidates: string[]): Promise<string | null> {
+  for (const candidate of candidates) {
+    const resolved = await findWorkspaceRootFromDir(candidate);
+    if (resolved) {
+      return resolved;
+    }
+  }
+  return null;
+}
+
+async function findWorkspaceRootFromDir(startDir: string): Promise<string | null> {
+  let currentDir = path.resolve(startDir);
+  const root = path.parse(currentDir).root;
+  while (true) {
+    const agentDir = path.join(currentDir, '.agent');
+    if (await fileExists(agentDir)) {
+      return currentDir;
+    }
+    if (currentDir === root) {
+      return null;
+    }
+    currentDir = path.dirname(currentDir);
+  }
+}
+
+function isInitTaskPath(taskPath: string): boolean {
+  const normalized = path.normalize(taskPath);
+  const initSuffix = path.join('.agent', 'artifacts', 'candidate', 'init.md');
+  return normalized.endsWith(initSuffix);
+}
+
+async function fileExists(targetPath: string): Promise<boolean> {
+  try {
+    await fs.access(targetPath);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function ensureString(value: unknown, name: string): string {

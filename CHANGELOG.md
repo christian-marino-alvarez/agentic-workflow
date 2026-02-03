@@ -18,6 +18,14 @@
 * **runtime:** add visible logging to MCP server startup and request handling ([077907a](https://github.com/christian-marino-alvarez/agentic-workflow/commit/077907aa0f2400c3c5607cf43b34fcefb6d38b3d))
 * **runtime:** redirect engine logs to stderr to protect MCP stdout protocol ([50756d8](https://github.com/christian-marino-alvarez/agentic-workflow/commit/50756d8a8ab9bb88e0854f71f2ac9605aea6641c))
 
+## [1.25.2-beta.3](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.25.1-beta.3...agentic-workflow-v1.25.2-beta.3) (2026-02-03)
+
+
+### Bug Fixes
+
+* **runtime:** resolve relative paths in MCP server ([e7fc272](https://github.com/christian-marino-alvarez/agentic-workflow/commit/e7fc272bbaa6a4d9f27614bf78be657c856e91b5))
+* **runtime:** resolve relative paths in MCP server ([ac55d5d](https://github.com/christian-marino-alvarez/agentic-workflow/commit/ac55d5dbf3737ee8c800267987bdea19ca124b48))
+
 ## [1.25.1-beta.3](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.25.0-beta.3...agentic-workflow-v1.25.1-beta.3) (2026-02-03)
 
 

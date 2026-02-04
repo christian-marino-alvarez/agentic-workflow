@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.31.0-beta.6](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.30.2-beta.6...agentic-workflow-v1.31.0-beta.6) (2026-02-04)
+
+
+### Features
+
+* **init:** add --workspace support ([e27509f](https://github.com/christian-marino-alvarez/agentic-workflow/commit/e27509f70b60d2a1ca3f4c3026ac404b73c1048a))
+* **init:** persist workspace for mcp ([4a13588](https://github.com/christian-marino-alvarez/agentic-workflow/commit/4a13588c8dca756b78463a2125d2ee55b7aaeb6a))
+* **mcp:** add resources list endpoints ([3badd6b](https://github.com/christian-marino-alvarez/agentic-workflow/commit/3badd6b8f6dbe8e38e7cfdd765af627c5897d639))
+* **mcp:** report package version on startup ([ec97aff](https://github.com/christian-marino-alvarez/agentic-workflow/commit/ec97aff5600d5d3e673f62edfe1b318b79922b2d))
+
+
+### Bug Fixes
+
+* **mcp:** declare resources capability ([614ca81](https://github.com/christian-marino-alvarez/agentic-workflow/commit/614ca81f75fe6ace7a809e7450d567aae5094d3a))
+
 ## [1.30.2-beta.6](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.30.1-beta.6...agentic-workflow-v1.30.2-beta.6) (2026-02-04)
 
 

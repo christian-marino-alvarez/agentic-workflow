@@ -41,6 +41,16 @@ Initializes the agentic system in the current directory.
 npx agentic-workflow init
 ```
 
+#### Workspace selection (recommended)
+When running via `npx`, the command may start in a temporary directory. To avoid this, pass the workspace explicitly:
+```bash
+npx agentic-workflow init --workspace /path/to/your/project
+```
+You can also set it via env:
+```bash
+AGENTIC_WORKSPACE=/path/to/your/project npx agentic-workflow init
+```
+
 ### `create <role|workflow|skill> <name>`
 Scaffolds a new project-specific component.
 - **role**: Creates a new agent role with mandatory identification rules.

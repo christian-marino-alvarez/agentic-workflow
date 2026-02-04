@@ -41,6 +41,16 @@ Inicializa el sistema agéntico en el directorio actual.
 npx agentic-workflow init
 ```
 
+#### Selección del workspace (recomendado)
+Si ejecutas desde `npx`, el comando puede arrancar en un directorio temporal. Para evitarlo, pasa el workspace explícitamente:
+```bash
+npx agentic-workflow init --workspace /ruta/a/tu/proyecto
+```
+También puedes fijarlo por entorno:
+```bash
+AGENTIC_WORKSPACE=/ruta/a/tu/proyecto npx agentic-workflow init
+```
+
 ### `create <role|workflow|skill> <name>`
 Genera el andamiaje (scaffolding) para un nuevo componente específico del proyecto.
 - **role**: Crea un nuevo rol de agente con reglas de identificación obligatorias.

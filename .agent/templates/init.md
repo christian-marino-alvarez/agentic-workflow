@@ -37,3 +37,6 @@ traceability:
   timestamp: {{traceabilityTimestamp}}
 runtime:
   started: {{runtimeStarted}}
+task:
+  path:
+    "{{taskId}}": "{{taskPath}}"

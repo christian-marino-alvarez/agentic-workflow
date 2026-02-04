@@ -1,3 +1,9 @@
+---
+kind: artifact
+name: task
+source: agentic-system-structure
+---
+
 # Task: Release Beta 1.18.0-beta.11
 
 ## Identificación

@@ -19,7 +19,7 @@ blocking: true
 > **Constitución activa (OBLIGATORIO)**:
 > - Cargar `constitution.clean_code` antes de iniciar
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
-> - Cargar `constitution.runtime_integration` para trazabilidad MCP
+> - **Activar `skill.runtime-governance`** (Para validación de gate y trazabilidad por el Architect)
 
 ## Output (REQUIRED)
 - Artefacto: `.agent/artifacts/<taskId>-<taskTitle>/brief.md`
@@ -73,20 +73,21 @@ Evaluar indicadores de complejidad:
   - **Evaluación de Agentes**: Desempeño y propuestas de mejora.
 
 ### 5. Solicitar aprobación del desarrollador (por consola)
-5.1 **Auditoría Pre-Gate (OBLIGATORIO)**:
-- Antes de solicitar la aprobación, el `architect-agent` **DEBE** usar `runtime.validate_gate` para la fase actual.
-- El agente **DEBE** usar `debug_read_logs` para confirmar que todos los pasos técnicos previos han sido registrados.
-- Estrictamente **PROHIBIDO** consolidar este paso con la solicitud de aprobación en una misma respuesta (esperar confirmación de la herramienta).
+```yaml
+approval:
+  developer:
+    decision: SI | NO
+    date: <ISO-8601>
+    comments: <opcional>
+```
+- Si `decision != SI` → **FAIL**.
 
-6. **PASS**
-- Llamar `runtime_advance_phase` **después** de la aprobación explícita del desarrollador.
-- Actualizar task.md con el `currentPhase` devuelto por el runtime (NO incrementar manualmente).
-- Completar metadatos de fase en task.md:
+### 6. PASS
+- Actualizar task.md:
   - Marcar fase como completada.
   - Establecer `task.lifecycle.phases.short-phase-1-brief.validated_at = <ISO-8601>`.
-  - Establecer `task.lifecycle.phases.short-phase-1-brief.runtime_validated = true`.
-  - Establecer `task.lifecycle.phases.short-phase-1-brief.validation_id = <ID de runtime>`.
   - Actualizar `task.phase.updated_at = <ISO-8601>`.
+  - Avanzar a `short-phase-2-implementation`.
 
 ---
 
@@ -96,14 +97,13 @@ Requisitos (todos obligatorios):
 2. El `brief.md` inicia con el prefijo del `architect-agent`.
 3. Las 5 preguntas están respondidas.
 4. La evaluación de complejidad está documentada.
-5. **Auditoría de Runtime**: El agente ha ejecutado `runtime.validate_gate` y el resultado es PASS.
-6. **Trazabilidad de Logs**: Los logs (`debug_read_logs`) confirman la ejecución de los pasos 1 a 4.
-7. Existe aprobación explícita del desarrollador.
-8. task.md refleja fase completada y datos de validación de runtime.
-9. task.md refleja timestamp y estado:
+5. Existe aprobación explícita del desarrollador.
+6. task.md refleja fase completada.
+7. task.md refleja timestamp y estado:
    - `task.lifecycle.phases.short-phase-1-brief.completed == true`
    - `task.lifecycle.phases.short-phase-1-brief.validated_at` no nulo
    - `task.phase.updated_at` no nulo
+8. **Gobernanza verificada**: El historial de logs muestra la secuencia de herramientas MCP definida en `skill.runtime-governance`.
 
 Si Gate FAIL:
 - Indicar qué requisito falta.

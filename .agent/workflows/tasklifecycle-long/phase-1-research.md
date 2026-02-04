@@ -25,7 +25,7 @@ blocking: true
 > **Constitución activa (OBLIGATORIO)**:
 > - Cargar `constitution.clean_code` antes de iniciar
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
-> - Cargar `constitution.runtime_integration` para trazabilidad MCP
+> - **Activar `skill.runtime-governance`** (Para validación de gate y trazabilidad)
 
 ## Output (REQUIRED)
 - Research report (obligatorio, generado por researcher-agent):
@@ -95,21 +95,26 @@ blocking: true
    - Devolver el control al `architect-agent` al finalizar
 
 
-4. Solicitar aprobación del desarrollador (OBLIGATORIA, por consola)
-4.1 **Auditoría Pre-Gate (OBLIGATORIO)**:
-- Antes de solicitar la aprobación, el `architect-agent` **DEBE** usar `runtime.validate_gate` para la fase actual.
-- El agente **DEBE** usar `debug_read_logs` para confirmar que el informe de investigación fue creado por el `researcher-agent`.
-- Estrictamente **PROHIBIDO** consolidar este paso con la solicitud de aprobación.
+4. Solicitar aprobacion del desarrollador (OBLIGATORIA, por consola)
+   - El desarrollador **DEBE** emitir una decision binaria:
+     - **SI** → aprobado
+     - **NO** → rechazado
+   - Registrar la decision en `research.md` con el formato:
+     ```yaml
+     approval:
+       developer:
+         decision: SI | NO
+         date: <ISO-8601>
+         comments: <opcional>
+     ```
+   - Si `decision != SI` → ir a **Paso 8 (FAIL)**.
 
 5. PASS
-- Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md`:
-  - marcar Fase 1 como completada
-  - establecer `task.lifecycle.phases.phase-1-research.validated_at = <ISO-8601>`
-  - establecer `task.lifecycle.phases.phase-1-research.runtime_validated = true`
-  - establecer `task.lifecycle.phases.phase-1-research.validation_id = <ID de runtime>`
-  - actualizar `task.phase.updated_at = <ISO-8601>`
-  - llamar `runtime_advance_phase` despues de la aprobacion explicita del desarrollador.
-  - actualizar `task.phase.current` con el `currentPhase` devuelto por el runtime (NO incrementar manualmente).
+   - Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md`:
+     - marcar Fase 1 como completada
+     - establecer `task.lifecycle.phases.phase-1-research.validated_at = <ISO-8601>`
+     - actualizar `task.phase.updated_at = <ISO-8601>`
+     - avanzar `task.phase.current = aliases.tasklifecycle-long.phases.phase_2.id`
 
 ---
 
@@ -135,14 +140,17 @@ Requisitos (todos obligatorios):
 3. El `research.md` inicia con el prefijo del `researcher-agent`.
 4. El informe **DEBE** haber sido creado por el `researcher-agent`, **NO** por el `architect-agent`.
    > ⚠️ Si el informe fue creado por otro agente → **Gate FAIL**.
-4. **Auditoría de Runtime**: El agente ha ejecutado `runtime.validate_gate` y el resultado es PASS.
-5. **Trazabilidad de Logs**: Los logs (`debug_read_logs`) confirman que el informe fue originado por el `researcher-agent`.
-6. Existe aprobacion explicita del desarrollador:
+5. Existe aprobacion explicita del desarrollador:
    - `approval.developer.decision == SI`
-7. La investigación es profunda, detallada y basada en fuentes oficiales o de prestigio.
-8. El informe **NO contiene** análisis, recomendaciones ni valoraciones.
-9. `task.md` refleja fase completada y datos de validación de runtime.
-10. `task.md` refleja timestamp y estado.
+6. La investigación es profunda, detallada y basada en fuentes oficiales o de prestigio.
+7. El informe **NO contiene** análisis, recomendaciones ni valoraciones.
+8. `task.md` refleja:
+   - Fase 1 completada
+   - `task.phase.current == aliases.tasklifecycle-long.phases.phase_2.id`
+   - `task.lifecycle.phases.phase-1-research.completed == true`
+   - `task.lifecycle.phases.phase-1-research.validated_at` no nulo
+   - `task.phase.updated_at` no nulo
+6. **Gobernanza verificada**: El historial de logs muestra la secuencia de herramientas MCP definida en `skill.runtime-governance`.
 
 Si Gate FAIL:
 - Ejecutar **Paso 8 (FAIL)**.

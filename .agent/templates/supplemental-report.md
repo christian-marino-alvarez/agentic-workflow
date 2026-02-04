@@ -1,3 +1,9 @@
+---
+kind: template
+name: supplemental-report
+source: agentic-system-structure
+---
+
 # Supplemental Report (Template)
 
 ## Identificacion

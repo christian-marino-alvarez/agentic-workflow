@@ -1,3 +1,9 @@
+---
+kind: artifact
+name: acceptance
+source: agentic-system-structure
+---
+
 # Acceptance Criteria — 4-copiar-estructura-agentic-cliente
 
 🏛️ **architect-agent**: Consolidando criterios de aceptacion para copia completa de `.agent` en cliente.

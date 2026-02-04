@@ -25,7 +25,6 @@ blocking: true
 > **Constitución activa (OBLIGATORIO)**:
 > - Cargar `constitution.clean_code` antes de iniciar
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
-> - Cargar `constitution.runtime_integration` para trazabilidad MCP
 
 ## Output (REQUIRED)
 - Crear metricas de la tarea (por agente y global):
@@ -75,22 +74,20 @@ blocking: true
 5. Registrar puntuaciones por agente
    - Actualizar `agent-scores.md` con el score de la tarea actual
 
-6. Solicitar feedback y puntuación del desarrollador (OBLIGATORIA, por consola)
-6.1 **Auditoría Pre-Gate (OBLIGATORIO)**:
-- Antes de la evaluación del usuario, el `architect-agent` **DEBE** usar `runtime.validate_gate`.
-- El agente **DEBE** usar `debug_read_logs` para confirmar el cálculo de métricas.
-- Estrictamente **PROHIBIDO** consolidar este paso.
+6. Solicitar feedback y puntuación obligatoria del desarrollador (por consola)
+   - Presentar `metrics.md` al usuario.
+   - Solicitar confirmación explícita (SI/NO).
+   - Solicitar puntuación del desarrollador (1-10) para CADA agente participante.
+   - **GATE OBLIGATORIO**: Sin estas puntuaciones, la tarea NO puede cerrarse.
+   - Si respuesta es NO → ir a **Paso 8 (FAIL)**.
 
 7. PASS
-- Registrar validación en `metrics.md`.
-- Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md`:
-  - marcar Fase 7 como completada
-  - establecer `task.lifecycle.phases.phase-7-evaluation.validated_at = <ISO-8601>`
-  - establecer `task.lifecycle.phases.phase-7-evaluation.runtime_validated = true`
-  - establecer `task.lifecycle.phases.phase-7-evaluation.validation_id = <ID de runtime>`
-  - actualizar `task.phase.updated_at = <ISO-8601>`
-  - llamar `runtime_advance_phase` despues de la aprobacion explicita del desarrollador.
-  - actualizar `task.phase.current` con el `currentPhase` devuelto por el runtime (NO incrementar manualmente).
+   - Registrar validación en `metrics.md`.
+   - Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md`:
+     - marcar Fase 7 como completada
+     - establecer `task.lifecycle.phases.phase-7-evaluation.validated_at = <ISO-8601>`
+     - actualizar `task.phase.updated_at = <ISO-8601>`
+     - avanzar `task.phase.current = aliases.tasklifecycle-long.phases.phase_8.id`
 
 ---
 
@@ -114,11 +111,13 @@ Requisitos (todos obligatorios):
 2. El `metrics.md` inicia con el prefijo del `architect-agent`.
 3. `metrics.md` contiene la validación del desarrollador (`Aprobado: SI`).
 4. `metrics.md` contiene la puntuación del desarrollador (0-5).
-6. **Auditoría de Runtime**: El agente ha ejecutado `runtime.validate_gate` y el resultado es PASS.
-7. **Trazabilidad de Logs**: Los logs (`debug_read_logs`) confirman la consolidación de métricas.
-8. `metrics.md` contiene la puntuación del desarrollador.
-9. `task.md` refleja fase completada y datos de validación de runtime.
-10. `task.md` refleja timestamp y estado.
+5. Existe `.agent/artifacts/<taskId>-<taskTitle>/agent-scores.md` actualizado.
+6. `task.md` refleja:
+   - Fase 7 completada
+   - `task.phase.current == aliases.tasklifecycle-long.phases.phase_8.id`
+   - `task.lifecycle.phases.phase-7-evaluation.completed == true`
+   - `task.lifecycle.phases.phase-7-evaluation.validated_at` no nulo
+   - `task.phase.updated_at` no nulo
 
 Si Gate FAIL:
 - Ejecutar **Paso 8 (FAIL)**.

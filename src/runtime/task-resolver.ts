@@ -29,28 +29,41 @@ export async function resolveTaskPath(taskPath: string): Promise<{ resolvedPath:
   const candidateRoots = collectWorkspaceCandidates();
   const workspaceRoot = await findWorkspaceRoot(candidateRoots);
   if (!workspaceRoot) {
-    const subject = taskPath.includes('init.md') ? 'el init' : 'el taskPath';
+    const subject = isInitCandidatePath(taskPath) ? 'el init' : 'el taskPath';
     throw new Error(`No pude resolver ${subject}: no se encontró ".agent/" desde el cwd actual. Ejecuta el comando desde el workspace o pasa una ruta absoluta.`);
   }
 
   return { resolvedPath: path.resolve(workspaceRoot, taskPath), workspaceRoot };
 }
 
-export async function ensureInitTaskFile(taskPath: string, workspaceRoot: string | null): Promise<void> {
-  if (!isInitTaskPath(taskPath)) {
-    return;
+export type InitTaskEnsureResult = {
+  taskPath: string;
+  created: boolean;
+  warning?: string;
+};
+
+export async function ensureInitTaskFile(taskPath: string, workspaceRoot: string | null): Promise<InitTaskEnsureResult> {
+  if (isLegacyInitPath(taskPath)) {
+    throw new Error('init.md legacy detectado. Elimina el archivo y reintenta con el nuevo flujo init.');
   }
-  const exists = await fileExists(taskPath);
+  if (!isInitCandidatePath(taskPath)) {
+    return { taskPath, created: false };
+  }
+
+  const initResolution = resolveInitCandidatePath(taskPath);
+  const resolvedTaskPath = initResolution.resolvedPath;
+  const exists = await fileExists(resolvedTaskPath);
   if (exists) {
-    return;
+    return { taskPath: resolvedTaskPath, created: false, warning: initResolution.warning };
   }
   if (!workspaceRoot) {
-    throw new Error('No se pudo resolver el workspace para crear init.md desde template.');
+    throw new Error('No se pudo resolver el workspace para crear init candidate desde template.');
   }
   const templatePath = path.join(workspaceRoot, '.agent', 'templates', 'init.md');
   const template = await fs.readFile(templatePath, 'utf-8');
-  await fs.mkdir(path.dirname(taskPath), { recursive: true });
-  await fs.writeFile(taskPath, template);
+  await fs.mkdir(path.dirname(resolvedTaskPath), { recursive: true });
+  await fs.writeFile(resolvedTaskPath, template);
+  return { taskPath: resolvedTaskPath, created: true, warning: initResolution.warning };
 }
 
 export async function resolveNextPhase(workflowsRoot: string, currentPhase: string, strategy?: string): Promise<string> {
@@ -184,10 +197,17 @@ async function findWorkspaceRootFromDir(startDir: string): Promise<string | null
   }
 }
 
-function isInitTaskPath(taskPath: string): boolean {
+function isInitCandidatePath(taskPath: string): boolean {
   const normalized = path.normalize(taskPath);
-  const initSuffix = path.join('.agent', 'artifacts', 'candidate', 'init.md');
-  return normalized.endsWith(initSuffix);
+  const candidateDir = path.join('.agent', 'artifacts', 'candidate');
+  if (normalized.endsWith(candidateDir)) {
+    return true;
+  }
+  const parsed = path.parse(normalized);
+  if (parsed.base.endsWith('-init.md') && normalized.includes(candidateDir)) {
+    return true;
+  }
+  return false;
 }
 
 async function fileExists(targetPath: string): Promise<boolean> {
@@ -214,4 +234,29 @@ function normalizeStrategy(strategy?: string): string | null {
     return normalized;
   }
   return null;
+}
+
+function resolveInitCandidatePath(taskPath: string): { resolvedPath: string; warning?: string } {
+  const normalized = path.normalize(taskPath);
+  const candidateDir = path.join('.agent', 'artifacts', 'candidate');
+
+  if (normalized.endsWith(candidateDir)) {
+    const filename = buildInitCandidateFilename();
+    return { resolvedPath: path.join(normalized, filename) };
+  }
+
+  return { resolvedPath: normalized };
+}
+
+function isLegacyInitPath(taskPath: string): boolean {
+  const normalized = path.normalize(taskPath);
+  const legacyInit = path.join('.agent', 'artifacts', 'candidate', 'init.md');
+  return normalized.endsWith(legacyInit);
+}
+
+function buildInitCandidateFilename(): string {
+  const iso = new Date().toISOString();
+  const trimmed = iso.replace(/\.\d{3}Z$/, 'Z');
+  const sanitized = trimmed.replace(/:/g, '-');
+  return `${sanitized}-init.md`;
 }

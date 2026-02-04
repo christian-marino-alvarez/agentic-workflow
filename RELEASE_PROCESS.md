@@ -23,6 +23,7 @@ The project uses GitHub Actions for automated releases to npm.
 1. Update version: `npm version prerelease --preid=beta` (or appropriate semver command).
 2. Update `CHANGELOG.md`.
 3. Build the distributable: `npm run build` (generates `dist/`).
+   - TODO: Ensure the build copies all resources under `src/agentic-system-structure` (rules, workflows, templates, artifacts, skills, and any new domains).
 4. (Optional) Generate local package: `npm run package`. The `.tgz` file will be moved to `.backups/npm-packages/`.
 5. Create a branch: `git checkout -b ci/publish-beta-x.x.x`.
 6. Push and create PR.

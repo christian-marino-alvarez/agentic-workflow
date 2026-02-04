@@ -59,8 +59,8 @@ aliases:
 ```
 
 ## Input (REQUIRED)
-- Existe el artefacto `init` (contrato de bootstrap) definido en el **Artifacts index**:
-  - `artifacts.candidate.init`
+- Existe el init candidate (contrato de bootstrap) con timestamp:
+  - `.agent/artifacts/candidate/<timestamp>-init.md`
 - El artefacto `init` **DEBE** contener en su bloque YAML:
   - `language.value` no vacío
   - `language.confirmed == true`
@@ -95,7 +95,7 @@ aliases:
    - Si no se pueden cargar → ir a **Paso 7 (FAIL)**.
 
 2. Verificar input:
-   - Comprobar que existe `artifacts.candidate.init`.
+   - Comprobar que existe `.agent/artifacts/candidate/<timestamp>-init.md`.
    - Leer su bloque YAML y validar:
      - `language.value` no vacío
      - `language.confirmed == true`
@@ -134,7 +134,7 @@ aliases:
    - Declarar `tasklifecycle` como **NO listo para iniciar la Fase 0**.
    - Indicar exactamente qué caso aplica (uno o más):
      - índices globales no cargables (`.agent/artifacts/index.md` / `.agent/templates/index.md`)
-     - `init` no existe (`artifacts.candidate.init`)
+     - `init` no existe (`.agent/artifacts/candidate/<timestamp>-init.md`)
      - idioma no definido o no confirmado en `init`
      - template inaccesible (`templates.task`)
      - no se pudo crear `task candidate` (`artifacts.candidate.task`)

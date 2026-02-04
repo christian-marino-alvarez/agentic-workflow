@@ -24,14 +24,6 @@ Existe **un único namespace** `aliases.tasklifecycle-short.phases.*` que contie
 - `id` de fase
 - `workflow` (path del workflow de la fase)
 
-> [!IMPORTANT]
-> **Trazabilidad Runtime (OBLIGATORIO)**:
-> Para garantizar la transparencia y el logging, este workflow **DEBE** ejecutarse a través de:
-> - `runtime_run`: Para iniciar la tarea o retomar tras un reinicio.
-> - `runtime_advance_phase`: Para avanzar de fase tras aprobación del desarrollador.
-> - `runtime_chat`: Para comunicaciones durante el ciclo.
-> Saltar estas herramientas invalida la auditoría de la sesión.
-
 ## Aliases (YAML)
 ```yaml
 aliases:
@@ -52,7 +44,7 @@ aliases:
 ```
 
 ## Input (REQUIRED)
-- Existe el artefacto `init` con `task.strategy == "short"`.
+- Existe el init candidate con `task.strategy == "short"` en `.agent/artifacts/candidate/<timestamp>-init.md`.
 - El desarrollador ha definido título y objetivo de la tarea.
 
 ## Output (REQUIRED)

@@ -26,7 +26,7 @@ Se ha realizado una reorganización profunda del sistema para mejorar la manteni
 ### Actualización de Código y Scripts
 - **package.json**: Se ha actualizado el script `copy-assets` para que la build (`dist/`) se genere correctamente desde la nueva ubicación.
 - **CLI (initCommand)**: Se ha modificado la lógica de inicialización para asegurar que la carpeta `.backups` se cree automáticamente y que el contenido de `AGENTS.md` sea coherente con la nueva estructura.
-- **Core (Backup Logic)**: Se ha actualizado la lógica de creación de backups en `src/core/migration/backup.ts` y `src/core/utils/backup.ts` para que los nuevos respaldos se guarden siempre en `.backups/`.
+- **Infrastructure (Backup Logic)**: Se ha actualizado la lógica de creación de backups en `src/infrastructure/migration/backup.ts` y `src/infrastructure/utils/backup.ts` para que los nuevos respaldos se guarden siempre en `.backups/`.
 
 ## 2. Verificación Técnica
 
@@ -41,7 +41,7 @@ Se ha realizado una reorganización profunda del sistema para mejorar la manteni
 | Carpetas movidas a `.agent/` | ☑ Cumplido | Verificado mediante `ls`. |
 | Backups movidos a `/.backups/` | ☑ Cumplido | Verificado mediante `ls`. |
 | Scripts de build actualizados | ☑ Cumplido | `npm run build` ejecutado con éxito. |
-| Lógica de backup en código actualizada | ☑ Cumplido | Código en `src/core` modificado. |
+| Lógica de backup en código actualizada | ☑ Cumplido | Código en `src/infrastructure` modificado. |
 | Sistema inicializable tras cambio | ☑ Cumplido | Lógica de `init` preparada. |
 
 ## 4. Notas Adicionales

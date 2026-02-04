@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.28.0-beta.5
+- fix(init): remove legacy init flow
+- chore(pkg): include dist/mcp in npm package
+
 ## [1.27.0-beta.4](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.26.1-beta.4...agentic-workflow-v1.27.0-beta.4) (2026-02-03)
 
 

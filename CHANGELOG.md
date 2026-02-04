@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.28.0-beta.4](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.27.0-beta.4...agentic-workflow-v1.28.0-beta.4) (2026-02-04)
+
+
+### Features
+
+* mcp refactor and distribution flow ([59bc352](https://github.com/christian-marino-alvarez/agentic-workflow/commit/59bc3529f7375ed9bd76b9e0bc45cd9d2c0f8f20))
+
 ## [1.27.0-beta.4](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.26.1-beta.4...agentic-workflow-v1.27.0-beta.4) (2026-02-03)
 
 

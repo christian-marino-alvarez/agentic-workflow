@@ -16,6 +16,9 @@
 ## 1.30.2-beta.9
 - docs(init): document workspace resolution
 
+## 1.30.2-beta.10
+- fix(mcp): declare resources capability for resources/list
+
 ## 1.30.1-beta.8
 - fix(init): resolve workspace for relative candidate paths
 - fix(init): quote owner placeholder in init template

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.28.0-beta.6
+- chore(init): remove legacy init.md after scaffold
+- chore(pkg): remove init.md from artifacts
+
 ## 1.28.0-beta.5
 - fix(init): remove legacy init flow
 - chore(pkg): include dist/mcp in npm package

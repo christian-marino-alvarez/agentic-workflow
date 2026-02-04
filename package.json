@@ -1,6 +1,6 @@
 {
   "name": "@christianmaf80/agentic-workflow",
-  "version": "1.28.0-beta.5",
+  "version": "1.28.0-beta.6",
   "description": "Portable agentic workflow orchestration system with strict identity and gate discipline",
   "type": "module",
   "displayName": "Agentic Workflow",
@@ -84,7 +84,7 @@
   "author": "Christian Marino Alvarez",
   "license": "ISC",
   "dependencies": {
-    "@christianmaf80/agentic-workflow": "^1.28.0-beta.4",
+    "@christianmaf80/agentic-workflow": "^1.28.0-beta.5",
     "@clack/prompts": "^0.7.0",
     "@modelcontextprotocol/sdk": "^1.25.3",
     "commander": "^11.1.0",

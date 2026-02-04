@@ -80,6 +80,7 @@ export async function initCommand(options: { nonInteractive?: boolean; startMcp?
     await fs.mkdir(agentDir, { recursive: true });
 
     await scaffoldAgentWorkspace(corePath, agentDir);
+    await removeLegacyInitCandidates(cwd);
     await writeAgentsEntry(cwd);
     await fs.mkdir(path.join(cwd, '.backups'), { recursive: true });
 
@@ -145,17 +146,38 @@ Solo define el arranque del sistema mediante el workflow \`init\`.
 }
 
 async function removeLegacyInitCandidates(cwd: string) {
-  const legacyInitPath = path.join(cwd, '.agent', 'artifacts', 'candidate', 'init.md');
-  try {
-    await fs.access(legacyInitPath);
-  } catch {
+  const artifactsRoot = path.join(cwd, '.agent', 'artifacts');
+  const legacyFiles = await collectLegacyInitFiles(artifactsRoot);
+  if (legacyFiles.length === 0) {
     return;
   }
 
+  for (const legacyInitPath of legacyFiles) {
+    try {
+      await fs.rm(legacyInitPath);
+    } catch {
+      const command = `rm -f \"${legacyInitPath}\"`;
+      throw new Error(`No se pudo eliminar init.md legacy. Ejecuta: ${command} y reintenta init.`);
+    }
+  }
+}
+
+async function collectLegacyInitFiles(rootDir: string): Promise<string[]> {
   try {
-    await fs.rm(legacyInitPath);
+    const entries = await fs.readdir(rootDir, { withFileTypes: true });
+    const matches: string[] = [];
+    for (const entry of entries) {
+      const fullPath = path.join(rootDir, entry.name);
+      if (entry.isDirectory()) {
+        matches.push(...await collectLegacyInitFiles(fullPath));
+        continue;
+      }
+      if (entry.isFile() && entry.name === 'init.md') {
+        matches.push(fullPath);
+      }
+    }
+    return matches;
   } catch {
-    const command = `rm -f \"${legacyInitPath}\"`;
-    throw new Error(`No se pudo eliminar init.md legacy. Ejecuta: ${command} y reintenta init.`);
+    return [];
   }
 }

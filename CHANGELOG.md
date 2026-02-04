@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.30.1-beta.8
+- fix(init): resolve workspace for relative candidate paths
+- fix(init): quote owner placeholder in init template
+
 ## 1.30.1-beta.7
 - fix(init): align init workflow with timestamp candidates
 

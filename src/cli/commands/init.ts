@@ -7,7 +7,7 @@ import {
   resolveInstalledCorePath
 } from '../../infrastructure/mapping/resolver.js';
 import { performBackup } from '../../infrastructure/utils/backup.js';
-import { startRuntimeMcpServer } from '../../runtime/mcp/server.js';
+import { startMcpServer } from '../../mcp/server.js';
 
 export async function initCommand(options: { nonInteractive?: boolean; startMcp?: boolean } = {}) {
   intro('Agentic Workflow Initialization');
@@ -90,7 +90,7 @@ export async function initCommand(options: { nonInteractive?: boolean; startMcp?
 
     if (startMcp) {
       note('Starting MCP server (foreground)...', 'MCP');
-      await startRuntimeMcpServer();
+      await startMcpServer();
     }
 
   } catch (error) {

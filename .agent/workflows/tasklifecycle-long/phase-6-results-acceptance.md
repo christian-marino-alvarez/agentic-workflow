@@ -91,8 +91,8 @@ blocking: true
   - establecer `task.lifecycle.phases.phase-6-results-acceptance.runtime_validated = true`
   - establecer `task.lifecycle.phases.phase-6-results-acceptance.validation_id = <ID de runtime>`
   - actualizar `task.phase.updated_at = <ISO-8601>`
-  - avanzar:
-    - `task.phase.current = aliases.tasklifecycle-long.phases.phase_7.id`
+  - llamar `runtime_advance_phase` despues de la aprobacion explicita del desarrollador.
+  - actualizar `task.phase.current` con el `currentPhase` devuelto por el runtime (NO incrementar manualmente).
    - Indicar rutas:
      - `results-acceptance.md`
      - `task.md` actualizado

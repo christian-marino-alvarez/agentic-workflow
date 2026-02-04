@@ -141,8 +141,8 @@ Para cada tarea `N` en el plan:
   - Establecer `task.lifecycle.phases.phase-4-implementation.runtime_validated = true`.
   - Establecer `task.lifecycle.phases.phase-4-implementation.validation_id = <ID de runtime>`.
   - Actualizar `task.phase.updated_at = <ISO-8601>`.
-  - Avanzar:
-    - `task.phase.current = aliases.tasklifecycle-long.phases.phase_5.id`
+  - Llamar `runtime_advance_phase` despues de la aprobacion explicita del desarrollador.
+  - Actualizar `task.phase.current` con el `currentPhase` devuelto por el runtime (NO incrementar manualmente).
 - Indicar rutas:
   - Directorio `agent-tasks/`
   - `architect/review.md`

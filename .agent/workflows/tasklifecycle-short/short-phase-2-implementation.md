@@ -73,13 +73,14 @@ El architect-agent **DEBE** verificar:
 - Estrictamente **PROHIBIDO** consolidar este paso con la solicitud de aprobación en una misma respuesta.
 
 ### 6. PASS (solo si APROBADO)
-- Actualizar task.md:
+- Llamar `runtime_advance_phase` **después** de la aprobación explícita del desarrollador.
+- Actualizar task.md con el `currentPhase` devuelto por el runtime (NO incrementar manualmente).
+- Completar metadatos de fase en task.md:
   - Marcar fase como completada.
   - Establecer `task.lifecycle.phases.short-phase-2-implementation.validated_at = <ISO-8601>`.
   - Establecer `task.lifecycle.phases.short-phase-2-implementation.runtime_validated = true`.
   - Establecer `task.lifecycle.phases.short-phase-2-implementation.validation_id = <ID de runtime>`.
   - Actualizar `task.phase.updated_at = <ISO-8601>`.
-  - Avanzar a `short-phase-3-closure`.
 
 ---
 

@@ -79,13 +79,14 @@ Evaluar indicadores de complejidad:
 - Estrictamente **PROHIBIDO** consolidar este paso con la solicitud de aprobación en una misma respuesta (esperar confirmación de la herramienta).
 
 6. **PASS**
-- Actualizar task.md:
+- Llamar `runtime_advance_phase` **después** de la aprobación explícita del desarrollador.
+- Actualizar task.md con el `currentPhase` devuelto por el runtime (NO incrementar manualmente).
+- Completar metadatos de fase en task.md:
   - Marcar fase como completada.
   - Establecer `task.lifecycle.phases.short-phase-1-brief.validated_at = <ISO-8601>`.
   - Establecer `task.lifecycle.phases.short-phase-1-brief.runtime_validated = true`.
   - Establecer `task.lifecycle.phases.short-phase-1-brief.validation_id = <ID de runtime>`.
   - Actualizar `task.phase.updated_at = <ISO-8601>`.
-  - Avanzar a `short-phase-2-implementation`.
 
 ---
 

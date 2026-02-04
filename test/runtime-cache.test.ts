@@ -32,15 +32,23 @@ async function createWorkspace(): Promise<string> {
 describe('Runtime cache', () => {
   let workspace: string;
   let originalCwd: string;
+  let originalWorkspaceEnv: string | undefined;
 
   beforeEach(async () => {
     originalCwd = process.cwd();
+    originalWorkspaceEnv = process.env.AGENTIC_WORKSPACE;
     workspace = await createWorkspace();
     process.chdir(workspace);
+    process.env.AGENTIC_WORKSPACE = workspace;
   });
 
   afterEach(() => {
     process.chdir(originalCwd);
+    if (originalWorkspaceEnv === undefined) {
+      delete process.env.AGENTIC_WORKSPACE;
+    } else {
+      process.env.AGENTIC_WORKSPACE = originalWorkspaceEnv;
+    }
   });
 
   it('uses cache until complete_step clears it', async () => {
@@ -48,7 +56,7 @@ describe('Runtime cache', () => {
     const taskPath = '.agent/artifacts/candidate/task.md';
     const statePath = path.join(workspace, '.agent', 'runtime', 'state.json');
 
-    await runtime.run({ taskPath, agent: 'architect-agent', statePath });
+    await runtime.run({ taskPath, agent: 'architect-agent', statePath, breakGlass: true });
 
     const cached = await runtime.getState({ statePath });
     const cachedRunId = cached.runId as string;

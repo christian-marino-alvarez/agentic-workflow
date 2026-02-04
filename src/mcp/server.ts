@@ -1,10 +1,20 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { CallToolRequestSchema, ListToolsRequestSchema, type ListToolsResult } from '@modelcontextprotocol/sdk/types.js';
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+  ListResourcesRequestSchema,
+  ReadResourceRequestSchema,
+  type ListToolsResult,
+  type ListResourcesResult,
+  type ReadResourceResult
+} from '@modelcontextprotocol/sdk/types.js';
 import { Logger } from '../infrastructure/logger/index.js';
 import { Runtime } from '../runtime/runtime.js';
 import { handleToolCall } from './handlers.js';
 import { MCP_TOOLS } from './tools.js';
+import { listAliasResources, listDomainAliases, readAliasResource } from './resources.js';
+import { z } from 'zod';
 
 export async function startMcpServer(): Promise<void> {
   Logger.info('MCP', 'Server iniciado via stdio.', { version: '1.0.0' });
@@ -35,6 +45,19 @@ async function createMcpServer(): Promise<Server> {
     tools: MCP_TOOLS
   }) satisfies ListToolsResult);
 
+  server.setRequestHandler(ListResourcesRequestSchema, async () => {
+    const resources = await listAliasResources();
+    return { resources } satisfies ListResourcesResult;
+  });
+
+  server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+    const uri = request.params.uri;
+    const content = await readAliasResource(uri);
+    return { contents: [content] } satisfies ReadResourceResult;
+  });
+
+  await registerDomainResourceHandlers(server);
+
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const name = request.params.name;
     const args = request.params.arguments ?? {};
@@ -42,4 +65,31 @@ async function createMcpServer(): Promise<Server> {
   });
 
   return server;
+}
+
+async function registerDomainResourceHandlers(server: Server): Promise<void> {
+  try {
+    const resources = await listAliasResources();
+    for (const resource of resources) {
+      if (!resource.uri.startsWith('agentic://aliases/')) {
+        continue;
+      }
+      const domain = resource.uri.replace('agentic://aliases/', '');
+      if (!domain || domain === 'root') {
+        continue;
+      }
+      const schema = z.object({
+        jsonrpc: z.literal('2.0').optional(),
+        id: z.any().optional(),
+        method: z.literal(`resources/${domain}/list`),
+        params: z.any().optional()
+      });
+      server.setRequestHandler(schema, async () => {
+        const aliases = await listDomainAliases(domain);
+        return { aliases };
+      });
+    }
+  } catch (error) {
+    Logger.warn('MCP', 'No se pudo registrar resources/<domain>/list', { error });
+  }
 }

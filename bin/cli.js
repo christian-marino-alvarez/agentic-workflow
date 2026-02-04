@@ -25,6 +25,7 @@ program
   .command('init')
   .description('Initialize the agentic system in the current directory')
   .option('--non-interactive', 'Run without prompts (assume YES)')
+  .option('--workspace <path>', 'Workspace root (absolute path)')
   .option('--start-mcp', 'Start MCP server after initialization (foreground)')
   .action((options) => initCommand(options));
 
@@ -56,4 +57,3 @@ program
   .action(() => registerMcpCommand());
 
 program.parse();
-

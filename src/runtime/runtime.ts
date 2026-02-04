@@ -11,6 +11,7 @@ import {
   resolveNextPhase,
   resolveTaskPath,
   resolveWorkflowsRootForTask,
+  resolveWorkspaceRoot,
   updateTaskPhase
 } from './task-resolver.js';
 
@@ -304,10 +305,7 @@ async function resolveStatePath(taskPath: string, override?: string): Promise<st
 }
 
 async function resolveDefaultWorkflowsRoot(): Promise<string> {
-  const root = await findWorkspaceRoot(collectWorkspaceCandidates());
-  if (!root) {
-    throw new Error('No se encontró workspace para workflows.');
-  }
+  const root = resolveWorkspaceRoot(process.env.AGENTIC_WORKSPACE);
   return path.join(root, '.agent', 'workflows');
 }
 

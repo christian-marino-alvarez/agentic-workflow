@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import fsSync from 'node:fs';
 import path from 'node:path';
 import matter from 'gray-matter';
 
@@ -21,23 +22,14 @@ export async function findWorkspaceRoot(candidates: string[]): Promise<string | 
 }
 
 export async function resolveTaskPath(taskPath: string): Promise<{ resolvedPath: string; workspaceRoot: string | null }> {
+  const workspaceRoot = resolveWorkspaceRoot(process.env.AGENTIC_WORKSPACE);
   if (path.isAbsolute(taskPath)) {
-    let workspaceRoot = await findWorkspaceRoot([path.dirname(taskPath)]);
-    if (!workspaceRoot) {
-      workspaceRoot = inferWorkspaceRootFromAgentPath(taskPath);
-    }
-    return { resolvedPath: taskPath, workspaceRoot };
+    return { resolvedPath: taskPath, workspaceRoot: workspaceRoot ?? inferWorkspaceRootFromAgentPath(taskPath) };
   }
 
-  const candidateRoots = collectWorkspaceCandidates();
-  const workspaceRoot = await findWorkspaceRoot(candidateRoots);
   if (!workspaceRoot) {
-    if (isInitCandidatePath(taskPath)) {
-      const fallbackRoot = process.cwd();
-      return { resolvedPath: path.resolve(fallbackRoot, taskPath), workspaceRoot: fallbackRoot };
-    }
     const subject = isInitCandidatePath(taskPath) ? 'el init' : 'el taskPath';
-    throw new Error(`No pude resolver ${subject}: no se encontró ".agent/" desde el cwd actual. Ejecuta el comando desde el workspace o pasa una ruta absoluta.`);
+    throw new Error(`No pude resolver ${subject}: no se encontró ".agent/". Ejecuta desde el workspace o pasa --workspace.`);
   }
 
   return { resolvedPath: path.resolve(workspaceRoot, taskPath), workspaceRoot };
@@ -326,6 +318,22 @@ function inferWorkspaceRootFromAgentPath(taskPath: string): string | null {
   }
   const base = normalized.slice(0, markerIndex);
   return base || path.parse(normalized).root;
+}
+
+export function resolveWorkspaceRoot(inputPath?: string): string {
+  if (inputPath && path.isAbsolute(inputPath)) {
+    return inputPath;
+  }
+
+  let dir = process.cwd();
+  while (dir !== path.dirname(dir)) {
+    if (fsSync.existsSync(path.join(dir, '.agent'))) {
+      return dir;
+    }
+    dir = path.dirname(dir);
+  }
+
+  throw new Error('No se encontró ".agent/". Ejecuta desde el workspace o pasa --workspace');
 }
 
 async function fileExists(targetPath: string): Promise<boolean> {

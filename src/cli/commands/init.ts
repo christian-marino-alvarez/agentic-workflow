@@ -9,10 +9,17 @@ import {
 import { performBackup } from '../../infrastructure/utils/backup.js';
 import { startMcpServer } from '../../mcp/server.js';
 
-export async function initCommand(options: { nonInteractive?: boolean; startMcp?: boolean } = {}) {
+export async function initCommand(options: { nonInteractive?: boolean; startMcp?: boolean; workspace?: string } = {}) {
   intro('Agentic Workflow Initialization');
 
-  const cwd = process.cwd();
+  const workspacePath = options.workspace ? path.resolve(options.workspace) : undefined;
+  if (workspacePath && !path.isAbsolute(workspacePath)) {
+    throw new Error('El workspace debe ser una ruta absoluta.');
+  }
+  const cwd = workspacePath ?? process.cwd();
+  if (workspacePath) {
+    process.env.AGENTIC_WORKSPACE = workspacePath;
+  }
   const agentDir = path.join(cwd, '.agent');
   const nonInteractive = Boolean(options.nonInteractive);
   const startMcp = Boolean(options.startMcp);

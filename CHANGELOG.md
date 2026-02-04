@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.33.0-beta.6](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.32.0-beta.6...agentic-workflow-v1.33.0-beta.6) (2026-02-04)
+
+
+### Features
+
+* **mcp:** add --workspace flag ([b63a017](https://github.com/christian-marino-alvarez/agentic-workflow/commit/b63a017d15f1a9289c995996ccbd94d8d3e583d0))
+
+
+### Bug Fixes
+
+* **mcp:** echo tool call logs to stderr ([61422d6](https://github.com/christian-marino-alvarez/agentic-workflow/commit/61422d6812eb16f78b5394fe2e39e258a9d431e8))
+* **runtime:** load workspace from global config ([4b34350](https://github.com/christian-marino-alvarez/agentic-workflow/commit/4b34350637a898d97cbba6921da5ce770ce97586))
+* **runtime:** validate string inputs ([6bebe64](https://github.com/christian-marino-alvarez/agentic-workflow/commit/6bebe6400efd105c9989fafe4805dace8fb449a4))
+
 ## 1.32.0-beta.10
 - fix(runtime): validate string inputs
 

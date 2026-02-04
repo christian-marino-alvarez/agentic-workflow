@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.29.0-beta.6
+- chore(init): remove legacy init.md after scaffold
+- chore(pkg): remove init.md from artifacts
+
 ## [1.29.0-beta.5](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.28.0-beta.5...agentic-workflow-v1.29.0-beta.5) (2026-02-04)
 
 

@@ -52,7 +52,7 @@
   ],
   "scripts": {
     "build": "node scripts/clean-dist.mjs && tsc -p tsconfig.build.json && npm run copy-assets",
-    "copy-assets": "mkdir -p dist/agent && cp -r src/agentic-system-structure/rules src/agentic-system-structure/workflows src/agentic-system-structure/templates src/agentic-system-structure/artifacts dist/agent/ && cp src/agentic-system-structure/index.md dist/agent/index.md",
+    "copy-assets": "mkdir -p dist/agent && cp -r src/agentic-system-structure/* dist/agent/",
     "start": "node dist/index.js",
     "publish:npm": "npm publish --registry https://registry.npmjs.org --access public",
     "publish:github": "npm publish --registry https://npm.pkg.github.com",
@@ -84,7 +84,7 @@
   "author": "Christian Marino Alvarez",
   "license": "ISC",
   "dependencies": {
-    "@christianmaf80/agentic-workflow": "^1.28.0-beta.5",
+    "@christianmaf80/agentic-workflow": "1.29.0-beta.6",
     "@clack/prompts": "^0.7.0",
     "@modelcontextprotocol/sdk": "^1.25.3",
     "commander": "^11.1.0",

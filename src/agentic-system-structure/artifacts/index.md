@@ -16,6 +16,7 @@ Define rutas y alias contractuales para los artifacts generados dinámicamente.
 artifacts:
   candidate:
     dir: .agent/artifacts/candidate
+    index: .agent/artifacts/candidate/index.md
     task: .agent/artifacts/candidate/task.md
 ```
 

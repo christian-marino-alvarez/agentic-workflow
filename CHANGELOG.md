@@ -1,7 +1,14 @@
 # Changelog
 
-## 1.33.0-beta.8
+## 1.33.1-beta.7
 - fix(init): align init template owner with architect-agent
+
+## [1.33.1-beta.6](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.33.0-beta.6...agentic-workflow-v1.33.1-beta.6) (2026-02-04)
+
+
+### Bug Fixes
+
+* align init owner with architect-agent ([820fc3c](https://github.com/christian-marino-alvarez/agentic-workflow/commit/820fc3cd9b271d56064e7013f8f32b22481cb853))
 
 ## [1.33.0-beta.6](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.32.0-beta.6...agentic-workflow-v1.33.0-beta.6) (2026-02-04)
 

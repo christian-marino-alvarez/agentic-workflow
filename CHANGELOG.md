@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.31.0-beta.8
+- feat(init): add non-interactive aliases
+
 ## 1.31.0-beta.7
 - chore(release): ensure npm dist-tag is updated on publish
 

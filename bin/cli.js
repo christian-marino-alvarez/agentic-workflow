@@ -25,9 +25,17 @@ program
   .command('init')
   .description('Initialize the agentic system in the current directory')
   .option('--non-interactive', 'Run without prompts (assume YES)')
+  .option('-y, --yes', 'Alias for --non-interactive')
+  .option('--no-prompt', 'Alias for --non-interactive')
   .option('--workspace <path>', 'Workspace root (absolute path)')
   .option('--start-mcp', 'Start MCP server after initialization (foreground)')
-  .action((options) => initCommand(options));
+  .action((options) => {
+    const nonInteractive =
+      Boolean(options.nonInteractive) ||
+      Boolean(options.yes) ||
+      options.prompt === false;
+    return initCommand({ ...options, nonInteractive });
+  });
 
 program
   .command('create')

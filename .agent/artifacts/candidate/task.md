@@ -1,15 +1,15 @@
 ---
-id: 20260204-mejorar-flow-init
-title: Mejorar el flow de init y creacion de task candidate
+id: 20260204-clean-init-legacy
+title: Eliminar init legacy en instalaciones nuevas
 owner: architect-agent
-strategy: long
+strategy: short
 ---
 
 # Task (Template)
 
 ## Identificacion
-- id: 20260204-mejorar-flow-init
-- title: Mejorar el flow de init y creacion de task candidate
+- id: 20260204-clean-init-legacy
+- title: Eliminar init legacy en instalaciones nuevas
 - scope: candidate | current
 - owner: architect-agent
 
@@ -20,24 +20,24 @@ strategy: long
   - candidate_path: artifacts.candidate.task
 
 ## Descripcion de la tarea
-Revisar y mejorar el arrancado de tarea mediante comando init, evitando errores por rutas inexistentes y definiendo un flujo con init candidates timestamp.
+Eliminar `init.md` legacy en proyectos que instalan la ultima version con el nuevo flow de init. Eliminar cualquier codigo del antiguo flow que referencie `init.md`.
 
 ## Objetivo
-Ajustar el arranque para que init genere un candidate con timestamp y la tarea se cree desde ese init al aportar titulo/objetivo; actualizar el Gate de init.
+Modificar el comando `init` y el runtime para borrar `.agent/artifacts/candidate/init.md` legacy cuando se instale o actualice, y remover referencias al flow antiguo.
 
 ## Estado del ciclo de vida (FUENTE UNICA DE VERDAD)
 
 ```yaml
 task:
-  id: "20260204-mejorar-flow-init"
-  title: "Mejorar el flow de init y creacion de task candidate"
-  strategy: "long"  # long | short
+  id: "20260204-clean-init-legacy"
+  title: "Eliminar init legacy en instalaciones nuevas"
+  strategy: "short"  # long | short
   artifacts:
     supplemental: []
   phase:
-    current: "phase-0-acceptance-criteria"
+    current: "short-phase-3-closure"
     validated_by: "architect-agent"
-    updated_at: "2026-02-04T11:51:40Z"
+    updated_at: "2026-02-04T12:57:52Z"
   lifecycle:
     phases:
       phase-0-acceptance-criteria:
@@ -94,23 +94,23 @@ task:
             validated_by: null
             validated_at: null
       short-phase-1-brief:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-02-04T12:49:19Z"
       short-phase-2-implementation:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-02-04T12:55:25Z"
       short-phase-3-closure:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-02-04T12:57:52Z"
 ```
 
 ---
 
 ## 2. Definicion y Alcance (Contrato)
-- **Acceptance Criteria**: [acceptance.md](file:///Users/milos/Documents/workspace/agentic-workflow/.agent/artifacts/20260204-mejorar-flow-init/acceptance.md)
+- **Acceptance Criteria**: [acceptance.md](file:///Users/milos/Documents/workspace/agentic-workflow/.agent/artifacts/20260204-clean-init-legacy/acceptance.md)
 - **Alias**: `task.acceptance`
 
 ---

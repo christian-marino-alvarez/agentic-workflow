@@ -43,6 +43,9 @@ export type InitTaskEnsureResult = {
 };
 
 export async function ensureInitTaskFile(taskPath: string, workspaceRoot: string | null): Promise<InitTaskEnsureResult> {
+  if (isLegacyInitPath(taskPath)) {
+    throw new Error('init.md legacy detectado. Elimina el archivo y reintenta con el nuevo flujo init.');
+  }
   if (!isInitCandidatePath(taskPath)) {
     return { taskPath, created: false };
   }
@@ -200,10 +203,6 @@ function isInitCandidatePath(taskPath: string): boolean {
   if (normalized.endsWith(candidateDir)) {
     return true;
   }
-  const legacyInit = path.join(candidateDir, 'init.md');
-  if (normalized.endsWith(legacyInit)) {
-    return true;
-  }
   const parsed = path.parse(normalized);
   if (parsed.base.endsWith('-init.md') && normalized.includes(candidateDir)) {
     return true;
@@ -240,22 +239,19 @@ function normalizeStrategy(strategy?: string): string | null {
 function resolveInitCandidatePath(taskPath: string): { resolvedPath: string; warning?: string } {
   const normalized = path.normalize(taskPath);
   const candidateDir = path.join('.agent', 'artifacts', 'candidate');
-  const legacyInit = path.join(candidateDir, 'init.md');
 
   if (normalized.endsWith(candidateDir)) {
     const filename = buildInitCandidateFilename();
     return { resolvedPath: path.join(normalized, filename) };
   }
 
-  if (normalized.endsWith(legacyInit)) {
-    const filename = buildInitCandidateFilename();
-    return {
-      resolvedPath: path.join(path.dirname(normalized), filename),
-      warning: 'init.md legacy path detected; using timestamped init candidate instead.'
-    };
-  }
-
   return { resolvedPath: normalized };
+}
+
+function isLegacyInitPath(taskPath: string): boolean {
+  const normalized = path.normalize(taskPath);
+  const legacyInit = path.join('.agent', 'artifacts', 'candidate', 'init.md');
+  return normalized.endsWith(legacyInit);
 }
 
 function buildInitCandidateFilename(): string {

@@ -21,6 +21,7 @@ export async function initCommand(options: { nonInteractive?: boolean; startMcp?
   const systemType = await detectAgentSystem(cwd);
 
   if (systemType === 'legacy') {
+    await removeLegacyInitCandidates(cwd);
     const shouldUpdate = nonInteractive
       ? true
       : await confirm({
@@ -141,4 +142,20 @@ Solo define el arranque del sistema mediante el workflow \`init\`.
 `;
 
   await fs.writeFile(agentsPath, content);
+}
+
+async function removeLegacyInitCandidates(cwd: string) {
+  const legacyInitPath = path.join(cwd, '.agent', 'artifacts', 'candidate', 'init.md');
+  try {
+    await fs.access(legacyInitPath);
+  } catch {
+    return;
+  }
+
+  try {
+    await fs.rm(legacyInitPath);
+  } catch {
+    const command = `rm -f \"${legacyInitPath}\"`;
+    throw new Error(`No se pudo eliminar init.md legacy. Ejecuta: ${command} y reintenta init.`);
+  }
 }

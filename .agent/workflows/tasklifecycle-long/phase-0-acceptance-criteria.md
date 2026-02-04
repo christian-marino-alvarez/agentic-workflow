@@ -129,11 +129,11 @@ blocking: true
    - El `architect-agent` **DEBE realizar explícitamente** las siguientes acciones:
     - Marcar la Fase 0 como completada en el `task.md`.
     - Establecer `task.lifecycle.phases.phase-0-acceptance-criteria.validated_at = <ISO-8601>`.
-    - Establecer `task.lifecycle.phases.phase-0-acceptance-criteria.runtime_validated = true`.
-    - Establecer `task.lifecycle.phases.phase-0-acceptance-criteria.validation_id = <ID de runtime>`.
-    - Actualizar `task.phase.updated_at = <ISO-8601>`.
-    - Actualizar el estado:
-      - `task.phase.current = aliases.tasklifecycle-long.phases.phase_1.id`
+   - Establecer `task.lifecycle.phases.phase-0-acceptance-criteria.runtime_validated = true`.
+   - Establecer `task.lifecycle.phases.phase-0-acceptance-criteria.validation_id = <ID de runtime>`.
+   - Actualizar `task.phase.updated_at = <ISO-8601>`.
+   - Llamar `runtime_advance_phase` despues de la aprobacion explicita del desarrollador.
+   - Actualizar `task.phase.current` con el `currentPhase` devuelto por el runtime (NO incrementar manualmente).
    - Esta actualización **NO es automática** y **NO puede ser inferida**.
    - Hasta que este cambio no se refleje en el `task.md`, **no se puede iniciar la Fase 1**.
 

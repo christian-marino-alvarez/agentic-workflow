@@ -117,7 +117,8 @@ Crear un **plan de implementación detallado** para ejecutar el diseño definido
   - establecer `task.lifecycle.phases.phase-3-planning.runtime_validated = true`
   - establecer `task.lifecycle.phases.phase-3-planning.validation_id = <ID de runtime>`
   - actualizar `task.phase.updated_at = <ISO-8601>`
-  - avanzar `task.phase.current = aliases.tasklifecycle-long.phases.phase_4.id`
+  - llamar `runtime_advance_phase` despues de la aprobacion explicita del desarrollador.
+  - actualizar `task.phase.current` con el `currentPhase` devuelto por el runtime (NO incrementar manualmente).
     - Indicar rutas finales:
       - `plan.md`
       - `task.md` actualizado

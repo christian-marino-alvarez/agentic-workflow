@@ -16,20 +16,13 @@ async function main() {
   }
 
   const requestList = [
-    buildRequest(1, 'runtime.list_workflows', { workflowsRoot: '.agent/workflows' }),
-    buildRequest(2, 'runtime.run', { taskPath, agent: 'architect-agent', statePath, eventsPath }),
-    buildRequest(3, 'runtime.get_state', { statePath }),
-    buildRequest(4, 'runtime.resume', { taskPath, agent: 'architect-agent', statePath, eventsPath }),
-    buildRequest(5, 'runtime.chat', { message: 'hola', role: 'user', eventsPath }),
-    buildRequest(6, 'runtime.emit_event', {
-      eventsPath,
-      event: {
-        type: 'custom',
-        timestamp: new Date().toISOString(),
-        runId: 'manual',
-        payload: { msg: 'ok' }
-      }
-    })
+    buildRequest(1, 'tools/list', undefined),
+    buildRequest(2, 'tools/call', { name: 'runtime.list_workflows', arguments: {} }),
+    buildRequest(3, 'tools/call', { name: 'runtime.run', arguments: { taskPath, agent: 'architect-agent', statePath, eventsPath } }),
+    buildRequest(4, 'tools/call', { name: 'runtime.get_state', arguments: { statePath } }),
+    buildRequest(5, 'tools/call', { name: 'runtime.resume', arguments: { taskPath, agent: 'architect-agent', statePath, eventsPath } }),
+    buildRequest(6, 'tools/call', { name: 'runtime.next_step', arguments: { taskPath, agent: 'architect-agent', statePath, eventsPath } }),
+    buildRequest(7, 'tools/call', { name: 'runtime.complete_step', arguments: {} })
   ];
 
   const responses = [];
@@ -78,7 +71,7 @@ function parseArgs(argv) {
 }
 
 function buildRequest(id, method, params) {
-  return { id, method, params };
+  return { jsonrpc: '2.0', id, method, params };
 }
 
 function sendMcpRequest(request) {
@@ -96,14 +89,41 @@ function sendMcpRequest(request) {
         reject(new Error(`MCP exited with code ${code}`));
         return;
       }
-      const lines = output.trim().split('\n');
-      const last = lines[lines.length - 1];
-      resolve(JSON.parse(last));
+      const response = extractResponse(output);
+      if (!response) {
+        reject(new Error('No MCP response received.'));
+        return;
+      }
+      resolve(response);
     });
 
-    child.stdin.write(`${JSON.stringify(request)}\n`);
+    child.stdin.write(buildPayload(request));
     child.stdin.end();
   });
+}
+
+function buildPayload(request) {
+  const json = JSON.stringify(request);
+  return `Content-Length: ${Buffer.byteLength(json, 'utf-8')}\r\n\r\n${json}`;
+}
+
+function extractResponse(raw) {
+  const headerIndex = raw.indexOf('\r\n\r\n');
+  if (headerIndex === -1) {
+    return null;
+  }
+  const header = raw.slice(0, headerIndex);
+  const lengthMatch = header.match(/Content-Length: (\d+)/i);
+  if (!lengthMatch) {
+    return null;
+  }
+  const length = Number(lengthMatch[1]);
+  const messageStart = headerIndex + 4;
+  const payload = raw.slice(messageStart, messageStart + length);
+  if (!payload) {
+    return null;
+  }
+  return JSON.parse(payload);
 }
 
 async function runCommand(command, commandArgs) {

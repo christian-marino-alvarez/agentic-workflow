@@ -104,7 +104,8 @@ Crear un informe de **analisis** profundo que:
   - establecer `task.lifecycle.phases.phase-2-analysis.runtime_validated = true`
   - establecer `task.lifecycle.phases.phase-2-analysis.validation_id = <ID de runtime>`
   - actualizar `task.phase.updated_at = <ISO-8601>`
-  - avanzar `task.phase.current = aliases.tasklifecycle-long.phases.phase_3.id`
+  - llamar `runtime_advance_phase` despues de la aprobacion explicita del desarrollador.
+  - actualizar `task.phase.current` con el `currentPhase` devuelto por el runtime (NO incrementar manualmente).
    - Indicar rutas:
      - `analysis.md`
      - `task.md` actualizado

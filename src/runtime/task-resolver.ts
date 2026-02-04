@@ -1,7 +1,6 @@
-import path from 'node:path';
 import fs from 'node:fs/promises';
+import path from 'node:path';
 import matter from 'gray-matter';
-import { resolveWorkflowsRoot } from '../../engine/task-loader.js';
 
 const WORKSPACE_ENV_VARS = ['PWD', 'INIT_CWD', 'AGENTIC_WORKSPACE', 'WORKSPACE'];
 
@@ -160,7 +159,14 @@ export async function updateTaskPhase(taskPath: string, currentPhase: string, ne
 }
 
 export function resolveWorkflowsRootForTask(taskPath: string): string {
-  return resolveWorkflowsRoot(path.dirname(path.resolve(taskPath)));
+  const root = path.dirname(path.resolve(taskPath));
+  const parts = root.split(path.sep);
+  const agentIndex = parts.lastIndexOf('.agent');
+  if (agentIndex === -1) {
+    return path.join(root, '.agent', 'workflows');
+  }
+  const base = parts.slice(0, agentIndex).join(path.sep);
+  return path.join(base || path.parse(root).root, '.agent', 'workflows');
 }
 
 async function findWorkspaceRootFromDir(startDir: string): Promise<string | null> {

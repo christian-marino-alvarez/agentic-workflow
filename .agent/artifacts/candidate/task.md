@@ -1,6 +1,6 @@
 ---
-id: 20260203-commit-push-branch
-title: Comitear y subir cambios de la rama
+id: 20260204-proceso-de-distribucion
+title: proceso-de-distribucion
 owner: architect-agent
 strategy: short
 ---
@@ -8,36 +8,36 @@ strategy: short
 # Task (Template)
 
 ## Identificación
-- id: 20260203-commit-push-branch
-- title: Comitear y subir cambios de la rama
+- id: 20260204-proceso-de-distribucion
+- title: proceso-de-distribucion
 - scope: candidate | current
 - owner: architect-agent
 
 ## Origen
 - created_from:
-  - workflow: tasklifecycle
-  - source: init / tasklifecycle
+  - workflow: tasklifecycle-short
+  - source: init / tasklifecycle-short
   - candidate_path: artifacts.candidate.task
 
 ## Descripción de la tarea
-Crear la rama feature para el refactor MCP, revisar los últimos commits, commitear todos los cambios, ejecutar tests acordados y subir la rama a origin lista para merge a develop.
+Actualizar README con pasos de distribución/registro MCP y validar el flujo de instalación con build + npm pack.
 
 ## Objetivo
-Dejar los cambios del refactor MCP versionados y subidos en una rama feature, listos para merge a develop.
+Documentar el proceso completo (build, pack, publish, install, register/update, start/stop) y validarlo desde npm en este proyecto.
 
 ## Estado del ciclo de vida (FUENTE ÚNICA DE VERDAD)
 
 ```yaml
 task:
-  id: "20260203-commit-push-branch"
-  title: "Comitear y subir cambios de la rama"
+  id: "20260204-proceso-de-distribucion"
+  title: "proceso-de-distribucion"
   strategy: "short"  # long | short
   artifacts:
     supplemental: []
   phase:
     current: "short-phase-3-closure"
     validated_by: "architect-agent"
-    updated_at: "2026-02-03T19:33:54Z"
+    updated_at: "2026-02-04T10:44:30Z"
   lifecycle:
     phases:
       phase-0-acceptance-criteria:
@@ -98,27 +98,27 @@ task:
       short-phase-1-brief:
         completed: true
         validated_by: "architect-agent"
-        validated_at: "2026-02-03T19:06:55Z"
+        validated_at: "2026-02-04T10:28:14.483Z"
         runtime_validated: true
-        validation_id: "10"
+        validation_id: "runtime-advance-phase"
       short-phase-2-implementation:
         completed: true
         validated_by: "architect-agent"
-        validated_at: "2026-02-03T19:28:39Z"
+        validated_at: "2026-02-04T10:41:42.554Z"
         runtime_validated: true
-        validation_id: "14"
+        validation_id: "runtime-advance-phase"
       short-phase-3-closure:
         completed: true
         validated_by: "architect-agent"
-        validated_at: "2026-02-03T19:33:54Z"
-        runtime_validated: true
-        validation_id: "17"
+        validated_at: "2026-02-04T10:44:30Z"
+        runtime_validated: false
+        validation_id: "runtime-advance-phase-error"
 ```
 
 ---
 
 ## 2. Definición y Alcance (Contrato)
-- **Acceptance Criteria**: [acceptance.md](file:///{{task.acceptance_path}})
+- **Acceptance Criteria**: [acceptance.md](file:///Users/milos/Documents/workspace/agentic-workflow/.agent/artifacts/20260204-proceso-de-distribucion/acceptance.md)
 - **Alias**: `task.acceptance`
 
 ---

@@ -8,5 +8,6 @@ fi
 
 task_path="$1"
 
-printf '%s\n' "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"runtime_advance_phase\",\"arguments\":{\"taskPath\":\"$task_path\",\"agent\":\"architect-agent\",\"expectedPhase\":\"short-phase-1-brief\"}}}" | \
-  node /Users/milos/Documents/workspace/agentic-workflow/bin/cli.js runtime mcp
+payload="{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"runtime.advance_phase\",\"arguments\":{\"taskPath\":\"$task_path\",\"agent\":\"architect-agent\",\"expectedPhase\":\"short-phase-1-brief\"}}}"
+printf 'Content-Length: %s\r\n\r\n%s' "${#payload}" "$payload" | \
+  node /Users/milos/Documents/workspace/agentic-workflow/bin/cli.js mcp

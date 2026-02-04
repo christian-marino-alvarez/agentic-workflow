@@ -74,6 +74,33 @@ Automatically registers the local server in the Antigravity/Gemini config.
 npx agentic-workflow register-mcp
 ```
 
+## 📦 Install and MCP Registration
+
+### Install and Run
+Global install:
+```bash
+npm install -g @christianmaf80/agentic-workflow
+agentic-workflow mcp
+```
+
+With `npx` (no global install):
+```bash
+npx agentic-workflow mcp
+```
+
+### Register or Update MCP Client
+Register (Antigravity/Gemini or Codex CLI if present):
+```bash
+npx agentic-workflow register-mcp
+```
+
+If you need to update a Codex registration, remove the existing
+`[mcp_servers.agentic-workflow]` block from `~/.codex/config.toml`,
+then run `register-mcp` again. Antigravity updates in place.
+
+### Stop and Logs
+Stop the MCP server with `Ctrl+C`. Runtime logs are written to `agentic-runtime.log`.
+
 ## ⚙️ Advanced Configuration
 
 ### MCP Runtime Integration

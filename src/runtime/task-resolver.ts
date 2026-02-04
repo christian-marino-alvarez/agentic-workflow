@@ -325,6 +325,11 @@ export function resolveWorkspaceRoot(inputPath?: string): string {
     return inputPath;
   }
 
+  const configured = loadWorkspaceConfigFromCwd();
+  if (configured) {
+    return configured;
+  }
+
   let dir = process.cwd();
   while (dir !== path.dirname(dir)) {
     if (fsSync.existsSync(path.join(dir, '.agent'))) {
@@ -334,6 +339,26 @@ export function resolveWorkspaceRoot(inputPath?: string): string {
   }
 
   throw new Error('No se encontró ".agent/". Ejecuta desde el workspace o pasa --workspace');
+}
+
+function loadWorkspaceConfigFromCwd(): string | null {
+  let dir = process.cwd();
+  while (dir !== path.dirname(dir)) {
+    const configPath = path.join(dir, '.agent', 'runtime', 'config.json');
+    if (fsSync.existsSync(configPath)) {
+      try {
+        const raw = fsSync.readFileSync(configPath, 'utf-8');
+        const parsed = JSON.parse(raw) as { workspaceRoot?: string };
+        if (parsed.workspaceRoot && path.isAbsolute(parsed.workspaceRoot)) {
+          return parsed.workspaceRoot;
+        }
+      } catch {
+        return null;
+      }
+    }
+    dir = path.dirname(dir);
+  }
+  return null;
 }
 
 async function fileExists(targetPath: string): Promise<boolean> {

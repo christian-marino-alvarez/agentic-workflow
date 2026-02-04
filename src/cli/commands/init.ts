@@ -90,6 +90,7 @@ export async function initCommand(options: { nonInteractive?: boolean; startMcp?
     await removeLegacyInitCandidates(cwd);
     await writeAgentsEntry(cwd);
     await fs.mkdir(path.join(cwd, '.backups'), { recursive: true });
+    await persistWorkspaceRoot(cwd);
 
     s.stop('Configuration complete.');
 
@@ -167,6 +168,14 @@ async function removeLegacyInitCandidates(cwd: string) {
       throw new Error(`No se pudo eliminar init.md legacy. Ejecuta: ${command} y reintenta init.`);
     }
   }
+}
+
+async function persistWorkspaceRoot(cwd: string) {
+  const runtimeDir = path.join(cwd, '.agent', 'runtime');
+  const configPath = path.join(runtimeDir, 'config.json');
+  await fs.mkdir(runtimeDir, { recursive: true });
+  const payload = { workspaceRoot: cwd };
+  await fs.writeFile(configPath, JSON.stringify(payload, null, 2));
 }
 
 async function collectLegacyInitFiles(rootDir: string): Promise<string[]> {

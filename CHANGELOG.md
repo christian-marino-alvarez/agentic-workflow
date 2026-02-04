@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.30.0-beta.8
+- fix(init): normalize runtime.run candidate path and forbid legacy init.md
+
 ## 1.30.0-beta.7
 - feat(init): index init candidates in artifacts/candidate/index.md
 - chore(artifacts): drop legacy artifacts from system structure

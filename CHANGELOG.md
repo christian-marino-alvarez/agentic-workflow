@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.32.0-beta.8
+- fix(runtime): load workspace from global config
+
 ## 1.32.0-beta.7
 - fix(mcp): echo tool call logs to stderr
 

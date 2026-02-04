@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.32.0-beta.9
+- feat(mcp): add --workspace flag
+
 ## 1.32.0-beta.8
 - fix(runtime): load workspace from global config
 

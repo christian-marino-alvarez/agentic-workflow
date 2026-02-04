@@ -57,7 +57,8 @@ program
 program
   .command('mcp')
   .description('Start MCP runtime server (stdio)')
-  .action(() => mcpCommand());
+  .option('--workspace <path>', 'Workspace root (absolute path)')
+  .action((options) => mcpCommand(options));
 
 program
   .command('register-mcp')

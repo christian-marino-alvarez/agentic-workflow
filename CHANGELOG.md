@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.29.0-beta.7
+- feat(init): index init candidates in artifacts/candidate/index.md
+- chore(artifacts): drop legacy artifacts from system structure
+
 ## 1.29.0-beta.6
 - chore(init): remove legacy init.md after scaffold
 - chore(pkg): remove init.md from artifacts

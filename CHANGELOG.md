@@ -25,6 +25,9 @@
 ## 1.30.2-beta.12
 - feat(mcp): log installed package version on startup
 
+## 1.30.2-beta.13
+- chore(release): ensure npm dist-tag is updated on publish
+
 ## 1.30.1-beta.8
 - fix(init): resolve workspace for relative candidate paths
 - fix(init): quote owner placeholder in init template

@@ -315,8 +315,11 @@ function ensureOwner(owner: string, agent: string): void {
   }
 }
 
-function requireString(value: string | undefined, field: string): string {
-  if (!value || value.trim().length === 0) {
+function requireString(value: unknown, field: string): string {
+  if (typeof value !== 'string') {
+    throw new Error(`${field} debe ser string`);
+  }
+  if (value.trim().length === 0) {
     throw new Error(`${field} requerido`);
   }
   return value;

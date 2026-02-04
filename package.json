@@ -62,6 +62,7 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test",
+    "test:coverage": "npm run build && vitest run --exclude test/chatkit-protocol.test.js --exclude test/view-templates.test.js --coverage --coverage.include='src/runtime/**' --coverage.include='src/mcp/**' --coverage.thresholds.lines=100 --coverage.thresholds.functions=100 --coverage.thresholds.branches=100 --coverage.thresholds.statements=100",
     "package": "npm pack && mv *.tgz .backups/npm-packages/"
   },
   "repository": {
@@ -97,6 +98,7 @@
     "@types/mocha": "^10.0.10",
     "@types/node": "^20.10.6",
     "@types/vscode": "^1.108.1",
+    "@vitest/coverage-v8": "^4.0.18",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
     "eslint": "^9.39.2",

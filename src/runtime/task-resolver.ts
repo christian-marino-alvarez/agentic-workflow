@@ -22,13 +22,20 @@ export async function findWorkspaceRoot(candidates: string[]): Promise<string | 
 
 export async function resolveTaskPath(taskPath: string): Promise<{ resolvedPath: string; workspaceRoot: string | null }> {
   if (path.isAbsolute(taskPath)) {
-    const workspaceRoot = await findWorkspaceRoot([path.dirname(taskPath)]);
+    let workspaceRoot = await findWorkspaceRoot([path.dirname(taskPath)]);
+    if (!workspaceRoot) {
+      workspaceRoot = inferWorkspaceRootFromAgentPath(taskPath);
+    }
     return { resolvedPath: taskPath, workspaceRoot };
   }
 
   const candidateRoots = collectWorkspaceCandidates();
   const workspaceRoot = await findWorkspaceRoot(candidateRoots);
   if (!workspaceRoot) {
+    if (isInitCandidatePath(taskPath)) {
+      const fallbackRoot = process.cwd();
+      return { resolvedPath: path.resolve(fallbackRoot, taskPath), workspaceRoot: fallbackRoot };
+    }
     const subject = isInitCandidatePath(taskPath) ? 'el init' : 'el taskPath';
     throw new Error(`No pude resolver ${subject}: no se encontró ".agent/" desde el cwd actual. Ejecuta el comando desde el workspace o pasa una ruta absoluta.`);
   }
@@ -308,6 +315,17 @@ function trimTrailingSep(value: string): string {
     return value;
   }
   return value.endsWith(path.sep) ? value.replace(new RegExp(`${path.sep}+$`), '') : value;
+}
+
+function inferWorkspaceRootFromAgentPath(taskPath: string): string | null {
+  const marker = `${path.sep}.agent${path.sep}`;
+  const normalized = path.normalize(taskPath);
+  const markerIndex = normalized.lastIndexOf(marker);
+  if (markerIndex === -1) {
+    return null;
+  }
+  const base = normalized.slice(0, markerIndex);
+  return base || path.parse(normalized).root;
 }
 
 async function fileExists(targetPath: string): Promise<boolean> {

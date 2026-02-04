@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.32.0-beta.6](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.31.0-beta.6...agentic-workflow-v1.32.0-beta.6) (2026-02-04)
+
+
+### Features
+
+* **init:** add non-interactive aliases ([d607431](https://github.com/christian-marino-alvarez/agentic-workflow/commit/d607431f2653f882e6dfa234413a16dc20cd8834))
+* **mcp:** log workspace context per tool call ([83f9961](https://github.com/christian-marino-alvarez/agentic-workflow/commit/83f99619a565a272e1345f519bb2bb02ef69a2cc))
+
 ## 1.31.0-beta.9
 - feat(mcp): log workspace context per tool call
 

@@ -70,3 +70,13 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --provenance --access public --tag ${{ steps.dist_tag.outputs.tag }}
+
+      - name: Ensure dist-tag
+        if: always()
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          NAME=$(node -p "require('./package.json').name")
+          VERSION=$(node -p "require('./package.json').version")
+          TAG=${{ steps.dist_tag.outputs.tag }}
+          npm dist-tag add "${NAME}@${VERSION}" "${TAG}"

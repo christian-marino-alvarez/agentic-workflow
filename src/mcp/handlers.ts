@@ -37,6 +37,13 @@ export async function handleToolCall(runtime: Runtime, name: string, args: Recor
     workspaceRoot,
     workspaceError
   });
+  console.error('[MCP] Tool call received', JSON.stringify({
+    tool: name,
+    cwd: process.cwd(),
+    workspaceEnv,
+    workspaceRoot,
+    workspaceError
+  }));
 
   const handler = TOOL_HANDLERS[name as ToolName];
   if (!handler) {

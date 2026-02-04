@@ -1,3 +1,9 @@
+---
+kind: artifact
+name: plan
+source: agentic-system-structure
+---
+
 🏛️ **architect-agent**: Plan de implementacion para scaffold VS Code.
 
 ---

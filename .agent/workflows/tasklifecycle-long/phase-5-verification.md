@@ -23,7 +23,6 @@ blocking: true
 > **Constitución activa (OBLIGATORIO)**:
 > - Cargar `constitution.clean_code` antes de iniciar
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
-> - Cargar `constitution.runtime_integration` para trazabilidad MCP
 
 ## Output (REQUIRED)
 - Informe detallado de verificación y testing:
@@ -94,10 +93,6 @@ blocking: true
    - Si no se cumplen → ir a **Paso 11 (FAIL)**.
 
 7. Solicitar aprobación del desarrollador (OBLIGATORIA, por consola)
-7.1 **Auditoría Pre-Gate (OBLIGATORIO)**:
-- Antes de solicitar la aprobación, el `qa-agent` **DEBE** usar `runtime.validate_gate`.
-- El agente **DEBE** usar `debug_read_logs` para confirmar la ejecución de comandos de test.
-- Estrictamente **PROHIBIDO** consolidar este paso.
    - El desarrollador **DEBE** emitir una decisión binaria:
      - **SI** → aprobado
      - **NO** → rechazado
@@ -115,11 +110,9 @@ blocking: true
    - Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md`:
      - marcar Fase 5 como completada
      - establecer `task.lifecycle.phases.phase-5-verification.validated_at = <ISO-8601>`
-     - establecer `task.lifecycle.phases.phase-5-verification.runtime_validated = true`
-     - establecer `task.lifecycle.phases.phase-5-verification.validation_id = <ID de runtime>`
      - actualizar `task.phase.updated_at = <ISO-8601>`
-     - llamar `runtime_advance_phase` despues de la aprobacion explicita del desarrollador.
-     - actualizar `task.phase.current` con el `currentPhase` devuelto por el runtime (NO incrementar manualmente).
+     - avanzar:
+       - `task.phase.current = aliases.tasklifecycle-long.phases.phase_6.id`
    - Indicar rutas:
      - `verification.md`
      - `task.md` actualizado
@@ -167,12 +160,14 @@ Requisitos (todos obligatorios):
    - O screenshots/grabaciones de E2E
    - O justificación documentada si la tarea no requiere tests
 5. Se cumplen los porcentajes de test definidos en el plan (si aplica).
-6. **Auditoría de Runtime**: El agente ha ejecutado `runtime.validate_gate` y el resultado es PASS.
-7. **Trazabilidad de Logs**: Los logs (`debug_read_logs`) confirman la ejecución de `npm test` o justificación.
-8. Existe aprobación explícita del desarrollador:
+6. Existe aprobación explícita del desarrollador:
    - `approval.developer.decision == SI`
-9. `task.md` refleja fase completada y datos de validación de runtime.
-10. `task.md` refleja timestamp y estado.
+7. `task.md` refleja:
+   - Fase 5 completada
+   - `task.phase.current == aliases.tasklifecycle-long.phases.phase_6.id`
+   - `task.lifecycle.phases.phase-5-verification.completed == true`
+   - `task.lifecycle.phases.phase-5-verification.validated_at` no nulo
+   - `task.phase.updated_at` no nulo
 
 Si Gate FAIL:
 - Ejecutar **Paso 11 (FAIL)**.

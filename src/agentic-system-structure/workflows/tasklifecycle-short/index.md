@@ -44,7 +44,7 @@ aliases:
 ```
 
 ## Input (REQUIRED)
-- Existe el artefacto `init` con `task.strategy == "short"`.
+- Existe el init candidate con `task.strategy == "short"` en `.agent/artifacts/candidate/<timestamp>-init.md`.
 - El desarrollador ha definido título y objetivo de la tarea.
 
 ## Output (REQUIRED)

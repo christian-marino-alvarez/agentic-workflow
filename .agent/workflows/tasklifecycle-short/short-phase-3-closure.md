@@ -19,7 +19,6 @@ blocking: true
 > **Constitución activa (OBLIGATORIO)**:
 > - Cargar `constitution.clean_code` antes de iniciar
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
-> - Cargar `constitution.runtime_integration` para trazabilidad MCP
 
 ## Output (REQUIRED)
 - Artefacto de cierre: `.agent/artifacts/<taskId>-<taskTitle>/closure.md`
@@ -63,10 +62,9 @@ Si no requiere tests:
   - Evidencia de tests (si aplica).
 
 ### 4. Presentar resultados al desarrollador
-4.1 **Auditoría Pre-Gate (OBLIGATORIO)**:
-- Antes de la aceptación final, el `architect-agent` **DEBE** usar `runtime.validate_gate` para el cierre de la tarea.
-- El agente **DEBE** usar `debug_read_logs` para confirmar la verificación técnica y los commits (si aplica).
-- Estrictamente **PROHIBIDO** consolidar este paso con la presentación de resultados.
+- Mostrar closure.md.
+- Resolver dudas.
+- Solicitar aceptación final por consola (SI/NO) y registrarla en `closure.md`.
 
 ### 6. Evaluar agentes (OBLIGATORIO)
 - Solicitar puntuación (1-10) del desarrollador para cada agente que haya intervenido.
@@ -83,8 +81,6 @@ Si hay cambios de código:
 - Generar changelog (si aplica).
 - Actualizar task.md con estado final.
   - Establecer `task.lifecycle.phases.short-phase-3-closure.validated_at = <ISO-8601>`.
-  - Establecer `task.lifecycle.phases.short-phase-3-closure.runtime_validated = true`.
-  - Establecer `task.lifecycle.phases.short-phase-3-closure.validation_id = <ID de runtime>`.
   - Actualizar `task.phase.updated_at = <ISO-8601>`.
 
 ---
@@ -94,13 +90,11 @@ Requisitos (todos obligatorios):
 1. Existe closure.md con template correcto.
 2. El `closure.md` inicia con el prefijo del `architect-agent`.
 3. Todos los acceptance criteria están marcados.
-4. **Auditoría de Runtime**: El agente ha ejecutado `runtime.validate_gate` y el resultado es PASS.
-5. **Trazabilidad de Logs**: Los logs (`debug_read_logs`) confirman el cierre y evaluación.
-6. Existe aceptación final del desarrollador.
-7. Se han registrado las puntuaciones de los agentes en `closure.md`.
-8. Commits realizados (si aplica).
-9. task.md refleja tarea completada y datos de validación de runtime.
-10. task.md refleja timestamp y estado:
+4. Existe aceptación final del desarrollador.
+5. Se han registrado las puntuaciones de los agentes en `closure.md`.
+6. Commits realizados (si aplica).
+7. task.md refleja tarea completada.
+8. task.md refleja timestamp y estado:
    - `task.lifecycle.phases.short-phase-3-closure.completed == true`
    - `task.lifecycle.phases.short-phase-3-closure.validated_at` no nulo
    - `task.phase.updated_at` no nulo

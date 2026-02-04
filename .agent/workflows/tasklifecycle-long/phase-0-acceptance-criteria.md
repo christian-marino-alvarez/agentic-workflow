@@ -22,7 +22,7 @@ blocking: true
 > **Constitución activa (OBLIGATORIO)**:
 > - Cargar `constitution.clean_code` antes de iniciar
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
-> - Cargar `constitution.runtime_integration` para trazabilidad MCP
+> - **Activar `skill.runtime-governance`** (Uso exclusivo del Architect para validación y trazabilidad)
 
 ## Output (REQUIRED)
 - Current task (definitiva) con acceptance criteria completos:
@@ -40,7 +40,11 @@ blocking: true
 - Registrar los acceptance criteria dentro del fichero de current task.
 
 ## Pasos obligatorios
-0. Activar `architect-agent` y usar prefijo obligatorio en cada mensaje.
+0. **Verificar Gobernanza (OBLIGATORIO)**:
+   - Activar `skill.runtime-governance`.
+   - Ejecutar el procedimiento de trazabilidad inicial (Paso 0 del Skill).
+   - El agente **DEBE** confirmar que el sistema de logs está activo antes de proceder.
+   - Usar prefijo obligatorio en cada mensaje.
 1. Cargar y leer el task candidate:
    - `artifacts.candidate.task`
    - Extraer:
@@ -106,11 +110,7 @@ blocking: true
      - checklist de criterios verificables (AC)
    - Si no se puede crear/escribir → ir a **Paso 10 (FAIL)**.
 
-### 8. Solicitar aprobación del desarrollador (OBLIGATORIA, por consola)
-8.1 **Auditoría Pre-Gate (OBLIGATORIO)**:
-- Antes de solicitar la aprobación, el `architect-agent` **DEBE** usar `runtime.validate_gate` para la fase actual.
-- El agente **DEBE** usar `debug_read_logs` para confirmar que el `taskId` fue calculado y los artefactos creados correctamente.
-- Estrictamente **PROHIBIDO** consolidar este paso con la solicitud de aprobación en una misma respuesta (esperar confirmación de la herramienta).
+8. Solicitar aprobacion del desarrollador (OBLIGATORIA, por consola)
    - El desarrollador **DEBE** aprobar explicitamente:
      - Acceptance criteria
      - Current task creada
@@ -124,20 +124,22 @@ blocking: true
      ```
    - Si `decision != SI` → ir a **Paso 10 (FAIL)**.
 
-9. **PASS**
+9. PASS
    - Informar que la Fase 0 está completada correctamente.
+   - Seguimiento del protocolo de cierre en `skill.runtime-governance`:
+     - Llamar `runtime.validate_gate` para verificar integridad.
+     - Solicitar aprobación final al usuario.
+     - Llamar `runtime.advance_phase` tras el "SI".
    - El `architect-agent` **DEBE realizar explícitamente** las siguientes acciones:
     - Marcar la Fase 0 como completada en el `task.md`.
     - Establecer `task.lifecycle.phases.phase-0-acceptance-criteria.validated_at = <ISO-8601>`.
-   - Establecer `task.lifecycle.phases.phase-0-acceptance-criteria.runtime_validated = true`.
-   - Establecer `task.lifecycle.phases.phase-0-acceptance-criteria.validation_id = <ID de runtime>`.
-   - Actualizar `task.phase.updated_at = <ISO-8601>`.
-   - Llamar `runtime_advance_phase` despues de la aprobacion explicita del desarrollador.
-   - Actualizar `task.phase.current` con el `currentPhase` devuelto por el runtime (NO incrementar manualmente).
+    - Actualizar `task.phase.updated_at = <ISO-8601>`.
+    - Actualizar el estado:
+      - `task.phase.current = aliases.tasklifecycle-long.phases.phase_1.id`
    - Esta actualización **NO es automática** y **NO puede ser inferida**.
    - Hasta que este cambio no se refleje en el `task.md`, **no se puede iniciar la Fase 1**.
 
-10. **FAIL** (obligatorio)
+10. FAIL (obligatorio)
    - Declarar Fase 0 como **NO completada**.
    - Indicar exactamente qué falló:
      - falta candidate
@@ -161,17 +163,21 @@ Requisitos (todos obligatorios):
    - `.agent/artifacts/<taskId>-<taskTitle>/acceptance.md`
 3. Ambos siguen sus respectivos templates.
 4. El `acceptance.md` inicia con el prefijo del `architect-agent`.
-5. El `taskId` es secuencial.
-6. **Auditoría de Runtime**: El agente ha ejecutado `runtime.validate_gate` y el resultado es PASS.
-7. **Trazabilidad de Logs**: Los logs (`debug_read_logs`) confirman la creación de la tarea y el cálculo del ID.
-8. Existe aprobación explícita del desarrollador registrada en `acceptance.md`:
+5. El `taskId` es secuencial:
+   - Ejecutar: `ls .agent/artifacts/ | grep -E "^[0-9]" | sort -n | tail -1 | cut -d'-' -f1`
+   - El taskId del nuevo directorio debe ser exactamente `output + 1`
+6. El current task incluye acceptance criteria completos y verificables.
+7. Existe aprobacion explicita del desarrollador (por consola) registrada en `acceptance.md`:
    - `approval.developer.decision == SI`
-9. El `architect-agent` ha marcado explícitamente:
+8. El `architect-agent` ha marcado explícitamente:
    - la Fase 0 como completada
    - `task.phase.current == aliases.tasklifecycle-long.phases.phase_1.id`
-10. `task.md` refleja fase completada y datos de validación de runtime.
-11. `task.md` refleja timestamp y estado.
-12. Las 5 preguntas obligatorias fueron realizadas y respondidas.
+9. `task.md` refleja timestamp y estado:
+   - `task.lifecycle.phases.phase-0-acceptance-criteria.completed == true`
+   - `task.lifecycle.phases.phase-0-acceptance-criteria.validated_at` no nulo
+   - `task.phase.updated_at` no nulo
+10. Las 5 preguntas obligatorias fueron realizadas y respondidas por el desarrollador.
+11. **Gobernanza verificada**: El historial de logs muestra la secuencia de herramientas MCP definida en `skill.runtime-governance`.
 
 Si Gate FAIL:
 - Ejecutar **FAIL**.

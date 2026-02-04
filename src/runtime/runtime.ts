@@ -48,17 +48,29 @@ export class Runtime {
     Logger.info('MCP', 'Tool called: runtime.run', { taskPath, agent });
 
     const resolved = await resolveTaskPath(taskPath);
-    await ensureInitTaskFile(resolved.resolvedPath, resolved.workspaceRoot);
-    const task = await loadTask(resolved.resolvedPath);
+    let initResult;
+    try {
+      initResult = await ensureInitTaskFile(resolved.resolvedPath, resolved.workspaceRoot);
+    } catch (error) {
+      Logger.warn('MCP', 'runtime failed to create init candidate; fallback required', {
+        taskPath,
+        error: formatError(error)
+      });
+      throw error;
+    }
+    if (initResult.warning) {
+      Logger.warn('MCP', initResult.warning, { taskPath, resolvedPath: initResult.taskPath });
+    }
+    const task = await loadTask(initResult.taskPath);
     ensureOwner(task.owner, agent);
 
-    const statePath = await resolveStatePath(resolved.resolvedPath, params.statePath);
+    const statePath = await resolveStatePath(initResult.taskPath, params.statePath);
     const state: RuntimeState = {
       version: 1,
       runId: crypto.randomUUID(),
       taskId: task.id,
       taskTitle: task.title,
-      taskPath: resolved.resolvedPath,
+      taskPath: initResult.taskPath,
       phase: task.phase,
       status: 'idle',
       steps: [],

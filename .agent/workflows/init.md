@@ -19,7 +19,7 @@ blocking: true
 - Cargar el bootstrap mínimo de índices.
 - Detectar idioma de conversación y confirmar explícitamente.
 - **Seleccionar estrategia de ciclo de vida (Long/Short)**.
-- Crear el **artefacto task candidate** `init.md`.
+- Crear el **init candidate** con timestamp `<timestamp>-init.md` en `.agent/artifacts/candidate/`.
 - **Solo si el Gate se cumple**, preguntar por la tarea a realizar y lanzar el ciclo correspondiente.
 
 ## Orquestación y Disciplina (SYSTEM INJECTION)
@@ -45,7 +45,7 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
 0. **Verificar Trazabilidad e Iniciar Runtime (OBLIGATORIO)**:
    - Antes de cualquier acción, verificar conectividad MCP mediante `runtime_chat`.
    - **Inmediatamente después**, llamar a `runtime.run` con:
-     - `taskPath`: Ruta al artefacto init que se creará (`.agent/artifacts/candidate/init.md`)
+     - `taskPath`: Ruta al directorio candidate (`.agent/artifacts/candidate/`) para crear `<timestamp>-init.md`
      - `agent`: `architect-agent`
    - El agente **DEBE** confirmar que ambas herramientas respondieron correctamente (`status: ok`).
    - **PROHIBICIÓN ESTRICTA**: No se permite consolidar este paso con la creación de artefactos en una misma respuesta. El agente debe esperar la confirmación del sistema antes de proceder al paso 1.
@@ -78,22 +78,22 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
    - Preguntar al desarrollador:
      - "Por favor, selecciona la estrategia: **Long** (9 fases completas) o **Short** (3 fases simplificadas)."
    - Si no hay selección → ir a **Paso 9 (FAIL)**.
-   - Registrar la selección en el artefacto `init.md`.
+- Registrar la selección en el init candidate `<timestamp>-init.md`.
 
-6. **Crear el artefacto `init.md` (OBLIGATORIO)**
+6. **Crear el init candidate `<timestamp>-init.md` (OBLIGATORIO)**
    - El artefacto **DEBE** crearse usando **exactamente** la estructura definida en:
      - `templates.init`
    - Todos los campos obligatorios del template **DEBEN** completarse.
-   - Incluir el campo `strategy: long | short`.
+- Incluir el campo `strategy: long | short` y `task.path` alias `<taskId>: <path>`.
    - **REQUISITO DE TRAZABILIDAD**: Incluir una confirmación explícita de que el Paso 0 (MCP) fue ejecutado correctamente.
    - No se permite modificar, omitir ni reinterpretar la estructura del template.
 
 7. Escribir el fichero en:
-   - `artifacts.candidate.init`
+   - `.agent/artifacts/candidate/<timestamp>-init.md`
 
 8. **Validar Gate con Runtime (OBLIGATORIO)**:
    - **ANTES** de evaluar el Gate, el agente **DEBE** llamar a `runtime.validate_gate` con:
-     - `taskPath`: `.agent/artifacts/candidate/init.md`
+     - `taskPath`: `.agent/artifacts/candidate/<timestamp>-init.md`
      - `agent`: `architect-agent`
      - `expectedPhase`: `init`
    - **Opcionalmente**, usar `debug_read_logs` para auditar que los pasos previos fueron registrados.
@@ -117,12 +117,12 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
 
 ## Output (REQUIRED)
 - Artefacto creado:
-  - `artifacts.candidate.init`
+  - `.agent/artifacts/candidate/<timestamp>-init.md`
 
 ## Gate (REQUIRED)
 Requisitos (todos obligatorios):
-1) Existe el artefacto:
-   - `artifacts.candidate.init`
+1) Existe el init candidate:
+   - `.agent/artifacts/candidate/<timestamp>-init.md`
 2) En su YAML:
    - `language.value` no vacío
    - `language.confirmed == true`

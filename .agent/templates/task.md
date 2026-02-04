@@ -44,75 +44,67 @@ task:
         completed: false
         validated_by: null
         validated_at: null
-        runtime_validated: false
-        validation_id: null
       phase-1-research:
         completed: false
         validated_by: null
         validated_at: null
-        runtime_validated: false
-        validation_id: null
       phase-2-analysis:
         completed: false
         validated_by: null
         validated_at: null
-        runtime_validated: false
-        validation_id: null
       phase-3-planning:
         completed: false
         validated_by: null
         validated_at: null
-        runtime_validated: false
-        validation_id: null
       phase-4-implementation:
         completed: false
         validated_by: null
         validated_at: null
-        runtime_validated: false
-        validation_id: null
       phase-5-verification:
         completed: false
         validated_by: null
         validated_at: null
-        runtime_validated: false
-        validation_id: null
       phase-6-results-acceptance:
         completed: false
         validated_by: null
         validated_at: null
-        runtime_validated: false
-        validation_id: null
       phase-7-evaluation:
         completed: false
         validated_by: null
         validated_at: null
-        runtime_validated: false
-        validation_id: null
       phase-8-commit-push:
         completed: false
         validated_by: null
         validated_at: null
-        runtime_validated: false
-        validation_id: null
     subflows:
+      components:
+        create:
+          - name: <component-name>
+            completed: false
+            validated_by: null
+            validated_at: null
+        refactor:
+          - name: <component-name>
+            completed: false
+            validated_by: null
+            validated_at: null
+        delete:
+          - name: <component-name>
+            completed: false
+            validated_by: null
+            validated_at: null
       short-phase-1-brief:
         completed: false
         validated_by: null
         validated_at: null
-        runtime_validated: false
-        validation_id: null
       short-phase-2-implementation:
         completed: false
         validated_by: null
         validated_at: null
-        runtime_validated: false
-        validation_id: null
       short-phase-3-closure:
         completed: false
         validated_by: null
         validated_at: null
-        runtime_validated: false
-        validation_id: null
 ```
 
 ---

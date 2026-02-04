@@ -10,6 +10,7 @@ export type ToolName =
   | 'runtime.get_state'
   | 'runtime.list_workflows'
   | 'runtime.emit_event'
+  | 'runtime.reconcile'
   | 'runtime.chat'
   | 'debug.read_logs';
 
@@ -122,6 +123,20 @@ export const MCP_TOOLS: Tool[] = [
         event: { type: 'object', description: 'Runtime event payload' }
       },
       required: ['event']
+    }
+  },
+  {
+    name: 'runtime.reconcile',
+    description: 'Reconcile out-of-band changes; block if manual resolution is required',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        taskPath: { type: 'string' },
+        agent: { type: 'string' },
+        statePath: { type: 'string' },
+        breakGlass: { type: 'boolean' }
+      },
+      required: ['taskPath', 'agent']
     }
   },
   {

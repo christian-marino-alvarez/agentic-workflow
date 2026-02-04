@@ -3,6 +3,7 @@ import fsSync from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import matter from 'gray-matter';
+import type { RuntimeWriteGuard } from './write-guard.js';
 
 const WORKSPACE_ENV_VARS = ['PWD', 'INIT_CWD', 'AGENTIC_WORKSPACE', 'WORKSPACE'];
 
@@ -23,7 +24,13 @@ export async function findWorkspaceRoot(candidates: string[]): Promise<string | 
 }
 
 export async function resolveTaskPath(taskPath: string): Promise<{ resolvedPath: string; workspaceRoot: string | null }> {
-  const workspaceRoot = resolveWorkspaceRoot(process.env.AGENTIC_WORKSPACE);
+  let workspaceRoot: string | null = null;
+  try {
+    workspaceRoot = resolveWorkspaceRoot(process.env.AGENTIC_WORKSPACE);
+  } catch {
+    workspaceRoot = null;
+  }
+
   if (path.isAbsolute(taskPath)) {
     return { resolvedPath: taskPath, workspaceRoot: workspaceRoot ?? inferWorkspaceRootFromAgentPath(taskPath) };
   }
@@ -42,7 +49,11 @@ export type InitTaskEnsureResult = {
   warning?: string;
 };
 
-export async function ensureInitTaskFile(taskPath: string, workspaceRoot: string | null): Promise<InitTaskEnsureResult> {
+export async function ensureInitTaskFile(
+  taskPath: string,
+  workspaceRoot: string | null,
+  writeGuard?: RuntimeWriteGuard
+): Promise<InitTaskEnsureResult> {
   if (isLegacyInitPath(taskPath)) {
     throw new Error('init.md legacy detectado. Elimina el archivo y reintenta con el nuevo flujo init.');
   }
@@ -55,7 +66,7 @@ export async function ensureInitTaskFile(taskPath: string, workspaceRoot: string
   const exists = await fileExists(resolvedTaskPath);
   if (exists) {
     if (workspaceRoot) {
-      await upsertCandidateIndexEntry(workspaceRoot, resolvedTaskPath);
+      await upsertCandidateIndexEntry(workspaceRoot, resolvedTaskPath, writeGuard);
     }
     return { taskPath: resolvedTaskPath, created: false, warning: initResolution.warning };
   }
@@ -64,9 +75,13 @@ export async function ensureInitTaskFile(taskPath: string, workspaceRoot: string
   }
   const templatePath = path.join(workspaceRoot, '.agent', 'templates', 'init.md');
   const template = await fs.readFile(templatePath, 'utf-8');
-  await fs.mkdir(path.dirname(resolvedTaskPath), { recursive: true });
-  await fs.writeFile(resolvedTaskPath, template);
-  await upsertCandidateIndexEntry(workspaceRoot, resolvedTaskPath);
+  if (writeGuard) {
+    await writeGuard.writeFile(resolvedTaskPath, template);
+  } else {
+    await fs.mkdir(path.dirname(resolvedTaskPath), { recursive: true });
+    await fs.writeFile(resolvedTaskPath, template);
+  }
+  await upsertCandidateIndexEntry(workspaceRoot, resolvedTaskPath, writeGuard);
   return { taskPath: resolvedTaskPath, created: true, warning: initResolution.warning };
 }
 
@@ -91,13 +106,14 @@ export async function resolveNextPhase(workflowsRoot: string, currentPhase: stri
         continue;
       }
 
-      const phaseIds = Object.entries(phases)
-        .sort(([a], [b]) => {
-          const aNum = parseInt(a.split('_').pop() ?? '0', 10);
-          const bNum = parseInt(b.split('_').pop() ?? '0', 10);
-          return aNum - bNum;
-        })
-        .map(([, value]) => {
+      const phaseEntries = Object.entries(phases).map(([key, value]) => {
+        const token = key.split('_').pop() || '0';
+        return { value, order: parseInt(token, 10) };
+      });
+
+      const phaseIds = phaseEntries
+        .sort((a, b) => a.order - b.order)
+        .map(({ value }) => {
           const id = (value as { id?: string }).id;
           if (!id) {
             throw new Error('Phase entry missing id.');
@@ -119,7 +135,13 @@ export async function resolveNextPhase(workflowsRoot: string, currentPhase: stri
   throw new Error(`No next phase found after ${currentPhase} in strategy ${normalizedStrategy ?? 'any'}.`);
 }
 
-export async function updateTaskPhase(taskPath: string, currentPhase: string, nextPhase: string, agent: string): Promise<{ updatedAt: string }> {
+export async function updateTaskPhase(
+  taskPath: string,
+  currentPhase: string,
+  nextPhase: string,
+  agent: string,
+  writeGuard?: RuntimeWriteGuard
+): Promise<{ updatedAt: string }> {
   const timestamp = new Date().toISOString();
   const resolvedPath = path.resolve(taskPath);
   const raw = await fs.readFile(resolvedPath, 'utf-8');
@@ -171,7 +193,11 @@ export async function updateTaskPhase(taskPath: string, currentPhase: string, ne
       lines[i] = `        validated_at: "${timestamp}"`;
     }
   }
-  await fs.writeFile(resolvedPath, lines.join('\n'));
+  if (writeGuard) {
+    await writeGuard.writeFile(resolvedPath, lines.join('\n'));
+  } else {
+    await fs.writeFile(resolvedPath, lines.join('\n'));
+  }
   return { updatedAt: timestamp };
 }
 
@@ -268,7 +294,11 @@ artifacts:
 ${CANDIDATE_INDEX_MARKER}
 `;
 
-async function upsertCandidateIndexEntry(workspaceRoot: string, candidatePath: string): Promise<void> {
+async function upsertCandidateIndexEntry(
+  workspaceRoot: string,
+  candidatePath: string,
+  writeGuard?: RuntimeWriteGuard
+): Promise<void> {
   const indexPath = path.join(workspaceRoot, '.agent', 'artifacts', 'candidate', 'index.md');
   const relativePath = toPosixPath(path.relative(workspaceRoot, candidatePath));
   const entryLine = `- ${relativePath}`;
@@ -295,8 +325,12 @@ async function upsertCandidateIndexEntry(workspaceRoot: string, candidatePath: s
     content = `${lines.join('\n')}\n`;
   }
 
-  await fs.mkdir(path.dirname(indexPath), { recursive: true });
-  await fs.writeFile(indexPath, content);
+  if (writeGuard) {
+    await writeGuard.writeFile(indexPath, content);
+  } else {
+    await fs.mkdir(path.dirname(indexPath), { recursive: true });
+    await fs.writeFile(indexPath, content);
+  }
 }
 
 function toPosixPath(value: string): string {

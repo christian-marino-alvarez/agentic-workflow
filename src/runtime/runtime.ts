@@ -4,6 +4,8 @@ import crypto from 'node:crypto';
 import { Logger } from '../infrastructure/logger/index.js';
 import type { RuntimeEvent } from '../mcp/emitter.js';
 import { loadTask } from './task-loader.js';
+import { RuntimeWriteGuard } from './write-guard.js';
+import { collectArtifactHashes, diffHashes } from './reconcile.js';
 import {
   collectWorkspaceCandidates,
   ensureInitTaskFile,
@@ -26,6 +28,7 @@ export type RuntimeActionParams = {
   role?: string;
   event?: RuntimeEvent;
   limit?: number;
+  breakGlass?: boolean;
 };
 
 export type RuntimeState = {
@@ -38,6 +41,7 @@ export type RuntimeState = {
   status: 'idle' | 'running' | 'completed' | 'failed';
   steps: Array<{ status: string; name?: string; at: string }>;
   updatedAt: string;
+  artifactHashes?: Record<string, string>;
 };
 
 export class Runtime {
@@ -49,9 +53,10 @@ export class Runtime {
     Logger.info('MCP', 'Tool called: runtime.run', { taskPath, agent });
 
     const resolved = await resolveTaskPath(taskPath);
+    const writeGuard = this.buildWriteGuard(resolved.resolvedPath, resolved.workspaceRoot, agent, params.breakGlass);
     let initResult;
     try {
-      initResult = await ensureInitTaskFile(resolved.resolvedPath, resolved.workspaceRoot);
+      initResult = await ensureInitTaskFile(resolved.resolvedPath, resolved.workspaceRoot, writeGuard);
     } catch (error) {
       Logger.warn('MCP', 'runtime failed to create init candidate; fallback required', {
         taskPath,
@@ -75,10 +80,11 @@ export class Runtime {
       phase: task.phase,
       status: 'idle',
       steps: [],
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      artifactHashes: {}
     };
 
-    await this.writeState(statePath, state);
+    await this.writeState(statePath, state, writeGuard);
     return { status: 'ok', runId: state.runId, phase: state.phase, statePath };
   }
 
@@ -105,6 +111,7 @@ export class Runtime {
     Logger.info('MCP', 'Tool called: runtime.next_step', { taskPath, agent });
 
     const resolved = await resolveTaskPath(taskPath);
+    const writeGuard = this.buildWriteGuard(resolved.resolvedPath, resolved.workspaceRoot, agent, params.breakGlass);
     const task = await loadTask(resolved.resolvedPath);
     ensureOwner(task.owner, agent);
 
@@ -117,7 +124,7 @@ export class Runtime {
     const step = { status: 'completed', at: new Date().toISOString() };
     state.steps.push(step);
     state.updatedAt = step.at;
-    await this.writeState(statePath, state);
+    await this.writeState(statePath, state, writeGuard);
     return { status: 'ok', runId: state.runId, phase: state.phase, step, statePath };
   }
 
@@ -151,6 +158,7 @@ export class Runtime {
     Logger.info('MCP', 'Tool called: runtime.advance_phase', { taskPath, agent, expectedPhase: expectedPhase ?? null });
 
     const resolved = await resolveTaskPath(taskPath);
+    const writeGuard = this.buildWriteGuard(resolved.resolvedPath, resolved.workspaceRoot, agent, params.breakGlass);
     const task = await loadTask(resolved.resolvedPath);
     if (task.owner !== agent) {
       throw new Error('Agent mismatch.');
@@ -189,7 +197,7 @@ export class Runtime {
         updatedAt: null
       };
     }
-    const updated = await updateTaskPhase(resolved.resolvedPath, task.phase, nextPhase, agent);
+    const updated = await updateTaskPhase(resolved.resolvedPath, task.phase, nextPhase, agent, writeGuard);
     return {
       status: 'ok',
       previousPhase: task.phase,
@@ -247,6 +255,73 @@ export class Runtime {
     return { status: 'ok', emitEvent: event };
   }
 
+  async reconcile(params: RuntimeActionParams): Promise<Record<string, unknown>> {
+    const taskPath = requireString(params.taskPath, 'taskPath');
+    const agent = requireString(params.agent, 'agent');
+    Logger.info('MCP', 'Tool called: runtime.reconcile', { taskPath, agent });
+
+    const resolved = await resolveTaskPath(taskPath);
+    const statePath = await resolveStatePath(resolved.resolvedPath, params.statePath);
+    const state = await this.readState(statePath);
+    if (!state) {
+      throw new Error('No state found.');
+    }
+    const artifacts = await collectArtifactHashes(path.dirname(state.taskPath));
+    const previous = state.artifactHashes ?? {};
+    const changes = diffHashes(previous, artifacts);
+    const timestamp = new Date().toISOString();
+
+    if (Object.keys(previous).length === 0) {
+      state.artifactHashes = artifacts;
+      state.updatedAt = timestamp;
+      const writeGuard = this.buildWriteGuard(resolved.resolvedPath, resolved.workspaceRoot, agent, params.breakGlass);
+      await this.writeState(statePath, state, writeGuard);
+      return {
+        status: 'accepted',
+        taskId: state.taskId,
+        taskPath: state.taskPath,
+        emitEvent: {
+          type: 'reconcile_accepted',
+          timestamp,
+          runId: state.taskId,
+          payload: { changes: [] }
+        }
+      };
+    }
+
+    if (changes.length > 0) {
+      return {
+        status: 'blocked',
+        reason: 'manual_resolution_required',
+        taskId: state.taskId,
+        taskPath: state.taskPath,
+        changes,
+        emitEvent: {
+          type: 'reconcile_blocked',
+          timestamp,
+          runId: state.taskId,
+          payload: { reason: 'manual_resolution_required', changes }
+        }
+      };
+    }
+
+    state.artifactHashes = artifacts;
+    state.updatedAt = timestamp;
+    const writeGuard = this.buildWriteGuard(resolved.resolvedPath, resolved.workspaceRoot, agent, params.breakGlass);
+    await this.writeState(statePath, state, writeGuard);
+    return {
+      status: 'accepted',
+      taskId: state.taskId,
+      taskPath: state.taskPath,
+      emitEvent: {
+        type: 'reconcile_accepted',
+        timestamp,
+        runId: state.taskId,
+        payload: { changes: [] }
+      }
+    };
+  }
+
   async chat(params: RuntimeActionParams): Promise<Record<string, unknown>> {
     const message = requireString(params.message, 'message');
     const role = params.role ?? 'user';
@@ -284,15 +359,22 @@ export class Runtime {
     }
   }
 
-  private async writeState(statePath: string, state: RuntimeState): Promise<void> {
+  private async writeState(statePath: string, state: RuntimeState, writeGuard: RuntimeWriteGuard): Promise<void> {
     this.stateCache.set(statePath, state);
-    await fs.mkdir(path.dirname(statePath), { recursive: true });
-    await fs.writeFile(path.resolve(statePath), JSON.stringify(state, null, 2));
+    await writeGuard.writeFile(path.resolve(statePath), JSON.stringify(state, null, 2));
   }
 
   private clearCache(): void {
     this.stateCache.clear();
   }
+
+  private buildWriteGuard(taskPath: string, workspaceRoot: string | null, agent: string, breakGlass?: boolean): RuntimeWriteGuard {
+    if (!workspaceRoot) {
+      throw new Error('No se pudo resolver workspaceRoot para write guard.');
+    }
+    return new RuntimeWriteGuard({ workspaceRoot, actor: agent, breakGlass: Boolean(breakGlass) });
+  }
+
 }
 
 async function resolveStatePath(taskPath: string, override?: string): Promise<string> {

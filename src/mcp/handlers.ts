@@ -1,6 +1,7 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { Logger } from '../infrastructure/logger/index.js';
 import { resolveWorkspaceRoot } from '../runtime/task-resolver.js';
+import { RuntimeWriteGuard } from '../runtime/write-guard.js';
 import { Runtime } from '../runtime/runtime.js';
 import { RuntimeEmitter } from './emitter.js';
 import type { ToolName } from './tools.js';
@@ -17,6 +18,7 @@ const TOOL_HANDLERS: Record<ToolName, ToolHandler> = {
   'runtime.get_state': (runtime, args) => runtime.getState(args),
   'runtime.list_workflows': (runtime, args) => runtime.listWorkflows(args),
   'runtime.emit_event': (runtime, args) => runtime.emitEvent(args),
+  'runtime.reconcile': (runtime, args) => runtime.reconcile(args),
   'runtime.chat': (runtime, args) => runtime.chat(args),
   'debug.read_logs': (runtime, args) => runtime.readLogs(args)
 };
@@ -50,7 +52,7 @@ export async function handleToolCall(runtime: Runtime, name: string, args: Recor
     throw new Error(`Tool no soportada: ${name}`);
   }
   const result = await handler(runtime, args);
-  await emitEventIfPresent(result, args);
+  await emitEventIfPresent(result, args, workspaceRoot);
   return {
     content: [
       {
@@ -61,7 +63,11 @@ export async function handleToolCall(runtime: Runtime, name: string, args: Recor
   };
 }
 
-async function emitEventIfPresent(result: Record<string, unknown>, args: Record<string, unknown>): Promise<void> {
+async function emitEventIfPresent(
+  result: Record<string, unknown>,
+  args: Record<string, unknown>,
+  workspaceRoot: string | null
+): Promise<void> {
   const event = result.emitEvent as Record<string, unknown> | undefined;
   if (!event) {
     return;
@@ -70,6 +76,9 @@ async function emitEventIfPresent(result: Record<string, unknown>, args: Record<
   if (!eventsPath) {
     return;
   }
-  const emitter = new RuntimeEmitter(eventsPath);
+  const actor = typeof args.agent === 'string' ? args.agent : 'runtime';
+  const breakGlass = Boolean(args.breakGlass);
+  const writeGuard = workspaceRoot ? new RuntimeWriteGuard({ workspaceRoot, actor, breakGlass }) : undefined;
+  const emitter = new RuntimeEmitter(eventsPath, writeGuard);
   await emitter.emit(event as any);
 }

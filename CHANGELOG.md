@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.32.0-beta.10
+- fix(runtime): validate string inputs
+
 ## 1.32.0-beta.9
 - feat(mcp): add --workspace flag
 

@@ -54,6 +54,9 @@ export async function ensureInitTaskFile(taskPath: string, workspaceRoot: string
   const resolvedTaskPath = initResolution.resolvedPath;
   const exists = await fileExists(resolvedTaskPath);
   if (exists) {
+    if (workspaceRoot) {
+      await upsertCandidateIndexEntry(workspaceRoot, resolvedTaskPath);
+    }
     return { taskPath: resolvedTaskPath, created: false, warning: initResolution.warning };
   }
   if (!workspaceRoot) {
@@ -63,6 +66,7 @@ export async function ensureInitTaskFile(taskPath: string, workspaceRoot: string
   const template = await fs.readFile(templatePath, 'utf-8');
   await fs.mkdir(path.dirname(resolvedTaskPath), { recursive: true });
   await fs.writeFile(resolvedTaskPath, template);
+  await upsertCandidateIndexEntry(workspaceRoot, resolvedTaskPath);
   return { taskPath: resolvedTaskPath, created: true, warning: initResolution.warning };
 }
 
@@ -259,4 +263,68 @@ function buildInitCandidateFilename(): string {
   const trimmed = iso.replace(/\.\d{3}Z$/, 'Z');
   const sanitized = trimmed.replace(/:/g, '-');
   return `${sanitized}-init.md`;
+}
+
+const CANDIDATE_INDEX_MARKER = '<!-- AUTO-GENERATED: candidates -->';
+const DEFAULT_CANDIDATE_INDEX = `---
+id: artifacts.candidate.index
+owner: architect-agent
+version: 1.0.0
+severity: PERMANENT
+---
+
+# INDEX — Artifacts / Candidate
+
+## Objetivo
+Este fichero define el indice del dominio artifacts.candidate.
+Declara la carpeta base para candidates.
+
+## Aliases (YAML)
+\`\`\`yaml
+artifacts:
+  candidate:
+    dir: .agent/artifacts/candidate
+\`\`\`
+
+## Reglas
+- No declarar rutas de archivos canonicos aqui.
+- Los candidates son dinamicos y se generan por workflow.
+
+## Candidates (auto)
+${CANDIDATE_INDEX_MARKER}
+`;
+
+async function upsertCandidateIndexEntry(workspaceRoot: string, candidatePath: string): Promise<void> {
+  const indexPath = path.join(workspaceRoot, '.agent', 'artifacts', 'candidate', 'index.md');
+  const relativePath = toPosixPath(path.relative(workspaceRoot, candidatePath));
+  const entryLine = `- ${relativePath}`;
+
+  let content = '';
+  try {
+    content = await fs.readFile(indexPath, 'utf-8');
+  } catch {
+    content = DEFAULT_CANDIDATE_INDEX;
+  }
+
+  if (!content.includes(CANDIDATE_INDEX_MARKER)) {
+    content = `${content.trimEnd()}\n\n## Candidates (auto)\n${CANDIDATE_INDEX_MARKER}\n`;
+  }
+
+  if (!content.includes(entryLine)) {
+    const lines = content.split('\n');
+    const markerIndex = lines.findIndex((line) => line.trim() === CANDIDATE_INDEX_MARKER);
+    if (markerIndex === -1) {
+      lines.push(entryLine);
+    } else {
+      lines.splice(markerIndex + 1, 0, entryLine);
+    }
+    content = `${lines.join('\n')}\n`;
+  }
+
+  await fs.mkdir(path.dirname(indexPath), { recursive: true });
+  await fs.writeFile(indexPath, content);
+}
+
+function toPosixPath(value: string): string {
+  return value.split(path.sep).join('/');
 }

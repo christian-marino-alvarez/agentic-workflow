@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.30.0-beta.7
+- feat(init): index init candidates in artifacts/candidate/index.md
+- chore(artifacts): drop legacy artifacts from system structure
+
 ## [1.30.0-beta.6](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.29.0-beta.6...agentic-workflow-v1.30.0-beta.6) (2026-02-04)
 
 

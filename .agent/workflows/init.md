@@ -91,7 +91,11 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
 7. Escribir el fichero en:
    - `.agent/artifacts/candidate/<timestamp>-init.md`
 
-8. **Validar Gate con Runtime (OBLIGATORIO)**:
+8. Indexar el init candidate en:
+   - `artifacts.candidate.index`
+   - Registrar la ruta del nuevo init (`.agent/artifacts/candidate/<timestamp>-init.md`).
+
+9. **Validar Gate con Runtime (OBLIGATORIO)**:
    - **ANTES** de evaluar el Gate, el agente **DEBE** llamar a `runtime.validate_gate` con:
      - `taskPath`: `.agent/artifacts/candidate/<timestamp>-init.md`
      - `agent`: `architect-agent`
@@ -101,14 +105,14 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
    - Si Gate FAIL → ir a **Paso 9 (FAIL)**.
    - Si Gate PASS → continuar.
 
-9. FAIL (obligatorio)
+10. FAIL (obligatorio)
    - Declarar `init` como **NO completado**.
    - Explicar exactamente qué requisito falló.
    - Pedir la acción mínima necesaria.
    - **No preguntar por la tarea**.
    - Terminar el workflow en estado bloqueado.
 
-10. PASS (solo si Gate PASS)
+11. PASS (solo si Gate PASS)
     - Preguntar por la tarea:
       - "¿Qué tarea quieres iniciar ahora? Dame un título corto y el objetivo."
     - Una vez recibidos título y objetivo:
@@ -118,6 +122,8 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
 ## Output (REQUIRED)
 - Artefacto creado:
   - `.agent/artifacts/candidate/<timestamp>-init.md`
+- Index actualizado:
+  - `artifacts.candidate.index`
 
 ## Gate (REQUIRED)
 Requisitos (todos obligatorios):
@@ -136,6 +142,7 @@ Requisitos (todos obligatorios):
    - El agente ha verificado conectividad MCP (`runtime_chat`).
    - El agente ha llamado `runtime.run` para iniciar el workflow.
    - El agente ha llamado `runtime.validate_gate` antes de evaluar el Gate.
-7) No se cargaron índices fuera del set permitido (solo `.agent/index.md`, `agent.domains.rules.index`, `rules.constitution.index`).
-8) El Root Index `.agent/index.md` fue cargado antes de cualquier otro índice.
-9) **Auditoría de logs**: Los pasos del workflow deben estar registrados en el buffer de logs del runtime.
+7) El init candidate está indexado en `artifacts.candidate.index`.
+8) No se cargaron índices fuera del set permitido (solo `.agent/index.md`, `agent.domains.rules.index`, `rules.constitution.index`).
+9) El Root Index `.agent/index.md` fue cargado antes de cualquier otro índice.
+10) **Auditoría de logs**: Los pasos del workflow deben estar registrados en el buffer de logs del runtime.

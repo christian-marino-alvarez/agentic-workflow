@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.30.2-beta.6](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.30.1-beta.6...agentic-workflow-v1.30.2-beta.6) (2026-02-04)
+
+
+### Bug Fixes
+
+* **init:** align init workflow with timestamp candidates ([8cfea58](https://github.com/christian-marino-alvarez/agentic-workflow/commit/8cfea587ebeddeb8d4345813e46cf00fb09b1c99))
+
 ## 1.30.1-beta.7
 - fix(init): align init workflow with timestamp candidates
 

@@ -7,6 +7,10 @@
 
 * **init:** align init workflow with timestamp candidates ([8cfea58](https://github.com/christian-marino-alvarez/agentic-workflow/commit/8cfea587ebeddeb8d4345813e46cf00fb09b1c99))
 
+## 1.30.1-beta.8
+- fix(init): resolve workspace for relative candidate paths
+- fix(init): quote owner placeholder in init template
+
 ## 1.30.1-beta.7
 - fix(init): align init workflow with timestamp candidates
 

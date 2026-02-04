@@ -1,7 +1,7 @@
 ---
 id: task.init
 title: Initialization
-owner: {{architectAgentId}}
+owner: "{{architectAgentId}}"
 phase:
   current: init
 ---

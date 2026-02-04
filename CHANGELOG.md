@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.31.0-beta.9
+- feat(mcp): log workspace context per tool call
+
 ## 1.31.0-beta.8
 - feat(init): add non-interactive aliases
 

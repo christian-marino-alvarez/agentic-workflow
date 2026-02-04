@@ -1,4 +1,6 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { Logger } from '../infrastructure/logger/index.js';
+import { resolveWorkspaceRoot } from '../runtime/task-resolver.js';
 import { Runtime } from '../runtime/runtime.js';
 import { RuntimeEmitter } from './emitter.js';
 import type { ToolName } from './tools.js';
@@ -20,6 +22,22 @@ const TOOL_HANDLERS: Record<ToolName, ToolHandler> = {
 };
 
 export async function handleToolCall(runtime: Runtime, name: string, args: Record<string, unknown>): Promise<CallToolResult> {
+  const workspaceEnv = process.env.AGENTIC_WORKSPACE;
+  let workspaceRoot: string | null = null;
+  let workspaceError: string | null = null;
+  try {
+    workspaceRoot = resolveWorkspaceRoot(workspaceEnv);
+  } catch (error) {
+    workspaceError = error instanceof Error ? error.message : String(error);
+  }
+  Logger.info('MCP', 'Tool call received', {
+    tool: name,
+    cwd: process.cwd(),
+    workspaceEnv,
+    workspaceRoot,
+    workspaceError
+  });
+
   const handler = TOOL_HANDLERS[name as ToolName];
   if (!handler) {
     throw new Error(`Tool no soportada: ${name}`);

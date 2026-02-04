@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.31.0-beta.7
+- chore(release): ensure npm dist-tag is updated on publish
+
 ## [1.31.0-beta.6](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.30.2-beta.6...agentic-workflow-v1.31.0-beta.6) (2026-02-04)
 
 

@@ -1,5 +1,6 @@
 import { intro, outro, spinner, confirm, note } from '@clack/prompts';
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { detectAgentSystem } from '../../infrastructure/migration/detector.js';
 import {
@@ -176,6 +177,10 @@ async function persistWorkspaceRoot(cwd: string) {
   await fs.mkdir(runtimeDir, { recursive: true });
   const payload = { workspaceRoot: cwd };
   await fs.writeFile(configPath, JSON.stringify(payload, null, 2));
+
+  const globalConfigPath = path.join(os.homedir(), '.agentic-workflow', 'config.json');
+  await fs.mkdir(path.dirname(globalConfigPath), { recursive: true });
+  await fs.writeFile(globalConfigPath, JSON.stringify(payload, null, 2));
 }
 
 async function collectLegacyInitFiles(rootDir: string): Promise<string[]> {

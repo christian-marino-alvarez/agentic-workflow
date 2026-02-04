@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import fsSync from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import matter from 'gray-matter';
 
@@ -330,6 +331,11 @@ export function resolveWorkspaceRoot(inputPath?: string): string {
     return configured;
   }
 
+  const globalConfigured = loadWorkspaceConfigFromGlobal();
+  if (globalConfigured) {
+    return globalConfigured;
+  }
+
   let dir = process.cwd();
   while (dir !== path.dirname(dir)) {
     if (fsSync.existsSync(path.join(dir, '.agent'))) {
@@ -359,6 +365,32 @@ function loadWorkspaceConfigFromCwd(): string | null {
     dir = path.dirname(dir);
   }
   return null;
+}
+
+function loadWorkspaceConfigFromGlobal(): string | null {
+  const configPath = getGlobalWorkspaceConfigPath();
+  if (!configPath || !fsSync.existsSync(configPath)) {
+    return null;
+  }
+  try {
+    const raw = fsSync.readFileSync(configPath, 'utf-8');
+    const parsed = JSON.parse(raw) as { workspaceRoot?: string };
+    if (parsed.workspaceRoot && path.isAbsolute(parsed.workspaceRoot)) {
+      return parsed.workspaceRoot;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function getGlobalWorkspaceConfigPath(): string | null {
+  try {
+    const home = os.homedir();
+    return path.join(home, '.agentic-workflow', 'config.json');
+  } catch {
+    return null;
+  }
 }
 
 async function fileExists(targetPath: string): Promise<boolean> {

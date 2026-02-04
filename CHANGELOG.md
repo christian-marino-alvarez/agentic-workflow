@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.30.1-beta.6](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.30.0-beta.6...agentic-workflow-v1.30.1-beta.6) (2026-02-04)
+
+
+### Bug Fixes
+
+* **init:** normalize runtime.run candidate path ([bc11c79](https://github.com/christian-marino-alvarez/agentic-workflow/commit/bc11c799277cec46f22ee20bc7fcec31d0578acf))
+
 ## 1.30.0-beta.8
 - fix(init): normalize runtime.run candidate path and forbid legacy init.md
 

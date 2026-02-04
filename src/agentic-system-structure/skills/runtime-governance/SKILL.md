@@ -13,6 +13,11 @@ Cuando un workflow solicite "Verificar Trazabilidad", el arquitecto debe:
 1. Llamar a `runtime.chat` o `runtime.emit_event` con un mensaje de activación (ej: "Verifying traceability for session [ID]").
 2. Esperar la confirmación del runtime (`{status: "ok"}`).
 3. Solo tras recibir confirmación, registrar `traceability.verified: true` en el artefacto correspondiente.
+4. **Ruta obligatoria para init**:
+   - `runtime.run` **DEBE** llamarse con `taskPath: ".agent/artifacts/candidate"` (sin `/` final).
+   - **PROHIBIDO** usar:
+     - `.agent/artifacts/candidate/`
+     - `.agent/artifacts/candidate/init.md`
 
 ## 2. Huella Digital de Gobernanza (Obligatoria)
 

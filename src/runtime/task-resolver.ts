@@ -202,7 +202,7 @@ async function findWorkspaceRootFromDir(startDir: string): Promise<string | null
 }
 
 function isInitCandidatePath(taskPath: string): boolean {
-  const normalized = path.normalize(taskPath);
+  const normalized = trimTrailingSep(path.normalize(taskPath));
   const candidateDir = path.join('.agent', 'artifacts', 'candidate');
   if (normalized.endsWith(candidateDir)) {
     return true;
@@ -214,34 +214,14 @@ function isInitCandidatePath(taskPath: string): boolean {
   return false;
 }
 
-async function fileExists(targetPath: string): Promise<boolean> {
-  try {
-    await fs.access(targetPath);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function normalizeStrategy(strategy?: string): string | null {
-  if (!strategy) {
-    return null;
-  }
-  const normalized = strategy.trim().toLowerCase();
-  if (normalized === 'short') {
-    return 'tasklifecycle-short';
-  }
-  if (normalized === 'long') {
-    return 'tasklifecycle-long';
-  }
-  if (normalized === 'tasklifecycle-short' || normalized === 'tasklifecycle-long') {
-    return normalized;
-  }
-  return null;
+function isLegacyInitPath(taskPath: string): boolean {
+  const normalized = trimTrailingSep(path.normalize(taskPath));
+  const legacyInit = path.join('.agent', 'artifacts', 'candidate', 'init.md');
+  return normalized.endsWith(legacyInit);
 }
 
 function resolveInitCandidatePath(taskPath: string): { resolvedPath: string; warning?: string } {
-  const normalized = path.normalize(taskPath);
+  const normalized = trimTrailingSep(path.normalize(taskPath));
   const candidateDir = path.join('.agent', 'artifacts', 'candidate');
 
   if (normalized.endsWith(candidateDir)) {
@@ -250,12 +230,6 @@ function resolveInitCandidatePath(taskPath: string): { resolvedPath: string; war
   }
 
   return { resolvedPath: normalized };
-}
-
-function isLegacyInitPath(taskPath: string): boolean {
-  const normalized = path.normalize(taskPath);
-  const legacyInit = path.join('.agent', 'artifacts', 'candidate', 'init.md');
-  return normalized.endsWith(legacyInit);
 }
 
 function buildInitCandidateFilename(): string {
@@ -327,4 +301,37 @@ async function upsertCandidateIndexEntry(workspaceRoot: string, candidatePath: s
 
 function toPosixPath(value: string): string {
   return value.split(path.sep).join('/');
+}
+
+function trimTrailingSep(value: string): string {
+  if (value.length <= 1) {
+    return value;
+  }
+  return value.endsWith(path.sep) ? value.replace(new RegExp(`${path.sep}+$`), '') : value;
+}
+
+async function fileExists(targetPath: string): Promise<boolean> {
+  try {
+    await fs.access(targetPath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function normalizeStrategy(strategy?: string): string | null {
+  if (!strategy) {
+    return null;
+  }
+  const normalized = strategy.trim().toLowerCase();
+  if (normalized === 'short') {
+    return 'tasklifecycle-short';
+  }
+  if (normalized === 'long') {
+    return 'tasklifecycle-long';
+  }
+  if (normalized === 'tasklifecycle-short' || normalized === 'tasklifecycle-long') {
+    return normalized;
+  }
+  return null;
 }

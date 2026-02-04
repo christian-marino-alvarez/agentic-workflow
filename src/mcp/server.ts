@@ -34,7 +34,8 @@ async function createMcpServer(): Promise<Server> {
     },
     {
       capabilities: {
-        tools: {}
+        tools: {},
+        resources: {}
       }
     }
   );

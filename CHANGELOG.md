@@ -880,3 +880,7 @@
 * reestructurar src para extension vscode ([0de9db2](https://github.com/christian-marino-alvarez/agentic-workflow/commit/0de9db2))
 
 ## [1.18.0-beta.10](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.17.0-beta.10...agentic-workflow-v1.18.0-beta.10) (2026-01-25)
+# [1.36.0-beta.13] (2026-02-05)
+
+### Bug Fixes
+* **CLI**: Overwrite workflows on `init` to avoid legacy inconsistencies.

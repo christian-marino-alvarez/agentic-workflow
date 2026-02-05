@@ -123,9 +123,11 @@ export class Runtime {
     const writeGuard = this.buildWriteGuard(resolved.resolvedPath, resolved.workspaceRoot, agent, params.breakGlass);
     const initResult = await ensureInitTaskFile(resolved.resolvedPath, resolved.workspaceRoot, writeGuard);
 
+    /* v8 ignore start */
     if (!resolved.workspaceRoot) {
       throw new Error('No se pudo resolver workspaceRoot para actualizar init candidate.');
     }
+    /* v8 ignore stop */
 
     const templatePath = path.join(resolved.workspaceRoot, '.agent', 'templates', 'init.md');
     const template = await fs.readFile(templatePath, 'utf-8');

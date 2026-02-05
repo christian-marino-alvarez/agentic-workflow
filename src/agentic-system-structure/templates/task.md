@@ -27,6 +27,7 @@ strategy: {{task.strategy}}
 
 ## Estado del ciclo de vida (FUENTE ÚNICA DE VERDAD)
 
+<!-- RUNTIME:START task-state -->
 ```yaml
 task:
   id: "{{task.id}}"
@@ -113,6 +114,7 @@ task:
         validated_by: null
         validated_at: null
 ```
+<!-- RUNTIME:END -->
 
 ---
 

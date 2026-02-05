@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.37.0-beta.9](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.37.0-beta.8...agentic-workflow-v1.37.0-beta.9) (2026-02-05)
+
+
+### Bug Fixes
+
+* **runtime:** add runtime markers to task template to allow guarded writes
+
 ## [1.37.0-beta.8](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.36.2-beta.8...agentic-workflow-v1.37.0-beta.8) (2026-02-05)
 
 
@@ -56,6 +63,7 @@
 
 ### Bug Fixes
 
+* **runtime:** add runtime markers to task template to allow guarded writes
 * align init owner with architect-agent ([820fc3c](https://github.com/christian-marino-alvarez/agentic-workflow/commit/820fc3cd9b271d56064e7013f8f32b22481cb853))
 * **build:** exclude vscode extension from build ([6104370](https://github.com/christian-marino-alvarez/agentic-workflow/commit/610437024b286428a7cd56964291a2ee5928906f))
 * **cli:** handle null backup on reinit ([61fb7a5](https://github.com/christian-marino-alvarez/agentic-workflow/commit/61fb7a55496f435f75c0f93ef36278650cdfd3f1))
@@ -99,7 +107,6 @@
 * **runtime:** resolve relative paths in MCP server ([e7fc272](https://github.com/christian-marino-alvarez/agentic-workflow/commit/e7fc272bbaa6a4d9f27614bf78be657c856e91b5))
 * **runtime:** resolve relative paths in MCP server ([ac55d5d](https://github.com/christian-marino-alvarez/agentic-workflow/commit/ac55d5dbf3737ee8c800267987bdea19ca124b48))
 * **runtime:** validate string inputs ([6bebe64](https://github.com/christian-marino-alvarez/agentic-workflow/commit/6bebe6400efd105c9989fafe4805dace8fb449a4))
-
 ## [1.36.2-beta.8](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.36.2-beta.7...agentic-workflow-v1.36.2-beta.8) (2026-02-05)
 
 

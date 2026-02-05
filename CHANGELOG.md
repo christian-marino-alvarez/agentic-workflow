@@ -48,6 +48,7 @@
 * **vscode-extension:** add Lit core base, CSP fixes, logging, and setup view ([546444b](https://github.com/christian-marino-alvarez/agentic-workflow/commit/546444bab7a9b9f2d0ee44585cd026da5ca30ab5))
 * **workflow:** align init.md with runtime_integration constitution ([e5d38c6](https://github.com/christian-marino-alvarez/agentic-workflow/commit/e5d38c6987f692d580761456311e117d1beb802a))
 * **workflow:** align init.md with runtime_integration constitution ([f670f52](https://github.com/christian-marino-alvarez/agentic-workflow/commit/f670f5226e2d1a11eaf0b9c1d844c12fb0d25275))
+* **workflow:** derive implementation owner from brief ([ea5ae9f](https://github.com/christian-marino-alvarez/agentic-workflow/commit/ea5ae9fac566802b9c2f85c6a53ea1b20f0c8128))
 
 
 ### Bug Fixes

@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
+import { fileURLToPath } from 'node:url';
 
 interface McpServerConfig {
   command: string;
@@ -12,10 +13,23 @@ interface AntigravityConfig {
 }
 
 const AGENTIC_SERVER_NAME = 'agentic-workflow';
-const AGENTIC_MCP_CONFIG: McpServerConfig = {
-  command: 'agentic-workflow',
-  args: ['mcp']
-};
+async function resolveMcpConfig(): Promise<McpServerConfig> {
+  const currentDir = path.dirname(fileURLToPath(import.meta.url));
+  const packageRoot = path.resolve(currentDir, '..', '..', '..');
+  const localBin = path.join(packageRoot, 'bin', 'cli.js');
+
+  if (await fileExists(localBin)) {
+    return {
+      command: process.execPath,
+      args: [localBin, 'mcp']
+    };
+  }
+
+  return {
+    command: 'agentic-workflow',
+    args: ['mcp']
+  };
+}
 
 async function fileExists(filePath: string): Promise<boolean> {
   try {
@@ -26,7 +40,7 @@ async function fileExists(filePath: string): Promise<boolean> {
   }
 }
 
-async function registerAntigravity(): Promise<boolean> {
+async function registerAntigravity(mcpConfig: McpServerConfig): Promise<boolean> {
   const configPath = path.join(os.homedir(), '.gemini', 'antigravity', 'mcp_config.json');
   const configDir = path.dirname(configPath);
 
@@ -45,7 +59,7 @@ async function registerAntigravity(): Promise<boolean> {
       config.mcpServers = {};
     }
 
-    config.mcpServers[AGENTIC_SERVER_NAME] = AGENTIC_MCP_CONFIG;
+    config.mcpServers[AGENTIC_SERVER_NAME] = mcpConfig;
     await fs.writeFile(configPath, JSON.stringify(config, null, 2));
     console.log(`✅ Registered in Antigravity: ${configPath}`);
     return true;
@@ -55,7 +69,7 @@ async function registerAntigravity(): Promise<boolean> {
   }
 }
 
-async function registerCodex(): Promise<boolean> {
+async function registerCodex(mcpConfig: McpServerConfig): Promise<boolean> {
   const configPath = path.join(os.homedir(), '.codex', 'config.toml');
 
   try {
@@ -68,18 +82,21 @@ async function registerCodex(): Promise<boolean> {
 
     const serverSection = `[mcp_servers.${AGENTIC_SERVER_NAME}]`;
 
-    if (content.includes(serverSection)) {
-      console.log(`ℹ️  Already registered in Codex`);
-      return true;
-    }
-
     const mcpEntry = `
 ${serverSection}
-command = "${AGENTIC_MCP_CONFIG.command}"
-args = ${JSON.stringify(AGENTIC_MCP_CONFIG.args)}
+command = "${mcpConfig.command}"
+args = ${JSON.stringify(mcpConfig.args)}
 `;
 
-    content = content.trimEnd() + '\n' + mcpEntry;
+    if (content.includes(serverSection)) {
+      const sectionRegex = new RegExp(
+        `\\[mcp_servers\\.${AGENTIC_SERVER_NAME}\\][\\s\\S]*?(?=\\n\\[mcp_servers\\.|$)`,
+        'm'
+      );
+      content = content.replace(sectionRegex, mcpEntry.trim());
+    } else {
+      content = content.trimEnd() + '\n' + mcpEntry;
+    }
     await fs.writeFile(configPath, content);
     console.log(`✅ Registered in Codex: ${configPath}`);
     return true;
@@ -131,13 +148,15 @@ export async function registerMcpCommand(): Promise<void> {
 
   let success = false;
 
+  const mcpConfig = await resolveMcpConfig();
+
   if (hasAntigravity) {
-    const result = await registerAntigravity();
+    const result = await registerAntigravity(mcpConfig);
     success = success || result;
   }
 
   if (hasCodex) {
-    const result = await registerCodex();
+    const result = await registerCodex(mcpConfig);
     success = success || result;
   }
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.36.2-beta.7](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.36.1-beta.7...agentic-workflow-v1.36.2-beta.7) (2026-02-05)
+
+
+### Bug Fixes
+
+* **mcp:** clean codex config headers ([58e3d81](https://github.com/christian-marino-alvarez/agentic-workflow/commit/58e3d81e57bca7967142536b237ac86bba14b44d))
+
 ## [1.36.1-beta.7](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.36.0-beta.7...agentic-workflow-v1.36.1-beta.7) (2026-02-05)
 
 

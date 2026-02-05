@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.36.0-beta.7](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.35.0-beta.7...agentic-workflow-v1.36.0-beta.7) (2026-02-05)
+
+
+### Features
+
+* **mcp:** force local cli for registration ([a5b1f52](https://github.com/christian-marino-alvarez/agentic-workflow/commit/a5b1f52fb3fe224c2b22c33a14e05f7afd3d600c))
+
 ## [1.35.0-beta.7](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.34.1-beta.7...agentic-workflow-v1.35.0-beta.7) (2026-02-05)
 
 

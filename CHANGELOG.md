@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.37.0-beta.10](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.37.0-beta.9...agentic-workflow-v1.37.0-beta.10) (2026-02-05)
+
+
+### Bug Fixes
+
+* **mcp:** rename tool definitions to use underscores to satisfy regex validation (e.g. `runtime.run` -> `runtime_run`)
+
 ## [1.37.0-beta.9](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.37.0-beta.8...agentic-workflow-v1.37.0-beta.9) (2026-02-05)
 
 

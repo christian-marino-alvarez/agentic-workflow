@@ -6,6 +6,7 @@ import type { RuntimeEvent } from '../mcp/emitter.js';
 import { loadTask } from './task-loader.js';
 import { RuntimeWriteGuard } from './write-guard.js';
 import { collectArtifactHashes, diffHashes } from './reconcile.js';
+import { syncFrontmatterForTaskArtifacts } from './frontmatter-sync.js';
 import {
   collectWorkspaceCandidates,
   ensureInitTaskFile,
@@ -164,7 +165,7 @@ export class Runtime {
       throw new Error('Agent mismatch.');
     }
     if (expectedPhase && task.phase !== expectedPhase) {
-      Logger.warn('MCP', 'runtime.advance_phase expectedPhase mismatch; no phase update', {
+      Logger.error('MCP', 'runtime.advance_phase expectedPhase mismatch; phase likely updated outside runtime', {
         expectedPhase,
         taskPhase: task.phase,
         taskId: task.id
@@ -198,6 +199,14 @@ export class Runtime {
       };
     }
     const updated = await updateTaskPhase(resolved.resolvedPath, task.phase, nextPhase, agent, writeGuard);
+    await syncFrontmatterForTaskArtifacts({
+      workspaceRoot: resolved.workspaceRoot ?? path.dirname(resolved.resolvedPath),
+      taskId: task.id,
+      taskTitle: task.title,
+      owner: task.owner,
+      currentPhase: nextPhase,
+      writeGuard
+    });
     return {
       status: 'ok',
       previousPhase: task.phase,

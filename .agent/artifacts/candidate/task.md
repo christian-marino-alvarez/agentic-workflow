@@ -1,7 +1,6 @@
 ---
-id: task-20260205-auto-delegacion-role
-
-title: Delegacion automatica de roles
+id: task-20260205-runtime-headers-consistency
+title: Runtime actualiza cabeceras y evita desalineacion de fases
 owner: architect-agent
 strategy: short
 ---
@@ -9,8 +8,8 @@ strategy: short
 # Task (Template)
 
 ## Identificación
-- id: task-20260205-auto-delegacion-role
-- title: Delegacion automatica de roles
+- id: task-20260205-runtime-headers-consistency
+- title: Runtime actualiza cabeceras y evita desalineacion de fases
 - scope: candidate | current
 - owner: architect-agent
 
@@ -21,27 +20,32 @@ strategy: short
   - candidate_path: artifacts.candidate.task
 
 ## Descripción de la tarea
-Permitir que el architect-agent cambie automaticamente el rol activo cuando una tarea no corresponda al agente actual.
+Analizar el warning de `runtime.advance_phase` por `expectedPhase mismatch` y mover al runtime la actualización de cabeceras de artefactos para evitar incoherencias de fase.
 
 ## Objetivo
-Habilitar delegacion automatica bajo confirmacion del usuario, sin requerir que el usuario invoque manualmente al nuevo agente.
+Que el runtime actualice cabeceras de ficheros markdown de control para agilizar el flow y evitar desalineaciones de fase.
 
 ## Estado del ciclo de vida (FUENTE ÚNICA DE VERDAD)
 
 ```yaml
 task:
-  id: "task-20260205-auto-delegacion-role"
-  title: "Delegacion automatica de roles"
+  id: "task-20260205-runtime-headers-consistency"
+  title: "Runtime actualiza cabeceras y evita desalineacion de fases"
   strategy: "short"  # long | short
   artifacts:
     supplemental: []
   phase:
     current: "completed"
     validated_by: "architect-agent"
-    updated_at: "2026-02-05T07:32:07Z"
+    updated_at: "2026-02-05T07:47:28Z"
   delegation:
-    active_agent: "architect-agent"
-    history: []
+    active_agent: "neo-agent"
+    history:
+      - from: "architect-agent"
+        to: "neo-agent"
+        approved_by: "developer"
+        approved_at: "2026-02-05T07:41:24Z"
+        reason: "Delegado runtime headers update y mitigacion expectedPhase mismatch."
   lifecycle:
     phases:
       phase-0-acceptance-criteria:
@@ -100,21 +104,21 @@ task:
       short-phase-1-brief:
         completed: true
         validated_by: "architect-agent"
-        validated_at: "2026-02-05T07:28:56Z"
+        validated_at: "2026-02-05T07:40:43Z"
       short-phase-2-implementation:
         completed: true
         validated_by: "architect-agent"
-        validated_at: "2026-02-05T07:30:55Z"
+        validated_at: "2026-02-05T07:46:23Z"
       short-phase-3-closure:
         completed: true
         validated_by: "architect-agent"
-        validated_at: "2026-02-05T07:32:07Z"
+        validated_at: "2026-02-05T07:47:28Z"
 ```
 
 ---
 
 ## 2. Definición y Alcance (Contrato)
-- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/task-20260205-auto-delegacion-role/acceptance.md)
+- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/task-20260205-runtime-headers-consistency/acceptance.md)
 - **Alias**: `task.acceptance`
 
 ---

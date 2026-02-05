@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.34.0-beta.8
+- chore(release): manual beta publish
+
 ## 1.33.2-beta.8
 - feat(workflow): derive implementation owner from brief
 - chore: sync workflow artifacts and owner defaults

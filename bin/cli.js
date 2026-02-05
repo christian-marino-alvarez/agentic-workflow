@@ -14,6 +14,30 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'));
 
+function checkDevEnvironment() {
+  try {
+    const cwd = process.cwd();
+    const pkgPath = join(cwd, 'package.json');
+    // Check if we are in the repo
+    const cwdPkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
+    if (cwdPkg.name === '@christianmaf80/agentic-workflow') {
+      // We are in the repo. Check if we are running the local binary.
+      // __filename is the absolute path of the executing script.
+      if (!__filename.startsWith(cwd)) {
+        console.warn('\x1b[33m%s\x1b[0m', '--------------------------------------------------------------------------------');
+        console.warn('\x1b[33m%s\x1b[0m', '⚠️  WARNING: DEVELOPMENT ENVIRONMENT DETECTED');
+        console.warn('\x1b[33m%s\x1b[0m', '   You are running a global/external version of agentic-workflow inside the source repo.');
+        console.warn('\x1b[33m%s\x1b[0m', '   This may cause version mismatches (missing MCP tools, etc).');
+        console.warn('\x1b[33m%s\x1b[0m', '   PLEASE RUN: npm run dev:setup');
+        console.warn('\x1b[33m%s\x1b[0m', '--------------------------------------------------------------------------------');
+      }
+    }
+  } catch (e) {
+    // Ignore errors (e.g. no package.json in cwd), just proceed.
+  }
+}
+checkDevEnvironment();
+
 const program = new Command();
 
 program

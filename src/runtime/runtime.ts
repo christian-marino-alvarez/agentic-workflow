@@ -30,6 +30,18 @@ export type RuntimeActionParams = {
   event?: RuntimeEvent;
   limit?: number;
   breakGlass?: boolean;
+  command?: string;
+  constitutionPaths?: string[];
+  language?: string;
+  languageConfirmed?: boolean;
+  strategy?: string;
+  traceabilityVerified?: boolean;
+  traceabilityTool?: string;
+  traceabilityResponse?: string;
+  traceabilityTimestamp?: string;
+  runtimeStarted?: boolean;
+  taskId?: string;
+  taskPathValue?: string;
 };
 
 export type RuntimeState = {
@@ -87,6 +99,53 @@ export class Runtime {
 
     await this.writeState(statePath, state, writeGuard);
     return { status: 'ok', runId: state.runId, phase: state.phase, statePath };
+  }
+
+  async updateInit(params: RuntimeActionParams): Promise<Record<string, unknown>> {
+    const taskPath = requireString(params.taskPath, 'taskPath');
+    const agent = requireString(params.agent, 'agent');
+    Logger.info('MCP', 'Tool called: runtime.update_init', { taskPath, agent });
+
+    const command = requireString(params.command, 'command');
+    const constitutionPaths = requireStringArray(params.constitutionPaths, 'constitutionPaths');
+    const language = requireString(params.language, 'language');
+    const languageConfirmed = requireBoolean(params.languageConfirmed, 'languageConfirmed');
+    const strategy = requireString(params.strategy, 'strategy');
+    const traceabilityVerified = requireBoolean(params.traceabilityVerified, 'traceabilityVerified');
+    const traceabilityTool = requireString(params.traceabilityTool, 'traceabilityTool');
+    const traceabilityResponse = requireString(params.traceabilityResponse, 'traceabilityResponse');
+    const traceabilityTimestamp = requireString(params.traceabilityTimestamp, 'traceabilityTimestamp');
+    const runtimeStarted = requireBoolean(params.runtimeStarted, 'runtimeStarted');
+    const taskId = requireString(params.taskId, 'taskId');
+    const taskPathValue = requireString(params.taskPathValue, 'taskPathValue');
+
+    const resolved = await resolveTaskPath(taskPath);
+    const writeGuard = this.buildWriteGuard(resolved.resolvedPath, resolved.workspaceRoot, agent, params.breakGlass);
+    const initResult = await ensureInitTaskFile(resolved.resolvedPath, resolved.workspaceRoot, writeGuard);
+
+    if (!resolved.workspaceRoot) {
+      throw new Error('No se pudo resolver workspaceRoot para actualizar init candidate.');
+    }
+
+    const templatePath = path.join(resolved.workspaceRoot, '.agent', 'templates', 'init.md');
+    const template = await fs.readFile(templatePath, 'utf-8');
+    const hydrated = renderInitTemplate(template, {
+      command,
+      constitutionPaths,
+      language,
+      languageConfirmed,
+      strategy,
+      traceabilityVerified,
+      traceabilityTool,
+      traceabilityResponse,
+      traceabilityTimestamp,
+      runtimeStarted,
+      taskId,
+      taskPathValue
+    });
+
+    await writeGuard.writeFile(initResult.taskPath, hydrated);
+    return { status: 'ok', taskPath: initResult.taskPath };
   }
 
   async resume(params: RuntimeActionParams): Promise<Record<string, unknown>> {
@@ -414,6 +473,60 @@ function requireString(value: unknown, field: string): string {
     throw new Error(`${field} requerido`);
   }
   return value;
+}
+
+function requireBoolean(value: unknown, field: string): boolean {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  throw new Error(`Missing or invalid ${field}.`);
+}
+
+function requireStringArray(value: unknown, field: string): string[] {
+  if (Array.isArray(value) && value.every((item) => typeof item === 'string')) {
+    return value;
+  }
+  throw new Error(`Missing or invalid ${field}.`);
+}
+
+type InitTemplatePayload = {
+  command: string;
+  constitutionPaths: string[];
+  language: string;
+  languageConfirmed: boolean;
+  strategy: string;
+  traceabilityVerified: boolean;
+  traceabilityTool: string;
+  traceabilityResponse: string;
+  traceabilityTimestamp: string;
+  runtimeStarted: boolean;
+  taskId: string;
+  taskPathValue: string;
+};
+
+function renderInitTemplate(template: string, payload: InitTemplatePayload): string {
+  const replacements: Record<string, string> = {
+    '{{command}}': payload.command,
+    '{{constitutionPaths[0]}}': payload.constitutionPaths[0] ?? '',
+    '{{constitutionPaths[1]}}': payload.constitutionPaths[1] ?? '',
+    '{{constitutionPaths[2]}}': payload.constitutionPaths[2] ?? '',
+    '{{language}}': payload.language,
+    '{{languageConfirmed}}': String(payload.languageConfirmed),
+    '{{strategy}}': payload.strategy,
+    '{{traceabilityVerified}}': String(payload.traceabilityVerified),
+    '{{traceabilityTool}}': payload.traceabilityTool,
+    '{{traceabilityResponse}}': payload.traceabilityResponse,
+    '{{traceabilityTimestamp}}': payload.traceabilityTimestamp,
+    '{{runtimeStarted}}': String(payload.runtimeStarted),
+    '{{taskId}}': payload.taskId,
+    '{{taskPath}}': payload.taskPathValue
+  };
+
+  let output = template;
+  for (const [token, value] of Object.entries(replacements)) {
+    output = output.split(token).join(value);
+  }
+  return output;
 }
 
 function formatError(error: unknown): string {

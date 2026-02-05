@@ -10,6 +10,7 @@ type ToolHandler = (runtime: Runtime, args: Record<string, unknown>) => Promise<
 
 const TOOL_HANDLERS: Record<ToolName, ToolHandler> = {
   'runtime.run': (runtime, args) => runtime.run(args),
+  'runtime.update_init': (runtime, args) => runtime.updateInit(args),
   'runtime.resume': (runtime, args) => runtime.resume(args),
   'runtime.next_step': (runtime, args) => runtime.nextStep(args),
   'runtime.complete_step': (runtime) => runtime.completeStep(),

@@ -2,6 +2,7 @@ import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 
 export type ToolName =
   | 'runtime.run'
+  | 'runtime.update_init'
   | 'runtime.resume'
   | 'runtime.next_step'
   | 'runtime.complete_step'
@@ -27,6 +28,45 @@ export const MCP_TOOLS: Tool[] = [
         eventsPath: { type: 'string', description: 'Optional events file path' }
       },
       required: ['taskPath', 'agent']
+    }
+  },
+  {
+    name: 'runtime.update_init',
+    description: 'Fill init candidate template with runtime-provided values',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        taskPath: { type: 'string', description: 'Path to init candidate file' },
+        agent: { type: 'string', description: 'Agent identifier' },
+        command: { type: 'string', description: 'Init command invoked' },
+        constitutionPaths: { type: 'array', items: { type: 'string' } },
+        language: { type: 'string' },
+        languageConfirmed: { type: 'boolean' },
+        strategy: { type: 'string', description: 'long | short' },
+        traceabilityVerified: { type: 'boolean' },
+        traceabilityTool: { type: 'string' },
+        traceabilityResponse: { type: 'string' },
+        traceabilityTimestamp: { type: 'string' },
+        runtimeStarted: { type: 'boolean' },
+        taskId: { type: 'string' },
+        taskPathValue: { type: 'string' }
+      },
+      required: [
+        'taskPath',
+        'agent',
+        'command',
+        'constitutionPaths',
+        'language',
+        'languageConfirmed',
+        'strategy',
+        'traceabilityVerified',
+        'traceabilityTool',
+        'traceabilityResponse',
+        'traceabilityTimestamp',
+        'runtimeStarted',
+        'taskId',
+        'taskPathValue'
+      ]
     }
   },
   {

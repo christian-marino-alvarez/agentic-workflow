@@ -18,12 +18,16 @@ Cuando un workflow solicite "Verificar Trazabilidad", el arquitecto debe:
    - **PROHIBIDO** usar:
      - `.agent/artifacts/candidate/`
      - `.agent/artifacts/candidate/init.md`
+5. **Completar init vía Runtime (OBLIGATORIO)**:
+   - Tras `runtime.run`, llamar a `runtime.update_init` con los datos recolectados.
+   - El init candidate **NO** puede quedar con placeholders `{{...}}`.
 
 ## 2. Huella Digital de Gobernanza (Obligatoria)
 
 Antes de cada transición de fase (Gate), el arquitecto debe asegurar que los logs de stderr contienen la siguiente secuencia para el `runId` actual:
 
 1. `runtime_run`: Debe existir para la tarea activa.
+2. `runtime_update_init`: Debe existir para init antes de validar gate.
 2. `runtime_validate_gate`: Llamado antes del `notify_user` de fin de fase.
 3. `runtime_advance_phase`: Llamado inmediatamente después de recibir el "SI" del usuario.
 
@@ -33,6 +37,7 @@ El arquitecto debe comparar el estado del sistema de archivos con los logs obten
 
 - **Anomalía A**: Existe un artefacto de fase (ej: `planning.md`) cuyas marcas de tiempo son posteriores a un mensaje de chat de aprobación, pero **NO** hay registro de `runtime_advance_phase`.
 - **Anomalía B**: El archivo `task.md` marca un paso como completado (`[x]`) sin que el log de runtime muestre la actividad correspondiente en esa ventana temporal.
+- **Anomalía C (Init)**: El init candidate contiene placeholders `{{...}}` o no hay log de `runtime.update_init`.
 
 **Acción ante Bypass**:
 - Invalidar la fase actual.

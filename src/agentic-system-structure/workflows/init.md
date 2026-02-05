@@ -40,6 +40,9 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
 3.  **Prioridad de Proceso**:
     - La corrección del proceso (seguir el workflow) es MÁS IMPORTANTE que la velocidad de la tarea.
     - Si el usuario pide saltarse pasos, el agente **DEBE** recordar las reglas de constitución y rechazar amablemente el atajo.
+4.  **Escritura Solo Runtime (CRITICAL)**:
+    - El agente **TIENE PROHIBIDO** escribir o editar archivos bajo `.agent/` durante `init`.
+    - La creación y actualización de artefactos **DEBE** ejecutarse exclusivamente vía herramientas Runtime MCP.
 
 ## Pasos obligatorios
 0. **Verificar Trazabilidad e Iniciar Runtime (OBLIGATORIO)**:
@@ -81,9 +84,14 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
    - Preguntar al desarrollador:
      - "Por favor, selecciona la estrategia: **Long** (9 fases completas) o **Short** (3 fases simplificadas)."
    - Si no hay selección → ir a **Paso 9 (FAIL)**.
-   - Registrar la selección en el init candidate `<timestamp>-init.md`.
+   - Registrar la selección en el init candidate `<timestamp>-init.md` **vía runtime**.
+
+5.1 **Completar init candidate vía Runtime (OBLIGATORIO)**
+   - Llamar a `runtime.update_init` con los datos recolectados.
+   - El agente **NO** puede editar el fichero manualmente.
 
 6. **Crear el init candidate `<timestamp>-init.md` (OBLIGATORIO)**
+   - **SOLO Runtime**: La creación debe ocurrir vía `runtime.run`. El agente **NO** puede escribir el fichero.
    - El artefacto **DEBE** crearse usando **exactamente** la estructura definida en:
      - `templates.init`
    - Todos los campos obligatorios del template **DEBEN** completarse.
@@ -93,10 +101,12 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
 
 7. Escribir el fichero en:
    - `.agent/artifacts/candidate/<timestamp>-init.md`
+   - **Solo Runtime**: si el fichero aparece sin log de `runtime.run` → **FAIL** por bypass.
 
 8. Indexar el init candidate en:
    - `artifacts.candidate.index`
    - Registrar la ruta del nuevo init (`.agent/artifacts/candidate/<timestamp>-init.md`).
+   - **Solo Runtime**: cualquier edición manual del índice → **FAIL**.
 
 9. **Validar Gate con Runtime (OBLIGATORIO)**:
    - **ANTES** de evaluar el Gate, el agente **DEBE** llamar a `runtime.validate_gate` con:

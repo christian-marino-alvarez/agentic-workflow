@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.33.2-beta.7
+- Fix: init scaffolds skills to enable runtime-governance
+
 ## [1.33.2-beta.6](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.33.1-beta.6...agentic-workflow-v1.33.2-beta.6) (2026-02-04)
 
 

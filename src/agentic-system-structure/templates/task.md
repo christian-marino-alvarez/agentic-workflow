@@ -38,6 +38,9 @@ task:
     current: "phase-0-acceptance-criteria"
     validated_by: "architect-agent"
     updated_at: "{{timestamp}}"
+  delegation:
+    active_agent: "architect-agent"
+    history: []
   lifecycle:
     phases:
       phase-0-acceptance-criteria:
@@ -106,6 +109,12 @@ task:
         validated_by: null
         validated_at: null
 ```
+
+---
+
+## Registro de delegación
+- Cualquier cambio de agente **DEBE** registrarse en `task.delegation.history`.
+- La entrada mínima incluye: `from`, `to`, `approved_by`, `approved_at`, `reason`.
 
 ---
 

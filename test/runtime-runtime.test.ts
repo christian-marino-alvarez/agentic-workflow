@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
@@ -374,5 +374,116 @@ describe('Runtime', () => {
     const runtime = new Runtime();
     const result = await runtime.readLogs({});
     expect(Array.isArray(result.logs)).toBe(true);
+  });
+  describe('updateInit', () => {
+    it('updates init artifact with provided values', async () => {
+      const runtime = new Runtime();
+      const templatePath = path.join(workspace, '.agent', 'templates', 'init.md');
+      await fs.mkdir(path.dirname(templatePath), { recursive: true });
+      await fs.writeFile(templatePath, 'template content {{command}}');
+
+      const taskId = 'test-init-task';
+      const taskPath = `.agent/artifacts/candidate/${taskId}.md`;
+
+      const params = {
+        taskPath,
+        agent: 'architect-agent',
+        command: '/init',
+        constitutionPaths: ['path1', 'path2', 'path3'],
+        language: 'es',
+        languageConfirmed: true,
+        strategy: 'short',
+        traceabilityVerified: true,
+        traceabilityTool: 'tool',
+        traceabilityResponse: 'response',
+        traceabilityTimestamp: '2023-01-01',
+        runtimeStarted: true,
+        taskId: '123',
+        taskPathValue: 'task-path-value',
+        breakGlass: true
+      };
+
+      const result = await runtime.updateInit(params);
+
+      expect(result.status).toBe('ok');
+      const content = await fs.readFile(path.join(workspace, taskPath), 'utf-8');
+      expect(content).toContain('/init');
+    });
+
+    it('throws when languageConfirmed is not boolean', async () => {
+      const runtime = new Runtime();
+      const params = {
+        taskPath: 'task.md',
+        agent: 'agent',
+        command: '/init',
+        constitutionPaths: [],
+        language: 'en',
+        languageConfirmed: 'true' as any,
+        strategy: 'short',
+        traceabilityVerified: true,
+        traceabilityTool: 'tool',
+        traceabilityResponse: 'response',
+        traceabilityTimestamp: 'ts',
+        runtimeStarted: true,
+        taskId: 'id',
+        taskPathValue: 'path',
+        breakGlass: true
+      };
+      await expect(runtime.updateInit(params)).rejects.toThrow('Missing or invalid languageConfirmed');
+    });
+
+    it('throws when constitutionPaths is not string array', async () => {
+      const runtime = new Runtime();
+      const params = {
+        taskPath: 'task.md',
+        agent: 'agent',
+        command: '/init',
+        constitutionPaths: 'invalid' as any,
+        language: 'en',
+        languageConfirmed: true,
+        strategy: 'short',
+        traceabilityVerified: true,
+        traceabilityTool: 'tool',
+        traceabilityResponse: 'response',
+        traceabilityTimestamp: 'ts',
+        runtimeStarted: true,
+        taskId: 'id',
+        taskPathValue: 'path',
+        breakGlass: true
+      };
+      await expect(runtime.updateInit(params)).rejects.toThrow('Missing or invalid constitutionPaths');
+    });
+
+    it('updates init artifact with minimal params', async () => {
+      const runtime = new Runtime();
+      const templatePath = path.join(workspace, '.agent', 'templates', 'init.md');
+      await fs.mkdir(path.dirname(templatePath), { recursive: true });
+      await fs.writeFile(templatePath, 'template content {{command}}');
+
+      const taskId = 'test-init-task-min';
+      const taskPath = `.agent/artifacts/candidate/${taskId}.md`;
+
+      const params = {
+        taskPath,
+        agent: 'architect-agent',
+        command: '/init',
+        constitutionPaths: [], // Empty array triggers fallback
+        language: 'es',
+        languageConfirmed: true,
+        strategy: 'short',
+        traceabilityVerified: true,
+        traceabilityTool: 'tool',
+        traceabilityResponse: 'response',
+        traceabilityTimestamp: '2023-01-01',
+        runtimeStarted: true,
+        taskId: '123',
+        taskPathValue: 'path',
+        breakGlass: true
+      };
+
+      const result = await runtime.updateInit(params);
+
+      expect(result.status).toBe('ok');
+    });
   });
 });

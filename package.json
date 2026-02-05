@@ -1,6 +1,6 @@
 {
   "name": "@christianmaf80/agentic-workflow",
-  "version": "1.38.0-beta.9",
+  "version": "1.38.0-beta.10",
   "description": "Portable agentic workflow orchestration system with strict identity and gate discipline",
   "type": "module",
   "displayName": "Agentic Workflow",
@@ -63,7 +63,10 @@
     "lint": "eslint src",
     "test": "vscode-test",
     "test:coverage": "npm run build && vitest run --exclude test/chatkit-protocol.test.js --exclude test/view-templates.test.js --coverage --coverage.include='src/runtime/**' --coverage.include='src/mcp/**' --coverage.thresholds.lines=100 --coverage.thresholds.functions=100 --coverage.thresholds.branches=100 --coverage.thresholds.statements=100",
-    "package": "npm pack && mv *.tgz .backups/npm-packages/"
+    "package": "npm pack && mv *.tgz .backups/npm-packages/",
+    "dev:setup": "npm run build && npm link",
+    "dev:refresh": "npm run build",
+    "dev:clean": "npm run clean && rm -rf dist node_modules && npm install"
   },
   "repository": {
     "type": "git",
@@ -85,7 +88,7 @@
   "author": "Christian Marino Alvarez",
   "license": "ISC",
   "dependencies": {
-    "@christianmaf80/agentic-workflow": "^1.36.0-beta.11",
+    "@christianmaf80/agentic-workflow": "^1.37.0-beta.9",
     "@clack/prompts": "^0.7.0",
     "@modelcontextprotocol/sdk": "^1.25.3",
     "commander": "^11.1.0",

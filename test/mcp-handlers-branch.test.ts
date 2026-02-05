@@ -18,7 +18,7 @@ describe('mcp handlers workspace error branch', () => {
     } as any;
     const base = await fs.mkdtemp(path.join(os.tmpdir(), 'agentic-mcp-branch-'));
     const eventsPath = path.join(base, 'events.jsonl');
-    const result = await handleToolCall(runtime, 'runtime.emit_event', { eventsPath });
+    const result = await handleToolCall(runtime, 'runtime_emit_event', { eventsPath });
     expect(result.content[0].text).toContain('custom');
   });
 });

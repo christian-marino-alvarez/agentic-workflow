@@ -33,8 +33,9 @@ templates:
   supplemental_report: .agent/templates/supplemental-report.md
 
   # Templates del ciclo Short
-  brief: .agent/templates/brief.md
-  closure: .agent/templates/closure.md
+  analisis: .agent/templates/analisis.md
+  plan: .agent/templates/plan.md
+  qa_results: .agent/templates/qa-results.md
 ```
 
 ## Reglas

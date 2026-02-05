@@ -1,22 +1,23 @@
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 
 export type ToolName =
-  | 'runtime.run'
-  | 'runtime.resume'
-  | 'runtime.next_step'
-  | 'runtime.complete_step'
-  | 'runtime.validate_gate'
-  | 'runtime.advance_phase'
-  | 'runtime.get_state'
-  | 'runtime.list_workflows'
-  | 'runtime.emit_event'
-  | 'runtime.reconcile'
-  | 'runtime.chat'
-  | 'debug.read_logs';
+  | 'runtime_run'
+  | 'runtime_update_init'
+  | 'runtime_resume'
+  | 'runtime_next_step'
+  | 'runtime_complete_step'
+  | 'runtime_validate_gate'
+  | 'runtime_advance_phase'
+  | 'runtime_get_state'
+  | 'runtime_list_workflows'
+  | 'runtime_emit_event'
+  | 'runtime_reconcile'
+  | 'runtime_chat'
+  | 'debug_read_logs';
 
 export const MCP_TOOLS: Tool[] = [
   {
-    name: 'runtime.run',
+    name: 'runtime_run',
     description: 'Start a new workflow runtime execution',
     inputSchema: {
       type: 'object',
@@ -30,7 +31,46 @@ export const MCP_TOOLS: Tool[] = [
     }
   },
   {
-    name: 'runtime.resume',
+    name: 'runtime_update_init',
+    description: 'Fill init candidate template with runtime-provided values',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        taskPath: { type: 'string', description: 'Path to init candidate file' },
+        agent: { type: 'string', description: 'Agent identifier' },
+        command: { type: 'string', description: 'Init command invoked' },
+        constitutionPaths: { type: 'array', items: { type: 'string' } },
+        language: { type: 'string' },
+        languageConfirmed: { type: 'boolean' },
+        strategy: { type: 'string', description: 'long | short' },
+        traceabilityVerified: { type: 'boolean' },
+        traceabilityTool: { type: 'string' },
+        traceabilityResponse: { type: 'string' },
+        traceabilityTimestamp: { type: 'string' },
+        runtimeStarted: { type: 'boolean' },
+        taskId: { type: 'string' },
+        taskPathValue: { type: 'string' }
+      },
+      required: [
+        'taskPath',
+        'agent',
+        'command',
+        'constitutionPaths',
+        'language',
+        'languageConfirmed',
+        'strategy',
+        'traceabilityVerified',
+        'traceabilityTool',
+        'traceabilityResponse',
+        'traceabilityTimestamp',
+        'runtimeStarted',
+        'taskId',
+        'taskPathValue'
+      ]
+    }
+  },
+  {
+    name: 'runtime_resume',
     description: 'Resume workflow runtime execution',
     inputSchema: {
       type: 'object',
@@ -44,7 +84,7 @@ export const MCP_TOOLS: Tool[] = [
     }
   },
   {
-    name: 'runtime.next_step',
+    name: 'runtime_next_step',
     description: 'Advance runtime one step',
     inputSchema: {
       type: 'object',
@@ -58,7 +98,7 @@ export const MCP_TOOLS: Tool[] = [
     }
   },
   {
-    name: 'runtime.complete_step',
+    name: 'runtime_complete_step',
     description: 'Acknowledge step completion',
     inputSchema: {
       type: 'object',
@@ -66,7 +106,7 @@ export const MCP_TOOLS: Tool[] = [
     }
   },
   {
-    name: 'runtime.validate_gate',
+    name: 'runtime_validate_gate',
     description: 'Validate a workflow gate',
     inputSchema: {
       type: 'object',
@@ -79,7 +119,7 @@ export const MCP_TOOLS: Tool[] = [
     }
   },
   {
-    name: 'runtime.advance_phase',
+    name: 'runtime_advance_phase',
     description: 'Advance to the next workflow phase',
     inputSchema: {
       type: 'object',
@@ -93,7 +133,7 @@ export const MCP_TOOLS: Tool[] = [
     }
   },
   {
-    name: 'runtime.get_state',
+    name: 'runtime_get_state',
     description: 'Read runtime state from statePath',
     inputSchema: {
       type: 'object',
@@ -104,7 +144,7 @@ export const MCP_TOOLS: Tool[] = [
     }
   },
   {
-    name: 'runtime.list_workflows',
+    name: 'runtime_list_workflows',
     description: 'List available workflows',
     inputSchema: {
       type: 'object',
@@ -114,7 +154,7 @@ export const MCP_TOOLS: Tool[] = [
     }
   },
   {
-    name: 'runtime.emit_event',
+    name: 'runtime_emit_event',
     description: 'Emit a runtime event',
     inputSchema: {
       type: 'object',
@@ -126,7 +166,7 @@ export const MCP_TOOLS: Tool[] = [
     }
   },
   {
-    name: 'runtime.reconcile',
+    name: 'runtime_reconcile',
     description: 'Reconcile out-of-band changes; block if manual resolution is required',
     inputSchema: {
       type: 'object',
@@ -140,7 +180,7 @@ export const MCP_TOOLS: Tool[] = [
     }
   },
   {
-    name: 'runtime.chat',
+    name: 'runtime_chat',
     description: 'Send a chat message to the runtime',
     inputSchema: {
       type: 'object',
@@ -153,7 +193,7 @@ export const MCP_TOOLS: Tool[] = [
     }
   },
   {
-    name: 'debug.read_logs',
+    name: 'debug_read_logs',
     description: 'Read runtime debug logs',
     inputSchema: {
       type: 'object',

@@ -27,6 +27,7 @@ strategy: {{task.strategy}}
 
 ## Estado del ciclo de vida (FUENTE ÚNICA DE VERDAD)
 
+<!-- RUNTIME:START task-state -->
 ```yaml
 task:
   id: "{{task.id}}"
@@ -96,19 +97,24 @@ task:
             completed: false
             validated_by: null
             validated_at: null
-      short-phase-1-brief:
+      short-phase-1-analisis:
         completed: false
         validated_by: null
         validated_at: null
-      short-phase-2-implementation:
+      short-phase-2-plan:
         completed: false
         validated_by: null
         validated_at: null
-      short-phase-3-closure:
+      short-phase-3-implementation:
+        completed: false
+        validated_by: null
+        validated_at: null
+      short-phase-4-qa-results:
         completed: false
         validated_by: null
         validated_at: null
 ```
+<!-- RUNTIME:END -->
 
 ---
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.38.0-beta.10](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.38.0-beta.9...agentic-workflow-v1.38.0-beta.10) (2026-02-05)
+
+
+### Bug Fixes
+
+* **mcp:** rename tool definitions to use underscores to satisfy regex validation (e.g. `runtime.run` -> `runtime_run`)
+
+
 ## [1.38.0-beta.9](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.37.0-beta.9...agentic-workflow-v1.38.0-beta.9) (2026-02-05)
 
 
@@ -52,10 +60,14 @@
 * **workflow:** align init.md with runtime_integration constitution ([f670f52](https://github.com/christian-marino-alvarez/agentic-workflow/commit/f670f5226e2d1a11eaf0b9c1d844c12fb0d25275))
 * **workflow:** derive implementation owner from brief ([ea5ae9f](https://github.com/christian-marino-alvarez/agentic-workflow/commit/ea5ae9fac566802b9c2f85c6a53ea1b20f0c8128))
 * **workflows:** update short lifecycle to 4 phases ([30d2a84](https://github.com/christian-marino-alvarez/agentic-workflow/commit/30d2a84608a08c161fb7ea69d0b18c30bd26852c))
+>>>>>>> origin/develop
 
 
 ### Bug Fixes
 
+<<<<<<< HEAD
+* **mcp:** rename tool definitions to use underscores to satisfy regex validation (e.g. `runtime.run` -> `runtime_run`)
+=======
 * align init owner with architect-agent ([820fc3c](https://github.com/christian-marino-alvarez/agentic-workflow/commit/820fc3cd9b271d56064e7013f8f32b22481cb853))
 * **build:** exclude vscode extension from build ([6104370](https://github.com/christian-marino-alvarez/agentic-workflow/commit/610437024b286428a7cd56964291a2ee5928906f))
 * **cli:** handle null backup on reinit ([61fb7a5](https://github.com/christian-marino-alvarez/agentic-workflow/commit/61fb7a55496f435f75c0f93ef36278650cdfd3f1))
@@ -100,6 +112,7 @@
 * **runtime:** resolve relative paths in MCP server ([e7fc272](https://github.com/christian-marino-alvarez/agentic-workflow/commit/e7fc272bbaa6a4d9f27614bf78be657c856e91b5))
 * **runtime:** resolve relative paths in MCP server ([ac55d5d](https://github.com/christian-marino-alvarez/agentic-workflow/commit/ac55d5dbf3737ee8c800267987bdea19ca124b48))
 * **runtime:** validate string inputs ([6bebe64](https://github.com/christian-marino-alvarez/agentic-workflow/commit/6bebe6400efd105c9989fafe4805dace8fb449a4))
+>>>>>>> origin/develop
 
 ## [1.37.0-beta.9](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.37.0-beta.8...agentic-workflow-v1.37.0-beta.9) (2026-02-05)
 

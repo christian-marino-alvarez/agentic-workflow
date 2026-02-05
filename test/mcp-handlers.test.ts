@@ -87,7 +87,7 @@ describe('MCP handlers', () => {
   it('emits phase_updated on advance_phase', async () => {
     const runtime = new Runtime();
     const eventsPath = path.join(workspace, '.agent', 'runtime', 'events.jsonl');
-    await handleToolCall(runtime, 'runtime.advance_phase', {
+    await handleToolCall(runtime, 'runtime_advance_phase', {
       taskPath: '.agent/artifacts/candidate/task.md',
       agent: 'architect-agent',
       eventsPath,
@@ -101,13 +101,13 @@ describe('MCP handlers', () => {
 
   it('unknown tool throws', async () => {
     const runtime = new Runtime();
-    await expect(handleToolCall(runtime, 'runtime.unknown', {})).rejects.toThrow('Tool no soportada');
+    await expect(handleToolCall(runtime, 'runtime_unknown', {})).rejects.toThrow('Tool no soportada');
   });
 
   it('runtime.emit_event writes to events', async () => {
     const runtime = new Runtime();
     const eventsPath = path.join(workspace, '.agent', 'runtime', 'events.jsonl');
-    await handleToolCall(runtime, 'runtime.emit_event', {
+    await handleToolCall(runtime, 'runtime_emit_event', {
       event: { type: 'custom', timestamp: new Date().toISOString(), runId: 'x' },
       eventsPath,
       agent: 'architect-agent',
@@ -118,10 +118,10 @@ describe('MCP handlers', () => {
     expect(parsed.some((event) => event.type === 'custom')).toBe(true);
   });
 
-  it('emits chat_message on runtime.chat', async () => {
+  it('emits chat_message on runtime_chat', async () => {
     const runtime = new Runtime();
     const eventsPath = path.join(workspace, '.agent', 'runtime', 'events.jsonl');
-    await handleToolCall(runtime, 'runtime.chat', {
+    await handleToolCall(runtime, 'runtime_chat', {
       message: 'hello',
       role: 'assistant',
       eventsPath,
@@ -135,7 +135,7 @@ describe('MCP handlers', () => {
 
   it('handles emitEvent without eventsPath', async () => {
     const runtime = new Runtime();
-    const result = await handleToolCall(runtime, 'runtime.emit_event', {
+    const result = await handleToolCall(runtime, 'runtime_emit_event', {
       event: { type: 'custom', timestamp: new Date().toISOString(), runId: 'x' }
     });
     expect(result.content[0].text).toContain('custom');
@@ -153,7 +153,7 @@ describe('MCP handlers', () => {
     process.env.HOME = home;
     try {
       const eventsPath = path.join(isolated, 'events.jsonl');
-      const result = await handleToolCall(runtime, 'runtime.emit_event', {
+      const result = await handleToolCall(runtime, 'runtime_emit_event', {
         event: { type: 'custom', timestamp: new Date().toISOString(), runId: 'x' },
         eventsPath
       });
@@ -196,18 +196,18 @@ describe('MCP handlers', () => {
       readLogs: vi.fn(async () => ({ logs: [] }))
     } as any;
 
-    await handleToolCall(runtime, 'runtime.run', { taskPath: 'task.md', agent: 'architect-agent' });
-    await handleToolCall(runtime, 'runtime.resume', { taskPath: 'task.md', agent: 'architect-agent' });
-    await handleToolCall(runtime, 'runtime.next_step', { taskPath: 'task.md', agent: 'architect-agent' });
-    await handleToolCall(runtime, 'runtime.complete_step', {});
-    await handleToolCall(runtime, 'runtime.validate_gate', { taskPath: 'task.md', agent: 'architect-agent' });
-    await handleToolCall(runtime, 'runtime.advance_phase', { taskPath: 'task.md', agent: 'architect-agent' });
-    await handleToolCall(runtime, 'runtime.get_state', { statePath: 'state.json' });
-    await handleToolCall(runtime, 'runtime.list_workflows', { workflowsRoot: workspace });
-    await handleToolCall(runtime, 'runtime.emit_event', { eventsPath, agent: 'architect-agent', breakGlass: true });
-    await handleToolCall(runtime, 'runtime.reconcile', { taskPath: 'task.md', agent: 'architect-agent' });
-    await handleToolCall(runtime, 'runtime.chat', { message: 'ping' });
-    await handleToolCall(runtime, 'debug.read_logs', {});
+    await handleToolCall(runtime, 'runtime_run', { taskPath: 'task.md', agent: 'architect-agent' });
+    await handleToolCall(runtime, 'runtime_resume', { taskPath: 'task.md', agent: 'architect-agent' });
+    await handleToolCall(runtime, 'runtime_next_step', { taskPath: 'task.md', agent: 'architect-agent' });
+    await handleToolCall(runtime, 'runtime_complete_step', {});
+    await handleToolCall(runtime, 'runtime_validate_gate', { taskPath: 'task.md', agent: 'architect-agent' });
+    await handleToolCall(runtime, 'runtime_advance_phase', { taskPath: 'task.md', agent: 'architect-agent' });
+    await handleToolCall(runtime, 'runtime_get_state', { statePath: 'state.json' });
+    await handleToolCall(runtime, 'runtime_list_workflows', { workflowsRoot: workspace });
+    await handleToolCall(runtime, 'runtime_emit_event', { eventsPath, agent: 'architect-agent', breakGlass: true });
+    await handleToolCall(runtime, 'runtime_reconcile', { taskPath: 'task.md', agent: 'architect-agent' });
+    await handleToolCall(runtime, 'runtime_chat', { message: 'ping' });
+    await handleToolCall(runtime, 'debug_read_logs', {});
 
     expect(runtime.run).toHaveBeenCalled();
     expect(runtime.readLogs).toHaveBeenCalled();

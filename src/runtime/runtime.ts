@@ -30,6 +30,18 @@ export type RuntimeActionParams = {
   event?: RuntimeEvent;
   limit?: number;
   breakGlass?: boolean;
+  command?: string;
+  constitutionPaths?: string[];
+  language?: string;
+  languageConfirmed?: boolean;
+  strategy?: string;
+  traceabilityVerified?: boolean;
+  traceabilityTool?: string;
+  traceabilityResponse?: string;
+  traceabilityTimestamp?: string;
+  runtimeStarted?: boolean;
+  taskId?: string;
+  taskPathValue?: string;
 };
 
 export type RuntimeState = {
@@ -51,7 +63,7 @@ export class Runtime {
   async run(params: RuntimeActionParams): Promise<Record<string, unknown>> {
     const taskPath = requireString(params.taskPath, 'taskPath');
     const agent = requireString(params.agent, 'agent');
-    Logger.info('MCP', 'Tool called: runtime.run', { taskPath, agent });
+    Logger.info('MCP', 'Tool called: runtime_run', { taskPath, agent });
 
     const resolved = await resolveTaskPath(taskPath);
     const writeGuard = this.buildWriteGuard(resolved.resolvedPath, resolved.workspaceRoot, agent, params.breakGlass);
@@ -89,10 +101,59 @@ export class Runtime {
     return { status: 'ok', runId: state.runId, phase: state.phase, statePath };
   }
 
+  async updateInit(params: RuntimeActionParams): Promise<Record<string, unknown>> {
+    const taskPath = requireString(params.taskPath, 'taskPath');
+    const agent = requireString(params.agent, 'agent');
+    Logger.info('MCP', 'Tool called: runtime_update_init', { taskPath, agent });
+
+    const command = requireString(params.command, 'command');
+    const constitutionPaths = requireStringArray(params.constitutionPaths, 'constitutionPaths');
+    const language = requireString(params.language, 'language');
+    const languageConfirmed = requireBoolean(params.languageConfirmed, 'languageConfirmed');
+    const strategy = requireString(params.strategy, 'strategy');
+    const traceabilityVerified = requireBoolean(params.traceabilityVerified, 'traceabilityVerified');
+    const traceabilityTool = requireString(params.traceabilityTool, 'traceabilityTool');
+    const traceabilityResponse = requireString(params.traceabilityResponse, 'traceabilityResponse');
+    const traceabilityTimestamp = requireString(params.traceabilityTimestamp, 'traceabilityTimestamp');
+    const runtimeStarted = requireBoolean(params.runtimeStarted, 'runtimeStarted');
+    const taskId = requireString(params.taskId, 'taskId');
+    const taskPathValue = requireString(params.taskPathValue, 'taskPathValue');
+
+    const resolved = await resolveTaskPath(taskPath);
+    const writeGuard = this.buildWriteGuard(resolved.resolvedPath, resolved.workspaceRoot, agent, params.breakGlass);
+    const initResult = await ensureInitTaskFile(resolved.resolvedPath, resolved.workspaceRoot, writeGuard);
+
+    /* v8 ignore start */
+    if (!resolved.workspaceRoot) {
+      throw new Error('No se pudo resolver workspaceRoot para actualizar init candidate.');
+    }
+    /* v8 ignore stop */
+
+    const templatePath = path.join(resolved.workspaceRoot, '.agent', 'templates', 'init.md');
+    const template = await fs.readFile(templatePath, 'utf-8');
+    const hydrated = renderInitTemplate(template, {
+      command,
+      constitutionPaths,
+      language,
+      languageConfirmed,
+      strategy,
+      traceabilityVerified,
+      traceabilityTool,
+      traceabilityResponse,
+      traceabilityTimestamp,
+      runtimeStarted,
+      taskId,
+      taskPathValue
+    });
+
+    await writeGuard.writeFile(initResult.taskPath, hydrated);
+    return { status: 'ok', taskPath: initResult.taskPath };
+  }
+
   async resume(params: RuntimeActionParams): Promise<Record<string, unknown>> {
     const taskPath = requireString(params.taskPath, 'taskPath');
     const agent = requireString(params.agent, 'agent');
-    Logger.info('MCP', 'Tool called: runtime.resume', { taskPath, agent });
+    Logger.info('MCP', 'Tool called: runtime_resume', { taskPath, agent });
 
     const resolved = await resolveTaskPath(taskPath);
     const task = await loadTask(resolved.resolvedPath);
@@ -109,7 +170,7 @@ export class Runtime {
   async nextStep(params: RuntimeActionParams): Promise<Record<string, unknown>> {
     const taskPath = requireString(params.taskPath, 'taskPath');
     const agent = requireString(params.agent, 'agent');
-    Logger.info('MCP', 'Tool called: runtime.next_step', { taskPath, agent });
+    Logger.info('MCP', 'Tool called: runtime_next_step', { taskPath, agent });
 
     const resolved = await resolveTaskPath(taskPath);
     const writeGuard = this.buildWriteGuard(resolved.resolvedPath, resolved.workspaceRoot, agent, params.breakGlass);
@@ -130,7 +191,7 @@ export class Runtime {
   }
 
   async completeStep(): Promise<Record<string, unknown>> {
-    Logger.info('MCP', 'Tool called: runtime.complete_step');
+    Logger.info('MCP', 'Tool called: runtime_complete_step');
     this.clearCache();
     return { status: 'ok', message: 'Step completion acknowledged.' };
   }
@@ -139,7 +200,7 @@ export class Runtime {
     const taskPath = requireString(params.taskPath, 'taskPath');
     const agent = requireString(params.agent, 'agent');
     const expectedPhase = params.expectedPhase;
-    Logger.info('MCP', 'Tool called: runtime.validate_gate', { taskPath, agent, expectedPhase });
+    Logger.info('MCP', 'Tool called: runtime_validate_gate', { taskPath, agent, expectedPhase });
 
     const resolved = await resolveTaskPath(taskPath);
     const task = await loadTask(resolved.resolvedPath);
@@ -156,7 +217,7 @@ export class Runtime {
     const taskPath = requireString(params.taskPath, 'taskPath');
     const agent = requireString(params.agent, 'agent');
     const expectedPhase = params.expectedPhase;
-    Logger.info('MCP', 'Tool called: runtime.advance_phase', { taskPath, agent, expectedPhase: expectedPhase ?? null });
+    Logger.info('MCP', 'Tool called: runtime_advance_phase', { taskPath, agent, expectedPhase: expectedPhase ?? null });
 
     const resolved = await resolveTaskPath(taskPath);
     const writeGuard = this.buildWriteGuard(resolved.resolvedPath, resolved.workspaceRoot, agent, params.breakGlass);
@@ -165,7 +226,7 @@ export class Runtime {
       throw new Error('Agent mismatch.');
     }
     if (expectedPhase && task.phase !== expectedPhase) {
-      Logger.error('MCP', 'runtime.advance_phase expectedPhase mismatch; phase likely updated outside runtime', {
+      Logger.error('MCP', 'runtime_advance_phase expectedPhase mismatch; phase likely updated outside runtime', {
         expectedPhase,
         taskPhase: task.phase,
         taskId: task.id
@@ -184,7 +245,7 @@ export class Runtime {
       nextPhase = await resolveNextPhase(workflowsRoot, task.phase, task.strategy);
     } catch (error) {
       const warning = formatError(error);
-      Logger.warn('MCP', 'runtime.advance_phase could not resolve next phase; no phase update', {
+      Logger.warn('MCP', 'runtime_advance_phase could not resolve next phase; no phase update', {
         taskPhase: task.phase,
         taskId: task.id,
         strategy: task.strategy ?? null,
@@ -225,7 +286,7 @@ export class Runtime {
 
   async getState(params: RuntimeActionParams): Promise<Record<string, unknown>> {
     const statePath = requireString(params.statePath, 'statePath');
-    Logger.info('MCP', 'Tool called: runtime.get_state', { statePath });
+    Logger.info('MCP', 'Tool called: runtime_get_state', { statePath });
     const state = await this.readState(statePath);
     if (!state) {
       throw new Error('No state found.');
@@ -245,7 +306,7 @@ export class Runtime {
 
   async listWorkflows(params: RuntimeActionParams): Promise<Record<string, unknown>> {
     const workflowsRoot = params.workflowsRoot ?? (await resolveDefaultWorkflowsRoot());
-    Logger.info('MCP', 'Tool called: runtime.list_workflows', { workflowsRoot });
+    Logger.info('MCP', 'Tool called: runtime_list_workflows', { workflowsRoot });
     const indexPath = path.join(workflowsRoot, 'index.md');
     const raw = await fs.readFile(indexPath, 'utf-8');
     const match = raw.match(/```yaml\n([\s\S]*?)```/);
@@ -267,7 +328,7 @@ export class Runtime {
   async reconcile(params: RuntimeActionParams): Promise<Record<string, unknown>> {
     const taskPath = requireString(params.taskPath, 'taskPath');
     const agent = requireString(params.agent, 'agent');
-    Logger.info('MCP', 'Tool called: runtime.reconcile', { taskPath, agent });
+    Logger.info('MCP', 'Tool called: runtime_reconcile', { taskPath, agent });
 
     const resolved = await resolveTaskPath(taskPath);
     const statePath = await resolveStatePath(resolved.resolvedPath, params.statePath);
@@ -414,6 +475,60 @@ function requireString(value: unknown, field: string): string {
     throw new Error(`${field} requerido`);
   }
   return value;
+}
+
+function requireBoolean(value: unknown, field: string): boolean {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  throw new Error(`Missing or invalid ${field}.`);
+}
+
+function requireStringArray(value: unknown, field: string): string[] {
+  if (Array.isArray(value) && value.every((item) => typeof item === 'string')) {
+    return value;
+  }
+  throw new Error(`Missing or invalid ${field}.`);
+}
+
+type InitTemplatePayload = {
+  command: string;
+  constitutionPaths: string[];
+  language: string;
+  languageConfirmed: boolean;
+  strategy: string;
+  traceabilityVerified: boolean;
+  traceabilityTool: string;
+  traceabilityResponse: string;
+  traceabilityTimestamp: string;
+  runtimeStarted: boolean;
+  taskId: string;
+  taskPathValue: string;
+};
+
+function renderInitTemplate(template: string, payload: InitTemplatePayload): string {
+  const replacements: Record<string, string> = {
+    '{{command}}': payload.command,
+    '{{constitutionPaths[0]}}': payload.constitutionPaths[0] ?? '',
+    '{{constitutionPaths[1]}}': payload.constitutionPaths[1] ?? '',
+    '{{constitutionPaths[2]}}': payload.constitutionPaths[2] ?? '',
+    '{{language}}': payload.language,
+    '{{languageConfirmed}}': String(payload.languageConfirmed),
+    '{{strategy}}': payload.strategy,
+    '{{traceabilityVerified}}': String(payload.traceabilityVerified),
+    '{{traceabilityTool}}': payload.traceabilityTool,
+    '{{traceabilityResponse}}': payload.traceabilityResponse,
+    '{{traceabilityTimestamp}}': payload.traceabilityTimestamp,
+    '{{runtimeStarted}}': String(payload.runtimeStarted),
+    '{{taskId}}': payload.taskId,
+    '{{taskPath}}': payload.taskPathValue
+  };
+
+  let output = template;
+  for (const [token, value] of Object.entries(replacements)) {
+    output = output.split(token).join(value);
+  }
+  return output;
 }
 
 function formatError(error: unknown): string {

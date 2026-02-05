@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.35.0-beta.7](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.34.1-beta.7...agentic-workflow-v1.35.0-beta.7) (2026-02-05)
+
+
+### Features
+
+* **init:** enforce workflow and role overwrite ([484a990](https://github.com/christian-marino-alvarez/agentic-workflow/commit/484a990ab95d50aedf72ac4ccbecdbbd346efa6b))
+* **workflows:** update short lifecycle to 4 phases ([30d2a84](https://github.com/christian-marino-alvarez/agentic-workflow/commit/30d2a84608a08c161fb7ea69d0b18c30bd26852c))
+
 ## [1.34.1-beta.7](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.34.0-beta.7...agentic-workflow-v1.34.1-beta.7) (2026-02-05)
 
 

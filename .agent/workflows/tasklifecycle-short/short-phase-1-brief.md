@@ -51,6 +51,11 @@ El architect-agent **DEBE** formular 5 preguntas específicas basadas en la tare
 - Las preguntas varían según la tarea concreta.
 - Sin respuestas completas, la fase NO avanza.
 
+### 2.1 Definir owner de implementación (OBLIGATORIO)
+- El desarrollador **DEBE** indicar el agente responsable de la implementación.
+- Registrar el valor en `brief.md` como `implementation_owner`.
+- Si no se define, usar `architect-agent` por defecto y dejar trazado en el brief.
+
 ### 3. Análisis de complejidad
 Evaluar indicadores de complejidad:
 - ¿Afecta más de 3 paquetes/módulos? → Alta
@@ -70,6 +75,7 @@ Evaluar indicadores de complejidad:
   - Análisis simplificado del estado actual.
   - Plan de implementación con pasos ejecutables.
   - Evaluación de complejidad.
+  - `implementation_owner` explícito (agente responsable de implementación).
   - **Evaluación de Agentes**: Desempeño y propuestas de mejora.
 
 ### 5. Solicitar aprobación del desarrollador (por consola)

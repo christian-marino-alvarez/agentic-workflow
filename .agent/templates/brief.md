@@ -2,6 +2,7 @@
 artifact: brief
 phase: short-phase-1-brief
 owner: architect-agent
+implementation_owner: architect-agent
 status: draft | approved
 related_task: <taskId>-<taskTitle>
 ---
@@ -17,6 +18,7 @@ Primera linea del documento:
 **Título**: <título de la tarea>
 **Objetivo**: <objetivo principal>
 **Estrategia**: Short
+**Owner de implementación**: <agent-id> (por defecto: architect-agent)
 
 ---
 

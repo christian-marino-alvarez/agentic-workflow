@@ -45,8 +45,11 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
 0. **Verificar Trazabilidad e Iniciar Runtime (OBLIGATORIO)**:
    - Antes de cualquier acción, verificar conectividad MCP mediante `runtime_chat`.
    - **Inmediatamente después**, llamar a `runtime.run` con:
-     - `taskPath`: Ruta al directorio candidate (`.agent/artifacts/candidate/`) para crear `<timestamp>-init.md`
+     - `taskPath`: `.agent/artifacts/candidate` (sin `/` final) para crear `<timestamp>-init.md`
      - `agent`: `architect-agent`
+   - **PROHIBIDO** usar:
+     - `.agent/artifacts/candidate/`
+     - `.agent/artifacts/candidate/init.md`
    - El agente **DEBE** confirmar que ambas herramientas respondieron correctamente (`status: ok`).
    - **PROHIBICIÓN ESTRICTA**: No se permite consolidar este paso con la creación de artefactos en una misma respuesta. El agente debe esperar la confirmación del sistema antes de proceder al paso 1.
    - Si las herramientas MCP no están disponibles → ir a **Paso 9 (FAIL)**, a menos que el desarrollador autorice explícitamente el fallback.
@@ -78,13 +81,13 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
    - Preguntar al desarrollador:
      - "Por favor, selecciona la estrategia: **Long** (9 fases completas) o **Short** (3 fases simplificadas)."
    - Si no hay selección → ir a **Paso 9 (FAIL)**.
-- Registrar la selección en el init candidate `<timestamp>-init.md`.
+   - Registrar la selección en el init candidate `<timestamp>-init.md`.
 
 6. **Crear el init candidate `<timestamp>-init.md` (OBLIGATORIO)**
    - El artefacto **DEBE** crearse usando **exactamente** la estructura definida en:
      - `templates.init`
    - Todos los campos obligatorios del template **DEBEN** completarse.
-- Incluir el campo `strategy: long | short` y `task.path` alias `<taskId>: <path>`.
+   - Incluir el campo `strategy: long | short`.
    - **REQUISITO DE TRAZABILIDAD**: Incluir una confirmación explícita de que el Paso 0 (MCP) fue ejecutado correctamente.
    - No se permite modificar, omitir ni reinterpretar la estructura del template.
 
@@ -121,13 +124,13 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
 
 ## Output (REQUIRED)
 - Artefacto creado:
-  - `.agent/artifacts/candidate/<timestamp>-init.md`
+- `.agent/artifacts/candidate/<timestamp>-init.md`
 - Index actualizado:
   - `artifacts.candidate.index`
 
 ## Gate (REQUIRED)
 Requisitos (todos obligatorios):
-1) Existe el init candidate:
+1) Existe el artefacto:
    - `.agent/artifacts/candidate/<timestamp>-init.md`
 2) En su YAML:
    - `language.value` no vacío

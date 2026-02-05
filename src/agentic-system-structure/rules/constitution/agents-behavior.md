@@ -180,3 +180,33 @@ Para evitar la autonomía no autorizada (omisión de gates), se define la siguie
 
 ### 9.3 Invalidez por Omisión
 Cualquier acción técnica realizada tras saltarse un Gate se considera **inválida y nula**. El agente responsable debe realizar un rollback inmediato al último estado estable aprobado antes de intentar corregir el flujo.
+
+---
+
+## 10. CANAL DE DELEGACIÓN DE AGENTES (PERMANENT)
+
+Se habilita un canal formal de delegación para cambiar el agente activo cuando el agente actual no pueda ejecutar la tarea por constitución, rol o asignación explícita.
+
+### 10.1 Solicitud de delegación
+- El **agente activo** debe solicitar explícitamente el cambio de agente al desarrollador.
+- Si el agente activo **no puede determinar** el agente responsable (por restricciones de constitución o rol), **DEBE** delegar la verificación al **architect-agent**.
+
+### 10.2 Aprobación obligatoria
+- La delegación **SOLO** puede ejecutarse con aprobación explícita del desarrollador (**SI**).
+- La solicitud **DEBE** hacerse vía `notify_user`:
+  - `BlockedOnUser: true`
+  - `PathsToReview` con el artefacto afectado
+  - Mensaje claro de cambio de agente
+
+### 10.3 Trazabilidad y registro
+- Cada cambio **DEBE** registrarse en `task.md` bajo `task.delegation`.
+- El registro mínimo debe incluir:
+  - `from` (agente anterior)
+  - `to` (agente nuevo)
+  - `approved_by` (desarrollador)
+  - `approved_at` (ISO-8601)
+  - `reason` (motivo de delegación)
+
+### 10.4 Límites
+- Cada tarea **DEBE** ser ejecutada por el agente determinado tras la delegación aprobada.
+- Ningún agente puede delegar para evadir restricciones de constitución o gates.

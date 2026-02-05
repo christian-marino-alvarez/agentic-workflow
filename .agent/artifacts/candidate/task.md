@@ -1,62 +1,124 @@
 ---
-kind: artifact
-name: task
-source: agentic-system-structure
+id: task-20260205-fix-init-copia-skills
+title: Fix init para copiar skills
+owner: architect-agent
+strategy: short
 ---
 
-# Task: Reorganización de estructura de archivos y backups
+# Task (Template)
 
 ## Identificación
-- id: task-20260128-reorganize-structure
-- title: Reorganización de estructura
-- scope: candidate
+- id: task-20260205-fix-init-copia-skills
+- title: Fix init para copiar skills
+- scope: candidate | current
 - owner: architect-agent
 
 ## Origen
 - created_from:
   - workflow: tasklifecycle-short
-  - source: init
+  - source: init / tasklifecycle
   - candidate_path: artifacts.candidate.task
 
 ## Descripción de la tarea
-Reorganizar la carpeta `src` trasladando el sistema de markdowns a una nueva carpeta `agentic-system-structure` y mover las carpetas de backups a una carpeta unificada `.backups`.
+Corregir el comando `agentic-workflow init` para que copie la carpeta `skills` en el scaffold local `.agent`.
 
 ## Objetivo
-Mejorar la organización del repositorio siguiendo una estructura más clara y centralizada para los archivos del sistema y los respaldos.
+Asegurar que el scaffold generado por `init` incluya `skills` y habilite el uso de `runtime-governance`.
 
 ## Estado del ciclo de vida (FUENTE ÚNICA DE VERDAD)
 
 ```yaml
 task:
-  id: "task-20260128-reorganize-structure"
-  title: "Reorganización de estructura"
-  strategy: "short"
+  id: "task-20260205-fix-init-copia-skills"
+  title: "Fix init para copiar skills"
+  strategy: "short"  # long | short
   artifacts:
     supplemental: []
   phase:
-    current: "short-phase-2-implementation"
+    current: "completed"
     validated_by: "architect-agent"
-    updated_at: "2026-01-28T08:21:00+01:00"
+    updated_at: "2026-02-05T06:59:05Z"
+  delegation:
+    active_agent: "neo-agent"
+    history:
+      - from: "architect-agent"
+        to: "neo-agent"
+        approved_by: "developer"
+        approved_at: "2026-02-05T06:48:26Z"
+        reason: "Delegado fix para copiar skills en init (src/cli/commands/init.ts)."
   lifecycle:
     phases:
+      phase-0-acceptance-criteria:
+        completed: false
+        validated_by: null
+        validated_at: null
+      phase-1-research:
+        completed: false
+        validated_by: null
+        validated_at: null
+      phase-2-analysis:
+        completed: false
+        validated_by: null
+        validated_at: null
+      phase-3-planning:
+        completed: false
+        validated_by: null
+        validated_at: null
+      phase-4-implementation:
+        completed: false
+        validated_by: null
+        validated_at: null
+      phase-5-verification:
+        completed: false
+        validated_by: null
+        validated_at: null
+      phase-6-results-acceptance:
+        completed: false
+        validated_by: null
+        validated_at: null
+      phase-7-evaluation:
+        completed: false
+        validated_by: null
+        validated_at: null
+      phase-8-commit-push:
+        completed: false
+        validated_by: null
+        validated_at: null
+    subflows:
+      components:
+        create:
+          - name: <component-name>
+            completed: false
+            validated_by: null
+            validated_at: null
+        refactor:
+          - name: <component-name>
+            completed: false
+            validated_by: null
+            validated_at: null
+        delete:
+          - name: <component-name>
+            completed: false
+            validated_by: null
+            validated_at: null
       short-phase-1-brief:
         completed: true
         validated_by: "architect-agent"
-        validated_at: "2026-01-28T08:21:00+01:00"
+        validated_at: "2026-02-05T06:50:15Z"
       short-phase-2-implementation:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-02-05T06:58:09Z"
       short-phase-3-closure:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-02-05T06:59:05Z"
 ```
 
 ---
 
 ## 2. Definición y Alcance (Contrato)
-- **Acceptance Criteria**: [.agent/artifacts/task-20260128-reorganize-structure/acceptance.md](file:///.agent/artifacts/task-20260128-reorganize-structure/acceptance.md)
+- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/task-20260205-fix-init-copia-skills/acceptance.md)
 - **Alias**: `task.acceptance`
 
 ---

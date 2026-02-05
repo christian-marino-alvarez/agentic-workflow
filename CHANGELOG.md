@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.33.0-beta.7
+- Fix: init scaffolds skills to enable runtime-governance
+
 ## 1.33.1-beta.7
 - fix(init): align init template owner with architect-agent
 

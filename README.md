@@ -36,6 +36,7 @@ The agent will use its terminal tools to set up the environment, create the `.ag
 Initializes the agentic system in the current directory.
 - Detects legacy systems and offers migration with automatic backups.
 - Creates/refreshes the `.agent/` structure with the core files.
+- Copies `skills` into `.agent/skills` to enable governance and specialized capabilities.
 - Generates `AGENTS.md`, the entry point for IDE assistants.
 ```bash
 npx agentic-workflow init

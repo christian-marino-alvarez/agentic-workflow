@@ -125,7 +125,7 @@ async function cleanupLegacyMcpConfig(cwd: string) {
 }
 
 async function scaffoldAgentWorkspace(corePath: string, agentDir: string) {
-  const entries = ['rules', 'workflows', 'templates', 'artifacts'];
+  const entries = ['rules', 'workflows', 'templates', 'artifacts', 'skills'];
   await Promise.all(
     entries.map(async (entry) => {
       const srcPath = path.join(corePath, entry);

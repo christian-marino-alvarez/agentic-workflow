@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.36.2-beta.9](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.36.2-beta.8...agentic-workflow-v1.36.2-beta.9) (2026-02-05)
+
+
+### Bug Fixes
+
+* **runtime:** add runtime markers to task template to allow guarded writes
+
 ## [1.36.2-beta.8](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.36.2-beta.7...agentic-workflow-v1.36.2-beta.8) (2026-02-05)
 
 

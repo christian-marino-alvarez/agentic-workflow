@@ -57,6 +57,9 @@ export async function initCommand(options: { nonInteractive?: boolean; startMcp?
         message: 'Do you want to force a re-initialization? (A backup will be created)',
       });
     if (!reinit || typeof reinit === 'symbol') {
+      const corePath = (await resolveInstalledCorePath(cwd)) ?? await resolveCorePath();
+      await overwriteMandatoryCoreFiles(corePath, agentDir);
+      note('Workflows and mandatory roles overwritten from core for consistency.', 'Updated');
       outro('Process finished.');
       return;
     }
@@ -135,6 +138,23 @@ async function scaffoldAgentWorkspace(corePath: string, agentDir: string) {
   );
   await fs.copyFile(path.join(corePath, 'index.md'), path.join(agentDir, 'index.md'));
   await fs.mkdir(path.join(agentDir, 'artifacts', 'candidate'), { recursive: true });
+}
+
+async function overwriteMandatoryCoreFiles(corePath: string, agentDir: string) {
+  const coreWorkflows = path.join(corePath, 'workflows');
+  const localWorkflows = path.join(agentDir, 'workflows');
+  await fs.mkdir(localWorkflows, { recursive: true });
+  await fs.cp(coreWorkflows, localWorkflows, { recursive: true, force: true });
+
+  const coreRolesDir = path.join(corePath, 'rules', 'roles');
+  const localRolesDir = path.join(agentDir, 'rules', 'roles');
+  await fs.mkdir(localRolesDir, { recursive: true });
+  const mandatoryRoles = ['architect.md', 'neo.md', 'researcher.md', 'qa.md'];
+  await Promise.all(
+    mandatoryRoles.map(async (roleFile) => {
+      await fs.copyFile(path.join(coreRolesDir, roleFile), path.join(localRolesDir, roleFile));
+    })
+  );
 }
 
 async function writeAgentsEntry(cwd: string) {

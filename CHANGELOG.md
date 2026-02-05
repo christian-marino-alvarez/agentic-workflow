@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.33.2-beta.8
+- feat(workflow): derive implementation owner from brief
+- chore: sync workflow artifacts and owner defaults
+- fix(runtime): expand write-guard to cover candidate and runtime state files
+
 ## [1.34.0-beta.7](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.33.2-beta.7...agentic-workflow-v1.34.0-beta.7) (2026-02-05)
 
 

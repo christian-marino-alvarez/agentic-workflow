@@ -1,12 +1,12 @@
 ---
-artifact: closure
-phase: short-phase-3-closure
+artifact: qa-results
+phase: short-phase-4-qa-results
 owner: architect-agent
 status: draft | approved
 related_task: <taskId>-<taskTitle>
 ---
 
-# Closure — <taskId>-<taskTitle>
+# QA Results — <taskId>-<taskTitle>
 
 ## Identificacion del agente (OBLIGATORIA)
 Primera linea del documento:
@@ -14,30 +14,30 @@ Primera linea del documento:
 
 ## 1. Resumen de la tarea
 
-**Título**: <título>
+**Titulo**: <titulo>
 **Estrategia**: Short
 **Estado final**: ☐ Completada ☐ Abortada
 
 ---
 
-## 2. Verificación
+## 2. Verificacion
 
 ### Tests ejecutados
 
-| Tipo | Comando/Método | Resultado |
+| Tipo | Comando/Metodo | Resultado |
 |------|----------------|-----------|
 | Unit | | ☐ Pass ☐ Fail ☐ N/A |
 | Integration | | ☐ Pass ☐ Fail ☐ N/A |
 | E2E | | ☐ Pass ☐ Fail ☐ N/A |
 
-### Justificación (si no hay tests)
-<Explicar por qué no aplican tests>
+### Justificacion (si no hay tests)
+<Explicar por que no aplican tests>
 
 ---
 
 ## 3. Estado de Acceptance Criteria
 
-| AC | Descripción | Estado |
+| AC | Descripcion | Estado |
 |----|-------------|--------|
 | 1 | | ☐ ✅ ☐ ❌ |
 | 2 | | ☐ ✅ ☐ ❌ |
@@ -51,19 +51,13 @@ Primera linea del documento:
 
 ### Ficheros modificados/creados
 
-| Fichero | Acción | Descripción |
+| Fichero | Accion | Descripcion |
 |---------|--------|-------------|
 | | Created/Modified/Deleted | |
 
-### Commits (si aplica)
-
-```
-<tipo>(<scope>): <descripción>
-```
-
 ---
 
-## 5. Aceptación final del desarrollador (OBLIGATORIA)
+## 5. Aceptacion final del desarrollador (OBLIGATORIA)
 
 ```yaml
 approval:
@@ -73,23 +67,4 @@ approval:
     comments: <opcional>
 ```
 
-> Sin aceptación, la tarea NO puede marcarse como completada.
-
----
-
-## 6. Puntuaciones de agentes (OBLIGATORIO)
-
-| Agente | Puntuacion (1-10) | Notas |
-|--------|-------------------|-------|
-| | | |
-
----
-
-## 7. Push final (si aplica)
-
-```yaml
-push:
-  approved: SI | NO
-  branch: <rama destino>
-  date: <ISO-8601>
-```
+> Sin aceptacion, la tarea NO puede marcarse como completada.

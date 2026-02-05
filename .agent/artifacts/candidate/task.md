@@ -1,6 +1,6 @@
 ---
-id: task-20260205-runtime-headers-consistency
-title: Runtime actualiza cabeceras y evita desalineacion de fases
+id: task-20260205-owner-desde-brief
+title: Owner desde brief para ejecucion
 owner: architect-agent
 strategy: short
 ---
@@ -8,8 +8,8 @@ strategy: short
 # Task (Template)
 
 ## Identificación
-- id: task-20260205-runtime-headers-consistency
-- title: Runtime actualiza cabeceras y evita desalineacion de fases
+- id: task-20260205-owner-desde-brief
+- title: Owner desde brief para ejecucion
 - scope: candidate | current
 - owner: architect-agent
 
@@ -20,32 +20,27 @@ strategy: short
   - candidate_path: artifacts.candidate.task
 
 ## Descripción de la tarea
-Analizar el warning de `runtime.advance_phase` por `expectedPhase mismatch` y mover al runtime la actualización de cabeceras de artefactos para evitar incoherencias de fase.
+Hacer que el owner de implementación se derive del brief, aplicable a Short y Long (incluidas subtareas), con fallback a architect si no se define.
 
 ## Objetivo
-Que el runtime actualice cabeceras de ficheros markdown de control para agilizar el flow y evitar desalineaciones de fase.
+Que el workflow tome el owner designado en el brief para ejecutar implementación y actualice el workflow/artefactos al entrar en fase de implementación.
 
 ## Estado del ciclo de vida (FUENTE ÚNICA DE VERDAD)
 
 ```yaml
 task:
-  id: "task-20260205-runtime-headers-consistency"
-  title: "Runtime actualiza cabeceras y evita desalineacion de fases"
+  id: "task-20260205-owner-desde-brief"
+  title: "Owner desde brief para ejecucion"
   strategy: "short"  # long | short
   artifacts:
     supplemental: []
   phase:
-    current: "completed"
+    current: "short-phase-2-implementation"
     validated_by: "architect-agent"
-    updated_at: "2026-02-05T07:47:28Z"
+    updated_at: "2026-02-05T08:08:40Z"
   delegation:
-    active_agent: "neo-agent"
-    history:
-      - from: "architect-agent"
-        to: "neo-agent"
-        approved_by: "developer"
-        approved_at: "2026-02-05T07:41:24Z"
-        reason: "Delegado runtime headers update y mitigacion expectedPhase mismatch."
+    active_agent: "architect-agent"
+    history: []
   lifecycle:
     phases:
       phase-0-acceptance-criteria:
@@ -104,21 +99,21 @@ task:
       short-phase-1-brief:
         completed: true
         validated_by: "architect-agent"
-        validated_at: "2026-02-05T07:40:43Z"
+        validated_at: "2026-02-05T08:08:40Z"
       short-phase-2-implementation:
-        completed: true
-        validated_by: "architect-agent"
-        validated_at: "2026-02-05T07:46:23Z"
+        completed: false
+        validated_by: null
+        validated_at: null
       short-phase-3-closure:
-        completed: true
-        validated_by: "architect-agent"
-        validated_at: "2026-02-05T07:47:28Z"
+        completed: false
+        validated_by: null
+        validated_at: null
 ```
 
 ---
 
 ## 2. Definición y Alcance (Contrato)
-- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/task-20260205-runtime-headers-consistency/acceptance.md)
+- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/task-20260205-owner-desde-brief/acceptance.md)
 - **Alias**: `task.acceptance`
 
 ---

@@ -9,19 +9,19 @@ import type { ToolName } from './tools.js';
 type ToolHandler = (runtime: Runtime, args: Record<string, unknown>) => Promise<Record<string, unknown>>;
 
 const TOOL_HANDLERS: Record<ToolName, ToolHandler> = {
-  'runtime.run': (runtime, args) => runtime.run(args),
-  'runtime.update_init': (runtime, args) => runtime.updateInit(args),
-  'runtime.resume': (runtime, args) => runtime.resume(args),
-  'runtime.next_step': (runtime, args) => runtime.nextStep(args),
-  'runtime.complete_step': (runtime) => runtime.completeStep(),
-  'runtime.validate_gate': (runtime, args) => runtime.validateGate(args),
-  'runtime.advance_phase': (runtime, args) => runtime.advancePhase(args),
-  'runtime.get_state': (runtime, args) => runtime.getState(args),
-  'runtime.list_workflows': (runtime, args) => runtime.listWorkflows(args),
-  'runtime.emit_event': (runtime, args) => runtime.emitEvent(args),
-  'runtime.reconcile': (runtime, args) => runtime.reconcile(args),
-  'runtime.chat': (runtime, args) => runtime.chat(args),
-  'debug.read_logs': (runtime, args) => runtime.readLogs(args)
+  'runtime_run': (runtime, args) => runtime.run(args),
+  'runtime_update_init': (runtime, args) => runtime.updateInit(args),
+  'runtime_resume': (runtime, args) => runtime.resume(args),
+  'runtime_next_step': (runtime, args) => runtime.nextStep(args),
+  'runtime_complete_step': (runtime) => runtime.completeStep(),
+  'runtime_validate_gate': (runtime, args) => runtime.validateGate(args),
+  'runtime_advance_phase': (runtime, args) => runtime.advancePhase(args),
+  'runtime_get_state': (runtime, args) => runtime.getState(args),
+  'runtime_list_workflows': (runtime, args) => runtime.listWorkflows(args),
+  'runtime_emit_event': (runtime, args) => runtime.emitEvent(args),
+  'runtime_reconcile': (runtime, args) => runtime.reconcile(args),
+  'runtime_chat': (runtime, args) => runtime.chat(args),
+  'debug_read_logs': (runtime, args) => runtime.readLogs(args)
 };
 
 export async function handleToolCall(runtime: Runtime, name: string, args: Record<string, unknown>): Promise<CallToolResult> {

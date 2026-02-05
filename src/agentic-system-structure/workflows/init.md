@@ -47,7 +47,7 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
 ## Pasos obligatorios
 0. **Verificar Trazabilidad e Iniciar Runtime (OBLIGATORIO)**:
    - Antes de cualquier acción, verificar conectividad MCP mediante `runtime_chat`.
-   - **Inmediatamente después**, llamar a `runtime.run` con:
+   - **Inmediatamente después**, llamar a `runtime_run` con:
      - `taskPath`: `.agent/artifacts/candidate` (sin `/` final) para crear `<timestamp>-init.md`
      - `agent`: `architect-agent`
    - **PROHIBIDO** usar:
@@ -87,11 +87,11 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
    - Registrar la selección en el init candidate `<timestamp>-init.md` **vía runtime**.
 
 5.1 **Completar init candidate vía Runtime (OBLIGATORIO)**
-   - Llamar a `runtime.update_init` con los datos recolectados.
+   - Llamar a `runtime_update_init` con los datos recolectados.
    - El agente **NO** puede editar el fichero manualmente.
 
 6. **Crear el init candidate `<timestamp>-init.md` (OBLIGATORIO)**
-   - **SOLO Runtime**: La creación debe ocurrir vía `runtime.run`. El agente **NO** puede escribir el fichero.
+   - **SOLO Runtime**: La creación debe ocurrir vía `runtime_run`. El agente **NO** puede escribir el fichero.
    - El artefacto **DEBE** crearse usando **exactamente** la estructura definida en:
      - `templates.init`
    - Todos los campos obligatorios del template **DEBEN** completarse.
@@ -101,7 +101,7 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
 
 7. Escribir el fichero en:
    - `.agent/artifacts/candidate/<timestamp>-init.md`
-   - **Solo Runtime**: si el fichero aparece sin log de `runtime.run` → **FAIL** por bypass.
+   - **Solo Runtime**: si el fichero aparece sin log de `runtime_run` → **FAIL** por bypass.
 
 8. Indexar el init candidate en:
    - `artifacts.candidate.index`
@@ -109,7 +109,7 @@ El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA 
    - **Solo Runtime**: cualquier edición manual del índice → **FAIL**.
 
 9. **Validar Gate con Runtime (OBLIGATORIO)**:
-   - **ANTES** de evaluar el Gate, el agente **DEBE** llamar a `runtime.validate_gate` con:
+   - **ANTES** de evaluar el Gate, el agente **DEBE** llamar a `runtime_validate_gate` con:
      - `taskPath`: `.agent/artifacts/candidate/<timestamp>-init.md`
      - `agent`: `architect-agent`
      - `expectedPhase`: `init`
@@ -147,14 +147,14 @@ Requisitos (todos obligatorios):
    - `language.confirmed == true`
    - `strategy` es "long" o "short"
    - **`traceability.verified == true`** (Confirma cumplimiento del Paso 0)
-   - **`runtime.started == true`** (Confirma que `runtime.run` fue llamado)
+   - **`runtime.started == true`** (Confirma que `runtime_run` fue llamado)
 3) El artefacto cumple el template oficial.
 4) Idioma definido y confirmado.
 5) Estrategia seleccionada.
 6) **Trazabilidad completa**: 
    - El agente ha verificado conectividad MCP (`runtime_chat`).
-   - El agente ha llamado `runtime.run` para iniciar el workflow.
-   - El agente ha llamado `runtime.validate_gate` antes de evaluar el Gate.
+   - El agente ha llamado `runtime_run` para iniciar el workflow.
+   - El agente ha llamado `runtime_validate_gate` antes de evaluar el Gate.
 7) El init candidate está indexado en `artifacts.candidate.index`.
 8) No se cargaron índices fuera del set permitido (solo `.agent/index.md`, `agent.domains.rules.index`, `rules.constitution.index`).
 9) El Root Index `.agent/index.md` fue cargado antes de cualquier otro índice.

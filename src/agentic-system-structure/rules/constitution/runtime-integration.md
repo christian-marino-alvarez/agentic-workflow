@@ -20,26 +20,27 @@ Cuando cualquier agente ejecute un workflow del sistema (`init`, `tasklifecycle-
 
 | Evento | Herramienta MCP | Cuándo usar |
 |--------|-----------------|-------------|
-| Inicio de tarea | `runtime.run` | Al crear una nueva tarea |
-| Avance de fase | `runtime.advance_phase` | Al completar cada fase del ciclo |
-| Obtener estado | `runtime.get_state` | Para consultar el estado actual |
-| Validar gate | `runtime.validate_gate` | Antes de solicitar aprobación |
-| Evento importante | `runtime.emit_event` | Para eventos de chat, errores, etc. |
+| Inicio de tarea | `runtime_run` | Al crear una nueva tarea |
+| Avance de fase | `runtime_advance_phase` | Al completar cada fase del ciclo |
+| Obtener estado | `runtime_get_state` | Para consultar el estado actual |
+| Validar gate | `runtime_validate_gate` | Antes de solicitar aprobación |
+| Evento importante | `runtime_emit_event` | Para eventos de chat, errores, etc. |
 
 ### 1.2 Flujo Obligatorio
 
 ```
 1. Al iniciar workflow:
-   → Llamar `runtime.run` con taskPath y agent
+   → Llamar `runtime_run` con taskPath y agent
 
 2. Al completar cada fase:
-   → Llamar `runtime.validate_gate` para verificar precondiciones
+   → Llamar `runtime_validate_gate` para verificar precondiciones
    → Solicitar aprobación al desarrollador (notify_user)
-   → Llamar `runtime.advance_phase` tras aprobación
+   → Llamar `runtime_advance_phase` tras aprobación
 
 3. Durante la ejecución:
-   → Usar `runtime.emit_event` para eventos significativos
-   → Usar `runtime.get_state` para consultar estado si es necesario
+   → Usar `runtime_emit_event` para eventos significativos
+   → Usar `runtime_get_state` para consultar estado si es necesario
+```
 
 ### 1.3 Regla de Nulidad (Bypass Detection)
 Cualquier acción técnica de cambio de estado (creación de artefactos, avance de fase) realizada sin una llamada correspondiente registrada en el Runtime MCP será considerada **nula e inválida**. 

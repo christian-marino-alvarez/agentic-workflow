@@ -10,16 +10,16 @@ Proveer al arquitecto de un conjunto de herramientas y procedimientos para garan
 ## 1. Procedimiento de Trazabilidad (Step 0)
 
 Cuando un workflow solicite "Verificar Trazabilidad", el arquitecto debe:
-1. Llamar a `runtime.chat` o `runtime.emit_event` con un mensaje de activación (ej: "Verifying traceability for session [ID]").
+1. Llamar a `runtime_chat` o `runtime_emit_event` con un mensaje de activación (ej: "Verifying traceability for session [ID]").
 2. Esperar la confirmación del runtime (`{status: "ok"}`).
 3. Solo tras recibir confirmación, registrar `traceability.verified: true` en el artefacto correspondiente.
 4. **Ruta obligatoria para init**:
-   - `runtime.run` **DEBE** llamarse con `taskPath: ".agent/artifacts/candidate"` (sin `/` final).
+   - `runtime_run` **DEBE** llamarse con `taskPath: ".agent/artifacts/candidate"` (sin `/` final).
    - **PROHIBIDO** usar:
      - `.agent/artifacts/candidate/`
      - `.agent/artifacts/candidate/init.md`
 5. **Completar init vía Runtime (OBLIGATORIO)**:
-   - Tras `runtime.run`, llamar a `runtime.update_init` con los datos recolectados.
+   - Tras `runtime_run`, llamar a `runtime_update_init` con los datos recolectados.
    - El init candidate **NO** puede quedar con placeholders `{{...}}`.
 
 ## 2. Huella Digital de Gobernanza (Obligatoria)
@@ -37,7 +37,7 @@ El arquitecto debe comparar el estado del sistema de archivos con los logs obten
 
 - **Anomalía A**: Existe un artefacto de fase (ej: `planning.md`) cuyas marcas de tiempo son posteriores a un mensaje de chat de aprobación, pero **NO** hay registro de `runtime_advance_phase`.
 - **Anomalía B**: El archivo `task.md` marca un paso como completado (`[x]`) sin que el log de runtime muestre la actividad correspondiente en esa ventana temporal.
-- **Anomalía C (Init)**: El init candidate contiene placeholders `{{...}}` o no hay log de `runtime.update_init`.
+- **Anomalía C (Init)**: El init candidate contiene placeholders `{{...}}` o no hay log de `runtime_update_init`.
 
 **Acción ante Bypass**:
 - Invalidar la fase actual.
@@ -47,9 +47,9 @@ El arquitecto debe comparar el estado del sistema de archivos con los logs obten
 ## 3. Procedimiento de Validación de Gate
 
 1. Cargar el artefacto de la fase (ej: `analysis.md`).
-2. Llamar a `runtime.validate_gate` con `expectedPhase`.
+2. Llamar a `runtime_validate_gate` con `expectedPhase`.
 3. Si el runtime falla (error visualizado en stdout), **CORREGIR** el artefacto antes de pedir aprobación al usuario.
-4. Una vez aprobado por el usuario, llamar a `runtime.advance_phase`.
+4. Una vez aprobado por el usuario, llamar a `runtime_advance_phase`.
 
 ## 4. Auditoría de Logs (Checklist)
 

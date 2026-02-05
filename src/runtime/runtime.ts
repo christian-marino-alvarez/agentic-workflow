@@ -63,7 +63,7 @@ export class Runtime {
   async run(params: RuntimeActionParams): Promise<Record<string, unknown>> {
     const taskPath = requireString(params.taskPath, 'taskPath');
     const agent = requireString(params.agent, 'agent');
-    Logger.info('MCP', 'Tool called: runtime.run', { taskPath, agent });
+    Logger.info('MCP', 'Tool called: runtime_run', { taskPath, agent });
 
     const resolved = await resolveTaskPath(taskPath);
     const writeGuard = this.buildWriteGuard(resolved.resolvedPath, resolved.workspaceRoot, agent, params.breakGlass);
@@ -104,7 +104,7 @@ export class Runtime {
   async updateInit(params: RuntimeActionParams): Promise<Record<string, unknown>> {
     const taskPath = requireString(params.taskPath, 'taskPath');
     const agent = requireString(params.agent, 'agent');
-    Logger.info('MCP', 'Tool called: runtime.update_init', { taskPath, agent });
+    Logger.info('MCP', 'Tool called: runtime_update_init', { taskPath, agent });
 
     const command = requireString(params.command, 'command');
     const constitutionPaths = requireStringArray(params.constitutionPaths, 'constitutionPaths');
@@ -151,7 +151,7 @@ export class Runtime {
   async resume(params: RuntimeActionParams): Promise<Record<string, unknown>> {
     const taskPath = requireString(params.taskPath, 'taskPath');
     const agent = requireString(params.agent, 'agent');
-    Logger.info('MCP', 'Tool called: runtime.resume', { taskPath, agent });
+    Logger.info('MCP', 'Tool called: runtime_resume', { taskPath, agent });
 
     const resolved = await resolveTaskPath(taskPath);
     const task = await loadTask(resolved.resolvedPath);
@@ -168,7 +168,7 @@ export class Runtime {
   async nextStep(params: RuntimeActionParams): Promise<Record<string, unknown>> {
     const taskPath = requireString(params.taskPath, 'taskPath');
     const agent = requireString(params.agent, 'agent');
-    Logger.info('MCP', 'Tool called: runtime.next_step', { taskPath, agent });
+    Logger.info('MCP', 'Tool called: runtime_next_step', { taskPath, agent });
 
     const resolved = await resolveTaskPath(taskPath);
     const writeGuard = this.buildWriteGuard(resolved.resolvedPath, resolved.workspaceRoot, agent, params.breakGlass);
@@ -189,7 +189,7 @@ export class Runtime {
   }
 
   async completeStep(): Promise<Record<string, unknown>> {
-    Logger.info('MCP', 'Tool called: runtime.complete_step');
+    Logger.info('MCP', 'Tool called: runtime_complete_step');
     this.clearCache();
     return { status: 'ok', message: 'Step completion acknowledged.' };
   }
@@ -198,7 +198,7 @@ export class Runtime {
     const taskPath = requireString(params.taskPath, 'taskPath');
     const agent = requireString(params.agent, 'agent');
     const expectedPhase = params.expectedPhase;
-    Logger.info('MCP', 'Tool called: runtime.validate_gate', { taskPath, agent, expectedPhase });
+    Logger.info('MCP', 'Tool called: runtime_validate_gate', { taskPath, agent, expectedPhase });
 
     const resolved = await resolveTaskPath(taskPath);
     const task = await loadTask(resolved.resolvedPath);
@@ -215,7 +215,7 @@ export class Runtime {
     const taskPath = requireString(params.taskPath, 'taskPath');
     const agent = requireString(params.agent, 'agent');
     const expectedPhase = params.expectedPhase;
-    Logger.info('MCP', 'Tool called: runtime.advance_phase', { taskPath, agent, expectedPhase: expectedPhase ?? null });
+    Logger.info('MCP', 'Tool called: runtime_advance_phase', { taskPath, agent, expectedPhase: expectedPhase ?? null });
 
     const resolved = await resolveTaskPath(taskPath);
     const writeGuard = this.buildWriteGuard(resolved.resolvedPath, resolved.workspaceRoot, agent, params.breakGlass);
@@ -224,7 +224,7 @@ export class Runtime {
       throw new Error('Agent mismatch.');
     }
     if (expectedPhase && task.phase !== expectedPhase) {
-      Logger.error('MCP', 'runtime.advance_phase expectedPhase mismatch; phase likely updated outside runtime', {
+      Logger.error('MCP', 'runtime_advance_phase expectedPhase mismatch; phase likely updated outside runtime', {
         expectedPhase,
         taskPhase: task.phase,
         taskId: task.id
@@ -243,7 +243,7 @@ export class Runtime {
       nextPhase = await resolveNextPhase(workflowsRoot, task.phase, task.strategy);
     } catch (error) {
       const warning = formatError(error);
-      Logger.warn('MCP', 'runtime.advance_phase could not resolve next phase; no phase update', {
+      Logger.warn('MCP', 'runtime_advance_phase could not resolve next phase; no phase update', {
         taskPhase: task.phase,
         taskId: task.id,
         strategy: task.strategy ?? null,
@@ -284,7 +284,7 @@ export class Runtime {
 
   async getState(params: RuntimeActionParams): Promise<Record<string, unknown>> {
     const statePath = requireString(params.statePath, 'statePath');
-    Logger.info('MCP', 'Tool called: runtime.get_state', { statePath });
+    Logger.info('MCP', 'Tool called: runtime_get_state', { statePath });
     const state = await this.readState(statePath);
     if (!state) {
       throw new Error('No state found.');
@@ -304,7 +304,7 @@ export class Runtime {
 
   async listWorkflows(params: RuntimeActionParams): Promise<Record<string, unknown>> {
     const workflowsRoot = params.workflowsRoot ?? (await resolveDefaultWorkflowsRoot());
-    Logger.info('MCP', 'Tool called: runtime.list_workflows', { workflowsRoot });
+    Logger.info('MCP', 'Tool called: runtime_list_workflows', { workflowsRoot });
     const indexPath = path.join(workflowsRoot, 'index.md');
     const raw = await fs.readFile(indexPath, 'utf-8');
     const match = raw.match(/```yaml\n([\s\S]*?)```/);
@@ -326,7 +326,7 @@ export class Runtime {
   async reconcile(params: RuntimeActionParams): Promise<Record<string, unknown>> {
     const taskPath = requireString(params.taskPath, 'taskPath');
     const agent = requireString(params.agent, 'agent');
-    Logger.info('MCP', 'Tool called: runtime.reconcile', { taskPath, agent });
+    Logger.info('MCP', 'Tool called: runtime_reconcile', { taskPath, agent });
 
     const resolved = await resolveTaskPath(taskPath);
     const statePath = await resolveStatePath(resolved.resolvedPath, params.statePath);

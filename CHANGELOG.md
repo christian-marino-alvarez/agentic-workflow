@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.36.1-beta.7](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.36.0-beta.7...agentic-workflow-v1.36.1-beta.7) (2026-02-05)
+
+
+### Bug Fixes
+
+* **mcp:** dedupe codex server entries ([fc41c00](https://github.com/christian-marino-alvarez/agentic-workflow/commit/fc41c003d223a067c1e8edec6c8b10352c3b2990))
+
 ## [1.36.0-beta.7](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.35.0-beta.7...agentic-workflow-v1.36.0-beta.7) (2026-02-05)
 
 

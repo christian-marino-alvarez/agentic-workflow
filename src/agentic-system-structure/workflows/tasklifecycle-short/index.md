@@ -33,14 +33,17 @@ aliases:
         id: init
         workflow: .agent/workflows/init.md
       short_phase_1:
-        id: short-phase-1-brief
-        workflow: .agent/workflows/tasklifecycle-short/short-phase-1-brief.md
+        id: short-phase-1-analisis
+        workflow: .agent/workflows/tasklifecycle-short/short-phase-1-analisis.md
       short_phase_2:
-        id: short-phase-2-implementation
-        workflow: .agent/workflows/tasklifecycle-short/short-phase-2-implementation.md
+        id: short-phase-2-plan
+        workflow: .agent/workflows/tasklifecycle-short/short-phase-2-plan.md
       short_phase_3:
-        id: short-phase-3-closure
-        workflow: .agent/workflows/tasklifecycle-short/short-phase-3-closure.md
+        id: short-phase-3-implementation
+        workflow: .agent/workflows/tasklifecycle-short/short-phase-3-implementation.md
+      short_phase_4:
+        id: short-phase-4-qa-results
+        workflow: .agent/workflows/tasklifecycle-short/short-phase-4-qa-results.md
 ```
 
 ## Input (REQUIRED)
@@ -49,19 +52,20 @@ aliases:
 
 ## Output (REQUIRED)
 - Task candidate con `task.strategy: short`.
-- Artefactos de cada fase: `brief.md`, `implementation.md`, `closure.md`.
+- Artefactos de cada fase: `analisis.md`, `plan.md`, `implementation.md`, `qa-results.md`.
 
 ## Objetivo (ONLY)
-- Ejecutar un ciclo simplificado de 3 fases para tareas de baja complejidad.
+- Ejecutar un ciclo simplificado de 4 fases para tareas de baja complejidad.
 - Mantener la integridad de los gates arquitectónicos.
-- Si se detecta complejidad alta en Brief, ofrecer abortar a Long.
+- Si se detecta complejidad alta en Analisis, ofrecer abortar a Long.
 
 ## Orden oficial de ejecución de fases
 Las fases del ciclo Short **DEBEN ejecutarse estrictamente en orden**:
 
-1. `aliases.tasklifecycle-short.phases.short_phase_1.id` (Brief)
-2. `aliases.tasklifecycle-short.phases.short_phase_2.id` (Implementation)
-3. `aliases.tasklifecycle-short.phases.short_phase_3.id` (Closure)
+1. `aliases.tasklifecycle-short.phases.short_phase_1.id` (Analisis)
+2. `aliases.tasklifecycle-short.phases.short_phase_2.id` (Plan)
+3. `aliases.tasklifecycle-short.phases.short_phase_3.id` (Implementation)
+4. `aliases.tasklifecycle-short.phases.short_phase_4.id` (QA + Resultados)
 
 ## Gate (REQUIRED)
 Requisitos (todos obligatorios):

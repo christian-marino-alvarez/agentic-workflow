@@ -1,24 +1,24 @@
 ---
-artifact: brief
-phase: short-phase-1-brief
+artifact: analisis
+phase: short-phase-1-analisis
 owner: architect-agent
 implementation_owner: architect-agent
 status: draft | approved
 related_task: <taskId>-<taskTitle>
 ---
 
-# Brief — <taskId>-<taskTitle>
+# Analisis — <taskId>-<taskTitle>
 
 ## Identificacion del agente (OBLIGATORIA)
 Primera linea del documento:
 `<icono> **<nombre-agente>**: <mensaje>`
 
-## 1. Identificación de la tarea
+## 1. Identificacion de la tarea
 
-**Título**: <título de la tarea>
+**Titulo**: <titulo de la tarea>
 **Objetivo**: <objetivo principal>
 **Estrategia**: Short
-**Owner de implementación**: <agent-id> (por defecto: architect-agent)
+**Owner de implementacion**: <agent-id> (por defecto: architect-agent)
 
 ---
 
@@ -38,54 +38,42 @@ Primera linea del documento:
 
 Derivados de las respuestas anteriores:
 
-1. **Alcance**: 
-2. **Entradas/Datos**: 
-3. **Salidas esperadas**: 
-4. **Restricciones**: 
-5. **Criterio de Done**: 
+1. **Alcance**:
+2. **Entradas/Datos**:
+3. **Salidas esperadas**:
+4. **Restricciones**:
+5. **Criterio de Done**:
 
 ---
 
-## 4. Análisis simplificado
+## 4. Analisis simplificado
 
 ### Estado actual (As-Is)
 - Estructura afectada:
 - Limitaciones conocidas:
 
-### Evaluación de complejidad
+### Evaluacion de complejidad
 
 | Indicador | Estado | Comentario |
 |-----------|--------|------------|
-| Afecta más de 3 paquetes | ☐ Sí ☐ No | |
-| Requiere investigación APIs | ☐ Sí ☐ No | |
-| Cambios breaking | ☐ Sí ☐ No | |
-| Tests E2E complejos | ☐ Sí ☐ No | |
+| Afecta mas de 3 paquetes | ☐ Si ☐ No | |
+| Requiere investigacion APIs | ☐ Si ☐ No | |
+| Cambios breaking | ☐ Si ☐ No | |
+| Tests E2E complejos | ☐ Si ☐ No | |
 
 **Resultado de complejidad**: ☐ BAJA (continuar Short) ☐ ALTA (recomendar abortar a Long)
 
 ---
 
-## 5. Plan de implementación
+## 5. Evaluacion de agentes
 
-### Pasos ordenados
-
-1. **Paso 1**
-   - Descripción:
-   - Entregables:
-
-2. **Paso 2**
-   - Descripción:
-   - Entregables:
-
-(Añadir más pasos según necesidad)
-
-### Verificación prevista
-- Tipo de tests:
-- Criterios de éxito:
+| Agente | Desempeno (1-10) | Propuestas de mejora |
+|--------|------------------|----------------------|
+| | | |
 
 ---
 
-## 6. Aprobación del desarrollador (OBLIGATORIA)
+## 6. Aprobacion del desarrollador (OBLIGATORIA)
 
 ```yaml
 approval:
@@ -95,4 +83,4 @@ approval:
     comments: <opcional>
 ```
 
-> Sin aprobación, esta fase NO puede avanzar a Implementation.
+> Sin aprobacion, esta fase NO puede avanzar a Plan.

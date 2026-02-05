@@ -200,7 +200,7 @@ export class Runtime {
     }
     const updated = await updateTaskPhase(resolved.resolvedPath, task.phase, nextPhase, agent, writeGuard);
     await syncFrontmatterForTaskArtifacts({
-      workspaceRoot: resolved.workspaceRoot ?? path.dirname(resolved.resolvedPath),
+      workspaceRoot: resolved.workspaceRoot as string,
       taskId: task.id,
       taskTitle: task.title,
       owner: task.owner,

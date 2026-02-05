@@ -70,6 +70,9 @@ blocking: true
 - Identificar todas las tareas de implementación y sus agentes responsables.
 - Crear (si no existe) el directorio:
   - `.agent/artifacts/<taskId>-<taskTitle>/agent-tasks/`
+ - Si una tarea no especifica agente responsable:
+   - Asignar por defecto `architect-agent`.
+   - Registrar el ajuste en `task.delegation.history` (reason: `missing_agent_in_plan`).
 
 ### 3. Bucle de delegación (SÍNCRONO)
 
@@ -81,6 +84,7 @@ Para cada tarea `N` en el plan:
 - Completar:
   - **Input**: Objetivo, Alcance, Dependencias (definidos por el arquitecto)
   - **Output**: Entregables, Evidencia requerida (definidos por el arquitecto)
+ - Asegurar que el frontmatter `owner` refleje el agente responsable definido en `plan.md` (o el default).
 
 #### 3.2 Asignar al agente
 - El `architect-agent` **DEBE** activar al agente correspondiente:

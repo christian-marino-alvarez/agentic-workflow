@@ -55,7 +55,7 @@ export class RuntimeWriteGuard {
       await this.recordDenied(check.relativePath, check.reason, content);
       throw new Error('FS write not allowed; use runtime tool');
     }
-    if (isTaskFile(resolved)) {
+    if (requiresRuntimeMarkers(resolved)) {
       const markersOk = await this.validateTaskMarkers(resolved, content);
       if (!markersOk.allowed) {
         await this.recordDenied(check.relativePath, markersOk.reason ?? 'task_markers_invalid', content);
@@ -73,7 +73,7 @@ export class RuntimeWriteGuard {
   async appendFile(targetPath: string, content: string): Promise<void> {
     const release = await this.acquireLockIfNeeded();
     const resolved = path.resolve(targetPath);
-    if (isTaskFile(resolved)) {
+    if (requiresRuntimeMarkers(resolved)) {
       await this.recordDenied(this.relativeToWorkspace(resolved), 'task_append_not_allowed', content);
       throw new Error('FS write not allowed; use runtime tool');
     }
@@ -193,7 +193,7 @@ function normalizeRoot(value: string): string {
   return value.split(path.sep).join('/');
 }
 
-function isTaskFile(targetPath: string): boolean {
+function requiresRuntimeMarkers(targetPath: string): boolean {
   const normalized = normalizeRoot(targetPath);
   return normalized.includes('/.agent/artifacts/') && normalized.endsWith('/task.md');
 }

@@ -46,6 +46,15 @@ blocking: true
 - Si el archivo no existe o no tiene una marca de aprobación afirmativa, el proceso **DEBE** detenerse inmediatamente (FAIL).
 - Verificar que la fase en `task.md` sea la correcta.
 
+### 1.1 Resolver owner de implementación (OBLIGATORIO)
+- Leer `implementation_owner` desde el frontmatter de `brief.md`.
+- Si está vacío o no existe, usar `architect-agent` por defecto.
+- Si el owner resuelto es distinto del agente activo:
+  - Solicitar aprobación explícita del desarrollador para delegar.
+  - Registrar el cambio en `task.delegation.history` con `from`, `to`, `approved_by`, `approved_at`, `reason`.
+  - Actualizar `task.delegation.active_agent`.
+  - Activar el agente designado antes de ejecutar la implementación.
+
 ### 2. Ejecutar implementación
 - Seguir los pasos definidos en `brief.md`.
 - Documentar cambios realizados.

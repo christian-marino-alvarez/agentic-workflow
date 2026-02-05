@@ -1,14 +1,14 @@
 ---
 id: task.init
 title: Initialization
-owner: "{{architectAgentId}}"
+owner: "architect-agent"
 phase:
   current: init
 ---
 # init bootstrap
 
 - command: {{command}}
-- role.architect: {{architectAgentId}}
+- role.architect: architect-agent
 - constitution.loaded.in_context: true
 
 ## Constitution (load order)
@@ -20,7 +20,7 @@ phase:
 bootstrap:
   done: true
 roles:
-  architect: {{architectAgentId}}
+  architect: architect-agent
 constitution:
   loaded:
     - {{constitutionPaths[0]}}

@@ -1,6 +1,7 @@
 ---
-id: task-20260205-fix-init-copia-skills
-title: Fix init para copiar skills
+id: task-20260205-auto-delegacion-role
+
+title: Delegacion automatica de roles
 owner: architect-agent
 strategy: short
 ---
@@ -8,8 +9,8 @@ strategy: short
 # Task (Template)
 
 ## Identificación
-- id: task-20260205-fix-init-copia-skills
-- title: Fix init para copiar skills
+- id: task-20260205-auto-delegacion-role
+- title: Delegacion automatica de roles
 - scope: candidate | current
 - owner: architect-agent
 
@@ -20,32 +21,27 @@ strategy: short
   - candidate_path: artifacts.candidate.task
 
 ## Descripción de la tarea
-Corregir el comando `agentic-workflow init` para que copie la carpeta `skills` en el scaffold local `.agent`.
+Permitir que el architect-agent cambie automaticamente el rol activo cuando una tarea no corresponda al agente actual.
 
 ## Objetivo
-Asegurar que el scaffold generado por `init` incluya `skills` y habilite el uso de `runtime-governance`.
+Habilitar delegacion automatica bajo confirmacion del usuario, sin requerir que el usuario invoque manualmente al nuevo agente.
 
 ## Estado del ciclo de vida (FUENTE ÚNICA DE VERDAD)
 
 ```yaml
 task:
-  id: "task-20260205-fix-init-copia-skills"
-  title: "Fix init para copiar skills"
+  id: "task-20260205-auto-delegacion-role"
+  title: "Delegacion automatica de roles"
   strategy: "short"  # long | short
   artifacts:
     supplemental: []
   phase:
     current: "completed"
     validated_by: "architect-agent"
-    updated_at: "2026-02-05T06:59:05Z"
+    updated_at: "2026-02-05T07:32:07Z"
   delegation:
-    active_agent: "neo-agent"
-    history:
-      - from: "architect-agent"
-        to: "neo-agent"
-        approved_by: "developer"
-        approved_at: "2026-02-05T06:48:26Z"
-        reason: "Delegado fix para copiar skills en init (src/cli/commands/init.ts)."
+    active_agent: "architect-agent"
+    history: []
   lifecycle:
     phases:
       phase-0-acceptance-criteria:
@@ -104,21 +100,21 @@ task:
       short-phase-1-brief:
         completed: true
         validated_by: "architect-agent"
-        validated_at: "2026-02-05T06:50:15Z"
+        validated_at: "2026-02-05T07:28:56Z"
       short-phase-2-implementation:
         completed: true
         validated_by: "architect-agent"
-        validated_at: "2026-02-05T06:58:09Z"
+        validated_at: "2026-02-05T07:30:55Z"
       short-phase-3-closure:
         completed: true
         validated_by: "architect-agent"
-        validated_at: "2026-02-05T06:59:05Z"
+        validated_at: "2026-02-05T07:32:07Z"
 ```
 
 ---
 
 ## 2. Definición y Alcance (Contrato)
-- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/task-20260205-fix-init-copia-skills/acceptance.md)
+- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/task-20260205-auto-delegacion-role/acceptance.md)
 - **Alias**: `task.acceptance`
 
 ---

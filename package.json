@@ -85,7 +85,7 @@
   "author": "Christian Marino Alvarez",
   "license": "ISC",
   "dependencies": {
-    "@christianmaf80/agentic-workflow": "^1.33.0-beta.6",
+    "@christianmaf80/agentic-workflow": "^1.33.2-beta.7",
     "@clack/prompts": "^0.7.0",
     "@modelcontextprotocol/sdk": "^1.25.3",
     "commander": "^11.1.0",

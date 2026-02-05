@@ -143,8 +143,9 @@ async function scaffoldAgentWorkspace(corePath: string, agentDir: string) {
 async function overwriteMandatoryCoreFiles(corePath: string, agentDir: string) {
   const coreWorkflows = path.join(corePath, 'workflows');
   const localWorkflows = path.join(agentDir, 'workflows');
+  await fs.rm(localWorkflows, { recursive: true, force: true });
   await fs.mkdir(localWorkflows, { recursive: true });
-  await fs.cp(coreWorkflows, localWorkflows, { recursive: true, force: true });
+  await fs.cp(coreWorkflows, localWorkflows, { recursive: true });
 
   const coreRolesDir = path.join(corePath, 'rules', 'roles');
   const localRolesDir = path.join(agentDir, 'rules', 'roles');
@@ -156,6 +157,7 @@ async function overwriteMandatoryCoreFiles(corePath: string, agentDir: string) {
     })
   );
 }
+
 
 async function writeAgentsEntry(cwd: string) {
   const agentsPath = path.join(cwd, 'AGENTS.md');

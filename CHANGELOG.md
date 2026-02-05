@@ -1,7 +1,14 @@
 # Changelog
 
-## 1.33.0-beta.7
+## 1.33.2-beta.7
 - Fix: init scaffolds skills to enable runtime-governance
+
+## [1.33.2-beta.6](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.33.1-beta.6...agentic-workflow-v1.33.2-beta.6) (2026-02-04)
+
+
+### Bug Fixes
+
+* **init:** align init template owner with architect-agent ([d5e8468](https://github.com/christian-marino-alvarez/agentic-workflow/commit/d5e8468ac2038db2c00272f2f524ed3c084562cb))
 
 ## 1.33.1-beta.7
 - fix(init): align init template owner with architect-agent

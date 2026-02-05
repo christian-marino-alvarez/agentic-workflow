@@ -389,7 +389,7 @@ describe('Runtime', () => {
         taskPath,
         agent: 'architect-agent',
         command: '/init',
-        constitutionPaths: ['path1', 'path2'],
+        constitutionPaths: ['path1', 'path2', 'path3'],
         language: 'es',
         languageConfirmed: true,
         strategy: 'short',
@@ -454,5 +454,36 @@ describe('Runtime', () => {
       await expect(runtime.updateInit(params)).rejects.toThrow('Missing or invalid constitutionPaths');
     });
 
+    it('updates init artifact with minimal params', async () => {
+      const runtime = new Runtime();
+      const templatePath = path.join(workspace, '.agent', 'templates', 'init.md');
+      await fs.mkdir(path.dirname(templatePath), { recursive: true });
+      await fs.writeFile(templatePath, 'template content {{command}}');
+
+      const taskId = 'test-init-task-min';
+      const taskPath = `.agent/artifacts/candidate/${taskId}.md`;
+
+      const params = {
+        taskPath,
+        agent: 'architect-agent',
+        command: '/init',
+        constitutionPaths: [], // Empty array triggers fallback
+        language: 'es',
+        languageConfirmed: true,
+        strategy: 'short',
+        traceabilityVerified: true,
+        traceabilityTool: 'tool',
+        traceabilityResponse: 'response',
+        traceabilityTimestamp: '2023-01-01',
+        runtimeStarted: true,
+        taskId: '123',
+        taskPathValue: 'path',
+        breakGlass: true
+      };
+
+      const result = await runtime.updateInit(params);
+
+      expect(result.status).toBe('ok');
+    });
   });
 });

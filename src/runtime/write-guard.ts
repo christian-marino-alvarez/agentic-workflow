@@ -195,7 +195,19 @@ function normalizeRoot(value: string): string {
 
 function isTaskFile(targetPath: string): boolean {
   const normalized = normalizeRoot(targetPath);
-  return normalized.includes('/.agent/artifacts/') && normalized.endsWith('/task.md');
+  if (normalized.includes('/.agent/artifacts/') && normalized.endsWith('/task.md')) {
+    return true;
+  }
+  if (normalized.includes('/.agent/artifacts/candidate/') && normalized.endsWith('/index.md')) {
+    return true;
+  }
+  if (normalized.includes('/.agent/artifacts/candidate/') && normalized.endsWith('-init.md')) {
+    return true;
+  }
+  if (normalized.endsWith('/.agent/runtime/state.json')) {
+    return true;
+  }
+  return false;
 }
 
 function hasRuntimeMarkers(content: string): boolean {

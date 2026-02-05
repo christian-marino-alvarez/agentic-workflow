@@ -88,15 +88,12 @@ command = "${mcpConfig.command}"
 args = ${JSON.stringify(mcpConfig.args)}
 `;
 
-    if (content.includes(serverSection)) {
-      const sectionRegex = new RegExp(
-        `\\[mcp_servers\\.${AGENTIC_SERVER_NAME}\\][\\s\\S]*?(?=\\n\\[mcp_servers\\.|$)`,
-        'm'
-      );
-      content = content.replace(sectionRegex, mcpEntry.trim());
-    } else {
-      content = content.trimEnd() + '\n' + mcpEntry;
-    }
+    const sectionRegex = new RegExp(
+      `\\[mcp_servers\\.${AGENTIC_SERVER_NAME}\\][\\s\\S]*?(?=\\n\\[mcp_servers\\.|$)`,
+      'gm'
+    );
+    content = content.replace(sectionRegex, '').trimEnd();
+    content = content.length > 0 ? content + '\n' + mcpEntry : mcpEntry.trimStart();
     await fs.writeFile(configPath, content);
     console.log(`✅ Registered in Codex: ${configPath}`);
     return true;

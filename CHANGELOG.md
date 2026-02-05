@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.34.1-beta.7](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.34.0-beta.7...agentic-workflow-v1.34.1-beta.7) (2026-02-05)
+
+
+### Bug Fixes
+
+* **runtime:** adjust write guard and cover frontmatter sync ([e06ca15](https://github.com/christian-marino-alvarez/agentic-workflow/commit/e06ca156c37b45304babcf7d24e3b200c47b7e64))
+
 ## 1.34.0-beta.8
 - chore(release): manual beta publish
 

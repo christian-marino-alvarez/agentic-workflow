@@ -4,7 +4,7 @@
   "description": "Portable agentic workflow orchestration system with strict identity and gate discipline",
   "type": "module",
   "displayName": "Agentic Workflow",
-  "main": "./dist/cli/index.js",
+  "main": "./dist/extension/extension.js",
   "engines": {
     "vscode": "^1.108.2"
   },
@@ -12,7 +12,9 @@
     "Other"
   ],
   "activationEvents": [
-    "onView:mainView"
+    "onStartupFinished",
+    "onView:keyView",
+    "onView:chatView"
   ],
   "contributes": {
     "viewsContainers": {
@@ -27,13 +29,27 @@
     "views": {
       "main": [
         {
-          "id": "mainView",
-          "name": "Agent Chat",
+          "id": "keyView",
+          "name": "Setup",
           "icon": "media/agent-chat.svg",
           "type": "webview"
+        },
+        {
+          "id": "chatView",
+          "name": "Agent Chat",
+          "icon": "media/agent-chat.svg",
+          "type": "webview",
+          "when": "agenticWorkflow.hasKey"
         }
       ]
-    }
+    },
+    "commands": [
+      {
+        "command": "agentic-workflow.runPoc",
+        "title": "AgentPoc: Run POC",
+        "category": "Agentic Workflow"
+      }
+    ]
   },
   "bin": {
     "agentic-workflow": "bin/cli.js"
@@ -51,13 +67,13 @@
     "RELEASE_PROCESS.md"
   ],
   "scripts": {
-    "build": "node scripts/clean-dist.mjs && tsc -p tsconfig.build.json && npm run copy-assets",
+    "build": "node scripts/clean-dist.mjs && tsc -p tsconfig.build.json && npm run copy-assets && node scripts/bundle-webviews.mjs",
     "copy-assets": "mkdir -p dist/agent && cp -r src/agentic-system-structure/* dist/agent/",
     "start": "node dist/index.js",
     "publish:npm": "npm publish --registry https://registry.npmjs.org --access public",
     "publish:github": "npm publish --registry https://npm.pkg.github.com",
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
+    "compile": "tsc -p ./ && node scripts/bundle-webviews.mjs",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
@@ -88,9 +104,10 @@
   "author": "Christian Marino Alvarez",
   "license": "ISC",
   "dependencies": {
-    "@christianmaf80/agentic-workflow": "^1.37.0-beta.9",
+    "@christianmaf80/agentic-workflow": "^1.38.0-beta.10",
     "@clack/prompts": "^0.7.0",
     "@modelcontextprotocol/sdk": "^1.25.3",
+    "@openai/agents": "^0.4.5",
     "commander": "^11.1.0",
     "gray-matter": "^4.0.3",
     "lit": "^3.3.2",

@@ -1,6 +1,7 @@
 node_modules
 dist
-.agent
+# .agent artifacts are now tracked
+# .agent.backup_* files are still ignored
 .agent.backup_*
 .backups/npm-packages/*.tgz
 .DS_Store

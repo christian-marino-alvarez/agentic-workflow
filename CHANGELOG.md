@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.39.0-beta.9](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.38.0-beta.9...agentic-workflow-v1.39.0-beta.9) (2026-02-05)
+
+
+### Features
+
+* update runtime governance, init workflow and add dev guide ([02f4dc1](https://github.com/christian-marino-alvarez/agentic-workflow/commit/02f4dc1f292550b4ea57999babba1b4968798e6a))
+
+
+### Bug Fixes
+
+* rename mcp tools to use underscores ([30c0850](https://github.com/christian-marino-alvarez/agentic-workflow/commit/30c0850ecfb6857e555cc00c67211d0f33224cf7))
+* rename mcp tools to use underscores to satisfy regex validation ([2839541](https://github.com/christian-marino-alvarez/agentic-workflow/commit/28395410e32a81182a4c15d43d14851670916ee6))
+
 ## [1.38.0-beta.10](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.38.0-beta.9...agentic-workflow-v1.38.0-beta.10) (2026-02-05)
 
 

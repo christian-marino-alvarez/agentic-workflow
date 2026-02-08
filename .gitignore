@@ -12,3 +12,5 @@ yarn-error.log*
 .env
 .env.local
 .vscode
+.vscode-test/
+.playwright-test-results/

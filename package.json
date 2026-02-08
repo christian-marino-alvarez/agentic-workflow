@@ -13,9 +13,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onStartupFinished",
-    "onView:keyView",
-    "onView:chatView"
+    "onStartupFinished"
   ],
   "contributes": {
     "viewsContainers": {
@@ -80,11 +78,13 @@
     "lint": "eslint src",
     "test": "vscode-test",
     "test:e2e": "npx playwright test",
-    "test:coverage": "npm run build && vitest run --exclude test/chatkit-protocol.test.js --exclude test/view-templates.test.js --coverage --coverage.include='src/runtime/**' --coverage.include='src/mcp/**' --coverage.thresholds.lines=100 --coverage.thresholds.functions=100 --coverage.thresholds.branches=100 --coverage.thresholds.statements=100",
+    "test:coverage": "npm run build && vitest run --exclude test/chatkit-protocol.test.js --exclude test/view-templates.test.js --exclude 'src/**/e2e/**' --coverage --coverage.include='src/runtime/**' --coverage.include='src/mcp/**' --coverage.thresholds.lines=100 --coverage.thresholds.functions=100 --coverage.thresholds.branches=100 --coverage.thresholds.statements=100",
     "package": "npm pack && mv *.tgz .backups/npm-packages/",
     "dev:setup": "npm run build && npm link",
     "dev:refresh": "npm run build",
-    "dev:clean": "npm run clean && rm -rf dist node_modules && npm install"
+    "dev:clean": "npm run clean && rm -rf dist node_modules && npm install",
+    "clean:poc": "rm -rf .vscode-test",
+    "gen:module": "yo ./scripts/scaffolding/generator-agw-module"
   },
   "repository": {
     "type": "git",

@@ -2,9 +2,9 @@ import { describe, it, expect, vi } from 'vitest';
 import { SetupRouter } from '../src/extension/modules/setup/background/router.js';
 
 describe('SetupRouter', () => {
-  it('should initialize with list tab', () => {
+  it('should initialize with new tab', () => {
     const router = new SetupRouter();
-    expect(router.getState().tab).toBe('list');
+    expect(router.getState().tab).toBe('new');
   });
 
   it('should switch tabs correctly', () => {

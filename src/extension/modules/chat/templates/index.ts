@@ -1,1 +1,3 @@
-export { default } from './default/index.js';
+export default {
+  render: () => '<div>Chat View</div>'
+};

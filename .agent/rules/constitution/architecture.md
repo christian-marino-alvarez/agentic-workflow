@@ -129,7 +129,9 @@ To ensure extreme decoupling and portability, every functional module MUST follo
 ├── types.d.ts       <-- Mandatory Centralized Types.
 ├── constants.ts     <-- Mandatory Centralized Constants.
 ├── background/      <-- Host Layer (Node.js + VS Code)
-│   ├── index.ts     <-- Controller + Module Registration (Setup object)
+│   ├── index.ts     <-- Unified Indexer. Re-exports background and backend.
+│   ├── background.ts <-- VS Code specific logic (Controller). Imports 'vscode'.
+│   ├── backend.ts    <-- Modular Backend logic (Fastify plugin). NO 'vscode' imports.
 │   ├── router.ts    <-- Internal View State
 │   ├── commands/    <-- VS Code Command registrations
 │   ├── state/       <-- Reactive Broadcasters (Host-side)

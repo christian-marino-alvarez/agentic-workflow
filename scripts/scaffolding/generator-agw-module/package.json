@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Generator for Agentic Workflow modules",
   "type": "module",
-  "main": "app/index.js",
+  "main": "generators/app/index.js",
   "keywords": [
     "yeoman-generator"
   ],

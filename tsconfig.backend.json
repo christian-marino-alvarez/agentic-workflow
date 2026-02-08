@@ -1,0 +1,25 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist-backend",
+    "rootDir": "./src",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ES2022",
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "src/backend/**/*",
+    "src/extension/modules/*/background/backend.ts",
+    "src/infrastructure/**/*"
+  ],
+  "exclude": [
+    "src/extension/modules/*/background/background.ts",
+    "src/extension/modules/*/background/index.ts",
+    "src/extension/modules/*/web/**/*",
+    "node_modules",
+    "**/*.test.ts"
+  ]
+}

@@ -33,7 +33,7 @@
   - **Complejidad**: Media
   - **Bloqueador**: Decisión crítica para arquitectura
 
-- [ ] **T014**: POC Agents SDK Integration (Node.js)
+- [x] **T014**: POC Agents SDK Integration (Node.js)
   - Proof of Concept de `@openai/agents` en Node.js backend
   - Validar streaming y tool execution
   - **Agente**: agent-sdk-specialist

@@ -1,12 +1,14 @@
 {
   "version": 1,
-  "runId": "d4d7465f-0bd7-45ab-977b-f33893411f01",
+  "runId": "ef15aee8-2fa5-4f58-ad9d-897d7bee6531",
   "taskId": "task.init",
   "taskTitle": "Initialization",
-  "taskPath": "/Users/milos/Documents/workspace/agentic-workflow/.agent/artifacts/candidate/2026-02-08T13-33-08Z-init.md",
+  "taskPath": "/Users/milos/Documents/workspace/agentic-workflow/.agent/artifacts/candidate/2026-02-08T16-58-34Z-init.md",
   "phase": "init",
   "status": "idle",
   "steps": [],
-  "updatedAt": "2026-02-08T13:33:08.570Z",
-  "artifactHashes": {}
+  "updatedAt": "2026-02-08T17:14:06.255Z",
+  "artifactHashes": {
+    "task.md": "3e6bff4b47ec5a6803d42a70582c908af6c63533dca6557c01315fde909b7b51"
+  }
 }

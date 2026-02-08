@@ -1,0 +1,37 @@
+import { html, css } from 'lit';
+import { customElement, state } from 'lit/decorators.js';
+import { AgwViewBase } from '../../../core/view/base.js';
+import { Tab, MessageType } from '../constants.js';
+import type { Tab as TabType } from '../types.js';
+
+@customElement('agw-<%= name %>-view')
+  export class View extends AgwViewBase {
+  @state()
+  private tab: TabType = Tab.Main;
+
+  public static styles = [
+  AgwViewBase.styles,
+  css`
+  :host { display: block; padding: 16px; }
+  `
+  ];
+
+  protected listen(): void {
+  window.addEventListener('message', (event) => {
+  const message = event.data;
+  if (message.type === MessageType.StateUpdate) {
+  this.tab = message.tab;
+  }
+  });
+  this.postMessage({ type: MessageType.WebviewReady });
+  }
+
+  protected renderView() {
+  return html`
+  <h1>
+    <%= pascalName %> Module
+  </h1>
+  <p>Current Tab: ${this.tab}</p>
+  `;
+  }
+  }

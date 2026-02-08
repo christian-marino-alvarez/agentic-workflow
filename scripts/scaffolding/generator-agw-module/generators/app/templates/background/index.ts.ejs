@@ -1,0 +1,38 @@
+import type { ExtensionContext } from 'vscode';
+import { AgwViewProviderBase } from '../../../core/controller/base.js';
+import { onMessage } from '../../../core/decorators/onMessage.js';
+import { MessageType, Tab } from '../constants.js';
+import type { <%= pascalName %>Domain, <%= pascalName %>Module } from '../types.d.ts';
+
+    export class Controller extends AgwViewProviderBase {
+    public static readonly viewType = '<%= camelName %>View';
+
+      public constructor(context: ExtensionContext) {
+      super(context, Controller.viewType);
+      }
+
+      protected onResolve(): void {
+      this.refresh();
+      }
+
+      private refresh(): void {
+      // Basic render implementation
+      if (this.webviewView) {
+      this.postMessage({ type: MessageType.StateUpdate, tab: Tab.Main });
+      }
+      }
+
+      @onMessage(MessageType.WebviewReady)
+      protected async handleReady(): Promise<void> {
+        this.refresh();
+        }
+        }
+
+        export function create<%= pascalName %>Domain(context: ExtensionContext): <%= pascalName %>Domain {
+            const view = new Controller(context);
+            return { view };
+            }
+
+            export const <%= pascalName %>: <%= pascalName %>Module = {
+                register: create<%= pascalName %>Domain
+                  };

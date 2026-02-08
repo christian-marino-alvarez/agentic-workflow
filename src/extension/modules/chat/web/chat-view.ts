@@ -79,6 +79,9 @@ export class View extends AgwViewBase {
       this.pendingInit = true;
       await this.updateComplete;
       void this.initChatKit();
+    } else {
+      this.isLoading = false;
+      this.statusText = 'Falta configurar API key';
     }
   }
 
@@ -164,7 +167,8 @@ export class View extends AgwViewBase {
   }
 
   private handleMessage(event: MessageEvent): void {
-    const type = (event.data as { type?: string })?.type;
+    const message = event.data;
+    const type = message?.type;
     if (type === 'api-key-missing') {
       this.statusText = 'Missing API key.';
       this.isLoading = false;
@@ -190,10 +194,11 @@ export class View extends AgwViewBase {
           <div id="status">${this.statusText}</div>
         </div>
         ${this.showTest
-          ? html`<button type="button" @click=${this.handleTestClick}>Test</button>`
-          : null}
+        ? html`<button type="button" @click=${this.handleTestClick}>Test</button>`
+        : null}
       </header>
-      ${this.isLoading ? html`<div class="loading">Loading… [chat]</div>` : null}
+      ${this.isLoading ? html`<div class="loading">Cargando chat…</div>` : null}
+      ${!this.isLoading && !this.showTest && !this.apiUrl ? html`<div class="loading">Configura tu clave en 'Setup' para empezar</div>` : null}
       <openai-chatkit class="chatkit"></openai-chatkit>
     `;
   }

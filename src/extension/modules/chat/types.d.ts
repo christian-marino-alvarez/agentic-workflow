@@ -1,6 +1,6 @@
 import type { Controller } from './controller.js';
 import type { ChatKitLocalServer } from '../chatkit-server/index.js';
-import type { ApiKeyBroadcaster } from '../setup/state/index.js';
+import type { ApiKeyBroadcaster } from '../setup/index.js';
 import type { ModuleRegistration } from '../router/index.js';
 
 export type ChatDomain = {

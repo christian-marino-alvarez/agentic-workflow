@@ -1,0 +1,12 @@
+{
+  "name": "poc-node20-agents-verification",
+  "version": "1.0.0",
+  "description": "POC to verify @openai/agents compatibility with Node.js 20.x",
+  "type": "module",
+  "scripts": {
+    "test": "node test-import.js"
+  },
+  "dependencies": {
+    "@openai/agents": "^0.4.6"
+  }
+}

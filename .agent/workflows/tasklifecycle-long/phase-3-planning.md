@@ -22,6 +22,8 @@ blocking: true
 > [!IMPORTANT]
 > **Constitución activa (OBLIGATORIO)**:
 > - Cargar `constitution.clean_code` antes de iniciar
+> - Cargar `constitution.architecture` (Principios de desacoplamiento y Facades)
+> - Cargar `constitution.oocss` (Mandatorio para tareas con UI/CSS)
 > - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
 
 ## Output (REQUIRED)

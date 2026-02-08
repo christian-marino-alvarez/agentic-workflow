@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "runId": "d4d7465f-0bd7-45ab-977b-f33893411f01",
+  "taskId": "task.init",
+  "taskTitle": "Initialization",
+  "taskPath": "/Users/milos/Documents/workspace/agentic-workflow/.agent/artifacts/candidate/2026-02-08T13-33-08Z-init.md",
+  "phase": "init",
+  "status": "idle",
+  "steps": [],
+  "updatedAt": "2026-02-08T13:33:08.570Z",
+  "artifactHashes": {}
+}

@@ -84,7 +84,8 @@
     "package": "npm pack && mv *.tgz .backups/npm-packages/",
     "dev:setup": "npm run build && npm link",
     "dev:refresh": "npm run build",
-    "dev:clean": "npm run clean && rm -rf dist node_modules && npm install"
+    "dev:clean": "npm run clean && rm -rf dist node_modules && npm install",
+    "clean:poc": "rm -rf .vscode-test"
   },
   "repository": {
     "type": "git",

@@ -1,0 +1,9 @@
+feat(agent/poc): implement OpenAI Agents SDK integration in VS Code extension
+
+- Add `PocController` using `@openai/agents` SDK.
+- Implement `Agent` instantiation, `tool` definition, and streaming execution.
+- Add dynamic API Key prompting via `vscode.window.showInputBox` as fallback.
+- Register `agentic-workflow.runPoc` command.
+- Refactor `agent-poc` module structure.
+
+Resolves: T014

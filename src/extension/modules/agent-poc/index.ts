@@ -1,15 +1,17 @@
 import { commands, type ExtensionContext, window } from 'vscode';
 import type { AgentPocDomain, AgentPocModule } from './types.js';
-import { runAgentPoc } from './agent.js';
+import { PocController } from './controller.js';
 
 export function createAgentPocDomain(context: ExtensionContext): AgentPocDomain {
-  const outputChannel = window.createOutputChannel('Agent POC');
+  // Controller manages its own OutputChannel or we can pass one.
+  // The new controller creates "Agentic POC" channel internally.
+  const controller = new PocController();
 
-  const disposable = commands.registerCommand('agentic-workflow.runPoc', () => {
-    return runAgentPoc(context, outputChannel);
+  const disposable = commands.registerCommand('agentic-workflow.runPoc', async () => {
+    await controller.runPoc();
   });
 
-  context.subscriptions.push(outputChannel, disposable);
+  context.subscriptions.push(disposable);
   return {};
 }
 

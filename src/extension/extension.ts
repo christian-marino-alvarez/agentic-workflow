@@ -1,12 +1,10 @@
 import type { ExtensionContext } from 'vscode';
 import { commands } from 'vscode';
 import { ChatKitLocalServer } from './modules/chatkit-server/index.js';
-import { ModuleRouter, Setup, Chat, History, Workflow, AgentPoc } from './index.js';
+import { ModuleRouter, Setup, Chat, History, Workflow, AgentPoc, OPENAI_KEY_SECRET, CONTEXT_HAS_KEY } from './index.js';
 
 export async function activate(context: ExtensionContext): Promise<void> {
   // Set initial context before anything else to wake up views
-  const OPENAI_KEY_SECRET = 'agenticWorkflow.openaiApiKey';
-  const CONTEXT_HAS_KEY = 'agenticWorkflow.hasKey';
   const hasKey = Boolean((await context.secrets.get(OPENAI_KEY_SECRET))?.trim());
   console.log('[Extension] Initial hasKey state:', hasKey);
   void commands.executeCommand('setContext', CONTEXT_HAS_KEY, hasKey);

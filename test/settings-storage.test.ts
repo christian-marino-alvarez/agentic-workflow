@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { SettingsStorage } from '../src/extension/modules/setup/settings-storage.js';
+import { SettingsStorage } from '../src/extension/modules/setup/background/settings-storage.js';
 import type { Memento } from 'vscode';
 
 describe('SettingsStorage', () => {

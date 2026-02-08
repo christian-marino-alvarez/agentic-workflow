@@ -58,13 +58,13 @@ export abstract class AgwViewBase extends LitElement {
       });
   }
 
-  protected listen(): void {}
+  protected listen(): void { }
 
   protected predata(): void {
     this.status = 'loading';
   }
 
-  protected async loadData(): Promise<void> {}
+  protected async loadData(): Promise<void> { }
 
   protected renderLoading() {
     return html`<div class="loading">Loading…</div>`;
@@ -77,6 +77,7 @@ export abstract class AgwViewBase extends LitElement {
   protected abstract renderView(): unknown;
 
   protected render(): unknown {
+    console.log('[AgwViewBase] render() - status:', this.status);
     if (this.status === 'loading') {
       return this.renderLoading();
     }

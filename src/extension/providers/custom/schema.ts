@@ -3,7 +3,7 @@ import { BaseModelSchema } from '../base.js';
 
 export const CustomConfigSchema = BaseModelSchema.extend({
   provider: z.literal('custom'),
-  baseUrl: z.string().url(),
+  baseUrl: z.string().min(1),
   modelId: z.string().min(1),
   secretKeyId: z.string().min(1),
 });

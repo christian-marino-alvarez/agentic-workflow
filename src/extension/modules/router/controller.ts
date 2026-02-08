@@ -1,6 +1,6 @@
 import type { Disposable, ExtensionContext } from 'vscode';
 import { commands } from 'vscode';
-import type { ApiKeyBroadcaster, ApiKeyState } from '../setup/state/index.js';
+import type { ApiKeyBroadcaster, ApiKeyState } from '../setup/background/state/index.js';
 
 export type ViewHandle = {
   show: (preserveFocus?: boolean) => void;
@@ -13,7 +13,7 @@ export type ModuleRegistration<TDomain, TArgs extends unknown[] = []> = {
 export class ModuleRouter implements Disposable {
   private readonly disposables: Disposable[] = [];
 
-  public constructor(private readonly context: ExtensionContext) {}
+  public constructor(private readonly context: ExtensionContext) { }
 
   public register<TDomain, TArgs extends unknown[]>(
     module: ModuleRegistration<TDomain, TArgs>,

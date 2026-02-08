@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.40.0-beta.9](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.39.0-beta.9...agentic-workflow-v1.40.0-beta.9) (2026-02-08)
+
+
+### Features
+
+* **agent-poc:** add openai agents sdk poc and stabilize extension host ([d421fe7](https://github.com/christian-marino-alvarez/agentic-workflow/commit/d421fe7f2270499fadbfad92dc8f3dc51a1c3b00))
+* **agent/poc:** implement OpenAI Agents SDK integration in VS Code extension ([7605f8f](https://github.com/christian-marino-alvarez/agentic-workflow/commit/7605f8f8b21fe1f1f051524376f199937ff1f342))
+* **setup:** implement modular multi-provider LLM schemas and secret management ([1f7b4f3](https://github.com/christian-marino-alvarez/agentic-workflow/commit/1f7b4f343a9d4d3495950f76fc603332ce9ffe24))
+* **setup:** implement modular setup UI with OOCSS architecture (T003/T004) ([333e3c2](https://github.com/christian-marino-alvarez/agentic-workflow/commit/333e3c2a38e43293b2f398efc6c3d99538b6c5cd))
+* **setup:** implement SettingsStorage facade for Memento API persistence (T003) ([cf08faf](https://github.com/christian-marino-alvarez/agentic-workflow/commit/cf08faf6feeb665ea33f6c73920d17d5e746b6fa))
+* **spike:** complete Node.js compatibility spike (T001) ([829ada2](https://github.com/christian-marino-alvarez/agentic-workflow/commit/829ada20f3d7de2caec03e7de10fa81166120160))
+
 ## [1.39.0-beta.9](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.38.0-beta.9...agentic-workflow-v1.39.0-beta.9) (2026-02-05)
 
 

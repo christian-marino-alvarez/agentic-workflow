@@ -7,6 +7,8 @@ import { Tab, MessageType, CHAT_API_URL } from '../constants.js';
 import { renderShell } from './shell/index.js';
 import { commonStyles, renderNotFound } from './common/index.js';
 import { mainStyles, renderMain } from './main/index.js';
+import { ChatSchema, ChatMessageType } from '../contracts/index.js';
+import { BaseMessageType } from '../../../../shared/messaging/base.js';
 
 @customElement('agw-chat-view')
 export class ChatView extends AgwViewBase {
@@ -22,23 +24,54 @@ export class ChatView extends AgwViewBase {
   @state()
   private secretKeyId: string = '';
 
+  constructor() {
+    super();
+    this.messageSchema = ChatSchema;
+  }
+
   public static styles = [
     AgwViewBase.styles,
     commonStyles,
     mainStyles
   ];
 
-  protected listen(): void {
-    window.addEventListener('message', (event) => {
-      const message = event.data;
-      if (message.type === MessageType.StateUpdate) {
-        this.tab = message.tab;
-        this.modelId = message.activeModelId || '';
-        this.environment = message.activeEnvironment;
-        this.requestUpdate();
+  protected onMessage(message: any): void {
+    const logArea = this.renderRoot.querySelector('#demo-logs');
+    if (logArea) {
+      const entry = document.createElement('div');
+      entry.textContent = `[${new Date().toLocaleTimeString()}] Recibido: ${message.type}`;
+      logArea.prepend(entry);
+    }
+
+    if (message.type === 'chat:state-update') {
+      this.tab = message.tab;
+      this.modelId = message.activeModelId || '';
+      this.environment = message.activeEnvironment;
+      this.requestUpdate();
+    }
+
+    if (message.type === ChatMessageType.Streaming) {
+      const output = this.renderRoot.querySelector('#streaming-output');
+      if (output) {
+        if (message.payload.index === 0) {
+          output.textContent = '';
+        }
+        output.textContent += message.payload.token;
+        output.scrollTop = output.scrollHeight;
       }
-    });
-    this.postMessage({ type: MessageType.WebviewReady });
+    }
+  }
+
+  public startDemo(): void {
+    const output = this.renderRoot.querySelector('#streaming-output');
+    if (output) {
+      output.textContent = 'Iniciando demo de streaming...';
+    }
+    this.postMessage({ type: 'chat:demo-streaming' }, { expectAck: true });
+  }
+
+  protected listen(): void {
+    this.postMessage({ type: BaseMessageType.WebviewReady });
   }
 
   private handleSend() {

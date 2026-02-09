@@ -24,6 +24,12 @@ artifacts:
 
 ## Candidates (auto)
 <!-- AUTO-GENERATED: candidates -->
+- .agent/artifacts/candidate/20260209193743-init.md
+- .agent/artifacts/candidate/2026-02-09T18-36-43Z-init.md
+- .agent/artifacts/candidate/2026-02-09T14-59-49Z-init.md
 - .agent/artifacts/candidate/2026-02-09T12-56-14Z-init.md
 - .agent/artifacts/candidate/2026-02-09T10-00-00Z-init.md
+
+
+
 

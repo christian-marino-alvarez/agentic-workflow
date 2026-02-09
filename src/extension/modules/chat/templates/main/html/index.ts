@@ -10,10 +10,11 @@ export function renderMain(params: { environment: string, modelId: string, onSen
         </div>
         
         <div class="chat-area">
-          <!-- Chat messages would go here -->
-          <div class="empty-state">
-            <p>Welcome to Agentic Workflow Chat</p>
-            <small>Configure your secrets in the Security tab to start.</small>
+          <div id="streaming-output" class="streaming-box">
+            <!-- Tokens aparecerán aquí -->
+          </div>
+          <div id="demo-logs" class="demo-logs">
+            <!-- Logs de ACKs y validaciones -->
           </div>
         </div>
 
@@ -21,6 +22,7 @@ export function renderMain(params: { environment: string, modelId: string, onSen
           <textarea id="payload" class="input-field" placeholder="Enter instructions for Neo..."></textarea>
           <div class="actions">
             <button class="btn-primary" @click=${params.onSend}>Send to Neo</button>
+            <button class="btn-secondary" @click=${() => (document.querySelector('agw-chat-view') as any)?.startDemo()}>Run Bridge Demo</button>
           </div>
         </div>
       </div>

@@ -19,8 +19,6 @@ constitution:
   clean_code: .agent/rules/constitution/clean-code.md
   agents_behavior: .agent/rules/constitution/agents-behavior.md
   runtime_integration: .agent/rules/constitution/runtime-integration.md
-  architecture: .agent/rules/constitution/architecture.md
-  oocss: .agent/rules/constitution/oocss.md
 ```
 
 ## Reglas

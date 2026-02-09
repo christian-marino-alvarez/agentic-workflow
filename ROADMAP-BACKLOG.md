@@ -9,16 +9,16 @@
 
 | Dominio | Completitud | Tareas Completadas | Tareas Totales |
 |---------|-------------|---------------------|----------------|
-| D1: Setup/Config | 75% | 3/4 | 4 |
+| D1: Setup/Config | 100% | 4/4 | 4 |
 | D2: UI/ChatKit | 25% | 0/5 | 5 |
 | D3: Backend/Extension Host | 10% | 0/4 | 4 |
 | D4: Agents SDK/Backend | 20% | 1/5 | 5 |
 | D5: MCP/Governance | 0% | 0/4 | 4 |
-| D6: Security | 0% | 0/3 | 3 |
+| D6: Security | 33% | 1/3 | 3 |
 | D7: Release/CI-CD | 0% | 0/2 | 2 |
 | D8: E2E Testing | 10% | 0/4 | 4 |
 
-**Total**: 4/31 tareas completadas (13%)
+**Total**: 6/31 tareas completadas (19%)
 
 ---
 
@@ -26,12 +26,11 @@
 
 ### Fase 0: Foundation (Spikes Técnicos)
 
-- [ ] **T001**: Spike Técnico - Node.js Compatibility
+- [x] **T001**: Spike Técnico - Node.js Compatibility ✅
   - Verificar compatibilidad de Node.js 22+ con VS Code Extension Host
   - Validar que Agents SDK puede ejecutarse
+  - **Resultado**: Node 20.x es compatible.
   - **Agente**: setup-config-agent
-  - **Complejidad**: Media
-  - **Bloqueador**: Decisión crítica para arquitectura
 
 - [x] **T014**: POC Agents SDK Integration (Node.js)
   - Proof of Concept de `@openai/agents` en Node.js backend
@@ -85,11 +84,11 @@
 
 ### Dominio D6: Security
 
-- [ ] **T023**: Secrets Management
+- [x] **T023**: Secrets Management ✅
   - API keys en VS Code SecretStorage
   - `.env` configuration template
   - **Agente**: security-agent
-  - **Complejidad**: Media
+  - **Resultado**: Implementado soporte multi-entorno y persistencia segura.
 
 ---
 

@@ -1,18 +1,23 @@
-import Fastify from 'fastify';
+import fastify from 'fastify';
 import cors from '@fastify/cors';
+import sessionPlugin from './plugins/session.js';
+
 import chatBackend from '../extension/modules/chat/backend/index.js';
 import securityBackend from '../extension/modules/security/backend/index.js';
 
 import helloWorldAgent from './modules/agents/hello-world.js';
 
 export async function createServer() {
-  const server = Fastify({
+  const server = fastify({
     logger: true
   });
 
   await server.register(cors, {
     origin: true
   });
+
+  // Core Plugins
+  await server.register(sessionPlugin);
 
   // Health check
   server.get('/health', async () => {

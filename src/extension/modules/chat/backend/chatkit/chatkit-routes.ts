@@ -10,35 +10,8 @@ import {
   type ThreadEvent
 } from './protocol.js';
 
-// Inter-module communication (JIT secrets)
-import { eventBus, SECURITY_EVENTS } from '../../../../../backend/shared/event-bus.js';
-import { randomUUID } from 'node:crypto';
-
-const OPENAI_KEY_SECRET = 'openai-api-key';
-
-async function getSecretJit(secretKeyId: string, environment: 'dev' | 'pro'): Promise<string> {
-  const requestId = randomUUID();
-
-  return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      eventBus.removeAllListeners(SECURITY_EVENTS.SECRET_RESPONSE(requestId));
-      reject(new Error(`Timeout waiting for secret ${secretKeyId} env=${environment}`));
-    }, 5000);
-
-    eventBus.once(SECURITY_EVENTS.SECRET_RESPONSE(requestId), (payload: { secret?: string; error?: string }) => {
-      clearTimeout(timeout);
-      if (payload.error) {
-        reject(new Error(payload.error));
-      } else if (payload.secret) {
-        resolve(payload.secret);
-      } else {
-        reject(new Error('Unknown error retrieving secret'));
-      }
-    });
-
-    eventBus.emit(SECURITY_EVENTS.SECRET_REQUEST, { secretKeyId, requestId, environment });
-  });
-}
+// Imports updated
+import { verifySession } from '../../../../../backend/middleware/auth.js';
 
 const threadStore = new ChatKitThreadStore();
 let cachedSystemPrompt: string | undefined;
@@ -78,21 +51,18 @@ async function getSystemPrompt(): Promise<string> {
 }
 
 export const registerChatKitRoutes = (fastify: any) => {
-  fastify.post('/chatkit', async (request: any, reply: any) => {
+  // Protect all /chatkit routes with verifySession
+  fastify.post('/chatkit', { preHandler: verifySession }, async (request: any, reply: any) => {
     const payload = request.body as ChatKitRequest;
     if (!payload?.type) {
       return reply.status(400).send({ error: 'Invalid request' });
     }
 
-    // JIT OpenAI API Key
-    let apiKey: string;
-    const secretKeyId = (payload.params as any)?.secret_key_id ?? OPENAI_KEY_SECRET;
-    const environment = (payload.params as any)?.environment ?? 'pro';
-    try {
-      apiKey = await getSecretJit(secretKeyId, environment);
-    } catch (err) {
-      console.error('[ChatKit-Backend] Secret retrieval failed:', err);
-      return reply.status(401).send({ error: 'OpenAI API key not configured or bridge timeout.' });
+    // API Key injected by verifySession
+    const apiKey = request.apiKey;
+    if (!apiKey) {
+      // Should be caught by middleware, but defensiveness is good
+      return reply.status(401).send({ error: 'Unauthorized' });
     }
 
     switch (payload.type) {

@@ -1,8 +1,0 @@
-{"type":"write_denied","actor":"runtime","targetPath":"unknown","relativePath":null,"timestamp":"2026-02-08T18:30:46.195Z","sha256":"07a5ae6aa88a91b832ad83d2de458ebadf8df810f63266dd76279ab274368f5e","reason":"path_outside_workspace"}
-{"type":"write_denied","actor":"runtime","targetPath":".agent/lock","relativePath":".agent/lock","timestamp":"2026-02-08T18:30:54.770Z","reason":"lock_already_held"}
-{"type":"write_denied","actor":"architect-agent","targetPath":".agent/lock","relativePath":".agent/lock","timestamp":"2026-02-08T20:02:04.905Z","reason":"lock_already_held"}
-{"type":"write_denied","actor":"architect-agent","targetPath":".agent/lock","relativePath":".agent/lock","timestamp":"2026-02-09T06:46:13.005Z","reason":"lock_already_held"}
-{"type":"write_denied","actor":"architect-agent","targetPath":".agent/lock","relativePath":".agent/lock","timestamp":"2026-02-09T06:46:27.781Z","reason":"lock_already_held"}
-{"type":"write_denied","actor":"architect-agent","targetPath":".agent/lock","relativePath":".agent/lock","timestamp":"2026-02-09T07:03:09.815Z","reason":"lock_already_held"}
-{"type":"write_denied","actor":"architect-agent","targetPath":".agent/lock","relativePath":".agent/lock","timestamp":"2026-02-09T07:03:23.531Z","reason":"lock_already_held"}
-{"type":"write_denied","actor":"architect-agent","targetPath":".agent/lock","relativePath":".agent/lock","timestamp":"2026-02-09T07:04:37.289Z","reason":"lock_already_held"}

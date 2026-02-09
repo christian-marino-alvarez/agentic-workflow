@@ -18,8 +18,6 @@ blocking: true
 > [!IMPORTANT]
 > **Constitucion activa (OBLIGATORIO)**:
 > - Cargar `constitution.clean_code` antes de iniciar
-> - Cargar `constitution.architecture` (Principios de desacoplamiento y Facades)
-> - Cargar `constitution.oocss` (Mandatorio para tareas con UI/CSS)
 > - Cargar `constitution.agents_behavior` (seccion 7: Gates, seccion 8: Constitucion)
 > - **Activar `skill.runtime-governance`** (Para validacion de gate y trazabilidad por el Architect)
 

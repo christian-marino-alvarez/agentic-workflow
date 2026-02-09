@@ -11,14 +11,14 @@
 |---------|-------------|---------------------|----------------|
 | D1: Setup/Config | 100% | 4/4 | 4 |
 | D2: UI/ChatKit | 25% | 0/5 | 5 |
-| D3: Backend/Extension Host | 10% | 0/4 | 4 |
+| D3: Backend/Extension Host | 25% | 1/4 | 4 |
 | D4: Agents SDK/Backend | 20% | 1/5 | 5 |
 | D5: MCP/Governance | 0% | 0/4 | 4 |
 | D6: Security | 33% | 1/3 | 3 |
 | D7: Release/CI-CD | 0% | 0/2 | 2 |
 | D8: E2E Testing | 10% | 0/4 | 4 |
 
-**Total**: 6/31 tareas completadas (19%)
+**Total**: 8/31 tareas completadas (26%)
 
 ---
 
@@ -66,7 +66,7 @@
 
 ### Dominio D1: Setup/Config
 
-- [ ] **T004**: Completar UI de Configuración
+- [x] **T004**: Completar UI de Configuración
   - Verificar/implementar input para artifacts path
   - Validación de path
   - **Dependencias**: T002, T003
@@ -96,7 +96,7 @@
 
 ### Dominio D3: Backend/Extension Host
 
-- [ ] **T010**: ChatKit Session Endpoint
+- [x] **T010**: ChatKit Session Endpoint
   - Endpoint para client secrets de ChatKit
   - Token management con expiración
   - **Agente**: backend-agent
@@ -322,9 +322,9 @@ Estas tareas tienen evidencia parcial en el código. Requieren verificación ant
 
 ## 📊 Métricas de Progreso
 
-- **Completadas**: 4 tareas
-- **En progreso**: 1 tarea (T004)
-- **Pendientes**: 26 tareas
+- **Completadas**: 6 tareas
+- **En progreso**: 0 tareas
+- **Pendientes**: 25 tareas
 - **Requieren verificación**: 3 tareas
 
 **Progreso total**: 13% (4/31)

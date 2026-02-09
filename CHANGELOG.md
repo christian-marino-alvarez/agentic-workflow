@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.41.0-beta.9](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.40.1-beta.9...agentic-workflow-v1.41.0-beta.9) (2026-02-09)
+
+
+### Features
+
+* **security:** implement multi-environment secrets and chat refactor ([40e3865](https://github.com/christian-marino-alvarez/agentic-workflow/commit/40e3865d1c1a12d29968ee1835094ffd536a40a8))
+* **security:** implement multi-environment secrets and chat refactor ([c444f7c](https://github.com/christian-marino-alvarez/agentic-workflow/commit/c444f7cd7e871ea2216f876ae210c77cfb33b5d9))
+
 ## [1.40.1-beta.9](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.40.0-beta.9...agentic-workflow-v1.40.1-beta.9) (2026-02-08)
 
 

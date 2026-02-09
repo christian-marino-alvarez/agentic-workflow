@@ -1,7 +1,7 @@
 {
   "name": "@christianmaf80/agentic-workflow",
   "publisher": "christianmaf80",
-  "version": "1.40.1-beta.9",
+  "version": "1.41.0-beta.9",
   "description": "Portable agentic workflow orchestration system with strict identity and gate discipline",
   "type": "module",
   "displayName": "Agentic Workflow",

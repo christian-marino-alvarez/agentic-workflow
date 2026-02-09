@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agentic System - Professional Presentation</title>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      securityLevel: 'loose',
+      fontFamily: 'Outfit, sans-serif'
+    });
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --primary: #00d5ff;
+      --secondary: #7b2ff7;
+      --bg: #0a0a0c;
+      --surface: #16161a;
+      --text: #e1e1e6;
+      --text-dim: #a1a1aa;
+      --border: #27272a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 4rem 2rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 5rem;
+    }
+
+    h1 {
+      font-size: 3.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 1rem;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      font-size: 1.25rem;
+      color: var(--text-dim);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .hero-image {
+      width: 100%;
+      border-radius: 24px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 213, 255, 0.1);
+      margin-bottom: 5rem;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .hero-image img {
+      width: 100%;
+      display: block;
+    }
+
+    section {
+      margin-bottom: 6rem;
+    }
+
+    h2 {
+      font-size: 2rem;
+      margin-bottom: 2rem;
+      border-left: 4px solid var(--primary);
+      padding-left: 1rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.5rem;
+      margin-bottom: 2rem;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      border-color: var(--primary);
+    }
+
+    .mermaid {
+      background: rgba(0, 0, 0, 0.2);
+      padding: 2rem;
+      border-radius: 12px;
+      margin-top: 1rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+    }
+
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      display: inline-block;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .code-block {
+      font-family: 'JetBrains Mono', monospace;
+      background: #000;
+      padding: 1.5rem;
+      border-radius: 12px;
+      color: #50fa7b;
+      font-size: 0.9rem;
+      border: 1px solid var(--border);
+      overflow-x: auto;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 4rem 0;
+      color: var(--text-dim);
+      border-top: 1px solid var(--border);
+    }
+
+    .text-dim {
+      color: var(--text-dim);
+    }
+
+    .margin-bottom-2 {
+      margin-bottom: 2rem;
+    }
+
+    .margin-top-05 {
+      margin-top: 0.5rem;
+    }
+
+    .margin-bottom-1 {
+      margin-bottom: 1rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 99px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: rgba(0, 213, 255, 0.1);
+      color: var(--primary);
+      margin-bottom: 1rem;
+    }
+
+    .focus-highlight {
+      filter: drop-shadow(0 0 15px var(--primary)) brightness(1.2);
+      transition: all 0.5s ease;
+      transform: scale(1.05);
+    }
+
+    .mermaid svg {
+      transition: all 0.8s ease;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">Agnostic Core v1.40</div>
+      <h1>Agentic Workflow Core</h1>
+      <p class="subtitle">The new frontier of portable, modular, and scalable agentic orchestration.</p>
+    </header>
+
+    <div class="hero-image">
+      <img src="agentic_system_hq_diagram.png" alt="Architecture Hero">
+    </div>
+
+    <section id="governance">
+      <h2>Governance & Communication</h2>
+      <div class="card">
+        <p class="text-dim margin-bottom-2">How the Assistant, MCP Server, and Runtime interact to govern the workspace.
+        </p>
+        <div class="mermaid">
+          sequenceDiagram
+          participant LLM as AI Assistant (LLM)
+          participant MCP as MCP Server (Bridge)
+          participant RT as Runtime Engine (Governor)
+          participant FS as Filesystem (.agent/MD)
+
+          Note over LLM, FS: 1. Capability Discovery
+          LLM->>MCP: ListTools()
+          MCP-->>LLM: Runtime Tools (run, next_step, etc.)
+
+          Note over LLM, FS: 2. Contextual Memory
+          FS->>RT: Read constitution + task.md
+          RT-->>MCP: State + Active Rules
+          MCP-->>LLM: Context injected into System Prompt
+
+          Note over LLM, FS: 3. Execution & Control
+          LLM->>MCP: CallTool("runtime_next_step")
+          MCP->>RT: Validate Gate (Constitution)
+          RT->>FS: Update task.md
+          RT-->>MCP: ACK Phase updated
+          MCP-->>LLM: New Workspace State
+        </div>
+      </div>
+    </section>
+
+    <section id="data-structure">
+      <h2>Markdown: Single Source of Truth</h2>
+      <div class="card">
+        <p class="text-dim margin-bottom-2">The system uses Markdown files with YAML metadata and state markers for
+          readable and robust persistence.</p>
+        <div class="mermaid">
+          graph LR
+          subgraph "MD File Structure"
+          FM[Frontmatter YAML]
+          Body[Markdown Content]
+          RT_Tags[Runtime Markers]
+          end
+
+          subgraph "Runtime Logic"
+          Parse[Markdown Parser]
+          Sync[Frontmatter Sync]
+          Guard[Write Guard]
+          end
+
+          FM -->|Metadata| Sync
+          Sync --> Parse
+          Body --> Parse
+          Parse --> Guard
+          Guard -->|Persistence| FS[(.agent/artifacts)]
+
+          classDef tech fill:#1a1a2e,stroke:#00d5ff,stroke-width:2px,color:#fff;
+          class FM,Body,RT_Tags,Sync,Guard tech;
+        </div>
+      </div>
+    </section>
+
+    <section id="architecture">
+      <h2>System Architecture</h2>
+      <div class="card">
+        <p class="text-dim margin-bottom-2">The Orchestrator Core manages communication between the AI assistant and the
+          filesystem through a robust protocol and a deterministic runtime.</p>
+        <div class="mermaid">
+          graph TD
+          subgraph AI["AI Interfaces"]
+          Assistant["Assistant (Antigravity/Codex)"]
+          end
+
+          subgraph Core["Agentic Core Engine"]
+          MCP["MCP Server (Protocol)"]
+          RT["Runtime Orchestrator"]
+          CLI["CLI Controller"]
+
+          subgraph Data["Knowledge & Structure"]
+          Workflows["Workflows (.agent)"]
+          Rules["Rules & Constitution"]
+          Artifacts["Task Artifacts"]
+          end
+          end
+
+          Assistant <-->|JSON-RPC| MCP
+            MCP <--> RT
+              RT <--> Workflows
+                RT <--> Rules
+                  RT <--> Artifacts
+                    CLI --> RT
+
+                    classDef core fill:#1a1a2e,stroke:#00d5ff,stroke-width:2px,color:#fff;
+                    classDef interface fill:#2e1a3e,stroke:#7b2ff7,stroke-width:2px,color:#fff;
+                    class MCP,RT,CLI core;
+                    class Assistant interface;
+        </div>
+      </div>
+    </section>
+
+    <section id="workflows">
+      <h2>Task Lifecycle</h2>
+      <div class="grid">
+        <div class="card">
+          <div class="feature-icon">⚡</div>
+          <h3>Long Strategy</h3>
+          <p class="text-dim margin-top-05">A 9-phase process designed for maximum security and traceability in complex
+            tasks.</p>
+          <div class="mermaid">
+            stateDiagram-v2
+            [*] --> Research
+            Research --> Analysis
+            Analysis --> Planning
+            Planning --> Implementation
+            Implementation --> Verification
+            Verification --> Results
+            Results --> [*]
+          </div>
+        </div>
+        <div class="card">
+          <div class="feature-icon">🚀</div>
+          <h3>Short Strategy</h3>
+          <p class="text-dim margin-top-05">Optimized 3-4 phase flow for rapid iterations and agile fixes.</p>
+          <div class="mermaid">
+            stateDiagram-v2
+            [*] --> Analysis
+            Analysis --> Implementation
+            Implementation --> Results
+            Results --> [*]
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="usage">
+      <h2>Portable Execution</h2>
+      <div class="card">
+        <p class="margin-bottom-1">After migration, the system is 100% independent of VS Code:</p>
+        <div class="code-block">
+          # Install dependencies
+          npm install
+
+          # Build the core
+          npm run build
+
+          # Start MCP server
+          node dist/cli/index.js mcp
+
+          # Initialize a new workspace
+          node dist/cli/index.js init
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>&copy; 2026 Agentic System Team - Advanced Agentic Coding</p>
+    </footer>
+  </div>
+</body>
+
+</html>

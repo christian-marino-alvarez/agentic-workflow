@@ -29,7 +29,7 @@
       "main": [
         {
           "id": "keyView",
-          "name": "Setup",
+          "name": "Security",
           "icon": "media/agent-chat.svg",
           "type": "webview"
         },
@@ -113,11 +113,14 @@
     "@fastify/autoload": "^6.3.1",
     "@fastify/cors": "^11.2.0",
     "@modelcontextprotocol/sdk": "^1.25.3",
+    "@openai/agents": "^0.4.6",
+    "@openai/agents-openai": "^0.4.6",
+    "@openai/agents-realtime": "^0.4.6",
     "commander": "^11.1.0",
     "fastify": "^5.7.4",
     "gray-matter": "^4.0.3",
     "lit": "^3.3.2",
-    "openai": "^6.17.0"
+    "openai": "^6.18.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",

@@ -179,11 +179,13 @@ Any deviation is a violation.
 
 ---
 
-## 11. Tests & Verifiability (Conceptual)
+## 11. Tests & Verifiability (Modular Architecture)
 
-- Code MUST be verifiable in isolation.
-- Hidden side effects are forbidden.
-- Deterministic behavior is mandatory.
+- **Strict Locality**: Every module MUST own its tests.
+- **Unit Tests**: MUST be located in `[module]/test/unit/`.
+- **E2E Tests**: MAY be located in `[module]/test/e2e/` or in the global `test/e2e/` if they cover cross-module flows.
+- Tests outside their domain (except global E2E) are a violation of the modular architecture.
+- Deterministic behavior and isolation are mandatory.
 
 ---
 

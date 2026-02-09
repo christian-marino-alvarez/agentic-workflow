@@ -17,4 +17,5 @@ export const BaseModelSchema = z.object({
     temperature: 0.7,
     maxTokens: 2048
   }),
+  environment: z.enum(['dev', 'pro']).default('pro'),
 }).passthrough();

@@ -155,7 +155,8 @@ To ensure extreme decoupling and portability, every functional module MUST follo
 4.  **Types supremacy**: No local type definitions in logic files. All types must reside in `types.d.ts` and be consumed from there.
 6.  **No Inline Styles (Mandatory)**: Using the `style` attribute in HTML or Lit templates is STRICTLY PROHIBITED. All styles MUST reside in separate CSS objects/files within the `templates/` structure.
 7.  **Theme Alignment**: All UI components MUST exclusively use VS Code CSS variables (`--vscode-*`) to ensure native feel across all themes.
-8.  **OOCSS Orientation (Mandatory)**: Styles MUST follow Object-Oriented CSS principles as defined in the [OOCSS Constitution](file:///.agent/rules/constitution/oocss.md).
+8.  **Folder Entrypoint (Mandatory)**: EVERY folder within a module MUST have an `index.ts` file that acts as the entrypoint for that specific sub-domain. External files should only import from these entrypoints, never from files deep within the folder.
+9.  **OOCSS Orientation (Mandatory)**: Styles MUST follow Object-Oriented CSS principles as defined in the [OOCSS Constitution](file:///.agent/rules/constitution/oocss.md).
     - **Separate Structure from Skin**: Define base objects for layout and apply skins via modifiers.
     - **Separate Container from Content**: Components must be reusable regardless of their location.
     - **Reusability**: Shared UI objects MUST reside in `common/css/`.

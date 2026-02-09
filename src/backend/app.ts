@@ -1,7 +1,9 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import chatBackend from '../extension/modules/chat/background/backend.js';
-import setupBackend from '../extension/modules/setup/background/backend.js';
+import chatBackend from '../extension/modules/chat/backend/index.js';
+import securityBackend from '../extension/modules/security/backend/index.js';
+
+import helloWorldAgent from './modules/agents/hello-world.js';
 
 export async function createServer() {
   const server = Fastify({
@@ -19,7 +21,10 @@ export async function createServer() {
 
   // Module Registration
   await server.register(chatBackend, { prefix: '/api/chat' });
-  await server.register(setupBackend, { prefix: '/api/setup' });
+  await server.register(securityBackend, { prefix: '/api/security' });
+
+  // Agent Demo Registration (Task 7)
+  await server.register(helloWorldAgent, { prefix: '/api/agent' });
 
   return server;
 }

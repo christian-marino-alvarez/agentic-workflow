@@ -1,9 +1,9 @@
 export {
-  Setup,
+  Security,
   type ApiKeyState,
   OPENAI_KEY_SECRET,
   CONTEXT_HAS_KEY
-} from './setup/index.js';
+} from './security/index.js';
 export { Chat, createChatDomain } from './chat/index.js';
 export { History, createHistoryDomain } from './history/index.js';
 export { Workflow, createWorkflowDomain } from './workflow/index.js';

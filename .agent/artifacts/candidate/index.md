@@ -32,11 +32,7 @@ artifacts:
 - .agent/artifacts/candidate/2026-02-08T13-33-08Z-init.md
 - .agent/artifacts/candidate/20260206-091921-init.md
 - .agent/artifacts/candidate/2026-02-06T08-17-58Z-init.md
-
-
-
-
-
-
-
-
+- .agent/artifacts/candidate/20260208-210321-init.md
+- .agent/artifacts/candidate/2026-02-08T20-51-15Z-init.md
+- .agent/artifacts/candidate/T023-secrets-management.md
+- .agent/artifacts/candidate/2026-02-08T20-51-15Z-init.md

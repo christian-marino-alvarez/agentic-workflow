@@ -1,7 +1,7 @@
-import type { ExtensionContext } from 'vscode';
-import { commands } from 'vscode';
-import { ChatKitLocalServer } from './modules/chatkit-server/index.js';
-import { ModuleRouter, Setup, Chat, History, Workflow, AgentPoc, OPENAI_KEY_SECRET, CONTEXT_HAS_KEY } from './index.js';
+import { ExtensionContext, commands } from 'vscode';
+import { ChatSidecarManager } from './modules/chat/index.js';
+import { ModuleRouter, Security, Chat, History, Workflow, AgentPoc, OPENAI_KEY_SECRET, CONTEXT_HAS_KEY } from './index.js';
+import type { SecurityDomain, ChatDomain } from './index.js';
 
 export async function activate(context: ExtensionContext): Promise<void> {
   // Set initial context before anything else to wake up views
@@ -9,20 +9,29 @@ export async function activate(context: ExtensionContext): Promise<void> {
   console.log('[Extension] Initial hasKey state:', hasKey);
   void commands.executeCommand('setContext', CONTEXT_HAS_KEY, hasKey);
 
-  const chatKitServer = new ChatKitLocalServer(context);
-  void chatKitServer.start();
-  context.subscriptions.push(chatKitServer);
-
   const router = new ModuleRouter(context);
-  const setupDomain = router.register(Setup);
-  const chatDomain = router.register(Chat, {
-    chatKitServer,
-    apiKeyBroadcaster: setupDomain.apiKeyBroadcaster
-  });
-  router.register(History);
-  router.register(Workflow);
-  router.register(AgentPoc);
-  router.connectChat(setupDomain.apiKeyBroadcaster, chatDomain.view);
+  const securityDomain = (await router.register(Security)) as SecurityDomain;
+
+  const chatSidecarManager = new ChatSidecarManager(context);
+  // Inyectar claves del puente en el servidor si están disponibles
+  if (securityDomain.bridge) {
+    console.log('[Extension] Security bridge ready on port:', securityDomain.bridge.port);
+    chatSidecarManager.setBridgeConfig(securityDomain.bridge);
+  }
+
+  void chatSidecarManager.start();
+  context.subscriptions.push(chatSidecarManager);
+
+  const chatDomain = (await router.register(Chat, {
+    chatSidecarManager,
+    apiKeyBroadcaster: securityDomain.apiKeyBroadcaster
+  })) as ChatDomain;
+
+  await router.register(History);
+  await router.register(Workflow);
+  await router.register(AgentPoc);
+
+  router.connectChat(securityDomain.apiKeyBroadcaster, chatDomain.view);
   context.subscriptions.push(router);
 }
 

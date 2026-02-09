@@ -4,7 +4,7 @@ import { dirname, resolve } from 'node:path';
 
 const entries = [
   {
-    entry: resolve('src/extension/modules/chat/web/chat-view.ts'),
+    entry: resolve('src/extension/modules/chat/templates/index.ts'),
     outfile: resolve('dist/extension/modules/chat/web/chat-view.js')
   },
   {
@@ -16,8 +16,8 @@ const entries = [
     outfile: resolve('dist/extension/modules/workflow/web/workflow-view.js')
   },
   {
-    entry: resolve('src/extension/modules/setup/templates/index.ts'),
-    outfile: resolve('dist/extension/modules/setup/web/setup-view.js')
+    entry: resolve('src/extension/modules/security/templates/index.ts'),
+    outfile: resolve('dist/extension/modules/security/web/security-view.js')
   }
 ];
 

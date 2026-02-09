@@ -30,7 +30,9 @@ El objetivo es desacoplar la lógica pesada de los agentes para evitar bloquear 
 - [x] phase-1-research
 - [x] phase-2-analysis
 - [x] phase-3-planning
-- [ ] phase-4-implementation
+- [x] phase-4-implementation
+- [x] phase-5-verification
+- [x] phase-6-results-acceptance
 
 ## Referencias
 - `acceptance.md`: Criterios de aceptación detallados y respuestas a preguntas de definición.

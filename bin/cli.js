@@ -8,6 +8,7 @@ import { createCommand } from '../dist/cli/commands/create.js';
 import { restoreCommand } from '../dist/cli/commands/restore.js';
 import { cleanCommand } from '../dist/cli/commands/clean.js';
 import { mcpCommand } from '../dist/cli/commands/mcp.js';
+import { bootstrapCommand } from '../dist/cli/commands/bootstrap.js';
 import { registerMcpCommand } from '../dist/cli/commands/register-mcp.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -88,5 +89,11 @@ program
   .command('register-mcp')
   .description('Register MCP server in Gemini CLI (Antigravity) and/or Codex CLI')
   .action(() => registerMcpCommand());
+
+program
+  .command('bootstrap')
+  .argument('<path>', 'Destination path for the standalone core')
+  .description('Bootstrap a standalone copy of the agentic core structure')
+  .action(bootstrapCommand);
 
 program.parse();

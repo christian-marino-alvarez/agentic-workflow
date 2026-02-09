@@ -33,15 +33,28 @@ export const mainStyles = css`
     justify-content: center;
   }
 
-  .empty-state {
-    text-align: center;
-    opacity: 0.5;
+  .streaming-box {
+    width: 100%;
+    height: 120px;
+    background: var(--agw-surface-overlay);
+    border: 1px solid var(--agw-border);
+    border-radius: 8px;
+    padding: 12px;
+    font-family: var(--agw-font-mono);
+    font-size: 13px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+    white-space: pre-wrap;
   }
 
-  .empty-state p {
-    font-size: 16px;
-    font-weight: 500;
-    margin-bottom: 8px;
+  .demo-logs {
+    width: 100%;
+    height: 80px;
+    font-size: 10px;
+    opacity: 0.6;
+    overflow-y: auto;
+    border-top: 1px dashed var(--agw-border);
+    padding-top: 8px;
   }
 
   .input-area {

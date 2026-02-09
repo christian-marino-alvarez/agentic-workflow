@@ -8,6 +8,7 @@ import type { ModelConfig } from '../../../providers/index.js';
 import { ChatRouter } from './router.js';
 import { Tab, MessageType } from '../constants.js';
 import type { StateUpdateMessage } from '../types.js';
+import { ChatSchema } from '../contracts/index.js';
 
 export class ChatController extends AgwViewProviderBase {
   public static readonly viewType = 'chatView';
@@ -17,6 +18,7 @@ export class ChatController extends AgwViewProviderBase {
   public constructor(context: ExtensionContext) {
     super(context, ChatController.viewType);
     this.settings = new SettingsStorage(context.globalState);
+    this.messageSchema = ChatSchema;
   }
 
   public show(preserveFocus?: boolean): void {
@@ -93,6 +95,30 @@ export class ChatController extends AgwViewProviderBase {
       this.postMessage({ type: 'chat:response', ok: response.ok, status: response.status, data });
     } catch (error: any) {
       this.postMessage({ type: 'chat:response', ok: false, error: String(error) });
+    }
+  }
+
+  @onMessage('chat:demo-streaming')
+  protected async handleDemoStreaming(_message: any): Promise<void> {
+    const tokens = [
+      "Hola", " soy", " Neo", ".", " Estoy", " probando",
+      " el", " nuevo", " Communication", " Bridge",
+      " con", " soporte", " para", " streaming", " y",
+      " reintentos", " automáticos", " mediante", " ACKs", "."
+    ];
+
+    for (let i = 0; i < tokens.length; i++) {
+      // Simular retraso de red
+      await new Promise(resolve => setTimeout(resolve, 150));
+
+      this.postMessage({
+        type: 'chat:streaming',
+        payload: {
+          token: tokens[i],
+          index: i,
+          done: i === tokens.length - 1
+        }
+      }, { expectAck: true }); // Probamos el sistema de ACKs con streaming
     }
   }
 }

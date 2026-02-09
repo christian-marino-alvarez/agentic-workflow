@@ -1,0 +1,129 @@
+---
+id: 2
+title: security-e2e-tests
+owner: architect-agent
+strategy: short
+---
+
+# Task (Candidate)
+
+## Identificación
+- id: 2
+- title: security-e2e-tests
+- scope: candidate
+- owner: architect-agent
+
+## Origen
+- created_from:
+  - workflow: tasklifecycle-short
+  - source: init
+  - candidate_path: artifacts.candidate.task
+
+## Descripción de la tarea
+me ùede arrancar los e2e de pruebas de security
+
+## Objetivo
+Ejecución y verificación de los tests de seguridad de extremo a extremo para asegurar la integridad del sistema.
+
+## Estado del ciclo de vida (FUENTE ÚNICA DE VERDAD)
+
+<!-- RUNTIME:START task-state -->
+```yaml
+task:
+  id: "2"
+  title: "security-e2e-tests"
+  strategy: "short"  # long | short
+  artifacts:
+    supplemental: []
+  phase:
+    current: "short-phase-1-analisis"
+    validated_by: "architect-agent"
+    updated_at: "2026-02-09T15:06:33Z"
+  delegation:
+    active_agent: "architect-agent"
+    history: []
+  lifecycle:
+    phases:
+      phase-0-acceptance-criteria:
+        completed: false
+        validated_by: null
+        validated_at: null
+      phase-1-research:
+        completed: false
+        validated_by: null
+        validated_at: null
+      phase-2-analysis:
+        completed: false
+        validated_by: null
+        validated_at: null
+      phase-3-planning:
+        completed: false
+        validated_by: null
+        validated_at: null
+      phase-4-implementation:
+        completed: false
+        validated_by: null
+        validated_at: null
+      phase-5-verification:
+        completed: false
+        validated_by: null
+        validated_at: null
+      phase-6-results-acceptance:
+        completed: false
+        validated_by: null
+        validated_at: null
+      phase-7-evaluation:
+        completed: false
+        validated_by: null
+        validated_at: null
+      phase-8-commit-push:
+        completed: false
+        validated_by: null
+        validated_at: null
+    subflows:
+      components:
+        create: []
+        refactor: []
+        delete: []
+      short-phase-1-analisis:
+        completed: false
+        validated_by: null
+        validated_at: null
+      short-phase-2-plan:
+        completed: false
+        validated_by: null
+        validated_at: null
+      short-phase-3-implementation:
+        completed: false
+        validated_by: null
+        validated_at: null
+      short-phase-4-qa-results:
+        completed: false
+        validated_by: null
+        validated_at: null
+```
+<!-- RUNTIME:END -->
+
+---
+
+## Registro de delegación
+- Cualquier cambio de agente **DEBE** registrarse en `task.delegation.history`.
+- La entrada mínima incluye: `from`, `to`, `approved_by`, `approved_at`, `reason`.
+
+---
+
+## 2. Definición y Alcance (Contrato)
+- **Acceptance Criteria**: [acceptance.md](file:///Users/milos/Documents/workspace/agentic-workflow/.agent/artifacts/2-security-e2e-tests/acceptance.md)
+- **Alias**: `task.acceptance`
+
+---
+
+## Reglas contractuales
+- Este fichero es la **fuente única de verdad** del estado de la tarea.
+- El campo `task.phase.current` **SOLO puede ser modificado por `architect-agent`**.
+- El campo `task.lifecycle.phases.*` **SOLO puede ser marcado como completed por `architect-agent`**.
+- Una fase **NO puede marcarse como completed** si no es la fase actual.
+- El avance de fase requiere:
+  1. Marcar la fase actual como `completed: true`
+  2. Validación explícita del architect
+  3. Actualización de `task.phase.current` a la siguiente fase

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.40.1-beta.9](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.40.0-beta.9...agentic-workflow-v1.40.1-beta.9) (2026-02-08)
+
+
+### Bug Fixes
+
+* adjust test coverage scope and setup-router test ([febf28d](https://github.com/christian-marino-alvarez/agentic-workflow/commit/febf28d2ab04683c421776755d422e361434fa00))
+
 ## [1.40.0-beta.9](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.39.0-beta.9...agentic-workflow-v1.40.0-beta.9) (2026-02-08)
 
 

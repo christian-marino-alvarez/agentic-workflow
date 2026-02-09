@@ -12,13 +12,13 @@
 | D1: Setup/Config | 75% | 3/4 | 4 |
 | D2: UI/ChatKit | 25% | 0/5 | 5 |
 | D3: Backend/Extension Host | 10% | 0/4 | 4 |
-| D4: Agents SDK/Backend | 0% | 0/5 | 5 |
+| D4: Agents SDK/Backend | 20% | 1/5 | 5 |
 | D5: MCP/Governance | 0% | 0/4 | 4 |
 | D6: Security | 0% | 0/3 | 3 |
 | D7: Release/CI-CD | 0% | 0/2 | 2 |
 | D8: E2E Testing | 10% | 0/4 | 4 |
 
-**Total**: 3/31 tareas completadas (10%)
+**Total**: 4/31 tareas completadas (13%)
 
 ---
 
@@ -33,7 +33,7 @@
   - **Complejidad**: Media
   - **Bloqueador**: Decisión crítica para arquitectura
 
-- [ ] **T014**: POC Agents SDK Integration (Node.js)
+- [x] **T014**: POC Agents SDK Integration (Node.js)
   - Proof of Concept de `@openai/agents` en Node.js backend
   - Validar streaming y tool execution
   - **Agente**: agent-sdk-specialist
@@ -75,9 +75,10 @@
 
 ### Dominio D4: Agents SDK/Backend
 
-- [ ] **T015**: Node.js Backend Server - Scaffolding
+- [x] **T015**: Node.js Backend Server - Scaffolding ✅
   - Setup inicial de backend TypeScript
   - Express/Fastify server básico
+  - **Ubicación**: `src/backend/`, `tsconfig.backend.json`
   - **Dependencias**: T014
   - **Agente**: agent-sdk-specialist
   - **Complejidad**: Media
@@ -322,12 +323,12 @@ Estas tareas tienen evidencia parcial en el código. Requieren verificación ant
 
 ## 📊 Métricas de Progreso
 
-- **Completadas**: 3 tareas
+- **Completadas**: 4 tareas
 - **En progreso**: 1 tarea (T004)
-- **Pendientes**: 27 tareas
+- **Pendientes**: 26 tareas
 - **Requieren verificación**: 3 tareas
 
-**Progreso total**: 10% (3/31)
+**Progreso total**: 13% (4/31)
 
 ---
 

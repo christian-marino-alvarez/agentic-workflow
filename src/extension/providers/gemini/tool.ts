@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { tool, Runner } from '@openai/agents';
 import { OpenAIProvider } from '@openai/agents-openai';
 import type { ExtensionContext } from 'vscode';
-import { SecretHelper } from '../../modules/setup/background/secret-helper.js';
+import { SecretHelper } from '../../modules/security/background/secret-helper.js';
 import { GeminiConfigSchema } from './schema.js';
 
 /**

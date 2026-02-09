@@ -1,13 +1,13 @@
 import type { Disposable, ExtensionContext } from 'vscode';
 import { commands } from 'vscode';
-import type { ApiKeyBroadcaster, ApiKeyState } from '../setup/background/state/index.js';
+import type { ApiKeyBroadcaster, ApiKeyState } from '../security/background/state/index.js';
 
 export type ViewHandle = {
   show: (preserveFocus?: boolean) => void;
 };
 
 export type ModuleRegistration<TDomain, TArgs extends unknown[] = []> = {
-  register: (context: ExtensionContext, ...args: TArgs) => TDomain;
+  register: (context: ExtensionContext, ...args: TArgs) => TDomain | Promise<TDomain>;
 };
 
 export class ModuleRouter implements Disposable {
@@ -15,11 +15,11 @@ export class ModuleRouter implements Disposable {
 
   public constructor(private readonly context: ExtensionContext) { }
 
-  public register<TDomain, TArgs extends unknown[]>(
+  public async register<TDomain, TArgs extends unknown[]>(
     module: ModuleRegistration<TDomain, TArgs>,
     ...args: TArgs
-  ): TDomain {
-    return module.register(this.context, ...args);
+  ): Promise<TDomain> {
+    return await module.register(this.context, ...args);
   }
 
   public connectChat(apiKeyBroadcaster: ApiKeyBroadcaster, chatView: ViewHandle): void {

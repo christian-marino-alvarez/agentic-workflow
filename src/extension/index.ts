@@ -1,5 +1,5 @@
 export {
-  Setup,
+  Security,
   Chat,
   createChatDomain,
   History,
@@ -14,4 +14,6 @@ export {
   type ModuleRegistration,
   type ViewHandle
 } from './modules/index.js';
+export type { SecurityDomain } from './modules/security/types.js';
+export type { ChatDomain } from './modules/chat/types.js';
 export * from './core/index.js';

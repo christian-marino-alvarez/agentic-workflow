@@ -29,7 +29,7 @@
       "main": [
         {
           "id": "keyView",
-          "name": "Setup",
+          "name": "Security",
           "icon": "media/agent-chat.svg",
           "type": "webview"
         },
@@ -83,6 +83,8 @@
     "dev:setup": "npm run build && npm link",
     "dev:refresh": "npm run build",
     "dev:clean": "npm run clean && rm -rf dist node_modules && npm install",
+    "build:backend": "tsc -p tsconfig.backend.json",
+    "start:backend": "node dist-backend/backend/index.js",
     "clean:poc": "rm -rf .vscode-test",
     "gen:module": "yo ./scripts/scaffolding/generator-agw-module"
   },
@@ -108,13 +110,17 @@
   "dependencies": {
     "@christianmaf80/agentic-workflow": "^1.38.0-beta.10",
     "@clack/prompts": "^0.7.0",
+    "@fastify/autoload": "^6.3.1",
+    "@fastify/cors": "^11.2.0",
     "@modelcontextprotocol/sdk": "^1.25.3",
-    "@openai/agents": "^0.4.5",
+    "@openai/agents": "^0.4.6",
+    "@openai/agents-openai": "^0.4.6",
+    "@openai/agents-realtime": "^0.4.6",
     "commander": "^11.1.0",
+    "fastify": "^5.7.4",
     "gray-matter": "^4.0.3",
     "lit": "^3.3.2",
-    "openai": "^6.17.0",
-    "zod": "^4.3.6"
+    "openai": "^6.18.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
@@ -124,11 +130,12 @@
     "@serenity-js/playwright-test": "^3.40.0",
     "@serenity-js/web": "^3.40.0",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^20.10.6",
+    "@types/node": "^20.19.33",
     "@types/vscode": "^1.108.1",
     "@vitest/coverage-v8": "^4.0.18",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
+    "cpy-cli": "^7.0.0",
     "eslint": "^9.39.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.52.0",

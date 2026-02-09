@@ -1,19 +1,6 @@
-import type { ExtensionContext } from 'vscode';
-import { Controller } from './controller.js';
-import type { ChatDomain, ChatDependencies, ChatModule } from './types.d.ts';
-
-export function createChatDomain(
-  context: ExtensionContext,
-  deps: ChatDependencies
-): ChatDomain {
-  const view = new Controller(context, deps);
-  return { view };
-}
-
-export const Chat: ChatModule = {
-  register: createChatDomain
-};
-
-export { Controller } from './controller.js';
-export { default as template } from './templates/index.js';
-export type { ChatDomain, TemplateParams, ChatDependencies } from './types.d.ts';
+export { Chat, createChatDomain } from './background/index.js';
+export { ChatSidecarManager } from './background/chatkit/index.js';
+export * from './backend/chatkit/index.js';
+export { default as chatBackend } from './backend/index.js';
+export type * from './types.js';
+export { Tab, MessageType } from './constants.js';

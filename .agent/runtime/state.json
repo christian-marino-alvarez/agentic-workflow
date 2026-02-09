@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "runId": "d4d7465f-0bd7-45ab-977b-f33893411f01",
-  "taskId": "task.init",
-  "taskTitle": "Initialization",
-  "taskPath": "/Users/milos/Documents/workspace/agentic-workflow/.agent/artifacts/candidate/2026-02-08T13-33-08Z-init.md",
-  "phase": "init",
+  "runId": "750305d6-90c4-4f06-98bb-6ca1b5b7105c",
+  "taskId": "9-secrets-management",
+  "taskTitle": "Secrets Management (T023)",
+  "taskPath": "/Users/milos/Documents/workspace/agentic-workflow/.agent/artifacts/9-secrets-management/task.md",
+  "phase": "phase-0-acceptance-criteria",
   "status": "idle",
   "steps": [],
-  "updatedAt": "2026-02-08T13:33:08.570Z",
+  "updatedAt": "2026-02-08T17:48:50.332Z",
   "artifactHashes": {}
 }

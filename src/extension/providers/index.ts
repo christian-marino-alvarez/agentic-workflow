@@ -32,6 +32,7 @@ export const ExtensionConfigSchema = z.object({
   models: z.array(ModelConfigSchema).default([]),
   activeModelId: z.string().optional(),
   artifactsPath: z.string().optional(),
+  environment: z.enum(['dev', 'pro']).default('pro'),
 });
 
 export type ExtensionConfig = z.infer<typeof ExtensionConfigSchema>;

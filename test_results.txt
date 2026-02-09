@@ -1,0 +1,423 @@
+
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90m/Users/milos/Documents/workspace/agentic-workflow[39m
+
+ [31m❯[39m src/extension/core/view/test/unit/templates.test.ts [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m src/extension/modules/chat/test/unit/protocol.test.ts [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m src/mcp/test/unit/mcp-handlers.test.ts [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m src/mcp/test/unit/mcp-emitter.test.ts [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m src/runtime/test/unit/runtime-frontmatter-sync.test.ts [2m([22m[2m0 test[22m[2m)[22m
+[90mstderr[2m | src/mcp/test/unit/mcp-handlers-branch.test.ts[2m > [22m[2mmcp handlers workspace error branch[2m > [22m[2mhandles non-Error thrown from workspace resolution
+[22m[39m[INFO] [MCP] Tool call received {"tool":"runtime_emit_event","cwd":"/Users/milos/Documents/workspace/agentic-workflow","workspaceRoot":"/Users/milos/Documents/workspace/agentic-workflow","workspaceError":null}
+[MCP] Tool call received {"tool":"runtime_emit_event","cwd":"/Users/milos/Documents/workspace/agentic-workflow","workspaceRoot":"/Users/milos/Documents/workspace/agentic-workflow","workspaceError":null}
+
+ [31m❯[39m src/mcp/test/unit/mcp-handlers-branch.test.ts [2m([22m[2m1 test[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 128[2mms[22m[39m
+[31m     [31m×[31m handles non-Error thrown from workspace resolution[39m[32m 126[2mms[22m[39m
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mruns and persists state
+[22m[39m[INFO] [MCP] Tool called: runtime_run {"taskPath":".agent/artifacts/candidate/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mruns with default state path
+[22m[39m[INFO] [MCP] Tool called: runtime_run {"taskPath":".agent/artifacts/candidate/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mrun throws on agent mismatch
+[22m[39m[INFO] [MCP] Tool called: runtime_run {"taskPath":".agent/artifacts/candidate/task.md","agent":"qa-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mrun logs and rethrows when init creation fails
+[22m[39m[INFO] [MCP] Tool called: runtime_run {"taskPath":".agent/artifacts/candidate/init.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mrun logs and rethrows when init creation fails
+[22m[39m[WARN] [MCP] runtime failed to create init candidate; fallback required {"taskPath":".agent/artifacts/candidate/init.md","error":"init.md legacy detectado. Elimina el archivo y reintenta con el nuevo flujo init."}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mresume reads persisted state
+[22m[39m[INFO] [MCP] Tool called: runtime_run {"taskPath":".agent/artifacts/candidate/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mresume reads persisted state
+[22m[39m[INFO] [MCP] Tool called: runtime_resume {"taskPath":".agent/artifacts/candidate/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mresume throws when no state exists
+[22m[39m[INFO] [MCP] Tool called: runtime_resume {"taskPath":".agent/artifacts/candidate/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime-mocked.test.ts[2m > [22m[2mRuntime mocked branches[2m > [22m[2mlogs warning when init returns warning
+[22m[39m[INFO] [MCP] Tool called: runtime_run {"taskPath":"task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime-mocked.test.ts[2m > [22m[2mRuntime mocked branches[2m > [22m[2mlogs warning when init returns warning
+[22m[39m[WARN] [MCP] warn {"taskPath":"task.md","resolvedPath":"/tmp/task.md"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime-mocked.test.ts[2m > [22m[2mRuntime mocked branches[2m > [22m[2mthrows when workspaceRoot is missing for write guard
+[22m[39m[INFO] [MCP] Tool called: runtime_run {"taskPath":"task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mnextStep appends step and completeStep clears cache
+[22m[39m[INFO] [MCP] Tool called: runtime_run {"taskPath":".agent/artifacts/candidate/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mnextStep appends step and completeStep clears cache
+[22m[39m[INFO] [MCP] Tool called: runtime_next_step {"taskPath":".agent/artifacts/candidate/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mnextStep appends step and completeStep clears cache
+[22m[39m[INFO] [MCP] Tool called: runtime_get_state {"statePath":"/var/folders/47/_6h1sdr15g77xhvnzjv2p3q00000gn/T/agentic-runtime-KKyjG7/.agent/runtime/state.json"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mnextStep appends step and completeStep clears cache
+[22m[39m[INFO] [MCP] Tool called: runtime_complete_step
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mnextStep appends step and completeStep clears cache
+[22m[39m[INFO] [MCP] Tool called: runtime_get_state {"statePath":"/var/folders/47/_6h1sdr15g77xhvnzjv2p3q00000gn/T/agentic-runtime-KKyjG7/.agent/runtime/state.json"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime-mocked.test.ts[2m > [22m[2mRuntime mocked branches[2m > [22m[2mformats non-Error exceptions from init creation
+[22m[39m[INFO] [MCP] Tool called: runtime_run {"taskPath":"task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime-mocked.test.ts[2m > [22m[2mRuntime mocked branches[2m > [22m[2mformats non-Error exceptions from init creation
+[22m[39m[WARN] [MCP] runtime failed to create init candidate; fallback required {"taskPath":"task.md","error":"init failed"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime-mocked.test.ts[2m > [22m[2mRuntime mocked branches[2m > [22m[2mresolves state path using task dirname when workspaceRoot is null
+[22m[39m[INFO] [MCP] Tool called: runtime_resume {"taskPath":"task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mnextStep throws when state is missing
+[22m[39m[INFO] [MCP] Tool called: runtime_next_step {"taskPath":".agent/artifacts/candidate/task.md","agent":"architect-agent"}
+
+ [32m✓[39m src/runtime/test/unit/runtime-runtime-mocked.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 71[2mms[22m[39m
+ [32m✓[39m src/runtime/test/unit/runtime-write-guard.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 152[2mms[22m[39m
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mvalidateGate returns true for matching agent/phase
+[22m[39m[INFO] [MCP] Tool called: runtime_run {"taskPath":".agent/artifacts/candidate/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mvalidateGate returns true for matching agent/phase
+[22m[39m[INFO] [MCP] Tool called: runtime_validate_gate {"taskPath":".agent/artifacts/candidate/task.md","agent":"architect-agent","expectedPhase":"phase-0-acceptance-criteria"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mvalidateGate returns false for agent/phase mismatch
+[22m[39m[INFO] [MCP] Tool called: runtime_run {"taskPath":".agent/artifacts/candidate/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-reconcile.test.ts[2m > [22m[2mRuntime.reconcile[2m > [22m[2maccepts when no prior hashes and sets baseline
+[22m[39m[INFO] [MCP] Tool called: runtime_run {"taskPath":".agent/artifacts/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mvalidateGate returns false for agent/phase mismatch
+[22m[39m[INFO] [MCP] Tool called: runtime_validate_gate {"taskPath":".agent/artifacts/candidate/task.md","agent":"qa-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mvalidateGate returns false for agent/phase mismatch
+[22m[39m[INFO] [MCP] Tool called: runtime_validate_gate {"taskPath":".agent/artifacts/candidate/task.md","agent":"architect-agent","expectedPhase":"phase-9"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2madvancePhase updates task phase
+[22m[39m[INFO] [MCP] Tool called: runtime_run {"taskPath":".agent/artifacts/candidate/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2madvancePhase updates task phase
+[22m[39m[INFO] [MCP] Tool called: runtime_advance_phase {"taskPath":".agent/artifacts/candidate/task.md","agent":"architect-agent","expectedPhase":"phase-0-acceptance-criteria"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-reconcile.test.ts[2m > [22m[2mRuntime.reconcile[2m > [22m[2maccepts when no prior hashes and sets baseline
+[22m[39m[INFO] [MCP] Tool called: runtime_reconcile {"taskPath":".agent/artifacts/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/mcp/test/unit/mcp-server.test.ts[2m > [22m[2mmcp server[2m > [22m[2mstarts MCP server and registers handlers
+[22m[39m[INFO] [MCP] Server iniciado via stdio. {"version":"1.39.0-beta.9"}
+[INFO] [MCP] Esperando mensajes JSON-RPC...
+[MCP] Server iniciado via stdio. Version 1.39.0-beta.9
+[MCP] Esperando mensajes JSON-RPC...
+
+[90mstderr[2m | src/mcp/test/unit/mcp-server.test.ts[2m > [22m[2mmcp server[2m > [22m[2mserves list/read resources and domain list handlers
+[22m[39m[INFO] [MCP] Server iniciado via stdio. {"version":"1.39.0-beta.9"}
+[INFO] [MCP] Esperando mensajes JSON-RPC...
+[MCP] Server iniciado via stdio. Version 1.39.0-beta.9
+[MCP] Esperando mensajes JSON-RPC...
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2madvancePhase updates task phase
+[22m[39m[WARN] [Runtime] No artifacts directory found for task; skipping frontmatter sync {"taskId":"test-task"}
+
+[90mstderr[2m | src/mcp/test/unit/mcp-server.test.ts[2m > [22m[2mmcp server[2m > [22m[2mhandles failure in registerDomainResourceHandlers
+[22m[39m[INFO] [MCP] Server iniciado via stdio. {"version":"1.39.0-beta.9"}
+[INFO] [MCP] Esperando mensajes JSON-RPC...
+[MCP] Server iniciado via stdio. Version 1.39.0-beta.9
+[MCP] Esperando mensajes JSON-RPC...
+
+[90mstderr[2m | src/mcp/test/unit/mcp-server.test.ts[2m > [22m[2mmcp server[2m > [22m[2mhandles failure in registerDomainResourceHandlers
+[22m[39m[WARN] [MCP] No se pudo registrar resources/<domain>/list {"error":{}}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-reconcile.test.ts[2m > [22m[2mRuntime.reconcile[2m > [22m[2mblocks when hashes differ from baseline
+[22m[39m[INFO] [MCP] Tool called: runtime_run {"taskPath":".agent/artifacts/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2madvancePhase returns warning on expectedPhase mismatch
+[22m[39m[INFO] [MCP] Tool called: runtime_run {"taskPath":".agent/artifacts/candidate/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2madvancePhase returns warning on expectedPhase mismatch
+[22m[39m[INFO] [MCP] Tool called: runtime_advance_phase {"taskPath":".agent/artifacts/candidate/task.md","agent":"architect-agent","expectedPhase":"phase-9"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2madvancePhase returns warning on expectedPhase mismatch
+[22m[39m[ERROR] [MCP] runtime_advance_phase expectedPhase mismatch; phase likely updated outside runtime {"expectedPhase":"phase-9","taskPhase":"phase-0-acceptance-criteria","taskId":"test-task"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-reconcile.test.ts[2m > [22m[2mRuntime.reconcile[2m > [22m[2mblocks when hashes differ from baseline
+[22m[39m[INFO] [MCP] Tool called: runtime_reconcile {"taskPath":".agent/artifacts/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/mcp/test/unit/mcp-server.test.ts[2m > [22m[2mmcp server[2m > [22m[2mhandles resolvePackageVersion failure
+[22m[39m[INFO] [MCP] Server iniciado via stdio. {"version":"unknown"}
+[INFO] [MCP] Esperando mensajes JSON-RPC...
+[MCP] Server iniciado via stdio. Version unknown
+[MCP] Esperando mensajes JSON-RPC...
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2madvancePhase throws on agent mismatch
+[22m[39m[INFO] [MCP] Tool called: runtime_run {"taskPath":".agent/artifacts/candidate/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/mcp/test/unit/mcp-server.test.ts[2m > [22m[2mmcp server[2m > [22m[2mhandles resolvePackageVersion missing version
+[22m[39m[INFO] [MCP] Server iniciado via stdio. {"version":"unknown"}
+[INFO] [MCP] Esperando mensajes JSON-RPC...
+[MCP] Server iniciado via stdio. Version unknown
+[MCP] Esperando mensajes JSON-RPC...
+
+[90mstderr[2m | src/runtime/test/unit/runtime-reconcile.test.ts[2m > [22m[2mRuntime.reconcile[2m > [22m[2mblocks when hashes differ from baseline
+[22m[39m[INFO] [MCP] Tool called: runtime_reconcile {"taskPath":".agent/artifacts/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2madvancePhase throws on agent mismatch
+[22m[39m[INFO] [MCP] Tool called: runtime_advance_phase {"taskPath":".agent/artifacts/candidate/task.md","agent":"qa-agent","expectedPhase":null}
+
+[90mstderr[2m | src/mcp/test/unit/mcp-server.test.ts[2m > [22m[2mmcp server[2m > [22m[2mhandles resolvePackageVersion with explicit version
+[22m[39m[INFO] [MCP] Server iniciado via stdio. {"version":"9.9.9"}
+[INFO] [MCP] Esperando mensajes JSON-RPC...
+[MCP] Server iniciado via stdio. Version 9.9.9
+[MCP] Esperando mensajes JSON-RPC...
+
+[90mstderr[2m | src/runtime/test/unit/runtime-reconcile.test.ts[2m > [22m[2mRuntime.reconcile[2m > [22m[2maccepts when hashes match existing baseline
+[22m[39m[INFO] [MCP] Tool called: runtime_run {"taskPath":".agent/artifacts/task.md","agent":"architect-agent"}
+
+ [32m✓[39m src/mcp/test/unit/mcp-server.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 222[2mms[22m[39m
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2madvancePhase returns warning when next phase cannot be resolved
+[22m[39m[INFO] [MCP] Tool called: runtime_run {"taskPath":".agent/artifacts/candidate/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2madvancePhase returns warning when next phase cannot be resolved
+[22m[39m[INFO] [MCP] Tool called: runtime_advance_phase {"taskPath":".agent/artifacts/candidate/task.md","agent":"architect-agent","expectedPhase":null}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-reconcile.test.ts[2m > [22m[2mRuntime.reconcile[2m > [22m[2maccepts when hashes match existing baseline
+[22m[39m[INFO] [MCP] Tool called: runtime_reconcile {"taskPath":".agent/artifacts/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2madvancePhase returns warning when next phase cannot be resolved
+[22m[39m[WARN] [MCP] runtime_advance_phase could not resolve next phase; no phase update {"taskPhase":"phase-0-acceptance-criteria","taskId":"test-task","strategy":"long","warning":"No next phase found after phase-0-acceptance-criteria in strategy tasklifecycle-long."}
+
+ [32m✓[39m src/runtime/test/unit/runtime-task-resolver.test.ts [2m([22m[2m42 tests[22m[2m)[22m[32m 293[2mms[22m[39m
+[90mstderr[2m | src/runtime/test/unit/runtime-reconcile.test.ts[2m > [22m[2mRuntime.reconcile[2m > [22m[2maccepts when hashes match existing baseline
+[22m[39m[INFO] [MCP] Tool called: runtime_reconcile {"taskPath":".agent/artifacts/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2madvancePhase warning includes null strategy when missing
+[22m[39m[INFO] [MCP] Tool called: runtime_advance_phase {"taskPath":"/var/folders/47/_6h1sdr15g77xhvnzjv2p3q00000gn/T/agentic-runtime-iKx2DO/.agent/artifacts/candidate/task-nostrategy.md","agent":"architect-agent","expectedPhase":null}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2madvancePhase warning includes null strategy when missing
+[22m[39m[WARN] [MCP] runtime_advance_phase could not resolve next phase; no phase update {"taskPhase":"phase-0-acceptance-criteria","taskId":"test-task","strategy":null,"warning":"No next phase found after phase-0-acceptance-criteria in strategy any."}
+
+ [32m✓[39m src/mcp/test/unit/mcp-resources.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 116[2mms[22m[39m
+[90mstderr[2m | src/runtime/test/unit/runtime-reconcile.test.ts[2m > [22m[2mRuntime.reconcile[2m > [22m[2mtreats null artifactHashes as empty baseline
+[22m[39m[INFO] [MCP] Tool called: runtime_run {"taskPath":".agent/artifacts/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mlistWorkflows returns yaml
+[22m[39m[INFO] [MCP] Tool called: runtime_list_workflows {"workflowsRoot":"/var/folders/47/_6h1sdr15g77xhvnzjv2p3q00000gn/T/agentic-runtime-GxZdVh/.agent/workflows"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-reconcile.test.ts[2m > [22m[2mRuntime.reconcile[2m > [22m[2mtreats null artifactHashes as empty baseline
+[22m[39m[INFO] [MCP] Tool called: runtime_reconcile {"taskPath":".agent/artifacts/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mlistWorkflows uses default workflows root
+[22m[39m[INFO] [MCP] Tool called: runtime_list_workflows {"workflowsRoot":"/var/folders/47/_6h1sdr15g77xhvnzjv2p3q00000gn/T/agentic-runtime-bblKeg/.agent/workflows"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-reconcile.test.ts[2m > [22m[2mRuntime.reconcile[2m > [22m[2maccepts when artifactHashes are pre-populated and match
+[22m[39m[INFO] [MCP] Tool called: runtime_run {"taskPath":".agent/artifacts/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-reconcile.test.ts[2m > [22m[2mRuntime.reconcile[2m > [22m[2maccepts when artifactHashes are pre-populated and match
+[22m[39m[INFO] [MCP] Tool called: runtime_reconcile {"taskPath":".agent/artifacts/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mlistWorkflows returns empty when yaml missing
+[22m[39m[INFO] [MCP] Tool called: runtime_list_workflows {"workflowsRoot":"/var/folders/47/_6h1sdr15g77xhvnzjv2p3q00000gn/T/agentic-runtime-fuMGpA/.agent/workflows"}
+
+ [32m✓[39m src/runtime/test/unit/runtime-reconcile.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 56[2mms[22m[39m
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mchat returns emitEvent payload
+[22m[39m[INFO] [Runtime] Chat message received from user {"message":"hello"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mchat defaults to user role when omitted
+[22m[39m[INFO] [Runtime] Chat message received from user {"message":"hello"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mgetState returns taskContent when available and empty when missing
+[22m[39m[INFO] [MCP] Tool called: runtime_get_state {"statePath":"/var/folders/47/_6h1sdr15g77xhvnzjv2p3q00000gn/T/agentic-runtime-mhnyZd/.agent/runtime/state.json"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mgetState returns taskContent when available and empty when missing
+[22m[39m[INFO] [MCP] Tool called: runtime_get_state {"statePath":"/var/folders/47/_6h1sdr15g77xhvnzjv2p3q00000gn/T/agentic-runtime-mhnyZd/.agent/runtime/state.json"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mgetState skips taskContent when taskPath is empty
+[22m[39m[INFO] [MCP] Tool called: runtime_get_state {"statePath":"/var/folders/47/_6h1sdr15g77xhvnzjv2p3q00000gn/T/agentic-runtime-zJjYrQ/.agent/runtime/state.json"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mgetState throws when state is missing
+[22m[39m[INFO] [MCP] Tool called: runtime_get_state {"statePath":"/var/folders/47/_6h1sdr15g77xhvnzjv2p3q00000gn/T/agentic-runtime-Dm8TY9/.agent/runtime/missing.json"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mreconcile throws when state is missing
+[22m[39m[INFO] [MCP] Tool called: runtime_reconcile {"taskPath":".agent/artifacts/candidate/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mreconcile accepts when no changes after baseline
+[22m[39m[INFO] [MCP] Tool called: runtime_run {"taskPath":".agent/artifacts/candidate/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mreconcile accepts when no changes after baseline
+[22m[39m[INFO] [MCP] Tool called: runtime_reconcile {"taskPath":".agent/artifacts/candidate/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mreconcile accepts when no changes after baseline
+[22m[39m[INFO] [MCP] Tool called: runtime_reconcile {"taskPath":".agent/artifacts/candidate/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mgetState throws when state is invalid JSON
+[22m[39m[INFO] [MCP] Tool called: runtime_get_state {"statePath":"/var/folders/47/_6h1sdr15g77xhvnzjv2p3q00000gn/T/agentic-runtime-Y1zubp/.agent/runtime/state.json"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mupdateInit[2m > [22m[2mupdates init artifact with provided values
+[22m[39m[INFO] [MCP] Tool called: runtime_update_init {"taskPath":".agent/artifacts/candidate/test-init-task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mupdateInit[2m > [22m[2mthrows when languageConfirmed is not boolean
+[22m[39m[INFO] [MCP] Tool called: runtime_update_init {"taskPath":"task.md","agent":"agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mupdateInit[2m > [22m[2mthrows when constitutionPaths is not string array
+[22m[39m[INFO] [MCP] Tool called: runtime_update_init {"taskPath":"task.md","agent":"agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-runtime.test.ts[2m > [22m[2mRuntime[2m > [22m[2mupdateInit[2m > [22m[2mupdates init artifact with minimal params
+[22m[39m[INFO] [MCP] Tool called: runtime_update_init {"taskPath":".agent/artifacts/candidate/test-init-task-min.md","agent":"architect-agent"}
+
+ [32m✓[39m src/runtime/test/unit/runtime-runtime.test.ts [2m([22m[2m36 tests[22m[2m)[22m[32m 284[2mms[22m[39m
+ [32m✓[39m src/runtime/test/unit/runtime-task-resolver-os.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 27[2mms[22m[39m
+[90mstdout[2m | src/extension/modules/security/test/unit/infrastructure.test.ts[2m > [22m[2mSecurity Infrastructure[2m > [22m[2mBridge Communication[2m > [22m[2mshould retrieve a known secret
+[22m[39m[BridgeServer] Listening on port 60192
+
+[90mstdout[2m | src/extension/modules/security/test/unit/infrastructure.test.ts[2m > [22m[2mSecurity Infrastructure[2m > [22m[2mBridge Communication[2m > [22m[2mshould throw for unknown secret
+[22m[39m[BridgeServer] Listening on port 60194
+
+[90mstdout[2m | src/extension/modules/security/test/unit/infrastructure.test.ts[2m > [22m[2mSecurity Infrastructure[2m > [22m[2mBridge Communication[2m > [22m[2mshould fail with unauthorized token
+[22m[39m[BridgeServer] Listening on port 60196
+
+ [32m✓[39m src/extension/modules/security/test/unit/infrastructure.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 47[2mms[22m[39m
+[90mstderr[2m | src/runtime/test/unit/runtime-cache.test.ts[2m > [22m[2mRuntime cache[2m > [22m[2muses cache until complete_step clears it
+[22m[39m[INFO] [MCP] Tool called: runtime_run {"taskPath":".agent/artifacts/candidate/task.md","agent":"architect-agent"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-cache.test.ts[2m > [22m[2mRuntime cache[2m > [22m[2muses cache until complete_step clears it
+[22m[39m[INFO] [MCP] Tool called: runtime_get_state {"statePath":"/var/folders/47/_6h1sdr15g77xhvnzjv2p3q00000gn/T/agentic-runtime-uOmAdx/.agent/runtime/state.json"}
+
+ [32m✓[39m src/runtime/test/unit/runtime-task-loader.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 35[2mms[22m[39m
+[90mstderr[2m | src/runtime/test/unit/runtime-cache.test.ts[2m > [22m[2mRuntime cache[2m > [22m[2muses cache until complete_step clears it
+[22m[39m[INFO] [MCP] Tool called: runtime_get_state {"statePath":"/var/folders/47/_6h1sdr15g77xhvnzjv2p3q00000gn/T/agentic-runtime-uOmAdx/.agent/runtime/state.json"}
+
+[90mstderr[2m | src/runtime/test/unit/runtime-cache.test.ts[2m > [22m[2mRuntime cache[2m > [22m[2muses cache until complete_step clears it
+[22m[39m[INFO] [MCP] Tool called: runtime_complete_step
+
+[90mstderr[2m | src/runtime/test/unit/runtime-cache.test.ts[2m > [22m[2mRuntime cache[2m > [22m[2muses cache until complete_step clears it
+[22m[39m[INFO] [MCP] Tool called: runtime_get_state {"statePath":"/var/folders/47/_6h1sdr15g77xhvnzjv2p3q00000gn/T/agentic-runtime-uOmAdx/.agent/runtime/state.json"}
+
+ [32m✓[39m src/runtime/test/unit/runtime-cache.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 35[2mms[22m[39m
+[90mstderr[2m | src/runtime/test/unit/runtime-no-workspace.test.ts[2m > [22m[2mRuntime updateInit no workspace[2m > [22m[2mthrows correct error when workspace resolution fails
+[22m[39m[INFO] [MCP] Tool called: runtime_update_init {"taskPath":"task.md","agent":"agent"}
+
+ [32m✓[39m src/runtime/test/unit/runtime-no-workspace.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 5[2mms[22m[39m
+[90mstderr[2m | src/extension/modules/security/test/unit/settings-storage.test.ts[2m > [22m[2mSettingsStorage[2m > [22m[2mshould handle invalid data in storage by returning default config
+[22m[39m[SettingsStorage] Invalid configuration found in storage: ZodError: [
+  {
+    "code": "invalid_union",
+    "errors": [],
+    "note": "No matching discriminator",
+    "discriminator": "provider",
+    "path": [
+      "models",
+      0,
+      "provider"
+    ],
+    "message": "Invalid input"
+  }
+]
+    at new ZodError [90m(file:///Users/milos/Documents/workspace/agentic-workflow/[39mnode_modules/[4mzod[24m/v4/core/core.js:39:39[90m)[39m
+    at Module.<anonymous> [90m(file:///Users/milos/Documents/workspace/agentic-workflow/[39mnode_modules/[4mzod[24m/v4/core/parse.js:40:20[90m)[39m
+    at _.inst.safeParse [90m(file:///Users/milos/Documents/workspace/agentic-workflow/[39mnode_modules/[4mzod[24m/v4/classic/schemas.js:40:46[90m)[39m
+    at SettingsStorage.getConfig [90m(/Users/milos/Documents/workspace/agentic-workflow/[39msrc/extension/modules/security/background/settings-storage.ts:36:42[90m)[39m
+    at [90m/Users/milos/Documents/workspace/agentic-workflow/[39msrc/extension/modules/security/test/unit/settings-storage.test.ts:53:28
+[90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+    at [90mfile:///Users/milos/Documents/workspace/agentic-workflow/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:915:20
+
+ [32m✓[39m src/extension/modules/security/test/unit/settings-storage.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+[90mstderr[2m | src/mcp/test/unit/mcp-handlers-update-init.test.ts[2m > [22m[2mmcp handlers update_init[2m > [22m[2mcalls runtime.updateInit
+[22m[39m[INFO] [MCP] Tool call received {"tool":"runtime_update_init","cwd":"/Users/milos/Documents/workspace/agentic-workflow","workspaceRoot":"/Users/milos/Documents/workspace/agentic-workflow","workspaceError":null}
+[MCP] Tool call received {"tool":"runtime_update_init","cwd":"/Users/milos/Documents/workspace/agentic-workflow","workspaceRoot":"/Users/milos/Documents/workspace/agentic-workflow","workspaceError":null}
+
+ [32m✓[39m src/mcp/test/unit/mcp-handlers-update-init.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/extension/modules/security/test/unit/router.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 2[2mms[22m[39m
+ [32m✓[39m src/extension/modules/security/test/unit/engine.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m src/extension/providers/test/unit/schemas.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/runtime/test/unit/runtime-index.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 3[2mms[22m[39m
+[90mstderr[2m | src/extension/modules/security/test/unit/controller.test.ts
+[22m[39mLit is in dev mode. Not recommended for production! See https://lit.dev/msg/dev-mode for more information.
+
+ [32m✓[39m src/mcp/test/unit/mcp-tools.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 2[2mms[22m[39m
+ [32m✓[39m src/extension/modules/security/test/unit/controller.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m src/mcp/test/unit/mcp-index.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 1[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Suites 5 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/mcp/test/unit/mcp-emitter.test.ts[2m [ src/mcp/test/unit/mcp-emitter.test.ts ][22m
+[31m[1mError[22m: Cannot find module '../src/runtime/write-guard.js' imported from '/Users/milos/Documents/workspace/agentic-workflow/src/mcp/test/unit/mcp-emitter.test.ts'[39m
+[36m [2m❯[22m src/mcp/test/unit/mcp-emitter.test.ts:[2m6:1[22m[39m
+    [90m  4| [39m[35mimport[39m os [35mfrom[39m [32m'node:os'[39m[33m;[39m
+    [90m  5| [39m[35mimport[39m { [33mRuntimeEmitter[39m } [35mfrom[39m [32m'../../emitter.js'[39m[33m;[39m
+    [90m  6| [39m[35mimport[39m { [33mRuntimeWriteGuard[39m } [35mfrom[39m [32m'../src/runtime/write-guard.js'[39m[33m;[39m
+    [90m   | [39m[31m^[39m
+    [90m  7| [39m
+    [90m  8| [39m[35masync[39m [35mfunction[39m [34mreadLines[39m(filePath[33m:[39m string)[33m:[39m [33mPromise[39m[33m<[39mstring[][33m>[39m {
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/mcp/test/unit/mcp-handlers.test.ts[2m [ src/mcp/test/unit/mcp-handlers.test.ts ][22m
+[31m[1mError[22m: Cannot find module '../src/runtime/runtime.js' imported from '/Users/milos/Documents/workspace/agentic-workflow/src/mcp/test/unit/mcp-handlers.test.ts'[39m
+[36m [2m❯[22m src/mcp/test/unit/mcp-handlers.test.ts:[2m5:1[22m[39m
+    [90m  3| [39m[35mimport[39m path [35mfrom[39m [32m'node:path'[39m[33m;[39m
+    [90m  4| [39m[35mimport[39m os [35mfrom[39m [32m'node:os'[39m[33m;[39m
+    [90m  5| [39m[35mimport[39m { [33mRuntime[39m } [35mfrom[39m [32m'../src/runtime/runtime.js'[39m[33m;[39m
+    [90m   | [39m[31m^[39m
+    [90m  6| [39m[35mimport[39m { handleToolCall } [35mfrom[39m [32m'../../handlers.js'[39m[33m;[39m
+    [90m  7| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/runtime/test/unit/runtime-frontmatter-sync.test.ts[2m [ src/runtime/test/unit/runtime-frontmatter-sync.test.ts ][22m
+[31m[1mError[22m: Cannot find module '../src/infrastructure/logger/index.js' imported from '/Users/milos/Documents/workspace/agentic-workflow/src/runtime/test/unit/runtime-frontmatter-sync.test.ts'[39m
+[36m [2m❯[22m src/runtime/test/unit/runtime-frontmatter-sync.test.ts:[2m7:1[22m[39m
+    [90m  5| [39m[35mimport[39m matter [35mfrom[39m [32m'gray-matter'[39m[33m;[39m
+    [90m  6| [39mimport { syncFrontmatterForTaskArtifacts } from '../../frontmatter-syn…
+    [90m  7| [39m[35mimport[39m { [33mLogger[39m } [35mfrom[39m [32m'../src/infrastructure/logger/index.js'[39m[33m;[39m
+    [90m   | [39m[31m^[39m
+    [90m  8| [39m
+    [90m  9| [39mtype [33mTempWorkspace[39m [33m=[39m {
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/extension/core/view/test/unit/templates.test.ts[2m [ src/extension/core/view/test/unit/templates.test.ts ][22m
+[31m[1mError[22m: Cannot find module '../../../../../../dist/extension/views/view-template.js' imported from '/Users/milos/Documents/workspace/agentic-workflow/src/extension/core/view/test/unit/templates.test.ts'[39m
+[36m [2m❯[22m src/extension/core/view/test/unit/templates.test.ts:[2m3:1[22m[39m
+    [90m  1| [39m[35mimport[39m test [35mfrom[39m [32m'node:test'[39m[33m;[39m
+    [90m  2| [39m[35mimport[39m assert [35mfrom[39m [32m'node:assert/strict'[39m[33m;[39m
+    [90m  3| [39mimport { ViewTemplate } from '../../../../../../dist/extension/views/v…
+    [90m   | [39m[31m^[39m
+    [90m  4| [39mimport { ChatViewTemplate } from '../../../../../../dist/extension/vie…
+    [90m  5| [39mimport { KeyViewTemplate } from '../../../../../../dist/extension/view…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/extension/modules/chat/test/unit/protocol.test.ts[2m [ src/extension/modules/chat/test/unit/protocol.test.ts ][22m
+[31m[1mError[22m: Cannot find module '../../background/chatkit/protocol.js' imported from '/Users/milos/Documents/workspace/agentic-workflow/src/extension/modules/chat/test/unit/protocol.test.ts'[39m
+[36m [2m❯[22m src/extension/modules/chat/test/unit/protocol.test.ts:[2m2:1[22m[39m
+    [90m  1| [39m[35mimport[39m { describe[33m,[39m it[33m,[39m expect } [35mfrom[39m [32m'vitest'[39m[33m;[39m
+    [90m  2| [39m[35mimport[39m {
+    [90m   | [39m[31m^[39m
+    [90m  3| [39m  [33mChatKitThreadStore[39m[33m,[39m
+    [90m  4| [39m  extractText[33m,[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯[22m[39m
+
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/mcp/test/unit/mcp-handlers-branch.test.ts[2m > [22mmcp handlers workspace error branch[2m > [22mhandles non-Error thrown from workspace resolution
+[31m[1mError[22m: FS write not allowed; use runtime tool[39m
+[36m [2m❯[22m RuntimeWriteGuard.acquireLockIfNeeded src/runtime/write-guard.ts:[2m183:13[22m[39m
+    [90m181| [39m    } [35mcatch[39m {
+    [90m182| [39m      await this.recordDenied(this.relativeToWorkspace(this.lockPath),…
+    [90m183| [39m      [35mthrow[39m [35mnew[39m [33mError[39m([32m'FS write not allowed; use runtime tool'[39m)[33m;[39m
+    [90m   | [39m            [31m^[39m
+    [90m184| [39m    }
+    [90m185| [39m  }
+[90m [2m❯[22m RuntimeWriteGuard.appendFile src/runtime/write-guard.ts:[2m74:21[22m[39m
+[90m [2m❯[22m RuntimeEmitter.emit src/mcp/emitter.ts:[2m23:7[22m[39m
+[90m [2m❯[22m emitEventIfPresent src/mcp/handlers.ts:[2m84:3[22m[39m
+[90m [2m❯[22m handleToolCall src/mcp/handlers.ts:[2m56:3[22m[39m
+[90m [2m❯[22m src/mcp/test/unit/mcp-handlers-branch.test.ts:[2m21:20[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m6 failed[39m[22m[2m | [22m[1m[32m21 passed[39m[22m[90m (27)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m169 passed[39m[22m[90m (170)[39m
+[2m   Start at [22m 19:30:54
+[2m   Duration [22m 1.26s[2m (transform 1.17s, setup 0ms, import 1.82s, tests 1.51s, environment 3ms)[22m
+

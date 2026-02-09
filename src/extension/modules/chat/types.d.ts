@@ -1,26 +1,29 @@
-import type { Controller } from './controller.js';
-import type { ChatKitLocalServer } from '../chatkit-server/index.js';
-import type { ApiKeyBroadcaster } from '../setup/index.js';
+import type { ChatController } from './background/index.js';
 import type { ModuleRegistration } from '../router/index.js';
+import { Tab, MessageType } from './constants.js';
 
-export type ChatDomain = {
-  view: Controller;
-};
+export type Tab = typeof Tab[keyof typeof Tab];
+export type MessageType = typeof MessageType[keyof typeof MessageType];
 
 export type TemplateParams = {
   nonce: string;
   scriptUri: string;
-  apiUrl: string;
-  apiOrigin: string;
   cspSource: string;
-  hasKey: boolean;
 };
 
-export type ChatDependencies = {
-  chatKitServer: ChatKitLocalServer;
-  apiKeyBroadcaster: ApiKeyBroadcaster;
+export type ChatViewState = {
+  tab: Tab;
 };
 
-export type ChatModule = ModuleRegistration<ChatDomain, [ChatDependencies]>;
+export type ChatDomain = {
+  view: ChatController;
+};
 
-export type ApiKeyState = 'missing' | 'present';
+export type ChatModule = ModuleRegistration<ChatDomain>;
+
+export type StateUpdateMessage = {
+  type: MessageType;
+  tab: Tab;
+  activeModelId?: string;
+  activeEnvironment: 'dev' | 'pro';
+};

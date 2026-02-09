@@ -1,3 +1,0 @@
-{"type":"SceneTagged","value":{"sceneId":"5410c4f1866a57bb4aab-630668a0b8359d44caf6-da39a3ee5e-0-0","tag":{"name":"macOS 25.2.0","type":"platform","platformName":"macOS","platformVersion":"25.2.0"},"timestamp":"2026-02-08T14:43:48.811Z"}}
-{"type":"SceneTagged","value":{"sceneId":"5410c4f1866a57bb4aab-630668a0b8359d44caf6-da39a3ee5e-0-0","tag":{"name":"chromium 145.0.7632.6","type":"browser","browserName":"chromium","browserVersion":"145.0.7632.6"},"timestamp":"2026-02-08T14:43:48.811Z"}}
-{"type":"SceneFinishes","value":{"outcome":{"code":64},"sceneId":"5410c4f1866a57bb4aab-630668a0b8359d44caf6-da39a3ee5e-0-0","timestamp":"2026-02-08T14:44:13.389Z"}}

@@ -11,7 +11,7 @@ export const ChatMessageSchema = BaseMessageSchema.extend({
   type: z.literal(ChatMessageType.Message),
   payload: z.object({
     content: z.string(),
-    context: z.record(z.unknown()).optional()
+    context: z.record(z.string(), z.unknown()).optional()
   })
 });
 

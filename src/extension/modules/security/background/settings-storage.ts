@@ -20,8 +20,8 @@ import { EventEmitter } from 'vscode';
  * Implementa el patrón Facade para desacoplar el negocio de vscode.Memento.
  */
 export class SettingsStorage {
-  private static readonly _onDidUpdateModels = new EventEmitter<void>();
-  public static readonly onDidUpdateModels = SettingsStorage._onDidUpdateModels.event;
+  private static readonly _onConfigUpdated = new EventEmitter<void>();
+  public static readonly onConfigUpdated = SettingsStorage._onConfigUpdated.event;
 
   constructor(private readonly globalState: Memento) { }
 
@@ -76,7 +76,7 @@ export class SettingsStorage {
    */
   public async setModels(models: ModelConfig[]): Promise<void> {
     await this.globalState.update(STORAGE_KEYS.MODELS, models);
-    SettingsStorage._onDidUpdateModels.fire();
+    SettingsStorage._onConfigUpdated.fire();
   }
 
   /**
@@ -91,6 +91,7 @@ export class SettingsStorage {
    */
   public async setActiveModelId(id: string): Promise<void> {
     await this.globalState.update(STORAGE_KEYS.ACTIVE_MODEL, id);
+    SettingsStorage._onConfigUpdated.fire();
   }
 
   /**
@@ -119,5 +120,6 @@ export class SettingsStorage {
    */
   public async setEnvironment(env: 'dev' | 'pro'): Promise<void> {
     await this.globalState.update(STORAGE_KEYS.ENVIRONMENT, env);
+    SettingsStorage._onConfigUpdated.fire();
   }
 }

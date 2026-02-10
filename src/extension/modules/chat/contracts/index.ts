@@ -68,7 +68,8 @@ export const StateUpdateSchema = BaseMessageSchema.extend({
   tab: z.string(),
   models: z.array(z.any()).optional(),
   activeModelId: z.string().optional(),
-  activeEnvironment: z.enum(['dev', 'pro'])
+  activeEnvironment: z.enum(['dev', 'pro']),
+  sessionKey: z.string().optional()
 });
 
 export const ChatSchema = z.discriminatedUnion('type', [

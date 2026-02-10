@@ -5,7 +5,9 @@ import type { FastifyInstance, FastifyPluginOptions } from 'fastify';
  */
 export interface BackendModuleContext {
   get(path: string, handler: (request: any, reply: any) => Promise<any>): void;
+  get(path: string, options: any, handler: (request: any, reply: any) => Promise<any>): void;
   post(path: string, handler: (request: any, reply: any) => Promise<any>): void;
+  post(path: string, options: any, handler: (request: any, reply: any) => Promise<any>): void;
   log: {
     info(msg: string): void;
     error(msg: string | Error): void;
@@ -20,8 +22,8 @@ export type BackendModulePlugin = (context: BackendModuleContext) => Promise<voi
 export function wrapAsPlugin(plugin: BackendModulePlugin) {
   return async (fastify: FastifyInstance, opts: FastifyPluginOptions) => {
     const context: BackendModuleContext = {
-      get: (path, handler) => fastify.get(path, handler),
-      post: (path, handler) => fastify.post(path, handler),
+      get: (path: string, ...args: any[]) => (fastify as any).get(path, ...args),
+      post: (path: string, ...args: any[]) => (fastify as any).post(path, ...args),
       log: fastify.log
     };
     await plugin(context);

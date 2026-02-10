@@ -14,6 +14,10 @@ export class ChatSidecarManager {
     // For now, assume it's set before start.
   }
 
+  public getSessionKey(): string | undefined {
+    return this.bridgeConfig?.sessionKey;
+  }
+
   public async start(): Promise<void> {
     if (this.sidecarProcess) {
       return;

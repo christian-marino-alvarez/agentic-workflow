@@ -17,7 +17,10 @@ export class ChatController extends AgwViewProviderBase {
   private router = new ChatRouter();
   private client: ChatBackendClient;
 
-  public constructor(context: ExtensionContext) {
+  public constructor(
+    context: ExtensionContext,
+    private readonly chatSidecarManager?: any
+  ) {
     super(context, ChatController.viewType);
     this.settings = new SettingsStorage(context.globalState);
     this.messageSchema = ChatSchema;
@@ -25,15 +28,15 @@ export class ChatController extends AgwViewProviderBase {
     // TODO: Inyectar esto desde el SidecarManager o un singleton de configuración
     // Por ahora, leemos de variables de entorno que el SidecarManager debería setear
     this.client = new ChatBackendClient({
-      baseUrl: process.env.AGW_BACKEND_URL || 'http://127.0.0.1:3000',
-      bridgePort: Number(process.env.AGW_BRIDGE_PORT) || 0,
-      bridgeToken: process.env.AGW_BRIDGE_TOKEN || '',
-      sessionKey: process.env.AGW_SESSION_KEY || ''
+      baseUrl: 'http://127.0.0.1:3000',
+      bridgePort: this.chatSidecarManager?.bridgeConfig?.port || 0,
+      bridgeToken: this.chatSidecarManager?.bridgeConfig?.bridgeToken || '',
+      sessionKey: this.chatSidecarManager?.getSessionKey?.() || ''
     });
 
-    // Listen for model updates from other controllers (e.g. Security)
+    // Listen for model/config updates from other controllers (e.g. Security)
     this.context.subscriptions.push(
-      SettingsStorage.onDidUpdateModels(() => {
+      SettingsStorage.onConfigUpdated(() => {
         void this.syncState();
       })
     );
@@ -84,13 +87,15 @@ export class ChatController extends AgwViewProviderBase {
 
     const state = this.router.getState();
     const config = this.settings.getConfig();
+    const sessionKey = this.chatSidecarManager?.getSessionKey?.();
 
     const message: StateUpdateMessage = {
       type: MessageType.StateUpdate,
       tab: state.tab,
       models: config.models,
       activeModelId: this.settings.getActiveModelId(),
-      activeEnvironment: this.settings.getEnvironment()
+      activeEnvironment: this.settings.getEnvironment(),
+      sessionKey
     };
 
     this.postMessage(message);
@@ -185,7 +190,7 @@ export interface ChatDomainOptions {
 }
 
 export function createChatDomain(context: ExtensionContext, options?: ChatDomainOptions) {
-  const controller = new ChatController(context);
+  const controller = new ChatController(context, options?.chatSidecarManager);
   return {
     view: controller
   };

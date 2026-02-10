@@ -28,6 +28,7 @@ export type StateUpdateMessage = {
   models?: ModelConfig[];
   activeModelId?: string;
   activeEnvironment: 'dev' | 'pro';
+  sessionKey?: string;
 };
 
 export type ModelProposalData = {

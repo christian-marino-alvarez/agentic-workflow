@@ -10,7 +10,7 @@
 | Dominio | Completitud | Tareas Completadas | Tareas Totales |
 |---------|-------------|---------------------|----------------|
 | D1: Setup/Config | 100% | 4/4 | 4 |
-| D2: UI/ChatKit | 25% | 0/5 | 5 |
+| D2: UI/ChatKit | 20% | 1/5 | 5 |
 | D3: Backend/Extension Host | 100% | 4/4 | 4 |
 | D4: Agents SDK/Backend | 40% | 2/5 | 5 |
 | D5: MCP/Governance | 0% | 0/4 | 4 |
@@ -18,7 +18,7 @@
 | D7: Release/CI-CD | 0% | 0/2 | 2 |
 | D8: E2E Testing | 10% | 0/4 | 4 |
 
-**Total**: 12/31 tareas completadas (39%)
+**Total**: 13/31 tareas completadas (42%)
 
 ---
 
@@ -161,13 +161,11 @@
 
 ### Dominio D2: UI/ChatKit
 
-- [ ] **T005**: Setup de Lit en Webview
-  - Lit framework configuration
-  - Build process y bundler
-  - Hot reload funcional
-  - **Agente**: ui-agent
-  - **Complejidad**: Media
-  - **Nota**: Verificar si ya está implementado
+- [x] **T005**: Setup de Lit en Webview ✅
+  - Lit framework configuration y decorators
+  - Build process con esbuild y bundling
+  - Base class `AgwViewBase` implementada
+  - **Ubicación**: `src/extension/core/web/`, `scripts/build/bundle-webviews.mjs`
 
 - [ ] **T006**: ChatKit Web Component Integration
   - Integrar `<openai-chatkit>` en webview
@@ -177,9 +175,10 @@
   - **Complejidad**: Alta
   - **Nota**: Verificar si `chatkit-server/` cumple este requisito
 
-- [ ] **T007**: Model Dropdown Component
+- [x] **T007**: Model Dropdown Component ✅
   - Lit component con dropdown
-  - Evento `model-changed`
+  - Sincronización en tiempo real (Event Bus)
+  - Visibilidad dinámica (hasKey)
   - **Dependencias**: T002, T005
   - **Agente**: ui-agent
   - **Complejidad**: Media

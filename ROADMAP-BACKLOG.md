@@ -1,6 +1,6 @@
 # Roadmap Backlog - ADR-001: VS Code ChatKit + Agent SDK + MCP Integration
 
-**Última actualización**: 2026-02-08  
+**Última actualización**: 2026-02-11  
 **Roadmap completo**: `.backups/.agent.backup_2026-02-06T08-11-37-009Z/artifacts/2-implementacion-adr-vscode-integration/roadmap.md`
 
 ---
@@ -10,7 +10,7 @@
 | Dominio | Completitud | Tareas Completadas | Tareas Totales |
 |---------|-------------|---------------------|----------------|
 | D1: Setup/Config | 100% | 4/4 | 4 |
-| D2: UI/ChatKit | 20% | 1/5 | 5 |
+| D2: UI/ChatKit | 80% | 4/5 | 5 |
 | D3: Backend/Extension Host | 100% | 4/4 | 4 |
 | D4: Agents SDK/Backend | 40% | 2/5 | 5 |
 | D5: MCP/Governance | 0% | 0/4 | 4 |
@@ -18,7 +18,7 @@
 | D7: Release/CI-CD | 0% | 0/2 | 2 |
 | D8: E2E Testing | 10% | 0/4 | 4 |
 
-**Total**: 13/31 tareas completadas (42%)
+**Total**: 16/31 tareas completadas (52%)
 
 ---
 
@@ -167,13 +167,12 @@
   - Base class `AgwViewBase` implementada
   - **Ubicación**: `src/extension/core/web/`, `scripts/build/bundle-webviews.mjs`
 
-- [ ] **T006**: ChatKit Web Component Integration
-  - Integrar `<openai-chatkit>` en webview
-  - Configuración básica
-  - **Dependencias**: T005
-  - **Agente**: ui-agent
-  - **Complejidad**: Alta
-  - **Nota**: Verificar si `chatkit-server/` cumple este requisito
+- [x] **T006**: ChatKit Web Component Integration ✅
+  - `<openai-chatkit>` integrado via CDN + types NPM
+  - Inicialización imperativa via `setOptions()`
+  - Shell template con CSP configurado
+  - esbuild bundling con dependencias inlineadas
+  - **Ubicación**: `src/extension/modules/chat/web/`
 
 - [x] **T007**: Model Dropdown Component ✅
   - Lit component con dropdown
@@ -183,19 +182,17 @@
   - **Agente**: ui-agent
   - **Complejidad**: Media
 
-- [ ] **T008**: Theming de ChatKit (VS Code Dark/Light)
-  - CSS variables mapping
-  - Actualización dinámica de tema
-  - **Dependencias**: T006
-  - **Agente**: ui-agent
-  - **Complejidad**: Media
+- [x] **T008**: Theming de ChatKit (VS Code Dark/Light) ✅
+  - Dark/light automático via `colorScheme` en `setOptions()`
+  - CSS alineado con Security view (VS Code-native tokens)
+  - Toolbar con badge env, model selector, status indicator
+  - **Ubicación**: `src/extension/modules/chat/web/templates/`
 
-- [ ] **T009**: CSP (Content Security Policy) Configuration
-  - CSP para webview con ChatKit
-  - Documentación de seguridad
-  - **Dependencias**: T006
-  - **Agente**: security-agent
-  - **Complejidad**: Media
+- [x] **T009**: CSP (Content Security Policy) Configuration ✅
+  - `frame-src`, `child-src` para iframe de ChatKit
+  - `script-src` con nonce + CDN
+  - `connect-src` para API endpoints
+  - **Ubicación**: `src/extension/modules/chat/web/templates/shell/html/index.ts`
 
 ---
 
@@ -303,30 +300,18 @@
 
 ## 🔍 Tareas que Requieren Verificación
 
-Estas tareas tienen evidencia parcial en el código. Requieren verificación antes de marcarlas como completadas o pendientes:
-
-1. **T005**: Lit Setup
-   - Verificar build config existente
-   - Verificar hot reload en `npm run watch`
-
-2. **T006**: ChatKit Integration
-   - Revisar `chatkit-server/` para confirmar integración
-   - Verificar si cumple criterios de aceptación
-
-3. **T010**: Session Endpoint
-   - Revisar `chatkit-server/server.ts` (11KB)
-   - Verificar token management
+No hay tareas pendientes de verificación. T005, T006, T010 han sido verificadas y completadas.
 
 ---
 
 ## 📊 Métricas de Progreso
 
-- **Completadas**: 6 tareas
+- **Completadas**: 16 tareas
 - **En progreso**: 0 tareas
-- **Pendientes**: 25 tareas
-- **Requieren verificación**: 3 tareas
+- **Pendientes**: 15 tareas
+- **Requieren verificación**: 0 tareas
 
-**Progreso total**: 13% (4/31)
+**Progreso total**: 52% (16/31)
 
 ---
 
@@ -358,4 +343,4 @@ Estas tareas tienen evidencia parcial en el código. Requieren verificación ant
 
 ---
 
-**Última revisión**: 2026-02-08 por architect-agent
+**Última revisión**: 2026-02-11 por architect-agent

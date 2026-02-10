@@ -12,7 +12,7 @@
 | D1: Setup/Config | 100% | 4/4 | 4 |
 | D2: UI/ChatKit | 25% | 0/5 | 5 |
 | D3: Backend/Extension Host | 25% | 1/4 | 4 |
-| D4: Agents SDK/Backend | 20% | 1/5 | 5 |
+| D4: Agents SDK/Backend | 40% | 2/5 | 5 |
 | D5: MCP/Governance | 0% | 0/4 | 4 |
 | D6: Security | 33% | 1/3 | 3 |
 | D7: Release/CI-CD | 0% | 0/2 | 2 |
@@ -125,9 +125,9 @@
 
 ### Dominio D4: Agents SDK/Backend
 
-- [ ] **T016**: Agent Workflows Implementation (TypeScript)
+- [x] **T016**: Agent Workflows Implementation (TypeScript) ✅
   - Multi-agent workflows con handoffs
-  - Tool integration básica
+  - Tool integration básica y HIL
   - **Dependencias**: T015
   - **Agente**: agent-sdk-specialist
   - **Complejidad**: Alta

@@ -2,14 +2,14 @@ import type { ExtensionContext, WebviewView } from 'vscode';
 import { commands, Uri } from 'vscode';
 import { CONTEXT_HAS_KEY, OPENAI_KEY_SECRET, Tab, ApiKeyStatus, MessageType, ViewMode } from '../constants.js';
 import type { EnrichedModel, CreateActionData, UpdateActionData, StateUpdateMessage, ModelConfig, ProviderType, SecurityDomain, SecurityModule } from '../types.js';
-import { AgwViewProviderBase } from '../../../core/controller/base.js';
+import { AgwViewProviderBase } from '../../../core/background/index.js';
 import { onMessage } from '../../../core/decorators/onMessage.js';
 import { SettingsStorage } from './settings-storage.js';
 import { ApiKeyBroadcaster } from './state/index.js';
 import { registerOpenAIKeyCommand } from './commands/index.js';
 import { SecurityRouter } from './router.js';
 import { SecurityEngine } from '../runtime/index.js';
-import template from '../templates/index.js';
+import template from '../web/templates/index.js';
 
 export class SecurityController extends AgwViewProviderBase {
   public static readonly viewType = 'keyView';
@@ -45,7 +45,7 @@ export class SecurityController extends AgwViewProviderBase {
     await this.ensureMigration();
 
     const scriptUri = webviewView.webview.asWebviewUri(
-      Uri.joinPath(this.context.extensionUri, 'dist', 'extension', 'modules', 'security', 'web', 'security-view.js')
+      Uri.joinPath(this.context.extensionUri, 'dist', 'extension', 'modules', 'security', 'web', 'view.js')
     );
 
     this.renderTemplate(webviewView, template.render, {

@@ -33,18 +33,18 @@ blocking: true
 - Actualizacion del estado en la current task:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 
-## Objetivo (ONLY)
-- Investigar necesidades tecnicas detectadas para la tarea.
-- Explorar alternativas y APIs relevantes.
-- Documentar compatibilidad y riesgos.
-- Entregar un informe riguroso y verificable para el architect-agent.
+## Objetivo (STRICT)
+- **Investigación Profunda**: Ejecutar una exploración técnica exhaustiva de bajo nivel sobre las necesidades detectadas.
+- **Análisis de APIs y Docs**: Documentar y explicar detalladamente todas las APIs, librerías y documentos oficiales consultados.
+- **Evidencia Técnica**: Proveer pruebas de concepto o comportamientos observados en el runtime.
+- **Detección de Riesgos**: Identificar cuellos de botella de performance, fallas de seguridad y bugs conocidos en las dependencias.
 
-> Esta fase **NO implementa código**.
+> Esta fase **NO implementa código funcional**.
 > Esta fase **REQUIERE aprobación explícita del desarrollador**.
 
 > [!CAUTION]
 > **REGLA PERMANENT**: Research DOCUMENTA, NO analiza.
-> El researcher-agent recopila información de fuentes oficiales.
+> El researcher-agent recopila información de fuentes oficiales con máximo rigor.
 > **PROHIBIDO**: proponer soluciones, evaluar trade-offs, recomendar alternativas.
 > El análisis corresponde a Phase 2.
 
@@ -68,7 +68,7 @@ blocking: true
    - Cargar `templates.research`
    - Si no existe o no se puede leer → ir a **Paso 8 (FAIL)**.
 
-3. **Delegar al researcher-agent (OBLIGATORIO)**
+3. **Delegar al researcher-agent (OBLIGATORIO - ALTO RIGOR)**
    > ⚠️ **REGLA PERMANENTE**: El `architect-agent` **NO PUEDE** crear el informe de research.
    > El `researcher-agent` es el **único agente autorizado** para crear `research.md`.
    
@@ -77,21 +77,22 @@ blocking: true
       - Descripción y objetivo de la tarea
       - Acceptance criteria
       - Template a utilizar (`templates.research`)
-   b) Esperar a que el `researcher-agent` complete su informe
-   c) Verificar que el informe existe y cumple el template
+   b) Exigir explícitamente profundidad en la investigación de las APIs y documentación oficial involucrada.
+   c) Esperar a que el `researcher-agent` complete su informe
+   d) Verificar que el informe cumple con el **Criterio de Rigor Técnico** (descripciones atómicas, límites de performance, seguridad).
    
    **Prefijo obligatorio del researcher-agent**: `🔬 **researcher-agent**:`
    
    El `researcher-agent` **DEBE**:
    - Crear el directorio: `.agent/artifacts/<taskId>-<taskTitle>/researcher/`
    - Crear el informe: `.agent/artifacts/<taskId>-<taskTitle>/researcher/research.md`
-   - Seguir estrictamente el template `templates.research`
+   - Seguir estrictamente el template `templates.research`.
+   - **Explicar detalladamente cada API o documento investigado**, citando fuentes y comportamientos técnicos reales.
    - Cubrir todos los puntos obligatorios:
-     - alternativas tecnicas y APIs relevantes
-     - compatibilidad multi-browser
-     - riesgos y trade-offs
-     - recomendaciones AI-first
-     - fuentes oficiales o de prestigio
+     - Profundización técnica (atómica) de hallazgos.
+     - Límites de performance y latencia.
+     - Matriz de compatibilidad detallada.
+     - Riesgos críticos basados en evidencia (docs/runtime).
    - Devolver el control al `architect-agent` al finalizar
 
 
@@ -142,7 +143,7 @@ Requisitos (todos obligatorios):
    > ⚠️ Si el informe fue creado por otro agente → **Gate FAIL**.
 5. Existe aprobacion explicita del desarrollador:
    - `approval.developer.decision == SI`
-6. La investigación es profunda, detallada y basada en fuentes oficiales o de prestigio.
+6. **Rigor Técnico**: La investigación es profunda, detalla APIs a nivel atómico y documenta límites de performance/seguridad.
 7. El informe **NO contiene** análisis, recomendaciones ni valoraciones.
 8. `task.md` refleja:
    - Fase 1 completada

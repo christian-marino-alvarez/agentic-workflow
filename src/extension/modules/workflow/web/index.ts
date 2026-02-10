@@ -1,1 +1,1 @@
-export { View } from './workflow-view.js';
+export { View } from './view.js';

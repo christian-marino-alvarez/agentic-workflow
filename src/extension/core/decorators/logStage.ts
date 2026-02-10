@@ -1,4 +1,4 @@
-import type { ViewStage } from '../controller/types.js';
+import type { ViewStage } from '../background/types.js';
 
 export function logStage(stage: ViewStage) {
   return function (

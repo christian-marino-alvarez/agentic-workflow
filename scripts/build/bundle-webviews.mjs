@@ -4,20 +4,20 @@ import { dirname, resolve } from 'node:path';
 
 const entries = [
   {
-    entry: resolve('src/extension/modules/chat/templates/index.ts'),
-    outfile: resolve('dist/extension/modules/chat/web/chat-view.js')
+    entry: 'src/extension/modules/chat/web/view.ts',
+    outfile: 'dist/extension/modules/chat/web/view.js'
   },
   {
-    entry: resolve('src/extension/modules/history/web/history-view.ts'),
-    outfile: resolve('dist/extension/modules/history/web/history-view.js')
+    entry: resolve('src/extension/modules/history/web/view.ts'),
+    outfile: resolve('dist/extension/modules/history/web/view.js')
   },
   {
-    entry: resolve('src/extension/modules/workflow/web/workflow-view.ts'),
-    outfile: resolve('dist/extension/modules/workflow/web/workflow-view.js')
+    entry: resolve('src/extension/modules/workflow/web/view.ts'),
+    outfile: resolve('dist/extension/modules/workflow/web/view.js')
   },
   {
-    entry: resolve('src/extension/modules/security/templates/index.ts'),
-    outfile: resolve('dist/extension/modules/security/web/security-view.js')
+    entry: resolve('src/extension/modules/security/web/view.ts'),
+    outfile: resolve('dist/extension/modules/security/web/view.js')
   }
 ];
 

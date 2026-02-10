@@ -1,5 +1,4 @@
-export { Chat, createChatDomain } from './background/index.js';
-export { ChatSidecarManager } from './background/chatkit/index.js';
+export * from './background/index.js';
 export * from './backend/chatkit/index.js';
 export { default as chatBackend } from './backend/index.js';
 export type * from './types.js';

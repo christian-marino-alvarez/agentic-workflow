@@ -67,4 +67,5 @@ const securityBackendPlugin: BackendModulePlugin = async (context) => {
   });
 };
 
+export { BridgeClient } from './bridge-client.js';
 export default wrapAsPlugin(securityBackendPlugin);

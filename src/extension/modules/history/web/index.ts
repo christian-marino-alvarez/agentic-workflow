@@ -1,1 +1,1 @@
-export { View } from './history-view.js';
+export { View } from './view.js';

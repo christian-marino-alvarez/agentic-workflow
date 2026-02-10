@@ -1,5 +1,5 @@
 import type { ExtensionContext } from 'vscode';
-import { Controller } from './controller.js';
+import { Controller } from './background/index.js';
 import type { WorkflowDomain, WorkflowModule } from './types.d.ts';
 
 export function createWorkflowDomain(context: ExtensionContext): WorkflowDomain {
@@ -11,6 +11,5 @@ export const Workflow: WorkflowModule = {
   register: createWorkflowDomain
 };
 
-export { Controller } from './controller.js';
-export { default as template } from './templates/index.js';
+export { Controller } from './background/index.js';
 export type { WorkflowDomain, TemplateParams } from './types.d.ts';

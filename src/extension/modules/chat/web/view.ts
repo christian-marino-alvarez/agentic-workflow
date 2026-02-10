@@ -3,11 +3,12 @@ import { customElement, state } from 'lit/decorators.js';
 import { AgwViewBase } from '../../../core/web/index.js';
 import { Tab, MessageType, CHAT_API_URL } from '../constants.js';
 
-// Import modular parts
 import { commonStyles, renderNotFound } from './templates/common/index.js';
-import { mainStyles, renderMain } from './templates/main/index.js';
+import { mainStyles, chatkitStyles, renderMain } from './templates/main/index.js';
 import { ChatSchema, ChatMessageType } from '../contracts/index.js';
 import { BaseMessageType } from '../../../../shared/messaging/base.js';
+
+// import '@openai/chatkit'; // Removed as it only contains types; loaded via CDN in template
 
 import {
   provideVSCodeDesignSystem,
@@ -53,39 +54,29 @@ export class ChatView extends AgwViewBase {
   public static styles = [
     AgwViewBase.styles,
     commonStyles,
-    mainStyles
+    mainStyles,
+    chatkitStyles
   ];
 
   protected onMessage(message: any): void {
-    const logArea = this.renderRoot.querySelector('#demo-logs');
-    if (logArea) {
-      const entry = document.createElement('div');
-      entry.textContent = `[${new Date().toLocaleTimeString()}] Recibido: ${message.type}`;
-      logArea.prepend(entry);
-    }
-
+    this.log('info', 'received-message', { type: message.type });
     if (message.type === MessageType.StateUpdate) {
+      this.log('info', 'state-update-received', {
+        tab: message.tab,
+        modelsCount: message.models?.length,
+        env: message.activeEnvironment
+      });
       this.tab = message.tab;
       this.models = message.models || [];
       this.modelId = message.activeModelId || '';
       this.environment = message.activeEnvironment;
+      this.secretKeyId = message.sessionKey || ''; // Use as clientToken
       this.isInitialized = true;
       this.requestUpdate();
     }
 
     if (message.type === MessageType.ModelProposal) {
       this.currentProposal = message.proposal;
-    }
-
-    if (message.type === ChatMessageType.Streaming) {
-      const output = this.renderRoot.querySelector('#streaming-output');
-      if (output) {
-        if (message.payload.index === 0) {
-          output.textContent = '';
-        }
-        output.textContent += message.payload.token;
-        output.scrollTop = output.scrollHeight;
-      }
     }
   }
 
@@ -136,13 +127,51 @@ export class ChatView extends AgwViewBase {
     this.currentProposal = null;
   }
 
+  private getChatKitOptions() {
+    const isDark = !document.body.classList.contains('vscode-light');
+    const options = {
+      api: {
+        url: CHAT_API_URL,
+        domainKey: 'agentic-workflow-local'
+      },
+      theme: {
+        colorScheme: isDark ? 'dark' as const : 'light' as const,
+        radius: 'round' as const,
+        density: 'compact' as const
+      },
+      header: {
+        enabled: false
+      },
+      history: {
+        enabled: false
+      }
+    };
+    console.log('[ChatView] ChatKit options generated:', options);
+    return options;
+  }
+
+  private _chatkitInitialized = false;
+
+  protected override updated(changedProperties: Map<string, unknown>) {
+    super.updated(changedProperties);
+    if (this._chatkitInitialized) return;
+
+    const chatkit = this.renderRoot.querySelector('#chatkit-instance') as any;
+    if (chatkit && typeof chatkit.setOptions === 'function') {
+      chatkit.setOptions(this.getChatKitOptions());
+      this._chatkitInitialized = true;
+      console.log('[ChatView] ChatKit initialized with setOptions');
+    }
+  }
+
+
   protected renderView() {
     if (this.tab === Tab.Main) {
       return renderMain({
         environment: this.environment,
         models: this.models,
         modelId: this.modelId,
-        onSend: () => this.handleSend(),
+        onSend: () => { }, // ChatKit handles sending
         onModelChange: (e: Event) => this.handleModelChange(e),
         proposal: this.currentProposal,
         onAcceptProposal: () => this.handleDecision(true),

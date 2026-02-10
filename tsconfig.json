@@ -16,6 +16,10 @@
     "src/**/*"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "src/extension/modules/chat/web/**/*",
+    "src/extension/modules/history/web/**/*",
+    "src/extension/modules/workflow/web/**/*",
+    "src/extension/modules/security/web/**/*"
   ]
 }

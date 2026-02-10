@@ -11,14 +11,14 @@
 |---------|-------------|---------------------|----------------|
 | D1: Setup/Config | 100% | 4/4 | 4 |
 | D2: UI/ChatKit | 25% | 0/5 | 5 |
-| D3: Backend/Extension Host | 25% | 1/4 | 4 |
+| D3: Backend/Extension Host | 100% | 4/4 | 4 |
 | D4: Agents SDK/Backend | 40% | 2/5 | 5 |
 | D5: MCP/Governance | 0% | 0/4 | 4 |
 | D6: Security | 33% | 1/3 | 3 |
 | D7: Release/CI-CD | 0% | 0/2 | 2 |
 | D8: E2E Testing | 10% | 0/4 | 4 |
 
-**Total**: 8/31 tareas completadas (26%)
+**Total**: 12/31 tareas completadas (39%)
 
 ---
 
@@ -103,21 +103,21 @@
   - **Complejidad**: Alta
   - **Nota**: Verificar si ya existe en `chatkit-server/server.ts`
 
-- [ ] **T011**: Communication Bridge (UI ↔ Extension Host)
+- [x] **T011**: Communication Bridge (UI ↔ Extension Host) ✅
   - PostMessage bridge bidireccional
   - Type-safe message contracts
   - **Dependencias**: T010
   - **Agente**: backend-agent
   - **Complejidad**: Media
 
-- [ ] **T012**: Backend HTTP Client (Extension Host ↔ Backend)
+- [x] **T012**: Backend HTTP Client (Extension Host ↔ Backend) ✅
   - HTTP/WebSocket client
   - Reconnection logic
   - **Dependencias**: T015
   - **Agente**: backend-agent
   - **Complejidad**: Alta
 
-- [ ] **T013**: Model Selection Management
+- [x] **T013**: Model Selection Management ✅
   - Sincronización de modelo activo
   - **Dependencias**: T003, T007
   - **Agente**: backend-agent

@@ -18,9 +18,6 @@ strategy: long
   - workflow: tasklifecycle
   - source: init / tasklifecycle
   - candidate_path: .agent/artifacts/candidate/task-t007.md
-- [x] **Sync**: Sincronización en tiempo real modelos (Event Bus) -> **Completado**
-- [x] **Bug Fix 4**: Estabilización de renderizado y lógica de auto-activación -> **Completado**
-- [ ] **Test**: Implementación de tests E2E de UI (Playwright) -> **Pendiente** (Guía entregada)nente selector de modelos en la interfaz de chat (ChatView) utilizando Lit y reutilizando componentes de VS Code. El sistema debe permitir tanto la selección manual de un modelo para el chat como la propuesta dinámica de modelos específicos optimizados por tarea, requiriendo aceptación del usuario si el modelo difiere del seleccionado.
 
 ## Descripción de la tarea
 Implementar un componente selector de modelos en la interfaz de chat (ChatView) utilizando Lit y reutilizando componentes de VS Code. El sistema debe permitir tanto la selección manual de un modelo para el chat como la propuesta dinámica de modelos específicos optimizados por tarea, requiriendo aceptación del usuario si el modelo difiere del seleccionado.
@@ -40,9 +37,9 @@ task:
     supplemental: []
     acceptance: ".agent/artifacts/6-model-dropdown-component/acceptance.md"
   phase:
-    current: "phase-8-commit-push"
+    current: "phase-6-results-acceptance"
     validated_by: "architect-agent"
-    updated_at: "2026-02-10T17:50:00Z"
+    updated_at: "2026-02-10T12:37:00Z"
   delegation:
     active_agent: "architect-agent"
     history:
@@ -98,17 +95,17 @@ task:
         validated_by: "architect-agent"
         validated_at: "2026-02-10T12:37:00Z"
       phase-6-results-acceptance:
-        completed: true
-        validated_by: "architect-agent"
-        validated_at: "2026-02-10T17:47:00Z"
+        completed: false
+        validated_by: null
+        validated_at: null
       phase-7-evaluation:
-        completed: true
-        validated_by: "architect-agent"
-        validated_at: "2026-02-10T17:50:00Z"
+        completed: false
+        validated_by: null
+        validated_at: null
       phase-8-commit-push:
-        completed: true
-        validated_by: "architect-agent"
-        validated_at: "2026-02-10T17:51:00Z"
+        completed: false
+        validated_by: null
+        validated_at: null
 ```
 <!-- RUNTIME:END -->
 

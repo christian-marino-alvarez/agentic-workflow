@@ -1,15 +1,12 @@
 {
   "version": 1,
-  "runId": "3d1398af-5150-47d0-aa68-ed99196cbde1",
-  "taskId": "4",
-  "taskTitle": "backend-http-client",
-  "taskPath": "/Users/milos/Documents/workspace/agentic-workflow/.agent/artifacts/4-backend-http-client/task.md",
-  "phase": "phase-2-analysis",
+  "runId": "e2f349d0-0d4f-4612-9e92-141b95318c40",
+  "taskId": "task.init",
+  "taskTitle": "Initialization",
+  "taskPath": "/Users/milos/Documents/workspace/agentic-workflow/.agent/artifacts/candidate/2026-02-10T18-20-33Z-init.md",
+  "phase": "init",
   "status": "idle",
   "steps": [],
-  "updatedAt": "2026-02-09T20:18:24.309Z",
-  "artifactHashes": {
-    "task.md": "dd8f8203c0c8c297dbcc00547c7a3c1a85f6dd30ae766ddd508c1996e3c4c238",
-    "acceptance.md": "df632689e0932522b763e53823ed00c50ca7ced31f6937498f9a594bbc28ebac"
-  }
+  "updatedAt": "2026-02-10T18:20:33.656Z",
+  "artifactHashes": {}
 }

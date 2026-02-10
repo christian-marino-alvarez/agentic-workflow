@@ -1,0 +1,5 @@
+{"type":"write_denied","actor":"runtime","targetPath":"unknown","relativePath":null,"timestamp":"2026-02-10T08:23:58.426Z","sha256":"3b905e02709c11adf37a988926724edbf7f0bb685b4c282cde7da8b152f15342","reason":"path_outside_workspace"}
+{"type":"write_denied","actor":"architect-agent","targetPath":".agent/lock","relativePath":".agent/lock","timestamp":"2026-02-10T08:24:25.280Z","reason":"lock_already_held"}
+{"type":"write_denied","actor":"architect-agent","targetPath":".agent/lock","relativePath":".agent/lock","timestamp":"2026-02-10T12:48:38.490Z","reason":"lock_already_held"}
+{"type":"write_denied","actor":"architect-agent","targetPath":".agent/lock","relativePath":".agent/lock","timestamp":"2026-02-10T12:49:01.965Z","reason":"lock_already_held"}
+{"type":"write_denied","actor":"architect-agent","targetPath":".agent/lock","relativePath":".agent/lock","timestamp":"2026-02-10T12:49:10.436Z","reason":"lock_already_held"}

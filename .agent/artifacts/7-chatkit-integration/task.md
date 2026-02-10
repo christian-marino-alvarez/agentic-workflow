@@ -1,90 +1,91 @@
 ---
-id: 4
-title: backend-http-client
+id: 7
+title: chatkit-integration
 owner: architect-agent
 strategy: long
 ---
 
-# Task (Template)
+# Task — 7-chatkit-integration
 
 ## Identificación
-- id: 4
-- title: backend-http-client
+- id: 7
+- title: chatkit-integration
 - scope: current
 - owner: architect-agent
 
 ## Origen
 - created_from:
   - workflow: tasklifecycle
-  - source: roadmap
-  - candidate_path: .agent/artifacts/candidate/task-t012.md
+  - source: tasklifecycle
+  - candidate_path: artifacts.candidate.task-t006.md
 
 ## Descripción de la tarea
-Implementación de un cliente HTTP/WebSocket robusto en el Extension Host de VS Code para centralizar la comunicación con el servidor Fastify.
+Integrar los componentes web de OpenAI ChatKit (o equivalente compatible) en la vista de chat (`ChatView`). Se debe reemplazar la interfaz primitiva actual (textarea y logs) por una experiencia de chat moderna y fluida que soporte hilos, mensajes de sistema/usuario y streaming nativo, respetando estrictamente el tema de VS Code y patrones OOCSS.
 
 ## Objetivo
-Garantizar una comunicación segura, tipada y con soporte para streaming entre VS Code y el Core agnóstico.
+Elevar la calidad técnica de la interfaz de chat a estándares de producción, aprovechando los contratos de mensajería ya definidos y el backend de ChatKit ya funcional.
 
 ## Estado del ciclo de vida (FUENTE ÚNICA DE VERDAD)
 
-<!-- RUNTIME:START task-state -->
 ```yaml
 task:
-  id: "4"
-  title: "backend-http-client"
+  id: "7"
+  title: "chatkit-integration"
   strategy: "long"  # long | short
   artifacts:
-    supplemental: []
+    supplemental: [".agent/artifacts/7-chatkit-integration/research.md"]
+    acceptance: ".agent/artifacts/7-chatkit-integration/acceptance.md"
   phase:
-    current: "phase-8-commit-push"
+    current: "phase-6-results-acceptance"
     validated_by: "architect-agent"
-    updated_at: "2026-02-10T06:25:41.453Z"
+    updated_at: "2026-02-10T21:05:00Z"
   delegation:
-    active_agent: "qa-agent"
+    active_agent: "neo-agent"
     history:
-      - from: "developer"
-        to: "qa-agent"
-        approved_by: "architect-agent"
-        approved_at: "2026-02-09T20:41:30Z"
-        reason: "Phase 4 completed. Delegation to qa-agent for Phase 5 verification."
+      - from: "architect-agent"
+        to: "neo-agent"
+        approved_by: "developer"
+        approved_at: "2026-02-10T20:57:00Z"
+        reason: "Handoff for formal implementation of ChatKit fixes and final integration."
   lifecycle:
     phases:
       phase-0-acceptance-criteria:
         completed: true
         validated_by: "architect-agent"
-        validated_at: "2026-02-09T20:18:15Z"
+        validated_at: "2026-02-10T18:00:00Z"
       phase-1-research:
         completed: true
         validated_by: "architect-agent"
-        validated_at: "2026-02-09T20:29:15Z"
+        validated_at: "2026-02-10T18:07:00Z"
       phase-2-analysis:
         completed: true
         validated_by: "architect-agent"
-        validated_at: "2026-02-09T20:32:15Z"
+        validated_at: "2026-02-10T18:00:00Z"
       phase-3-planning:
         completed: true
         validated_by: "architect-agent"
-        validated_at: "2026-02-09T20:33:30Z"
+        validated_at: "2026-02-10T18:10:00Z"
       phase-4-implementation:
         completed: true
         validated_by: "architect-agent"
-        validated_at: "2026-02-09T20:41:30Z"
+        validated_at: "2026-02-10T21:05:00Z"
       phase-5-verification:
         completed: true
         validated_by: "architect-agent"
-        validated_at: "2026-02-10T06:25:19.644Z"
+        validated_at: "2026-02-10T18:20:00Z"
       phase-6-results-acceptance:
         completed: true
         validated_by: "architect-agent"
-        validated_at: "2026-02-10T06:25:37.968Z"
+        validated_at: "2026-02-10T21:05:00Z"
+        debug_notes: "Resolved ChatView loading/sync issues: added sessionKey propagation and ConfigUpdated event."
       phase-7-evaluation:
-        completed: true
-        validated_by: "architect-agent"
-        validated_at: "2026-02-10T06:25:41.453Z"
+        completed: false
+        validated_by: null
+        validated_at: null
       phase-8-commit-push:
-        completed: true
-        validated_by: "architect-agent"
-        validated_at: "2026-02-10T06:26:30Z"
+        completed: false
+        validated_by: null
+        validated_at: null
 ```
 <!-- RUNTIME:END -->
 
@@ -97,7 +98,7 @@ task:
 ---
 
 ## 2. Definición y Alcance (Contrato)
-- **Acceptance Criteria**: [.agent/artifacts/4-backend-http-client/acceptance.md](file:///Users/milos/Documents/workspace/agentic-workflow/.agent/artifacts/4-backend-http-client/acceptance.md)
+- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/7-chatkit-integration/acceptance.md)
 - **Alias**: `task.acceptance`
 
 ---

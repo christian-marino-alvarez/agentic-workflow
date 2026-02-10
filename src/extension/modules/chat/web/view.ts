@@ -9,6 +9,19 @@ import { mainStyles, renderMain } from './templates/main/index.js';
 import { ChatSchema, ChatMessageType } from '../contracts/index.js';
 import { BaseMessageType } from '../../../../shared/messaging/base.js';
 
+import {
+  provideVSCodeDesignSystem,
+  vsCodeDropdown,
+  vsCodeOption,
+  vsCodeButton
+} from '@vscode/webview-ui-toolkit';
+
+provideVSCodeDesignSystem().register(
+  vsCodeDropdown(),
+  vsCodeOption(),
+  vsCodeButton()
+);
+
 @customElement('agw-chat-view')
 export class ChatView extends AgwViewBase {
   @state()
@@ -21,7 +34,16 @@ export class ChatView extends AgwViewBase {
   private modelId: string = '';
 
   @state()
+  private models: any[] = [];
+
+  @state()
   private secretKeyId: string = '';
+
+  @state()
+  private currentProposal: any | null = null;
+
+  @state()
+  private isInitialized: boolean = false;
 
   constructor() {
     super();
@@ -42,11 +64,17 @@ export class ChatView extends AgwViewBase {
       logArea.prepend(entry);
     }
 
-    if (message.type === 'chat:state-update') {
+    if (message.type === MessageType.StateUpdate) {
       this.tab = message.tab;
+      this.models = message.models || [];
       this.modelId = message.activeModelId || '';
       this.environment = message.activeEnvironment;
+      this.isInitialized = true;
       this.requestUpdate();
+    }
+
+    if (message.type === MessageType.ModelProposal) {
+      this.currentProposal = message.proposal;
     }
 
     if (message.type === ChatMessageType.Streaming) {
@@ -69,7 +97,9 @@ export class ChatView extends AgwViewBase {
     this.postMessage({ type: 'chat:demo-streaming' }, { expectAck: true });
   }
 
-  protected listen(): void {
+  protected override listen(): void {
+    // Request immediate sync when webview is fully ready
+    this.postMessage({ type: 'chat:request-sync' });
     this.postMessage({ type: BaseMessageType.WebviewReady });
   }
 
@@ -84,15 +114,42 @@ export class ChatView extends AgwViewBase {
     }
   }
 
+  private handleModelChange(event: Event) {
+    const dropdown = event.target as any;
+    const newModelId = dropdown.value;
+    this.postMessage({
+      type: MessageType.SetModel,
+      modelId: newModelId
+    });
+  }
+
+  private handleDecision(accepted: boolean) {
+    if (!this.currentProposal) {
+      return;
+    }
+
+    this.postMessage({
+      type: MessageType.ModelDecision,
+      accepted,
+      proposal: this.currentProposal
+    });
+    this.currentProposal = null;
+  }
+
   protected renderView() {
     if (this.tab === Tab.Main) {
       return renderMain({
         environment: this.environment,
+        models: this.models,
         modelId: this.modelId,
-        onSend: () => this.handleSend()
+        onSend: () => this.handleSend(),
+        onModelChange: (e: Event) => this.handleModelChange(e),
+        proposal: this.currentProposal,
+        onAcceptProposal: () => this.handleDecision(true),
+        onRejectProposal: () => this.handleDecision(false),
+        isInitialized: this.isInitialized
       });
     }
     return renderNotFound();
   }
 }
-

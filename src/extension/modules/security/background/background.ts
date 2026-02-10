@@ -131,10 +131,19 @@ export class SecurityController extends AgwViewProviderBase {
 
   @onMessage(MessageType.DeleteModel)
   protected async handleDeleteModel(message: { data: string }): Promise<void> {
+    const activeModelId = this.settingsStorage.getActiveModelId();
     const config = this.settingsStorage.getConfig();
     const newModels = config.models.filter((m: ModelConfig) => m.id !== message.data);
+
     await this.settingsStorage.setModels(newModels);
+
+    // Si borramos el activo y quedan modelos, seleccionamos el primero disponible
+    if (message.data === activeModelId && newModels.length > 0) {
+      await this.settingsStorage.setActiveModelId(newModels[0].id);
+    }
+
     this.router.setTab(Tab.List); // Volver a la lista tras borrar
+    await this.syncInitialState();
     await this.syncState();
   }
 
@@ -149,7 +158,14 @@ export class SecurityController extends AgwViewProviderBase {
     }
 
     await this.settingsStorage.setModels([...config.models, newModel]);
+
+    // Si es el primer modelo, lo activamos automáticamente
+    if (config.models.length === 0) {
+      await this.settingsStorage.setActiveModelId(newModel.id);
+    }
+
     this.router.setTab(Tab.List);
+    await this.syncInitialState();
     await this.syncState();
   }
 
@@ -180,6 +196,7 @@ export class SecurityController extends AgwViewProviderBase {
 
     await this.settingsStorage.setModels(updatedModels);
     this.router.setTab(Tab.List);
+    await this.syncInitialState();
     await this.syncState();
   }
 

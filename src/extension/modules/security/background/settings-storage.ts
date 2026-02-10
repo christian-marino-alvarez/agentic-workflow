@@ -11,6 +11,8 @@ const STORAGE_KEYS = {
   ENVIRONMENT: 'agentic-workflow.environment',
 } as const;
 
+import { EventEmitter } from 'vscode';
+
 /**
  * SettingsStorage (Facade)
  * 
@@ -18,6 +20,9 @@ const STORAGE_KEYS = {
  * Implementa el patrón Facade para desacoplar el negocio de vscode.Memento.
  */
 export class SettingsStorage {
+  private static readonly _onDidUpdateModels = new EventEmitter<void>();
+  public static readonly onDidUpdateModels = SettingsStorage._onDidUpdateModels.event;
+
   constructor(private readonly globalState: Memento) { }
 
   /**
@@ -71,6 +76,7 @@ export class SettingsStorage {
    */
   public async setModels(models: ModelConfig[]): Promise<void> {
     await this.globalState.update(STORAGE_KEYS.MODELS, models);
+    SettingsStorage._onDidUpdateModels.fire();
   }
 
   /**

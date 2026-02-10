@@ -30,6 +30,13 @@ export class ChatController extends AgwViewProviderBase {
       bridgeToken: process.env.AGW_BRIDGE_TOKEN || '',
       sessionKey: process.env.AGW_SESSION_KEY || ''
     });
+
+    // Listen for model updates from other controllers (e.g. Security)
+    this.context.subscriptions.push(
+      SettingsStorage.onDidUpdateModels(() => {
+        void this.syncState();
+      })
+    );
   }
 
   public show(preserveFocus?: boolean): void {
@@ -43,6 +50,15 @@ export class ChatController extends AgwViewProviderBase {
       enableScripts: true,
       localResourceRoots: [this.context.extensionUri]
     };
+
+    // Re-sync state whenever the view becomes visible
+    // This ensures environment and models are always up-to-date
+    webviewView.onDidChangeVisibility(() => {
+      if (webviewView.visible) {
+        void this.syncState();
+      }
+    });
+
     void this.renderHtml(webviewView);
   }
 
@@ -67,11 +83,12 @@ export class ChatController extends AgwViewProviderBase {
     }
 
     const state = this.router.getState();
-    const config = this.settings.getEnvironment();
+    const config = this.settings.getConfig();
 
     const message: StateUpdateMessage = {
       type: MessageType.StateUpdate,
       tab: state.tab,
+      models: config.models,
       activeModelId: this.settings.getActiveModelId(),
       activeEnvironment: this.settings.getEnvironment()
     };
@@ -86,6 +103,14 @@ export class ChatController extends AgwViewProviderBase {
   @onMessage(MessageType.SetTab)
   protected async handleSetTab(message: { tab: any }): Promise<void> {
     this.router.setTab(message.tab);
+    await this.syncState();
+  }
+
+  @onMessage(MessageType.SetModel)
+  protected async handleSetModel(message: { modelId: string }): Promise<void> {
+    // TODO: Persist model selection locally for this chat session
+    // For now, we just log it. Full implementation will come in backend orchestration step
+    console.log('[ChatController] Model changed to:', message.modelId);
     await this.syncState();
   }
 
@@ -124,6 +149,11 @@ export class ChatController extends AgwViewProviderBase {
   /**
    * Demo streaming se mantiene igual para pruebas de UI sin backend real
    */
+  @onMessage('chat:request-sync')
+  protected async handleRequestSync(_message: any): Promise<void> {
+    await this.syncState();
+  }
+
   @onMessage('chat:demo-streaming')
   protected async handleDemoStreaming(_message: any): Promise<void> {
     const tokens = [

@@ -4,9 +4,12 @@ export const Tab = {
 
 export const MessageType = {
   WebviewReady: 'webview-ready',
-  StateUpdate: 'state-update',
+  StateUpdate: 'chat:state-update',
   SetTab: 'set-tab',
-  ChatRequest: 'chat:request'
+  ChatRequest: 'chat:request',
+  SetModel: 'chat:set-model',
+  ModelProposal: 'chat:model-proposal',
+  ModelDecision: 'chat:model-decision'
 } as const;
 
 export const CHAT_API_URL = 'http://localhost:3000/api/chat/chatkit';

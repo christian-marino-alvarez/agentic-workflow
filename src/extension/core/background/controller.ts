@@ -18,6 +18,7 @@ export abstract class AgwViewProviderBase
   protected readonly logId: string;
   protected webviewView?: WebviewView;
   protected readonly disposables: Disposable[] = [];
+  protected readonly isDelegated: boolean;
 
   /**
    * Mensajes pendientes de confirmación (ACK)
@@ -39,11 +40,15 @@ export abstract class AgwViewProviderBase
   public constructor(
     protected readonly context: ExtensionContext,
     protected readonly viewId: string,
-    logger: ViewLogger = ViewLogger.getInstance()
+    logger: ViewLogger = ViewLogger.getInstance(),
+    options: { skipRegistration?: boolean; isDelegated?: boolean } = {}
   ) {
     this.logger = logger;
     this.logId = `${viewId}-next`;
-    this.register();
+    this.isDelegated = options.isDelegated || options.skipRegistration || false;
+    if (!options.skipRegistration) {
+      this.register();
+    }
     this.context.subscriptions.push(this);
   }
 
@@ -125,7 +130,12 @@ export abstract class AgwViewProviderBase
       payload.timestamp = new Date().toISOString();
     }
 
-    this.logger.info(this.logId, 'post-message', { type: payload.type, id: payload.id });
+    this.logger.info(this.logId, 'post-message', { type: payload.type, id: payload.id, domain: this.viewId });
+
+    // Inyectar el dominio para que el Shell sepa a qué pestaña dirigirlo
+    if (!payload.domain) {
+      payload.domain = this.viewId;
+    }
 
     if (options.expectAck) {
       this.trackMessage(payload);
@@ -185,6 +195,10 @@ export abstract class AgwViewProviderBase
     render: (params: TParams) => string,
     params: TParams
   ): void {
+    if (this.isDelegated) {
+      this.logger.info(this.logId, 'skip-render-template-delegated');
+      return;
+    }
     webviewView.webview.html = render(params);
   }
 
@@ -263,7 +277,11 @@ export abstract class AgwViewProviderBase
 
     const handlers = getMessageHandlers(this);
     handlers
-      .filter((handler) => handler.type === message?.type)
+      .filter((handler) => {
+        // Si el mensaje tiene dominio, debe coincidir con el viewId del controlador
+        const matchesDomain = !message.domain || message.domain === this.viewId;
+        return matchesDomain && handler.type === message?.type;
+      })
       .forEach((handler) => {
         const method = (this as unknown as Record<string, (payload: unknown) => void>)[
           handler.method

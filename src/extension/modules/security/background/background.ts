@@ -22,7 +22,7 @@ export class SecurityController extends AgwViewProviderBase {
     private readonly apiKeyBroadcaster: ApiKeyBroadcaster,
     private readonly settingsStorage: SettingsStorage
   ) {
-    super(context, SecurityController.viewType);
+    super(context, SecurityController.viewType, undefined, { skipRegistration: true });
     void this.syncInitialState();
   }
 

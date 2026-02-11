@@ -5,6 +5,8 @@ import { z } from 'zod';
 
 export type AgwStatus = 'loading' | 'ready' | 'error';
 
+let vscodeApi: any = null;
+
 export abstract class AgwViewBase extends LitElement {
   @state()
   protected status: AgwStatus = 'loading';
@@ -12,7 +14,12 @@ export abstract class AgwViewBase extends LitElement {
   @state()
   protected errorMessage = '';
 
-  protected readonly vscode = window.acquireVsCodeApi ? window.acquireVsCodeApi() : null;
+  protected get vscode() {
+    if (!vscodeApi && (window as any).acquireVsCodeApi) {
+      vscodeApi = (window as any).acquireVsCodeApi();
+    }
+    return vscodeApi;
+  }
 
   /**
    * Opcional: Esquema de validación para los mensajes que recibe la Webview.
@@ -119,6 +126,10 @@ export abstract class AgwViewBase extends LitElement {
       this.trackMessage(payload);
     }
 
+    if (this.domain && !payload.domain) {
+      payload.domain = this.domain;
+    }
+
     this.vscode?.postMessage(payload);
   }
 
@@ -179,15 +190,26 @@ export abstract class AgwViewBase extends LitElement {
   }
 
   /**
-   * Manejador central de mensajes entrantes con validación opcional.
+   * El dominio al que pertenece esta vista (ej: 'chat', 'security').
+   * Si está definido, solo procesará mensajes con este domain.
+   */
+  protected domain?: string;
+
+  /**
+   * Manejador central de mensajes entrantes con validación opcional y filtrado por dominio.
    */
   private handleIncomingMessage(message: any): void {
-    // 1. Envío de ACK automático para mensajes que lo requieran
+    // 1. Filtrado por dominio si aplica
+    if (this.domain && message?.domain && message.domain !== this.domain) {
+      return;
+    }
+
+    // 2. Envío de ACK automático para mensajes que lo requieran
     if (message?.id && message.type !== 'system:ack') {
       this.sendAck(message.id);
     }
 
-    // 2. Procesar si es un ACK para nosotros
+    // 3. Procesar si es un ACK para nosotros
     if (message?.type === 'system:ack') {
       this.handleAck(message);
       return;

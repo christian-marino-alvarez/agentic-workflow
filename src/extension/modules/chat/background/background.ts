@@ -21,7 +21,7 @@ export class ChatController extends AgwViewProviderBase {
     context: ExtensionContext,
     private readonly chatSidecarManager?: any
   ) {
-    super(context, ChatController.viewType);
+    super(context, ChatController.viewType, undefined, { skipRegistration: true });
     this.settings = new SettingsStorage(context.globalState);
     this.messageSchema = ChatSchema;
 

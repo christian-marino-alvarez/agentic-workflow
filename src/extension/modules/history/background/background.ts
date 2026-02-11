@@ -7,7 +7,7 @@ export class Controller extends AgwViewProviderBase {
   public static readonly viewType = 'historyView';
 
   public constructor(context: ExtensionContext) {
-    super(context, Controller.viewType);
+    super(context, Controller.viewType, undefined, { skipRegistration: true });
   }
 
   protected onResolve(webviewView: WebviewView): void {

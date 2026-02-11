@@ -10,7 +10,7 @@
 | Dominio | Completitud | Tareas Completadas | Tareas Totales |
 |---------|-------------|---------------------|----------------|
 | D1: Setup/Config | 100% | 4/4 | 4 |
-| D2: UI/ChatKit | 80% | 4/5 | 5 |
+| D2: UI/ChatKit | 66% | 4/6 | 6 |
 | D3: Backend/Extension Host | 100% | 4/4 | 4 |
 | D4: Agents SDK/Backend | 40% | 2/5 | 5 |
 | D5: MCP/Governance | 0% | 0/4 | 4 |
@@ -18,7 +18,7 @@
 | D7: Release/CI-CD | 0% | 0/2 | 2 |
 | D8: E2E Testing | 10% | 0/4 | 4 |
 
-**Total**: 16/31 tareas completadas (52%)
+**Total**: 16/32 tareas completadas (50%)
 
 ---
 
@@ -193,6 +193,24 @@
   - `script-src` con nonce + CDN
   - `connect-src` para API endpoints
   - **Ubicación**: `src/extension/modules/chat/web/templates/shell/html/index.ts`
+- [ ] **T032**: Unified Tabbed Shell (Fase 0)
+  - Unificar las 4 vistas en un único `<agw-unified-shell>`
+  - Persistent state management entre pestañas
+  - **Dependencias**: T007, T011
+  - **Agente**: architect-agent / Neo
+  - **ADR**: ADR-001
+
+- [ ] **T033**: Standalone Lit Chat Shell (Fase 1)
+  - Reemplazar ChatKit por componentes Lit propios
+  - Markdown, Syntax highlighting, Auto-scroll
+  - **Dependencias**: T032
+  - **Agente**: Neo
+
+- [ ] **T034**: A2UI Protocol Integration (Fase 2)
+  - Integrar `@a2ui/web-lib` y renderizado declarativo
+  - Custom components (diff, terminal, etc.)
+  - **Dependencias**: T033
+  - **Agente**: Neo
 
 ---
 

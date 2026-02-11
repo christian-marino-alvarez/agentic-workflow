@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "runId": "e2f349d0-0d4f-4612-9e92-141b95318c40",
-  "taskId": "task.init",
-  "taskTitle": "Initialization",
-  "taskPath": "/Users/milos/Documents/workspace/agentic-workflow/.agent/artifacts/candidate/2026-02-10T18-20-33Z-init.md",
-  "phase": "init",
+  "runId": "c0276783-519b-41ea-9e2a-b31ab27a2d25",
+  "taskId": "9",
+  "taskTitle": "Unified Tabbed Shell Implementation",
+  "taskPath": "/Users/milos/Documents/workspace/agentic-workflow/.agent/artifacts/9-unified-shell-implementation/task.md",
+  "phase": "phase-0-acceptance-criteria",
   "status": "idle",
   "steps": [],
-  "updatedAt": "2026-02-10T18:20:33.656Z",
+  "updatedAt": "2026-02-11T07:32:15.572Z",
   "artifactHashes": {}
 }

@@ -23,6 +23,7 @@ provideVSCodeDesignSystem().register(
   vsCodeButton()
 );
 
+
 @customElement('agw-chat-view')
 export class ChatView extends AgwViewBase {
   @state()
@@ -48,6 +49,7 @@ export class ChatView extends AgwViewBase {
 
   constructor() {
     super();
+    this.domain = 'chatView';
     this.messageSchema = ChatSchema;
   }
 
@@ -154,7 +156,9 @@ export class ChatView extends AgwViewBase {
 
   protected override updated(changedProperties: Map<string, unknown>) {
     super.updated(changedProperties);
-    if (this._chatkitInitialized) return;
+    if (this._chatkitInitialized) {
+      return;
+    }
 
     const chatkit = this.renderRoot.querySelector('#chatkit-instance') as any;
     if (chatkit && typeof chatkit.setOptions === 'function') {

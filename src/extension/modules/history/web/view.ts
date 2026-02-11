@@ -4,6 +4,10 @@ import { AgwViewBase } from '../../../core/web/index.js';
 
 @customElement('agw-history-view')
 export class View extends AgwViewBase {
+  constructor() {
+    super();
+    this.domain = 'historyView';
+  }
   public static styles = [
     AgwViewBase.styles,
     css`

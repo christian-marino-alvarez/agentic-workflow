@@ -18,6 +18,10 @@ const entries = [
   {
     entry: resolve('src/extension/modules/security/web/view.ts'),
     outfile: resolve('dist/extension/modules/security/web/view.js')
+  },
+  {
+    entry: resolve('src/extension/modules/core/web/main-view.ts'),
+    outfile: resolve('dist/extension/modules/core/web/main-view.js')
   }
 ];
 

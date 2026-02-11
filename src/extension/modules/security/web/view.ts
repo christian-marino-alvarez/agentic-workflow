@@ -17,6 +17,11 @@ export class SecurityView extends AgwViewBase {
   @state()
   private tab: TabType = Tab.New;
 
+  constructor() {
+    super();
+    this.domain = 'keyView';
+  }
+
   @state()
   private models: EnrichedModel[] = [];
 
@@ -41,13 +46,11 @@ export class SecurityView extends AgwViewBase {
     editStyles
   ];
 
-  protected listen(): void {
-    window.addEventListener('message', (event) => this.handleMessage(event));
+  protected override listen(): void {
     this.postMessage({ type: MessageType.WebviewReady });
   }
 
-  private handleMessage(event: MessageEvent): void {
-    const message = event.data;
+  protected override onMessage(message: any): void {
     console.log('[SecurityView] Received message:', message.type, JSON.stringify(message));
     if (message.type === MessageType.StateUpdate) {
       this.tab = message.tab;

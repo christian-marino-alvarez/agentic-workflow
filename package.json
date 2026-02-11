@@ -20,7 +20,7 @@
       "activitybar": [
         {
           "id": "main",
-          "title": "Agent Chat",
+          "title": "Agentic Workflow",
           "icon": "media/agent-chat.svg"
         }
       ]
@@ -28,17 +28,9 @@
     "views": {
       "main": [
         {
-          "id": "keyView",
-          "name": "Security",
-          "icon": "media/agent-chat.svg",
+          "id": "agw.mainView",
+          "name": "Main Shell",
           "type": "webview"
-        },
-        {
-          "id": "chatView",
-          "name": "Agent Chat",
-          "icon": "media/agent-chat.svg",
-          "type": "webview",
-          "when": "agenticWorkflow.hasKey"
         }
       ]
     },

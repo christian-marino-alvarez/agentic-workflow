@@ -59,7 +59,7 @@
   ],
   "scripts": {
     "build": "node scripts/build/clean-dist.mjs && tsc -p tsconfig.build.json && npm run copy-assets && node scripts/build/bundle-webviews.mjs",
-    "copy-assets": "mkdir -p dist/agent && cp -r src/agentic-system-structure/* dist/agent/",
+    "copy-assets": "mkdir -p dist/agent && cp -r .agent/* dist/agent/",
     "start": "node dist/index.js",
     "publish:npm": "npm publish --registry https://registry.npmjs.org --access public",
     "publish:github": "npm publish --registry https://npm.pkg.github.com",

@@ -15,6 +15,7 @@ Los agentes **DEBEN** referenciar estas habilidades por alias.
 ```yaml
 skills:
   runtime-governance: .agent/skills/runtime-governance/SKILL.md
+  module-scaffolding: .agent/skills/module-scaffolding/SKILL.md
 ```
 
 ## Reglas

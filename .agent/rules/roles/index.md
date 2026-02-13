@@ -36,6 +36,7 @@ roles:
   qa: .agent/rules/roles/qa.md
   researcher: .agent/rules/roles/researcher.md
   neo: .agent/rules/roles/neo.md
+  developer: .agent/rules/roles/developer.md
 ```
 
 ## Reglas

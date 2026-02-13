@@ -1,19 +1,22 @@
-export {
-  Security,
-  Chat,
-  createChatDomain,
-  History,
-  createHistoryDomain,
-  Workflow,
-  createWorkflowDomain,
-  type ApiKeyState,
-  OPENAI_KEY_SECRET,
-  CONTEXT_HAS_KEY,
-  AgentPoc,
-  ModuleRouter,
-  type ModuleRegistration,
-  type ViewHandle
-} from './modules/index.js';
-export type { SecurityDomain } from './modules/security/types.js';
-export type { ChatDomain } from './modules/chat/types.js';
-export * from './core/index.js';
+import * as vscode from 'vscode';
+import { App } from './modules/app/index.js';
+
+let appInstance: App | undefined;
+
+/**
+ * Standard VS Code activation function.
+ */
+export async function activate(context: vscode.ExtensionContext): Promise<void> {
+  appInstance = new App(context);
+  await appInstance.activate();
+}
+
+/**
+ * Standard VS Code deactivation function.
+ */
+export async function deactivate(): Promise<void> {
+  if (appInstance) {
+    await appInstance.deactivate();
+    appInstance = undefined;
+  }
+}

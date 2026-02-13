@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.42.1-beta.9](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.42.0-beta.9...agentic-workflow-v1.42.1-beta.9) (2026-02-13)
+
+
+### Bug Fixes
+
+* **build:** update copy-assets path to use .agent instead of missing src directory ([77cc5fc](https://github.com/christian-marino-alvarez/agentic-workflow/commit/77cc5fcb9f260fa6bf9aad28392912897bf0d10d))
+
 ## [1.42.0-beta.9](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.41.0-beta.9...agentic-workflow-v1.42.0-beta.9) (2026-02-13)
 
 

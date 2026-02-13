@@ -58,6 +58,10 @@ El módulo exporta dos abstracciones base para la implementación del lado del s
 ### 3.2 Protocolo de Mensajes
 Todo mensaje DEBE cumplir la interfaz estricta definida en `core/types.d.ts`. No se permiten payloads ad-hoc sin tipado en `from`, `to` y `origin`.
 
+## 3.3 Tests
+- **Ubicación**: Todos los tests deben residir en `src/extension/modules/<modulo>/test/unit`.
+- **Prohibición**: No se permiten carpetas `test` anidadas dentro de subdirectorios funcionales (ej: `backend/test` ❌).
+
 ## 4. Gestión de Dependencias y Limpieza
 - **Cero Dependencias Circulares**: Core no depende de ningún módulo funcional (`app`, `chat`, etc.).
 - **Minimalismo**: El código muerto (decorators obsoletos, constantes de ciclo de vida antiguas como `ViewStage`) debe ser eliminado inmediatamente.

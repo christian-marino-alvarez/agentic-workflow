@@ -1,5 +1,5 @@
 import { suite, test, expect, beforeEach, afterEach } from 'vitest';
-import { AbstractBackend } from '../abstract-server.js';
+import { AbstractBackend } from '../../backend/abstract-server.js';
 import fastify from 'fastify';
 
 // Mock Implementation for testing

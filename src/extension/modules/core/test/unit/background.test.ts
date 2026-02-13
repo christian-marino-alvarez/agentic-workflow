@@ -2,12 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Background } from '../../background/index.js';
 import { MessagingBackground } from '../../messaging/background.js';
 import { MessageOrigin } from '../../constants.js';
+import { spawn, exec } from 'child_process';
 
 // Mock MessagingBackground
 vi.mock('../../messaging/background.js', () => {
   const MockMessagingBackground = vi.fn();
   MockMessagingBackground.prototype.emit = vi.fn();
   MockMessagingBackground.prototype.subscribe = vi.fn(() => ({ dispose: vi.fn() }));
+  MockMessagingBackground.prototype.setEndpoint = vi.fn();
   return { MessagingBackground: MockMessagingBackground };
 });
 
@@ -19,6 +21,14 @@ vi.mock('vscode', () => ({
 vi.mock('../../view/html.js', () => ({
   getWebviewHtml: () => '<html>Mocked HTML</html>'
 }));
+
+// Mock child_process
+vi.mock('child_process', () => {
+  return {
+    spawn: vi.fn(),
+    exec: vi.fn((cmd, cb) => cb(null, ''))
+  };
+});
 
 class TestBackground extends Background {
   constructor() {
@@ -60,5 +70,28 @@ describe('Background Layer', () => {
     background.onMessage(handler);
 
     expect(messengerMock.subscribe).toHaveBeenCalledWith('test-background::background', handler);
+  });
+
+  it('should spawn sidecar process', async () => {
+    const spawnMock = vi.mocked(spawn);
+    const execMock = vi.mocked(exec);
+
+    spawnMock.mockReturnValue({
+      stdout: { on: vi.fn() },
+      stderr: { on: vi.fn() },
+      on: vi.fn(),
+      kill: vi.fn(),
+      unref: vi.fn()
+    } as any);
+
+    await (background as any).spawnSidecar('/mock/script.js', 3000);
+
+    // Verify killPort was called (lsof check)
+    expect(execMock).toHaveBeenCalledWith(expect.stringContaining('lsof -i :3000'), expect.any(Function));
+
+    // Verify spawn was called
+    expect(spawnMock).toHaveBeenCalledWith('node', ['/mock/script.js'], expect.objectContaining({
+      env: expect.objectContaining({ PORT: '3000' })
+    }));
   });
 });

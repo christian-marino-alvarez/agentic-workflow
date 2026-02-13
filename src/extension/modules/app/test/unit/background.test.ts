@@ -54,7 +54,7 @@ describe('AppBackground', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    background = new AppBackground({ path: '/mock/uri' } as any);
+    background = new AppBackground({ fsPath: '/mock/uri', path: '/mock/uri' } as any);
     messengerMock = (MessagingBackground as any).mock.instances[0];
   });
 

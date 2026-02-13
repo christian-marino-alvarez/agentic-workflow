@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.42.0-beta.9](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.41.0-beta.9...agentic-workflow-v1.42.0-beta.9) (2026-02-13)
+
+
+### Features
+
+* **backend:** T010 implement session secure endpoint and auth middleware ([26debf0](https://github.com/christian-marino-alvarez/agentic-workflow/commit/26debf0c57dbb49d686fe7c3d669195a3923d06d))
+* **chat:** add model advisor service, interceptor, and ChatKit backend integration ([f4a07cb](https://github.com/christian-marino-alvarez/agentic-workflow/commit/f4a07cb9d034fc625c36083a9568c21736a70ea8))
+* **chat:** implement agent runtime engine with handoffs and HIL support ([3f087c8](https://github.com/christian-marino-alvarez/agentic-workflow/commit/3f087c805bd894bd45b6655dc5d7ae7e770fb0f9))
+* **chat:** implement model dropdown and dynamic visibility synchronization ([07a1bce](https://github.com/christian-marino-alvarez/agentic-workflow/commit/07a1bceceabf0e8ab67459461ff21042de5893b1))
+* **cli:** add bootstrap command to eject standalone core ([a488707](https://github.com/christian-marino-alvarez/agentic-workflow/commit/a48870784efc0400c3e7521c5ad0afb976d505c6))
+* **cli:** add bootstrap command to eject standalone core ([86a37b4](https://github.com/christian-marino-alvarez/agentic-workflow/commit/86a37b49d55ca50114d0f29810f203310c86146f))
+* **core:** migrate agentic core and add professional documentation ([c13716d](https://github.com/christian-marino-alvarez/agentic-workflow/commit/c13716d865d72022cd27d1b55a6be93b8f13bd7c))
+* **core:** migrate agentic core and add professional documentation ([5332067](https://github.com/christian-marino-alvarez/agentic-workflow/commit/5332067027bd557eb3b37df9c1ce5b741cf3557d))
+* **core:** migrate agentic core to independent package and generate professional documentation ([04c49ec](https://github.com/christian-marino-alvarez/agentic-workflow/commit/04c49ec9d215d38ee85966ec964a3b1fb547c4ca))
+* **core:** refactor backend architecture ([8d6c9ae](https://github.com/christian-marino-alvarez/agentic-workflow/commit/8d6c9ae5899573b9412c76039b021adabf8675c4))
+* **extension:** implement unified tabbed shell and multiplexed provider architecture ([c7d5a5b](https://github.com/christian-marino-alvarez/agentic-workflow/commit/c7d5a5b5854de2000839ba67755041cb8c0eb766))
+
+
+### Bug Fixes
+
+* **chat:** fix zod schema for message context in contracts ([758efec](https://github.com/christian-marino-alvarez/agentic-workflow/commit/758efec8abf6aaba23b59623121e4cbb9a151414))
+* **chat:** resolve merge conflict in zod schema ([822fd60](https://github.com/christian-marino-alvarez/agentic-workflow/commit/822fd60ec8ccbd3999d5911b2eea4e22fa9c8884))
+* **chat:** resolve webview rendering failures and prevent tsc bundle overwrites ([db2631a](https://github.com/christian-marino-alvarez/agentic-workflow/commit/db2631aa5d0f997450d099ea2ded9c1f2036efa5))
+
 ## [1.41.0-beta.9](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.40.1-beta.9...agentic-workflow-v1.41.0-beta.9) (2026-02-09)
 
 

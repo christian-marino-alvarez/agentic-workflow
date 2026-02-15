@@ -1,8 +1,11 @@
 ---
-id: background
-name: Orchestration Specialist
-description: Expert in extension lifecycle, state management, and coordinating the Backend-View bridge.
+id: roles.background
+owner: architect-agent
+version: 1.0.0
+severity: PERMANENT
 scope: background
+trigger: model_decision
+description: Expert in extension lifecycle, state management, and coordinating the Backend-View bridge.
 ---
 
 # Orchestration Specialist (background)

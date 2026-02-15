@@ -1,8 +1,11 @@
 ---
-id: view
-name: UI/UX Specialist
-description: Expert in Lit-based webviews, HTML/CSS, and user interaction (Strictly no business logic).
+id: roles.view
+owner: architect-agent
+version: 1.0.0
+severity: PERMANENT
 scope: view
+trigger: model_decision
+description: Expert in Lit-based webviews, HTML/CSS, and user interaction (Strictly no business logic).
 ---
 
 # UI/UX Specialist (view)

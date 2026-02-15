@@ -1,22 +1,22 @@
-import type { ExtensionContext } from 'vscode';
-import { ChatKitLocalServer } from './modules/chatkit-server/index.js';
-import { ModuleRouter, Setup, Chat, History, Workflow } from './index.js';
+import * as vscode from 'vscode';
+import { App } from './modules/app/index.js';
 
-export function activate(context: ExtensionContext): void {
-  const chatKitServer = new ChatKitLocalServer(context);
-  void chatKitServer.start();
-  context.subscriptions.push(chatKitServer);
+let app: App | undefined;
 
-  const router = new ModuleRouter(context);
-  const setupDomain = router.register(Setup);
-  const chatDomain = router.register(Chat, {
-    chatKitServer,
-    apiKeyBroadcaster: setupDomain.apiKeyBroadcaster
-  });
-  router.register(History);
-  router.register(Workflow);
-  router.connectChat(setupDomain.apiKeyBroadcaster, chatDomain.view);
-  context.subscriptions.push(router);
+export async function activate(context: vscode.ExtensionContext): Promise<void> {
+  console.log('[Extension] Initializing Agentic Workflow...');
+  try {
+    app = new App(context);
+    await app.activate();
+    console.log('[Extension] Activated successfully.');
+  } catch (error) {
+    console.error('[Extension] Activation failed:', error);
+    throw error;
+  }
 }
 
-export function deactivate(): void {}
+export async function deactivate(): Promise<void> {
+  if (app) {
+    await app.deactivate();
+  }
+}

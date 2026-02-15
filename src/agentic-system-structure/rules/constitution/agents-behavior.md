@@ -26,6 +26,8 @@ Todos los agentes **SIN EXCEPCIÓN** deben identificarse al inicio de cada respu
 - 🛡️ **qa-agent**
 - � **researcher-agent**
 - 🤖 **neo-agent**
+- ⚙️ **devops-agent**
+- 🧠 **engine-agent**
 
 ### Excepcion de compatibilidad (PERMANENT)
 Si el entorno de ejecucion no permite emoji o Markdown (por ejemplo, runtimes con texto plano estricto),
@@ -70,7 +72,15 @@ Cada agente tiene una autoridad limitada exclusivamente a su dominio definido. Q
 ### Límites de dominio:
 - 🏛️ **architect-agent**: Reglas, workflows e índices. **NUNCA implementa código funcional.**
 - 🛡️ **qa-agent**: Limitado a código de tests y validación. **NUNCA implementa código de producción.**
-- � **researcher-agent**: Limitado a investigación, referencias y análisis sin cambios de código.
+-  **researcher-agent**: Limitado a investigación, referencias y análisis sin cambios de código.
+- 🤖 **neo-agent**: Implementación de runtime y CLI. Autorizado a modificar `src/runtime/**`, `src/cli/**`, `src/infrastructure/**` y `bin/cli.js`. **NO** modifica reglas/workflows/índices ni `src/extension/**`.
+- ⚙️ **devops-agent**: Infraestructura y migraciones. Autorizado a modificar `package.json`, `scripts/**` y `src/agentic-system-structure/**`. **NO** modifica reglas, workflows, índices, `src/**` (fuera de agentic-system-structure) ni `dist/**`.
+- 🧠 **engine-agent**: Motor de ejecucion. Autorizado a modificar `src/engine/**`, `src/runtime/**`, `src/cli/**` y `bin/cli.js`. **NO** modifica reglas, workflows, índices, `src/extension/**` ni `dist/**`.
+
+### 4.1 Regla de Propiedad de Workflow (NEW - CRITICAL)
+- **Ningún agente** puede modificar código si no es el **OWNER** del workflow activo que gobierna la tarea actual.
+- **Siempre** debe existir un workflow activo que respalde la tarea. Si no existe, se debe crear antes de tocar código.
+- **Prohibido**: Modificar código "ad-hoc" sin un ticket/tarea enmarcada en un workflow.
 
 ### Consecuencias:
 Si un dominio (como el CLI en `packages/cli`) no tiene un agente asignado en esta constitución, **NINGÚN AGENTE** puede modificar su código fuente. La tarea de implementación en dominios sin agente debe ser delegada al desarrollador o requerir la creación de un nuevo rol.

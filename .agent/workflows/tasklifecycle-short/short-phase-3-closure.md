@@ -47,12 +47,13 @@ blocking: true
 - Verificar que la fase en `task.md` sea la correcta.
 
 ### 2. Ejecutar verificación
-Si la tarea requiere tests:
+### 2. Ejecutar verificación
+- **SIEMPRE** validar unit tests y test E2E si aplica.
 - Ejecutar tests según `constitution.clean_code`.
 - Documentar resultados.
 
-Si no requiere tests:
-- Documentar justificación.
+Si no requiere tests (excepción justificada):
+- Documentar justificación robusta.
 
 ### 3. Crear artefacto closure.md
 - Usar template `templates.closure`.

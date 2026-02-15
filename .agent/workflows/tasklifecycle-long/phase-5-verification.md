@@ -33,8 +33,9 @@ blocking: true
 ---
 
 ## Objetivo (ONLY)
+## Objetivo (ONLY)
 - Verificar la implementación mediante tests (unitarios y E2E si aplica).
-- Si la tarea **no requiere tests**, revisar únicamente los informes disponibles.
+- **SIEMPRE** validar unit tests y test E2E si aplica.
 - Reportar resultados de testing, cobertura y métricas de performance (si aplica).
 - Confirmar cumplimiento de los porcentajes de testing definidos en el plan cuando existan.
 - Obtener aprobación explícita del desarrollador (SI/NO) para avanzar.

@@ -4,7 +4,7 @@
   "description": "Portable agentic workflow orchestration system with strict identity and gate discipline",
   "type": "module",
   "displayName": "Agentic Workflow",
-  "main": "./dist/cli/index.js",
+  "main": "./dist/extension/extension.js",
   "engines": {
     "vscode": "^1.108.2"
   },
@@ -90,12 +90,14 @@
     "openai": "^6.17.0"
   },
   "devDependencies": {
+    "@types/glob": "^8.1.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "^20.10.6",
     "@types/vscode": "^1.108.1",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
     "eslint": "^9.39.2",
+    "glob": "^13.0.3",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.52.0",
     "vitest": "^4.0.18"

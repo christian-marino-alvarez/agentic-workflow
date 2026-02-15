@@ -1,10 +1,5 @@
 ---
-id: role.vscode-specialist
-type: rule
-owner: architect-agent
-version: 1.0.0
-severity: PERMANENT
-scope: project
+trigger: always_on
 ---
 
 # ROLE: vscode-specialist

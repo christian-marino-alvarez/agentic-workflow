@@ -1,9 +1,5 @@
 ---
-id: rules.constitution.index
-owner: architect-agent
-version: 2.0.1
-severity: PERMANENT
-trigger: always_on
+trigger: model_decision
 ---
 
 # INDEX — Rules / Constitution

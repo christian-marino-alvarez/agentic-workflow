@@ -1,10 +1,5 @@
 ---
-id: role.neo-agent
-type: rule
-owner: architect-agent
-version: 1.0.0
-severity: PERMANENT
-scope: project
+trigger: model_decision
 ---
 
 # ROLE: neo-agent

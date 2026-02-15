@@ -1,7 +1,7 @@
 ---
 id: rules.constitution.index
 owner: architect-agent
-version: 2.0.0
+version: 2.0.1
 severity: PERMANENT
 trigger: always_on
 ---
@@ -22,6 +22,9 @@ constitution:
   class_oriented: .agent/rules/constitution/class-oriented.md
   external_html: .agent/rules/constitution/external-html.md
   lit_decorators: .agent/rules/constitution/lit-decorators.md
+  backend: .agent/rules/constitution/backend.md
+  background: .agent/rules/constitution/background.md
+  view: .agent/rules/constitution/view.md
 ```
 
 ## Reglas

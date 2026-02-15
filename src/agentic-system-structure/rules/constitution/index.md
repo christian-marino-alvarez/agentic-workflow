@@ -1,7 +1,7 @@
 ---
 id: rules.constitution.index
 owner: architect-agent
-version: 2.0.0
+version: 2.0.1
 severity: PERMANENT
 trigger: always_on
 ---
@@ -18,6 +18,13 @@ por alias en lugar de rutas directas.
 constitution:
   clean_code: .agent/rules/constitution/clean-code.md
   agents_behavior: .agent/rules/constitution/agents-behavior.md
+  vscode_extensions: .agent/rules/constitution/vscode-extensions.md
+  class_oriented: .agent/rules/constitution/class-oriented.md
+  external_html: .agent/rules/constitution/external-html.md
+  lit_decorators: .agent/rules/constitution/lit-decorators.md
+  backend: .agent/rules/constitution/backend.md
+  background: .agent/rules/constitution/background.md
+  view: .agent/rules/constitution/view.md
 ```
 
 ## Reglas

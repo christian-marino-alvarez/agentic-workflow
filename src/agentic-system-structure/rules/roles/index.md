@@ -1,7 +1,7 @@
 ---
 id: rules.roles.index
 owner: architect-agent
-version: 1.0.1
+version: 1.0.2
 severity: PERMANENT
 trigger: always_on
 ---
@@ -36,6 +36,12 @@ roles:
   qa: .agent/rules/roles/qa.md
   researcher: .agent/rules/roles/researcher.md
   neo: .agent/rules/roles/neo.md
+  devops: .agent/rules/roles/devops.md
+  engine: .agent/rules/roles/engine.md
+  vscode-specialist: .agent/rules/roles/vscode-specialist.md
+  backend: .agent/rules/roles/backend.md
+  background: .agent/rules/roles/background.md
+  view: .agent/rules/roles/view.md
 ```
 
 ## Reglas

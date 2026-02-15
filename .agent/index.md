@@ -1,7 +1,7 @@
 ---
 id: agent.index
 owner: architect-agent
-version: 1.1.0
+version: 1.1.1
 severity: PERMANENT
 description: "UNIFIED ROOT INDEX. Lists ALL system aliases in a single file."
 ---
@@ -15,16 +15,13 @@ Contiene **TODOS** los alias de Rules, Workflows, Templates y Artifacts.
 ## Aliases (YAML)
 ```yaml
 agent:
-  version: 1.1.0
+  version: 1.1.1
 
   rules:
     constitution:
       clean_code: .agent/rules/constitution/clean-code.md
       agents_behavior: .agent/rules/constitution/agents-behavior.md
       vscode_extensions: .agent/rules/constitution/vscode-extensions.md
-      class_oriented: .agent/rules/constitution/class-oriented.md
-      external_html: .agent/rules/constitution/external-html.md
-      lit_decorators: .agent/rules/constitution/lit-decorators.md
       backend: .agent/rules/constitution/backend.md
       background: .agent/rules/constitution/background.md
       view: .agent/rules/constitution/view.md
@@ -34,7 +31,6 @@ agent:
       qa: .agent/rules/roles/qa.md
       researcher: .agent/rules/roles/researcher.md
       neo: .agent/rules/roles/neo.md
-      devops: .agent/rules/roles/devops.md
       engine: .agent/rules/roles/engine.md
       vscode-specialist: .agent/rules/roles/vscode-specialist.md
       backend: .agent/rules/roles/backend.md

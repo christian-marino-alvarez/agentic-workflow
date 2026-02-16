@@ -1,6 +1,6 @@
 ---
 id: workflow.tasklifecycle-short.short-phase-1-brief
-description: Fase 1 del ciclo Short. Fusiona Acceptance + Analysis + Planning. Incluye 5 preguntas obligatorias y detección de complejidad.
+description: Phase 1 of the Short lifecycle. Merges Acceptance + Analysis + Planning. Includes 5 mandatory questions and complexity detection.
 owner: architect-agent
 version: 1.0.0
 severity: PERMANENT
@@ -12,106 +12,106 @@ blocking: true
 # WORKFLOW: tasklifecycle-short.short-phase-1-brief
 
 ## Input (REQUIRED)
-- Existe task candidate con `task.strategy: short`.
-- El desarrollador ha proporcionado título y objetivo.
+- Task candidate exists with `task.strategy: short`.
+- The developer has provided a title and objective.
 
 > [!IMPORTANT]
-> **Constitución activa (OBLIGATORIO)**:
-> - Cargar `constitution.clean_code` antes de iniciar
-> - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
+> **Active constitution (MANDATORY)**:
+> - Load `constitution.clean_code` before starting
+> - Load `constitution.agents_behavior` (section 7: Gates, section 8: Constitution)
 
 ## Output (REQUIRED)
-- Artefacto: `.agent/artifacts/<taskId>-<taskTitle>/brief.md`
-- Artefacto: `.agent/artifacts/<taskId>-<taskTitle>/acceptance.md` (NUEVO)
-- Task actualizado con fase actual = `short-phase-1-brief`
+- Artifact: `.agent/artifacts/<taskId>-<taskTitle>/brief.md`
+- Artifact: `.agent/artifacts/<taskId>-<taskTitle>/acceptance.md` (NEW)
+- Task updated with current phase = `short-phase-1-brief`
 
-## Objetivo (ONLY)
-- Ejecutar las **5 preguntas obligatorias** para definir acceptance criteria.
-- Realizar un **análisis profundo** para detectar complejidad.
-- Crear un **plan simplificado** de implementación.
-- Si se detecta complejidad alta, **ofrecer abortar** y reiniciar en modo Long.
+## Objective (ONLY)
+- Execute the **5 mandatory questions** to define acceptance criteria.
+- Perform a **deep analysis** to detect complexity.
+- Create a **simplified implementation plan**.
+- If high complexity is detected, **offer to abort** and restart in Long mode.
 
-> Esta fase **NO implementa código**.  
-> Esta fase **REQUIERE aprobación explícita del desarrollador (SI/NO)**.
+> This phase **DOES NOT implement code**.  
+> This phase **REQUIRES explicit developer approval (SI/NO)**.
 
 ---
 
-## Pasos obligatorios
+## Mandatory Steps
 
-0. Activar `architect-agent` y usar prefijo obligatorio en cada mensaje.
+0. Activate `architect-agent` and use the mandatory prefix in every message.
 
-### 1. Verificar inputs
-- Existe task candidate.
+### 1. Verify inputs
+- Task candidate exists.
 - `task.strategy == "short"`.
-- Si falla → **FAIL**.
+- If it fails → **FAIL**.
 
-### 2. Ejecutar 5 preguntas obligatorias
-El architect-agent **DEBE** formular 5 preguntas específicas basadas en la tarea:
-- Las preguntas varían según la tarea concreta.
-- Sin respuestas completas, la fase NO avanza.
+### 2. Execute 5 mandatory questions
+The architect-agent **MUST** formulate 5 specific questions based on the task:
+- Questions vary depending on the specific task.
+- Without complete answers, the phase DOES NOT advance.
 
-### 3. Análisis de complejidad
-Evaluar indicadores de complejidad:
-- ¿Afecta más de 3 paquetes/módulos? → Alta
-- ¿Requiere investigación de APIs externas? → Alta
-- ¿Introduce cambios breaking? → Alta
-- ¿Necesita tests E2E complejos? → Alta
+### 3. Complexity analysis
+Evaluate complexity indicators:
+- Does it affect more than 3 packages/modules? → High
+- Does it require external API research? → High
+- Does it introduce breaking changes? → High
+- Does it need complex E2E tests? → High
 
-**Si complejidad es ALTA**:
-- Notificar al desarrollador.
-- Ofrecer opción de abortar y crear nueva tarea en modo Long.
-- Si decide abortar → terminar fase con estado "aborted".
-### 4. Crear artefactos (brief.md y acceptance.md)
-- Usar templates `templates.brief` y `templates.acceptance`.
-- En `acceptance.md` incluir:
-  - Acceptance criteria derivados de las 5 preguntas.
-- En `brief.md` incluir:
-  - Análisis simplificado del estado actual.
-  - Plan de implementación con pasos ejecutables.
-  - Evaluación de complejidad.
-  - **Evaluación de Agentes**: Desempeño y propuestas de mejora.
+**If complexity is HIGH**:
+- Notify the developer.
+- Offer the option to abort and create a new task in Long mode.
+- If the developer decides to abort → terminate the phase with "aborted" status.
+### 4. Create artifacts (brief.md and acceptance.md)
+- Use templates `templates.brief` and `templates.acceptance`.
+- In `acceptance.md` include:
+  - Acceptance criteria derived from the 5 questions.
+- In `brief.md` include:
+  - Simplified analysis of the current state.
+  - Implementation plan with executable steps.
+  - Complexity evaluation.
+  - **Agent Evaluation**: Performance and improvement proposals.
 
-### 5. Solicitar aprobación del desarrollador (por consola)
+### 5. Request developer approval (via console)
 ```yaml
 approval:
   developer:
     decision: SI | NO
     date: <ISO-8601>
-    comments: <opcional>
+    comments: <optional>
 ```
-- Si `decision != SI` → **FAIL**.
+- If `decision != SI` → **FAIL**.
 
 ### 6. PASS
-- Informar que la Fase 1 (Brief) está completada correctamente.
-- El `architect-agent` **DEBE realizar explícitamente** las siguientes acciones:
-  - Marcar la fase como completada en el `task.md`.
-  - Establecer `task.lifecycle.phases.short-phase-1-brief.completed = true`.
-  - Establecer `task.lifecycle.phases.short-phase-1-brief.validated_at = <ISO-8601>`.
-  - Actualizar `task.phase.updated_at = <ISO-8601>`.
-  - Actualizar el estado:
+- Report that Phase 1 (Brief) is correctly completed.
+- The `architect-agent` **MUST explicitly perform** the following actions:
+  - Mark the phase as completed in `task.md`.
+  - Set `task.lifecycle.phases.short-phase-1-brief.completed = true`.
+  - Set `task.lifecycle.phases.short-phase-1-brief.validated_at = <ISO-8601>`.
+  - Update `task.phase.updated_at = <ISO-8601>`.
+  - Update the state:
     - `task.phase.current = short-phase-2-implementation`
-- Esta actualización **NO es automática** y **NO puede ser inferida**.
-- Hasta que este cambio no se refleje en el `task.md`, **no se puede iniciar la Fase 2**.
-- Indicar rutas:
+- This update is **NOT automatic** and **CANNOT be inferred**.
+- Until this change is reflected in `task.md`, **Phase 2 cannot be started**.
+- Indicate paths:
   - `brief.md`
   - `acceptance.md`
-  - `task.md` actualizado
+  - `task.md` updated
 
 ---
 
 ## Gate (REQUIRED)
-Requisitos (todos obligatorios):
-1. Existen `brief.md` y `acceptance.md` con templates correctos.
-2. El `brief.md` inicia con el prefijo del `architect-agent`.
-3. Las 5 preguntas están respondidas.
-4. La evaluación de complejidad está documentada.
-5. Existe aprobación explícita del desarrollador.
-6. task.md refleja fase completada.
-7. task.md refleja timestamp y estado:
+Requirements (all mandatory):
+1. `brief.md` and `acceptance.md` exist with correct templates.
+2. The `brief.md` starts with the `architect-agent` prefix.
+3. All 5 questions have been answered.
+4. The complexity evaluation is documented.
+5. Explicit developer approval exists.
+6. task.md reflects the phase as completed.
+7. task.md reflects timestamp and state:
    - `task.lifecycle.phases.short-phase-1-brief.completed == true`
-   - `task.lifecycle.phases.short-phase-1-brief.validated_at` no nulo
-   - `task.phase.updated_at` no nulo
+   - `task.lifecycle.phases.short-phase-1-brief.validated_at` not null
+   - `task.phase.updated_at` not null
 
-Si Gate FAIL:
-- Indicar qué requisito falta.
-- Bloquear hasta resolver.
+If Gate FAIL:
+- Indicate which requirement is missing.
+- Block until resolved.

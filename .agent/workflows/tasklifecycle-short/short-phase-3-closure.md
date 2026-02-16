@@ -1,6 +1,6 @@
 ---
 id: workflow.tasklifecycle-short.short-phase-3-closure
-description: Fase 3 del ciclo Short. Fusiona Verification + Results + Commit.
+description: Phase 3 of the Short lifecycle. Merges Verification + Results + Commit.
 owner: architect-agent
 version: 1.0.0
 severity: PERMANENT
@@ -12,101 +12,100 @@ blocking: true
 # WORKFLOW: tasklifecycle-short.short-phase-3-closure
 
 ## Input (REQUIRED)
-- Existe informe de implementación aprobado.
-- task.md refleja `task.phase.current == "short-phase-3-closure"`
+- Approved implementation report exists.
+- task.md reflects `task.phase.current == "short-phase-3-closure"`
 
 > [!IMPORTANT]
-> **Constitución activa (OBLIGATORIO)**:
-> - Cargar `constitution.clean_code` antes de iniciar
-> - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
+> **Active constitution (MANDATORY)**:
+> - Load `constitution.clean_code` before starting
+> - Load `constitution.agents_behavior` (section 7: Gates, section 8: Constitution)
 
 ## Output (REQUIRED)
-- Artefacto de cierre: `.agent/artifacts/<taskId>-<taskTitle>/closure.md`
-- Commits realizados (si aplica).
-- Task completado.
+- Closure artifact: `.agent/artifacts/<taskId>-<taskTitle>/closure.md`
+- Commits performed (if applicable).
+- Task completed.
 
-## Objetivo (ONLY)
-- Verificar la implementación mediante tests (si aplica).
-- Presentar resultados al desarrollador.
-- Obtener aceptación final.
-- Consolidar y realizar commit.
+## Objective (ONLY)
+- Verify the implementation through tests (if applicable).
+- Present results to the developer.
+- Obtain final acceptance.
+- Consolidate and perform commit.
 
-> Esta fase **NO implementa código nuevo**.  
-> Esta fase **CIERRA el ciclo de la tarea**.
+> This phase **DOES NOT implement new code**.  
+> This phase **CLOSES the task lifecycle**.
 
 ---
 
-## Pasos obligatorios
+## Mandatory Steps
 
-0. Activar `architect-agent` y usar prefijo obligatorio en cada mensaje.
+0. Activate `architect-agent` and use the mandatory prefix in every message.
 
-### 1. Protocolo de Validación Pre-Vuelo (OBLIGATORIO)
-- El agente **DEBE** leer físicamente el informe de implementación aprobado: `.agent/artifacts/<taskId>-<taskTitle>/architect/implementation.md`.
-- **Citar explícitamente** la decisión de aprobación (ej: "Estado: APROBADO").
-- Si el informe no existe o no está aprobado, el proceso **DEBE** detenerse inmediatamente (FAIL).
-- Verificar que la fase en `task.md` sea la correcta.
+### 1. Pre-Flight Validation Protocol (MANDATORY)
+- The agent **MUST** physically read the approved implementation report: `.agent/artifacts/<taskId>-<taskTitle>/architect/implementation.md`.
+- **Explicitly cite** the approval decision (e.g.: "Status: APPROVED").
+- If the report does not exist or is not approved, the process **MUST** stop immediately (FAIL).
+- Verify that the phase in `task.md` is correct.
 
-### 2. Ejecutar verificación
-### 2. Ejecutar verificación
-- **SIEMPRE** validar unit tests y test E2E si aplica.
-- Ejecutar tests según `constitution.clean_code`.
-- Documentar resultados.
+### 2. Execute verification
+- **ALWAYS** validate unit tests and E2E tests if applicable.
+- Run tests according to `constitution.clean_code`.
+- Document results.
 
-Si no requiere tests (excepción justificada):
-- Documentar justificación robusta.
+If tests are not required (justified exception):
+- Document robust justification.
 
-### 3. Crear artefacto closure.md
-- Usar template `templates.closure`.
-- Incluir:
-  - Resumen de verificación.
-  - Estado de cada acceptance criteria (✅/❌).
-  - Evidencia de tests (si aplica).
+### 3. Create closure.md artifact
+- Use template `templates.closure`.
+- Include:
+  - Verification summary.
+  - Status of each acceptance criterion (✅/❌).
+  - Test evidence (if applicable).
 
-### 4. Presentar resultados al desarrollador
-- Mostrar closure.md.
-- Resolver dudas.
-- Solicitar aceptación final por consola (SI/NO) y registrarla en `closure.md`.
+### 4. Present results to the developer
+- Show closure.md.
+- Resolve questions.
+- Request final acceptance via console (SI/NO) and record it in `closure.md`.
 
-### 6. Evaluar agentes (OBLIGATORIO)
-- Solicitar puntuación (1-10) del desarrollador para cada agente que haya intervenido.
-- **GATE OBLIGATORIO**: Sin puntuación, la tarea NO puede cerrarse.
-- Registrar las puntuaciones en `closure.md`.
+### 6. Evaluate agents (MANDATORY)
+- Request score (1-10) from the developer for each agent that participated.
+- **MANDATORY GATE**: Without scores, the task CANNOT be closed.
+- Record the scores in `closure.md`.
 
-### 7. Consolidar commits
-Si hay cambios de código:
-- Preparar commits siguiendo Conventional Commits.
-- Solicitar aprobación del desarrollador para push.
+### 7. Consolidate commits
+If there are code changes:
+- Prepare commits following Conventional Commits.
+- Request developer approval for push.
 
 ### 8. PASS
-- Informar que la Fase 3 (Closure) está completada correctamente.
-- El `architect-agent` **DEBE realizar explícitamente** las siguientes acciones:
-  - Marcar la tarea como **COMPLETADA** en el `task.md`.
-  - Establecer `task.lifecycle.phases.short-phase-3-closure.completed = true`.
-  - Establecer `task.lifecycle.phases.short-phase-3-closure.validated_at = <ISO-8601>`.
-  - Actualizar `task.phase.updated_at = <ISO-8601>`.
-  - Marcar la tarea como **técnicamente cerrada**.
-- Esta actualización **NO es automática** y **NO puede ser inferida**.
-- Generar changelog (si aplica).
-- Indicar rutas:
+- Report that Phase 3 (Closure) is correctly completed.
+- The `architect-agent` **MUST explicitly perform** the following actions:
+  - Mark the task as **COMPLETED** in `task.md`.
+  - Set `task.lifecycle.phases.short-phase-3-closure.completed = true`.
+  - Set `task.lifecycle.phases.short-phase-3-closure.validated_at = <ISO-8601>`.
+  - Update `task.phase.updated_at = <ISO-8601>`.
+  - Mark the task as **technically closed**.
+- This update is **NOT automatic** and **CANNOT be inferred**.
+- Generate changelog (if applicable).
+- Indicate paths:
   - `closure.md`
-  - `task.md` actualizado
+  - `task.md` updated
 
 ---
 
 ## Gate (REQUIRED)
-Requisitos (todos obligatorios):
-1. Existe closure.md con template correcto.
-2. El `closure.md` inicia con el prefijo del `architect-agent`.
-3. Todos los acceptance criteria están marcados.
-4. Existe aceptación final del desarrollador.
-5. Se han registrado las puntuaciones de los agentes en `closure.md`.
-6. Commits realizados (si aplica).
-7. task.md refleja tarea completada.
-8. task.md refleja timestamp y estado:
+Requirements (all mandatory):
+1. closure.md exists with correct template.
+2. The `closure.md` starts with the `architect-agent` prefix.
+3. All acceptance criteria are marked.
+4. Final developer acceptance exists.
+5. Agent scores have been recorded in `closure.md`.
+6. Commits performed (if applicable).
+7. task.md reflects the task as completed.
+8. task.md reflects timestamp and state:
    - `task.lifecycle.phases.short-phase-3-closure.completed == true`
-   - `task.lifecycle.phases.short-phase-3-closure.validated_at` no nulo
-   - `task.phase.updated_at` no nulo
+   - `task.lifecycle.phases.short-phase-3-closure.validated_at` not null
+   - `task.phase.updated_at` not null
 
-Si Gate FAIL:
-- Indicar qué requisito falta.
-- Bloquear hasta resolver.
+If Gate FAIL:
+- Indicate which requirement is missing.
+- Block until resolved.

@@ -1,6 +1,6 @@
 ---
 id: workflow.tasklifecycle-short.short-phase-2-implementation
-description: Fase 2 del ciclo Short. Ejecuta la implementación según el brief aprobado.
+description: Phase 2 of the Short lifecycle. Executes implementation according to the approved brief.
 owner: architect-agent
 version: 1.0.0
 severity: PERMANENT
@@ -12,103 +12,103 @@ blocking: true
 # WORKFLOW: tasklifecycle-short.short-phase-2-implementation
 
 ## Input (REQUIRED)
-- Existe brief aprobado: `.agent/artifacts/<taskId>-<taskTitle>/brief.md`
-- task.md refleja `task.phase.current == "short-phase-2-implementation"`
+- Approved brief exists: `.agent/artifacts/<taskId>-<taskTitle>/brief.md`
+- task.md reflects `task.phase.current == "short-phase-2-implementation"`
 
 > [!IMPORTANT]
-> **Constitución activa (OBLIGATORIO)**:
-> - Cargar `constitution.clean_code` antes de iniciar
-> - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
-> - Cargar constituciones específicas del dominio según la tarea
+> **Active constitution (MANDATORY)**:
+> - Load `constitution.clean_code` before starting
+> - Load `constitution.agents_behavior` (section 7: Gates, section 8: Constitution)
+> - Load domain-specific constitutions as required by the task
 
 ## Output (REQUIRED)
-- Código implementado según el plan del brief.
-- Informe de implementación: `.agent/artifacts/<taskId>-<taskTitle>/architect/implementation.md`
-- Task actualizado.
+- Code implemented according to the brief plan.
+- Implementation report: `.agent/artifacts/<taskId>-<taskTitle>/architect/implementation.md`
+- Task updated.
 
-## Objetivo (ONLY)
-- Ejecutar todas las subtareas de implementación definidas en el brief.
-- Permitir al architect-agent verificar coherencia con el plan.
-- Generar informe de revisión arquitectónica.
+## Objective (ONLY)
+- Execute all implementation subtasks defined in the brief.
+- Allow the architect-agent to verify coherence with the plan.
+- Generate an architectural review report.
 
-> Esta fase **SÍ implementa código**.  
-> Esta fase **NO redefine alcance**.
+> This phase **DOES implement code**.  
+> This phase **DOES NOT redefine scope**.
 
 ---
 
-## Pasos obligatorios
+## Mandatory Steps
 
-0. Activar `architect-agent` y usar prefijo obligatorio en cada mensaje.
+0. Activate `architect-agent` and use the mandatory prefix in every message.
 
-### 1. Protocolo de Validación Pre-Vuelo (OBLIGATORIO)
-- El agente **DEBE** leer físicamente el artefacto de la fase anterior: `.agent/artifacts/<taskId>-<taskTitle>/brief.md`.
-- **Citar explícitamente** la decisión del desarrollador (ej: "Aprobado: SI") y el timestamp si existe.
-- Si el archivo no existe o no tiene una marca de aprobación afirmativa, el proceso **DEBE** detenerse inmediatamente (FAIL).
-- Verificar que la fase en `task.md` sea la correcta.
+### 1. Pre-Flight Validation Protocol (MANDATORY)
+- The agent **MUST** physically read the previous phase artifact: `.agent/artifacts/<taskId>-<taskTitle>/brief.md`.
+- **Explicitly cite** the developer's decision (e.g.: "Approved: SI") and the timestamp if it exists.
+- If the file does not exist or does not have an affirmative approval mark, the process **MUST** stop immediately (FAIL).
+- Verify that the phase in `task.md` is correct.
 
-### 2. Ejecutar implementación
-- Seguir los pasos definidos en `brief.md`.
-- Documentar cambios realizados.
-- Documentar decisiones técnicas.
+### 2. Execute implementation
+- Follow the steps defined in `brief.md`.
+- Document changes made.
+- Document technical decisions.
 
-### 3. Revisión arquitectónica (OBLIGATORIA)
-El architect-agent **DEBE** verificar:
-- Coherencia con el plan del brief.
-- Respeto a reglas de arquitectura y clean code.
-- Cumplimiento de acceptance criteria.
+### 3. Architectural review (MANDATORY)
+The architect-agent **MUST** verify:
+- Coherence with the brief plan.
+- Compliance with architecture and clean code rules.
+- Fulfillment of acceptance criteria.
 
-### 4. Crear informe de implementación
-- Crear `.agent/artifacts/<taskId>-<taskTitle>/architect/implementation.md`
-- Incluir:
-  - Cambios realizados.
-  - Ficheros modificados/creados.
-  - Decisiones técnicas.
-  - Estado: APROBADO | RECHAZADO.
+### 4. Create implementation report
+- Create `.agent/artifacts/<taskId>-<taskTitle>/architect/implementation.md`
+- Include:
+  - Changes made.
+  - Modified/created files.
+  - Technical decisions.
+  - Status: APPROVED | REJECTED.
 
-### 5. Solicitar aprobacion del desarrollador (OBLIGATORIA, por consola)
-- El desarrollador **DEBE** aprobar la implementacion:
-  - **SI** → aprobado
-  - **NO** → rechazado
-- Registrar la decision en `architect/implementation.md`:
+### 5. Request developer approval (MANDATORY, via console)
+- The developer **MUST** approve the implementation:
+  - **SI** → approved
+  - **NO** → rejected
+- Record the decision in `architect/implementation.md`:
   ```yaml
   approval:
     developer:
       decision: SI | NO
       date: <ISO-8601>
-      comments: <opcional>
+      comments: <optional>
   ```
-- Si `decision != SI` → **FAIL**.
+- If `decision != SI` → **FAIL**.
 
-### 6. PASS (solo si APROBADO)
-- Informar que la Fase 2 (Implementation) está completada correctamente.
-- El `architect-agent` **DEBE realizar explícitamente** las siguientes acciones:
-  - Marcar la fase como completada en el `task.md`.
-  - Establecer `task.lifecycle.phases.short-phase-2-implementation.completed = true`.
-  - Establecer `task.lifecycle.phases.short-phase-2-implementation.validated_at = <ISO-8601>`.
-  - Actualizar `task.phase.updated_at = <ISO-8601>`.
-  - Actualizar el estado:
+### 6. PASS (only if APPROVED)
+- Report that Phase 2 (Implementation) is correctly completed.
+- The `architect-agent` **MUST explicitly perform** the following actions:
+  - Mark the phase as completed in `task.md`.
+  - Set `task.lifecycle.phases.short-phase-2-implementation.completed = true`.
+  - Set `task.lifecycle.phases.short-phase-2-implementation.validated_at = <ISO-8601>`.
+  - Update `task.phase.updated_at = <ISO-8601>`.
+  - Update the state:
     - `task.phase.current = short-phase-3-closure`
-- Esta actualización **NO es automática** y **NO puede ser inferida**.
-- Hasta que este cambio no se refleje en el `task.md`, **no se puede iniciar la Fase 3**.
-- Indicar rutas:
+- This update is **NOT automatic** and **CANNOT be inferred**.
+- Until this change is reflected in `task.md`, **Phase 3 cannot be started**.
+- Indicate paths:
   - `architect/implementation.md`
-  - `task.md` actualizado
+  - `task.md` updated
 
 ---
 
 ## Gate (REQUIRED)
-Requisitos (todos obligatorios):
-1. Implementación coherente con brief.
-2. El `architect/implementation.md` inicia con el prefijo del `architect-agent`.
-3. Existe informe de implementación con estado APROBADO.
-4. Existe aprobacion explicita del desarrollador registrada en `architect/implementation.md`:
+Requirements (all mandatory):
+1. Implementation coherent with brief.
+2. The `architect/implementation.md` starts with the `architect-agent` prefix.
+3. Implementation report exists with APPROVED status.
+4. Explicit developer approval recorded in `architect/implementation.md`:
    - `approval.developer.decision == SI`
-5. task.md refleja fase completada.
-6. task.md refleja timestamp y estado:
+5. task.md reflects the phase as completed.
+6. task.md reflects timestamp and state:
    - `task.lifecycle.phases.short-phase-2-implementation.completed == true`
-   - `task.lifecycle.phases.short-phase-2-implementation.validated_at` no nulo
-   - `task.phase.updated_at` no nulo
+   - `task.lifecycle.phases.short-phase-2-implementation.validated_at` not null
+   - `task.phase.updated_at` not null
 
-Si Gate FAIL:
-- Iterar para corregir problemas.
-- No avanzar hasta resolver.
+If Gate FAIL:
+- Iterate to fix issues.
+- Do not advance until resolved.

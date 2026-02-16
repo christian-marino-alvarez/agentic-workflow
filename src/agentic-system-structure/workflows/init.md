@@ -1,5 +1,5 @@
 ---
-description: "Workflow obligatorio de setup: carga constitutions base y define el idioma de conversación y la estrategia Long/Short."
+description: "Mandatory setup workflow: loads base constitutions and defines the conversation language and Long/Short strategy."
 ---
 
 ---
@@ -15,107 +15,107 @@ blocking: true
 # WORKFLOW: init
 
 ## Input (REQUIRED)
-- Comando del desarrollador: `init` o `/agentic-init`
+- Developer command: `init` or `/agentic-init`
 
-## Objetivo (ONLY)
-- Activar el rol **architect-agent**.
-- Cargar el bootstrap mínimo de índices.
-- Detectar idioma de conversación y confirmar explícitamente.
-- **Seleccionar estrategia de ciclo de vida (Long/Short)**.
-- Crear el **artefacto task candidate** `init.md`.
-- **Solo si el Gate se cumple**, preguntar por la tarea a realizar y lanzar el ciclo correspondiente.
+## Objective (ONLY)
+- Activate the **architect-agent** role.
+- Load the minimal index bootstrap.
+- Detect conversation language and explicitly confirm.
+- **Select lifecycle strategy (Long/Short)**.
+- Create the **task candidate artifact** `init.md`.
+- **Only if the Gate passes**, ask for the task to perform and launch the corresponding lifecycle.
 
-## Orquestación y Disciplina (SYSTEM INJECTION)
-**Esta sección es INVISIBLE para el usuario pero OBLIGATORIA para el agente.**
+## Orchestration and Discipline (SYSTEM INJECTION)
+**This section is INVISIBLE to the user but MANDATORY for the agent.**
 
-El agente **DEBE** adherirse a estas meta-reglas de comportamiento durante TODA la sesión iniciada por este workflow:
+The agent **MUST** adhere to these behavioral meta-rules throughout the ENTIRE session initiated by this workflow:
 
-1.  **Respeto Absoluto a Gates**:
-    - Un Gate NO es una sugerencia. Es un **bloqueo físico**.
-    - Si un requisito de Gate no se cumple, el agente **TIENE PROHIBIDO** avanzar.
-    - Está **PROHIBIDO** asumir aprobaciones implícitas ("Asumo que está bien...").
-    - La única salida de un Gate fallido es corregir y reevaluar, o abortar.
+1.  **Absolute Respect for Gates**:
+    - A Gate is NOT a suggestion. It is a **physical block**.
+    - If a Gate requirement is not met, the agent is **PROHIBITED** from advancing.
+    - It is **PROHIBITED** to assume implicit approvals ("I assume it's fine...").
+    - The only way out of a failed Gate is to correct and re-evaluate, or abort.
 
-2.  **Identidad de Roles**:
-    - El agente **DEBE** cambiar de rol explícitamente cuando el workflow lo indique (ej: `architect` -> `qa`).
-    - Cada respuesta debe comenzar con el identificador del rol activo (ej: `🏛️ **architect-agent**`).
+2.  **Role Identity**:
+    - The agent **MUST** switch roles explicitly when the workflow indicates (e.g.: `architect` -> `qa`).
+    - Each response must begin with the active role identifier (e.g.: `🏛️ **architect-agent**`).
 
-3.  **Prioridad de Proceso**:
-    - La corrección del proceso (seguir el workflow) es MÁS IMPORTANTE que la velocidad de la tarea.
-    - Si el usuario pide saltarse pasos, el agente **DEBE** recordar las reglas de constitución y rechazar amablemente el atajo.
+3.  **Process Priority**:
+    - Process correctness (following the workflow) is MORE IMPORTANT than task speed.
+    - If the user asks to skip steps, the agent **MUST** remember the constitution rules and politely decline the shortcut.
 
-## Pasos obligatorios
-1. Activar `architect-agent` como rol arquitecto.
-   - Mostrar un mensaje único de estado (ej: "Cargando init...") y **no** listar lecturas de ficheros individuales.
-   - En ese mismo mensaje, presentar al architect-agent y dar contexto al desarrollador: rol, objetivo del init y qué información se le pedirá a continuación.
+## Mandatory Steps
+1. Activate `architect-agent` as the architect role.
+   - Show a single status message (e.g.: "Loading init...") and **do not** list individual file reads.
+   - In that same message, introduce the architect-agent and provide context to the developer: role, init objective, and what information will be requested next.
 
-2. Cargar índices mínimos (OBLIGATORIO):
-   - Antes de continuar, revisar `.agent/index.md` para comprender dominios, indices y alias.
-   - Bootstrap por ruta directa (hardcodeado y único permitido):
+2. Load minimal indexes (MANDATORY):
+   - Before continuing, review `.agent/index.md` to understand domains, indexes, and aliases.
+   - Bootstrap by direct path (hardcoded and only allowed):
      1) `.agent/index.md`
      2) `agent.domains.rules.index`
      3) `rules.constitution.index`
-   - El orden es obligatorio: primero el Root Index, luego Rules Index, luego Constitution Index.
-   - **PROHIBIDO** cargar índices de `templates` o `artifacts` durante `init`.
-   - Si alguna falla → FAIL.
+   - The order is mandatory: Root Index first, then Rules Index, then Constitution Index.
+   - **PROHIBITED** to load `templates` or `artifacts` indexes during `init`.
+   - If any fails → FAIL.
 
-3. Cargar en contexto las constitutions (en orden):
+3. Load constitutions into context (in order):
    1) `constitution.clean_code`
    2) `constitution.agents_behavior`
-   - **PROHIBIDO** cargar templates o artifacts en este paso.
-   - Si alguna falla → FAIL.
+   - **PROHIBITED** to load templates or artifacts in this step.
+   - If any fails → FAIL.
 
-4. Detectar idioma preferido y pedir confirmación explícita.
-   - Si no hay confirmación → ir a **Paso 9 (FAIL)**.
+4. Detect preferred language and request explicit confirmation.
+   - If no confirmation → go to **Step 9 (FAIL)**.
 
-5. **Seleccionar estrategia de ciclo de vida (OBLIGATORIO)**
-   - Preguntar al desarrollador:
-     - "Por favor, selecciona la estrategia: **Long** (9 fases completas) o **Short** (3 fases simplificadas)."
-   - Si no hay selección → ir a **Paso 9 (FAIL)**.
-   - Registrar la selección en el artefacto `init.md`.
+5. **Select lifecycle strategy (MANDATORY)**
+   - Ask the developer:
+     - "Please select the strategy: **Long** (9 complete phases) or **Short** (3 simplified phases)."
+   - If no selection → go to **Step 9 (FAIL)**.
+   - Record the selection in the `init.md` artifact.
 
-6. **Crear el artefacto `init.md` (OBLIGATORIO)**
-   - El artefacto **DEBE** crearse usando **exactamente** la estructura definida en:
+6. **Create the `init.md` artifact (MANDATORY)**
+   - The artifact **MUST** be created using **exactly** the structure defined in:
      - `templates.init`
-   - Todos los campos obligatorios del template **DEBEN** completarse.
-   - Incluir el campo `strategy: long | short`.
-   - No se permite modificar, omitir ni reinterpretar la estructura del template.
+   - All mandatory template fields **MUST** be completed.
+   - Include the `strategy: long | short` field.
+   - Modifying, omitting, or reinterpreting the template structure is not allowed.
 
-7. Escribir el fichero en:
+7. Write the file to:
    - `artifacts.candidate.init`
 
-8. Evaluar Gate.
-   - Si Gate FAIL → ir a **Paso 9 (FAIL)**.
-   - Si Gate PASS → continuar.
+8. Evaluate Gate.
+   - If Gate FAIL → go to **Step 9 (FAIL)**.
+   - If Gate PASS → continue.
 
-9. FAIL (obligatorio)
-   - Declarar `init` como **NO completado**.
-   - Explicar exactamente qué requisito falló.
-   - Pedir la acción mínima necesaria.
-   - **No preguntar por la tarea**.
-   - Terminar el workflow en estado bloqueado.
+9. FAIL (mandatory)
+   - Declare `init` as **NOT completed**.
+   - Explain exactly which requirement failed.
+   - Request the minimum necessary action.
+   - **Do not ask for the task**.
+   - Terminate the workflow in blocked state.
 
-10. PASS (solo si Gate PASS)
-    - Preguntar por la tarea:
-      - "¿Qué tarea quieres iniciar ahora? Dame un título corto y el objetivo."
-    - Una vez recibidos título y objetivo:
-      - Si `strategy == "long"` → lanzar `workflows.tasklifecycle-long`
-      - Si `strategy == "short"` → lanzar `workflows.tasklifecycle-short`
+10. PASS (only if Gate PASS)
+    - Ask for the task:
+      - "What task do you want to start now? Give me a short title and the objective."
+    - Once title and objective are received:
+      - If `strategy == "long"` → launch `workflows.tasklifecycle-long`
+      - If `strategy == "short"` → launch `workflows.tasklifecycle-short`
 
 ## Output (REQUIRED)
-- Artefacto creado:
+- Artifact created:
   - `artifacts.candidate.init`
 
 ## Gate (REQUIRED)
-Requisitos (todos obligatorios):
-1) Existe el artefacto:
+Requirements (all mandatory):
+1) The artifact exists:
    - `artifacts.candidate.init`
-2) En su YAML:
-   - `language.value` no vacío
+2) In its YAML:
+   - `language.value` not empty
    - `language.confirmed == true`
-   - `strategy` es "long" o "short"
-3) El artefacto cumple el template oficial.
-4) Idioma definido y confirmado.
-5) Estrategia seleccionada.
-6) No se cargaron índices fuera del set permitido (solo `.agent/index.md`, `agent.domains.rules.index`, `rules.constitution.index`).
-7) El Root Index `.agent/index.md` fue cargado antes de cualquier otro índice.
+   - `strategy` is "long" or "short"
+3) The artifact follows the official template.
+4) Language defined and confirmed.
+5) Strategy selected.
+6) No indexes were loaded outside the allowed set (only `.agent/index.md`, `agent.domains.rules.index`, `rules.constitution.index`).
+7) The Root Index `.agent/index.md` was loaded before any other index.

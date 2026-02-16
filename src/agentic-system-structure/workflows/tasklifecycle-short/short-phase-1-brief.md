@@ -82,11 +82,20 @@ approval:
 - Si `decision != SI` → **FAIL**.
 
 ### 6. PASS
-- Actualizar task.md:
-  - Marcar fase como completada.
+- Informar que la Fase 1 (Brief) está completada correctamente.
+- El `architect-agent` **DEBE realizar explícitamente** las siguientes acciones:
+  - Marcar la fase como completada en el `task.md`.
+  - Establecer `task.lifecycle.phases.short-phase-1-brief.completed = true`.
   - Establecer `task.lifecycle.phases.short-phase-1-brief.validated_at = <ISO-8601>`.
   - Actualizar `task.phase.updated_at = <ISO-8601>`.
-  - Avanzar a `short-phase-2-implementation`.
+  - Actualizar el estado:
+    - `task.phase.current = short-phase-2-implementation`
+- Esta actualización **NO es automática** y **NO puede ser inferida**.
+- Hasta que este cambio no se refleje en el `task.md`, **no se puede iniciar la Fase 2**.
+- Indicar rutas:
+  - `brief.md`
+  - `acceptance.md`
+  - `task.md` actualizado
 
 ---
 

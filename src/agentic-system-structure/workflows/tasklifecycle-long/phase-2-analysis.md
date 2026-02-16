@@ -105,11 +105,16 @@ Crear un informe de **analisis** profundo que:
    - Si `decision != SI` → ir a **Paso 10 (FAIL)**.
 
 9. PASS
-   - Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md`:
-     - marcar Fase 2 como completada
-     - establecer `task.lifecycle.phases.phase-2-analysis.validated_at = <ISO-8601>`
-     - actualizar `task.phase.updated_at = <ISO-8601>`
-     - avanzar `task.phase.current = aliases.tasklifecycle-long.phases.phase_3.id`
+   - Informar que la Fase 2 está completada correctamente.
+   - El `architect-agent` **DEBE realizar explícitamente** las siguientes acciones:
+     - Marcar la Fase 2 como completada en el `task.md`.
+     - Establecer `task.lifecycle.phases.phase-2-analysis.completed = true`.
+     - Establecer `task.lifecycle.phases.phase-2-analysis.validated_at = <ISO-8601>`.
+     - Actualizar `task.phase.updated_at = <ISO-8601>`.
+     - Actualizar el estado:
+       - `task.phase.current = aliases.tasklifecycle-long.phases.phase_3.id`
+   - Esta actualización **NO es automática** y **NO puede ser inferida**.
+   - Hasta que este cambio no se refleje en el `task.md`, **no se puede iniciar la Fase 3**.
    - Indicar rutas:
      - `analysis.md`
      - `task.md` actualizado

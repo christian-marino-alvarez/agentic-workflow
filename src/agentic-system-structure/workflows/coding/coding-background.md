@@ -102,13 +102,23 @@ approval:
 ```
 
 ### 8. Evaluate Gate
-- If `decision == SI`:
-  - Mark task as `completed`.
-  - Return control to architect for next workflow.
+- If `decision == SI` → go to **Step 9 (PASS)**.
 - If `decision == NO`:
   - Mark task as `failed`.
   - Define corrective actions.
   - **Do NOT advance** until resolved.
+  - Go to **Step 10 (FAIL)**.
+
+### 9. PASS (only if Gate approved)
+- Mark agent task as `completed`.
+- Update agent task file:
+  ```yaml
+  execution:
+    status: completed
+    completed_at: <ISO-8601>
+  ```
+- Update the coding layer report with final status.
+- Return control to `architect-agent` for next workflow in the sequence.
 
 ---
 

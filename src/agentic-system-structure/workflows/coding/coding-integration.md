@@ -124,13 +124,23 @@ approval:
 ```
 
 ### 9. Evaluate Gate
-- If `decision == SI`:
-  - Mark integration task as `completed`.
-  - Return control to architect for Phase 4 closure.
+- If `decision == SI` → go to **Step 10 (PASS)**.
 - If `decision == NO`:
   - Identify failing layer(s).
   - Create corrective sub-task for specific layer workflow.
   - Re-run integration after correction.
+  - Go to **Step 11 (FAIL)**.
+
+### 10. PASS (only if Gate approved)
+- Mark integration task as `completed`.
+- Update agent task file:
+  ```yaml
+  execution:
+    status: completed
+    completed_at: <ISO-8601>
+  ```
+- Update the integration report with final assessment: `PASS`.
+- Return control to `architect-agent` for **Phase 4 closure** (Gate final de Phase 4).
 
 ---
 

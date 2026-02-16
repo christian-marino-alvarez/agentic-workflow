@@ -1,6 +1,6 @@
 ---
 id: workflow.tasklifecycle-long.phase-4-implementation
-description: Fase 4 del ciclo de tarea. Ejecuta la implementación mediante delegación granular de tareas a agentes con Gate de aprobación del desarrollador por cada tarea. Solo avanza si todas las tareas han sido aprobadas.
+description: Phase 4 of the task lifecycle. Executes implementation through granular task delegation to agents with developer approval Gate per task. Only advances if all tasks have been approved.
 owner: architect-agent
 version: 3.0.0
 severity: PERMANENT
@@ -12,183 +12,183 @@ blocking: true
 # WORKFLOW: tasklifecycle.phase-4-implementation
 
 ## Input (REQUIRED)
-- Existe el plan de implementación aprobado:
+- The approved implementation plan exists:
   - `.agent/artifacts/<taskId>-<taskTitle>/plan.md`
-- Existe la current task:
+- The current task exists:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
-- El `task.md` **DEBE** reflejar:
+- The `task.md` **MUST** reflect:
   - `task.phase.current == aliases.tasklifecycle-long.phases.phase_4.id`
 
 > [!IMPORTANT]
-> **Constitución activa (OBLIGATORIO)**:
-> - Cargar `constitution.clean_code` antes de iniciar
-> - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
-> - Cargar constituciones específicas del dominio según la tarea
+> **Active constitution (MANDATORY)**:
+> - Load `constitution.clean_code` before starting
+> - Load `constitution.agents_behavior` (section 7: Gates, section 8: Constitution)
+> - Load domain-specific constitutions as required by the task
 
 ## Output (REQUIRED)
-- Por **cada tarea de agente**:
+- For **each agent task**:
   - `.agent/artifacts/<taskId>-<taskTitle>/agent-tasks/<N>-<agent>-<taskName>.md`
-- Informe de revisión del arquitecto:
+- Architect review report:
   - `.agent/artifacts/<taskId>-<taskTitle>/architect/review.md`
-- Actualización del estado en:
+- State update in:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 
 ---
 
-## Objetivo (ONLY)
-- Ejecutar **todas las tareas de implementación** definidas en el plan aprobado mediante **delegación granular**.
-- Cada tarea es un **fichero independiente** con estructura Input/Output/Gate.
-- Cada tarea requiere **aprobación explícita del desarrollador** (Gate síncrono) antes de asignar la siguiente.
-- Generar un **informe de revisión arquitectónica obligatorio** consolidando todas las tareas.
+## Objective (ONLY)
+- Execute **all implementation tasks** defined in the approved plan through **granular delegation**.
+- Each task is an **independent file** with Input/Output/Gate structure.
+- Each task requires **explicit developer approval** (synchronous Gate) before assigning the next one.
+- Generate a **mandatory architectural review report** consolidating all tasks.
 
-> Esta fase **SÍ implementa código**.  
-> Esta fase **NO redefine alcance ni planificación**.  
-> Esta fase **NO puede avanzar sin Gate PASS en todas las tareas + confirmación global**.
+> This phase **DOES implement code**.  
+> This phase **DOES NOT redefine scope or planning**.  
+> This phase **CANNOT advance without Gate PASS on all tasks + global confirmation**.
 
 ---
 
-## Templates (OBLIGATORIOS)
-- Cada tarea de agente **DEBE** usar:
+## Templates (MANDATORY)
+- Each agent task **MUST** use:
   - `templates.agent_task`
-- El informe de revisión **DEBE** usar:
+- The review report **MUST** use:
   - `templates.review`
-- Si algún template no existe o no se puede cargar → **FAIL**.
+- If any template does not exist or cannot be loaded → **FAIL**.
 
 ---
 
-## Pasos obligatorios
-0. Activar `architect-agent` y usar prefijo obligatorio en cada mensaje.
+## Mandatory Steps
+0. Activate `architect-agent` and use the mandatory prefix in every message.
 
-### 1. Verificar inputs
-- Existe `plan.md` aprobado.
-- Existe `task.md`.
+### 1. Verify inputs
+- Approved `plan.md` exists.
+- `task.md` exists.
 - `task.phase.current == aliases.tasklifecycle-long.phases.phase_4.id`.
-- Si falla → ir a **Paso 10 (FAIL)**.
+- If it fails → go to **Step 10 (FAIL)**.
 
-### 2. Extraer tareas del plan
-- Leer `plan.md`.
-- Identificar todas las tareas de implementación y sus agentes responsables.
-- Crear (si no existe) el directorio:
+### 2. Extract tasks from the plan
+- Read `plan.md`.
+- Identify all implementation tasks and their responsible agents.
+- Create (if it does not exist) the directory:
   - `.agent/artifacts/<taskId>-<taskTitle>/agent-tasks/`
 
-### 3. Bucle de delegación (SÍNCRONO)
+### 3. Delegation loop (SYNCHRONOUS)
 
-Para cada tarea `N` en el plan:
+For each task `N` in the plan:
 
-#### 3.1 Crear fichero de tarea
-- Crear fichero usando `templates.agent_task`:
+#### 3.1 Create task file
+- Create file using `templates.agent_task`:
   - `.agent/artifacts/<taskId>-<taskTitle>/agent-tasks/<N>-<agent>-<taskName>.md`
-- Completar:
-  - **Input**: Objetivo, Alcance, Dependencias (definidos por el arquitecto)
-  - **Output**: Entregables, Evidencia requerida (definidos por el arquitecto)
+- Complete:
+  - **Input**: Objective, Scope, Dependencies (defined by the architect)
+  - **Output**: Deliverables, Required evidence (defined by the architect)
 
-#### 3.2 Asignar al agente
-- El `architect-agent` **DEBE** activar al agente correspondiente:
-  - `qa-agent`, `researcher-agent` u otros roles definidos.
-- El agente ejecuta la tarea y completa la sección "Implementation Report" del fichero.
+#### 3.2 Assign to agent
+- The `architect-agent` **MUST** activate the corresponding agent:
+  - `qa-agent`, `researcher-agent`, or other defined roles.
+- The agent executes the task and completes the "Implementation Report" section of the file.
 
-#### 3.3 Presentar al desarrollador
-- El `architect-agent` **DEBE** presentar la tarea completada al desarrollador.
-- Solicitar Gate por consola: **SI / NO**.
+#### 3.3 Present to developer
+- The `architect-agent` **MUST** present the completed task to the developer.
+- Request Gate via console: **SI / NO**.
 
-#### 3.4 Registrar Gate
-- Actualizar el fichero de la tarea con la decisión:
+#### 3.4 Record Gate
+- Update the task file with the decision:
   ```yaml
   approval:
     developer:
       decision: SI | NO
       date: <ISO-8601>
-      comments: <opcional>
+      comments: <optional>
   ```
 
-#### 3.5 Evaluar Gate
-- Si `decision == SI`:
-  - Marcar tarea como `completed`.
-  - Continuar con la siguiente tarea (N+1).
-- Si `decision == NO`:
-  - Marcar tarea como `failed`.
-  - Definir acciones correctivas.
-  - Crear nueva tarea de corrección si procede.
-  - **NO avanzar** hasta resolver.
+#### 3.5 Evaluate Gate
+- If `decision == SI`:
+  - Mark task as `completed`.
+  - Continue with the next task (N+1).
+- If `decision == NO`:
+  - Mark task as `failed`.
+  - Define corrective actions.
+  - Create a new correction task if applicable.
+  - **DO NOT advance** until resolved.
 
-### 4. Consolidación de implementación
-- El `architect-agent` revisa:
-  - Todas las tareas completadas y aprobadas.
-  - Coherencia entre tareas.
-  - Alineación con el plan aprobado.
-  - Respeto a reglas de arquitectura y clean code.
+### 4. Implementation consolidation
+- The `architect-agent` reviews:
+  - All completed and approved tasks.
+  - Coherence between tasks.
+  - Alignment with the approved plan.
+  - Compliance with architecture and clean code rules.
 
-### 5. Crear informe de revisión arquitectónica (OBLIGATORIO)
-- Crear:
+### 5. Create architectural review report (MANDATORY)
+- Create:
   - `.agent/artifacts/<taskId>-<taskTitle>/architect/review.md`
-- El informe **DEBE**:
-  - Usar el template `templates.review`.
-  - Listar todas las tareas y su estado de Gate.
-  - Indicar cumplimiento o desviación del plan.
-  - Listar problemas detectados (si existen).
+- The report **MUST**:
+  - Use the `templates.review` template.
+  - List all tasks and their Gate status.
+  - Indicate compliance or deviation from the plan.
+  - List detected issues (if any).
 
-### 6. Gate final del desarrollador (OBLIGATORIO, por consola)
-- Solicitar confirmación global:
-  - "Todas las tareas han sido ejecutadas y aprobadas. ¿Confirmas que la Fase 4 está completa? (SI/NO)"
-- Registrar en `architect/review.md`:
+### 6. Developer final Gate (MANDATORY, via console)
+- Request global confirmation:
+  - "All tasks have been executed and approved. Do you confirm that Phase 4 is complete? (SI/NO)"
+- Record in `architect/review.md`:
   ```yaml
   final_approval:
     developer:
       decision: SI | NO
       date: <ISO-8601>
-      comments: <opcional>
+      comments: <optional>
   ```
-- Si `decision != SI` → ir a **Paso 10 (FAIL)**.
+- If `decision != SI` → go to **Step 10 (FAIL)**.
 
-### 7. PASS (solo si Gate final aprobado)
-- El `architect-agent` **DEBE**:
-  - Marcar Fase 4 como completada en `task.md`.
-  - Establecer `task.lifecycle.phases.phase-4-implementation.validated_at = <ISO-8601>`.
-  - Actualizar `task.phase.updated_at = <ISO-8601>`.
-  - Avanzar:
+### 7. PASS (only if final Gate approved)
+- The `architect-agent` **MUST**:
+  - Mark Phase 4 as completed in `task.md`.
+  - Set `task.lifecycle.phases.phase-4-implementation.validated_at = <ISO-8601>`.
+  - Update `task.phase.updated_at = <ISO-8601>`.
+  - Advance:
     - `task.phase.current = aliases.tasklifecycle-long.phases.phase_5.id`
-- Indicar rutas:
-  - Directorio `agent-tasks/`
+- Indicate paths:
+  - `agent-tasks/` directory
   - `architect/review.md`
 
 ---
 
-## FAIL (OBLIGATORIO)
+## FAIL (MANDATORY)
 
-### 10. Declarar Fase 4 como **NO completada**
-Casos de FAIL:
-- Plan inexistente o no aprobado.
-- Fase incorrecta.
-- Tarea de agente incompleta o rechazada.
-- Gate de tarea individual = NO sin resolución.
-- Gate final = NO.
+### 10. Declare Phase 4 as **NOT completed**
+FAIL cases:
+- Non-existent or unapproved plan.
+- Incorrect phase.
+- Incomplete or rejected agent task.
+- Individual task Gate = NO without resolution.
+- Final Gate = NO.
 
-Acciones obligatorias:
-- Identificar la tarea fallida.
-- Definir acciones correctivas.
-- Crear nueva tarea de corrección si procede.
-- Iterar hasta Gate PASS.
+Mandatory actions:
+- Identify the failed task.
+- Define corrective actions.
+- Create a new correction task if applicable.
+- Iterate until Gate PASS.
 
-Terminar bloqueado: no avanzar de fase.
+Terminate blocked: do not advance phase.
 
 ---
 
 ## Gate (REQUIRED)
 
-Requisitos (todos obligatorios):
-1. Existe una tarea de agente por cada paso del plan.
-2. Todas las tareas tienen Gate PASS (`approval.developer.decision == SI`).
-3. Existe `architect/review.md`.
-4. El `architect/review.md` inicia con el prefijo del `architect-agent`.
-5. Cada `agent-tasks/*.md` inicia con el prefijo del agente correspondiente.
-6. El informe de revisión tiene Gate final PASS.
-7. La implementación es coherente con el `plan.md`.
-8. `task.md` refleja:
-   - Fase 4 completada
+Requirements (all mandatory):
+1. An agent task exists for each step in the plan.
+2. All tasks have Gate PASS (`approval.developer.decision == SI`).
+3. `architect/review.md` exists.
+4. The `architect/review.md` starts with the `architect-agent` prefix.
+5. Each `agent-tasks/*.md` starts with the corresponding agent's prefix.
+6. The review report has final Gate PASS.
+7. The implementation is coherent with `plan.md`.
+8. `task.md` reflects:
+   - Phase 4 completed
    - `task.phase.current == aliases.tasklifecycle-long.phases.phase_5.id`
    - `task.lifecycle.phases.phase-4-implementation.completed == true`
-   - `task.lifecycle.phases.phase-4-implementation.validated_at` no nulo
-   - `task.phase.updated_at` no nulo
+   - `task.lifecycle.phases.phase-4-implementation.validated_at` not null
+   - `task.phase.updated_at` not null
 
-Si Gate FAIL:
-- Ejecutar **Paso 10 (FAIL)**.
+If Gate FAIL:
+- Execute **Step 10 (FAIL)**.

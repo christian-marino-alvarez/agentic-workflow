@@ -1,6 +1,6 @@
 ---
 id: workflow.tasklifecycle-long.phase-2-analysis
-description: Fase 2 del ciclo de tarea. Analisis profundo basado en la investigacion previa, cubre acceptance criteria y define agentes, responsabilidades e impacto. Requiere aprobacion del desarrollador.
+description: Phase 2 of the task lifecycle. Deep analysis based on prior research, covers acceptance criteria and defines agents, responsibilities, and impact. Requires developer approval.
 owner: architect-agent
 version: 1.0.0
 severity: PERMANENT
@@ -12,138 +12,138 @@ blocking: true
 # WORKFLOW: tasklifecycle.phase-2-analysis
 
 ## Input (REQUIRED)
-- Existe la current task creada en Fase 0:
+- The current task created in Phase 0 exists:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
-- Existe el informe de investigacion aprobado:
+- The approved research report exists:
   - `.agent/artifacts/<taskId>-<taskTitle>/researcher/research.md`
-- El `task.md` **DEBE** incluir:
-  - descripcion
-  - objetivo
-  - acceptance criteria definidos
+- The `task.md` **MUST** include:
+  - description
+  - objective
+  - defined acceptance criteria
   - `task.phase.current == aliases.tasklifecycle-long.phases.phase_2.id`
 
 > [!IMPORTANT]
-> **Constitución activa (OBLIGATORIO)**:
-> - Cargar `constitution.clean_code` antes de iniciar
-> - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
+> **Active constitution (MANDATORY)**:
+> - Load `constitution.clean_code` before starting
+> - Load `constitution.agents_behavior` (section 7: Gates, section 8: Constitution)
 
 ## Output (REQUIRED)
-- Crear el artefacto de analisis **a partir del template**:
+- Create the analysis artifact **from the template**:
   - `.agent/artifacts/<taskId>-<taskTitle>/analysis.md`
-- Actualizar el estado en la current task:
+- Update the state in the current task:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 
-## Objetivo (ONLY)
-Crear un informe de **analisis** profundo que:
-- cubra **todos** los acceptance criteria del `task.md`
-- respete la arquitectura y reglas del proyecto
-- analice el estado real del proyecto (estructura, componentes y areas activas)
-- integre la investigacion aprobada de Fase 1
-- defina agentes, subareas e impacto de la tarea
-- identifique si la tarea requiere crear, modificar o eliminar componentes del sistema
-- identificar si la tarea requiere crear una demo y su impacto estructural
-- sirva como **input contractual** para la Fase 3 (Planning)
+## Objective (ONLY)
+Create a deep **analysis** report that:
+- covers **all** acceptance criteria from `task.md`
+- respects the project's architecture and rules
+- analyzes the actual project state (structure, components, and active areas)
+- integrates the approved research from Phase 1
+- defines agents, sub-areas, and task impact
+- identifies whether the task requires creating, modifying, or deleting system components
+- identifies whether the task requires creating a demo and its structural impact
+- serves as **contractual input** for Phase 3 (Planning)
 
-> Esta fase **NO implementa codigo**.  
-> Esta fase **NO planifica ejecucion detallada**.  
-> Esta fase **REQUIERE aprobacion explicita del desarrollador**.
+> This phase **DOES NOT implement code**.  
+> This phase **DOES NOT plan detailed execution**.  
+> This phase **REQUIRES explicit developer approval**.
 
-## Template (OBLIGATORIO)
-- El informe **DEBE** crearse usando el template:
+## Template (MANDATORY)
+- The report **MUST** be created using the template:
   - `templates.analysis`
-- El template **NO DEBE** modificarse.
-- Si el template no existe o no se puede cargar → **FAIL**.
+- The template **MUST NOT** be modified.
+- If the template does not exist or cannot be loaded → **FAIL**.
 
-## Pasos obligatorios
-0. Activar `architect-agent` y usar prefijo obligatorio en cada mensaje.
-1. Verificar inputs
-   - Existe `.agent/artifacts/<taskId>-<taskTitle>/task.md`
-   - Existe `.agent/artifacts/<taskId>-<taskTitle>/researcher/research.md`
+## Mandatory Steps
+0. Activate `architect-agent` and use the mandatory prefix in every message.
+1. Verify inputs
+   - `.agent/artifacts/<taskId>-<taskTitle>/task.md` exists
+   - `.agent/artifacts/<taskId>-<taskTitle>/researcher/research.md` exists
    - `task.phase.current == aliases.tasklifecycle-long.phases.phase_2.id`
-   - El `task.md` contiene acceptance criteria definidos
-   - El research esta aprobado por el desarrollador (SI)
-   - Si falla → ir a **Paso 10 (FAIL)**.
+   - `task.md` contains defined acceptance criteria
+   - Research is approved by the developer (SI)
+   - If it fails → go to **Step 10 (FAIL)**.
 
-2. Cargar template de analysis
-   - Cargar `templates.analysis`
-   - Si no existe o no se puede leer → ir a **Paso 10 (FAIL)**.
+2. Load analysis template
+   - Load `templates.analysis`
+   - If it does not exist or cannot be read → go to **Step 10 (FAIL)**.
 
-3. Crear instancia de analysis
-   - Copiar el template a:
+3. Create analysis instance
+   - Copy the template to:
      - `.agent/artifacts/<taskId>-<taskTitle>/analysis.md`
-   - Rellenar secciones segun la tarea concreta.
+   - Fill sections according to the specific task.
 
-4. Analizar estado del proyecto e historial de agentes
-   - Revisar estructura, componentes y tareas previas.
-   - Documentar hallazgos en `analysis.md`.
+4. Analyze project state and agent history
+   - Review structure, components, and previous tasks.
+   - Document findings in `analysis.md`.
 
-5. Integrar investigacion aprobada
-   - Basar alternativas, riesgos y compatibilidad en `research.md`.
-   - Complementar con analisis arquitectonico propio.
+5. Integrate approved research
+   - Base alternatives, risks, and compatibility on `research.md`.
+   - Complement with own architectural analysis.
 
-6. Cobertura de acceptance criteria
-   - Mapear **cada acceptance criteria** a su analisis, verificacion y riesgos.
+6. Acceptance criteria coverage
+   - Map **each acceptance criterion** to its analysis, verification, and risks.
 
-7. Definir agentes y subareas
-   - Enumerar agentes necesarios.
-   - Definir responsabilidades y handoffs.
-   - Identificar si se requiere crear, modificar o eliminar componentes.
-   - Identificar si se requiere crear demo y su impacto estructural.
+7. Define agents and sub-areas
+   - List required agents.
+   - Define responsibilities and handoffs.
+   - Identify if creating, modifying, or deleting components is required.
+   - Identify if creating a demo is required and its structural impact.
 
-8. Solicitar aprobacion del desarrollador (OBLIGATORIO, por consola)
-   - El desarrollador **DEBE** emitir una decision binaria:
-     - **SI** (aprobado)
-     - **NO** (rechazado)
-   - La decision **DEBE** registrarse en `analysis.md` con el formato:
+8. Request developer approval (MANDATORY, via console)
+   - The developer **MUST** issue a binary decision:
+     - **SI** (approved)
+     - **NO** (rejected)
+   - The decision **MUST** be recorded in `analysis.md` with the format:
      ```yaml
      approval:
        developer:
          decision: SI | NO
          date: <ISO-8601>
-         comments: <opcional>
+         comments: <optional>
      ```
-   - Si `decision != SI` → ir a **Paso 10 (FAIL)**.
+   - If `decision != SI` → go to **Step 10 (FAIL)**.
 
 9. PASS
-   - Informar que la Fase 2 está completada correctamente.
-   - El `architect-agent` **DEBE realizar explícitamente** las siguientes acciones:
-     - Marcar la Fase 2 como completada en el `task.md`.
-     - Establecer `task.lifecycle.phases.phase-2-analysis.completed = true`.
-     - Establecer `task.lifecycle.phases.phase-2-analysis.validated_at = <ISO-8601>`.
-     - Actualizar `task.phase.updated_at = <ISO-8601>`.
-     - Actualizar el estado:
+   - Report that Phase 2 is correctly completed.
+   - The `architect-agent` **MUST explicitly perform** the following actions:
+     - Mark Phase 2 as completed in `task.md`.
+     - Set `task.lifecycle.phases.phase-2-analysis.completed = true`.
+     - Set `task.lifecycle.phases.phase-2-analysis.validated_at = <ISO-8601>`.
+     - Update `task.phase.updated_at = <ISO-8601>`.
+     - Update the state:
        - `task.phase.current = aliases.tasklifecycle-long.phases.phase_3.id`
-   - Esta actualización **NO es automática** y **NO puede ser inferida**.
-   - Hasta que este cambio no se refleje en el `task.md`, **no se puede iniciar la Fase 3**.
-   - Indicar rutas:
+   - This update is **NOT automatic** and **CANNOT be inferred**.
+   - Until this change is reflected in `task.md`, **Phase 3 cannot be started**.
+   - Indicate paths:
      - `analysis.md`
-     - `task.md` actualizado
+     - `task.md` updated
 
-## FAIL (OBLIGATORIO)
-10. Declarar Fase 2 como **NO completada**
-    - Indicar exactamente que fallo:
-      - task inexistente
-      - fase incorrecta
-      - research inexistente o no aprobado
-      - template inexistente
-      - fallo al crear `analysis.md`
-      - aprobacion del desarrollador = NO o inexistente
-    - Pedir la accion minima para solventar
-    - Terminar bloqueado: no avanzar de fase.
+## FAIL (MANDATORY)
+10. Declare Phase 2 as **NOT completed**
+    - Indicate exactly what failed:
+      - non-existent task
+      - incorrect phase
+      - non-existent or unapproved research
+      - non-existent template
+      - failure creating `analysis.md`
+      - developer approval = NO or missing
+    - Request the minimum action to resolve
+    - Terminate blocked: do not advance phase.
 
 ## Gate (REQUIRED)
-Requisitos (todos obligatorios):
-1. Existe `.agent/artifacts/<taskId>-<taskTitle>/analysis.md`.
-2. El fichero sigue la estructura del template `templates.analysis`.
-3. El `analysis.md` inicia con el prefijo del `architect-agent`.
-4. Cubre todos los acceptance criteria del `task.md`.
-5. Existe aprobacion explicita del desarrollador:
+Requirements (all mandatory):
+1. `.agent/artifacts/<taskId>-<taskTitle>/analysis.md` exists.
+2. The file follows the `templates.analysis` template structure.
+3. The `analysis.md` starts with the `architect-agent` prefix.
+4. Covers all acceptance criteria from `task.md`.
+5. Explicit developer approval exists:
    - `approval.developer.decision == SI`
-6. `task.md` refleja:
-   - Fase 2 completada
+6. `task.md` reflects:
+   - Phase 2 completed
    - `task.phase.current == aliases.tasklifecycle-long.phases.phase_3.id`
    - `task.lifecycle.phases.phase-2-analysis.completed == true`
-   - `task.lifecycle.phases.phase-2-analysis.validated_at` no nulo
-   - `task.phase.updated_at` no nulo
-Si Gate FAIL:
-- Ejecutar **Paso 10 (FAIL)**.
+   - `task.lifecycle.phases.phase-2-analysis.validated_at` not null
+   - `task.phase.updated_at` not null
+If Gate FAIL:
+- Execute **Step 10 (FAIL)**.

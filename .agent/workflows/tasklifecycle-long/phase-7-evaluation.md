@@ -1,6 +1,6 @@
 ---
 id: workflow.tasklifecycle-long.phase-7-evaluation
-description: Fase 7 del ciclo de tarea. Evalua la participacion de los agentes y la ejecucion de la tarea con puntuaciones objetivas.
+description: Phase 7 of the task lifecycle. Evaluates agent participation and task execution with objective scores.
 owner: architect-agent
 version: 1.0.0
 severity: PERMANENT
@@ -12,121 +12,121 @@ blocking: true
 # WORKFLOW: tasklifecycle.phase-7-evaluation
 
 ## Input (REQUIRED)
-- Existe el informe de implementacion por agente (si aplica):
+- The agent implementation report exists (if applicable):
   - `.agent/artifacts/<taskId>-<taskTitle>/<agent>/subtask-implementation.md`
-- Existe el informe de revision del arquitecto:
+- The architect's review report exists:
   - `.agent/artifacts/<taskId>-<taskTitle>/architect/review.md`
-- Existe la current task:
+- The current task exists:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
-- El `task.md` **DEBE** reflejar:
+- The `task.md` **MUST** reflect:
   - `task.phase.current == aliases.tasklifecycle-long.phases.phase_7.id`
 
 > [!IMPORTANT]
-> **Constitución activa (OBLIGATORIO)**:
-> - Cargar `constitution.clean_code` antes de iniciar
-> - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
+> **Active constitution (MANDATORY)**:
+> - Load `constitution.clean_code` before starting
+> - Load `constitution.agents_behavior` (section 7: Gates, section 8: Constitution)
 
 ## Output (REQUIRED)
-- Crear metricas de la tarea (por agente y global):
+- Create task metrics (per agent and global):
   - `.agent/artifacts/<taskId>-<taskTitle>/metrics.md`
-- Registrar puntuaciones por agente:
+- Record per-agent scores:
   - `.agent/artifacts/<taskId>-<taskTitle>/agent-scores.md`
-- Actualizacion del estado en:
+- State update in:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 
-## Objetivo (ONLY)
-- Valorar objetivamente a cada agente participante.
-- Evaluar la adecuacion del rol y la ejecucion de cada agente.
+## Objective (ONLY)
+- Objectively evaluate each participating agent.
+- Assess the role adequacy and execution of each agent.
 
-## Templates (OBLIGATORIOS)
-- Metricas de tarea:
+## Templates (MANDATORY)
+- Task metrics:
   - `templates.task_metrics`
-- Metricas globales:
+- Global metrics:
   - `templates.agent_scores`
 
 ---
 
-## Pasos obligatorios
+## Mandatory Steps
 
-0. Activar `architect-agent` y usar prefijo obligatorio en cada mensaje.
+0. Activate `architect-agent` and use the mandatory prefix in every message.
 
-1. Verificar inputs
-   - Existe `task.md`
+1. Verify inputs
+   - `task.md` exists
    - `task.phase.current == aliases.tasklifecycle-long.phases.phase_7.id`
-   - Existe `architect/review.md`
-   - Si aplica, existen subtasks por agente
-   - Si falla → ir a **Paso 8 (FAIL)**.
+   - `architect/review.md` exists
+   - If applicable, agent subtasks exist
+   - If it fails → go to **Step 8 (FAIL)**.
 
-2. Cargar templates
-   - Cargar `templates.task_metrics` y `templates.agent_scores`
-   - Si no existen o no se pueden leer → ir a **Paso 8 (FAIL)**.
+2. Load templates
+   - Load `templates.task_metrics` and `templates.agent_scores`
+   - If they do not exist or cannot be read → go to **Step 8 (FAIL)**.
 
-3. Evaluar agentes
-   - Para cada agente participante:
-     - revisar su subtask e informe de review
-     - asignar puntuacion (0-10)
-     - justificar la puntuacion
+3. Evaluate agents
+   - For each participating agent:
+     - review their subtask and review report
+     - assign score (0-10)
+     - justify the score
 
-4. Calcular puntuacion global de la tarea
-   - Promedio ponderado de agentes
-   - Registrar en `metrics.md`
+4. Calculate global task score
+   - Weighted average of agents
+   - Record in `metrics.md`
 
-5. Registrar puntuaciones por agente
-   - Actualizar `agent-scores.md` con el score de la tarea actual
+5. Record per-agent scores
+   - Update `agent-scores.md` with the current task's score
 
-6. Solicitar feedback y puntuación obligatoria del desarrollador (por consola)
-   - Presentar `metrics.md` al usuario.
-   - Solicitar confirmación explícita (SI/NO).
-   - Solicitar puntuación del desarrollador (1-10) para CADA agente participante.
-   - **GATE OBLIGATORIO**: Sin estas puntuaciones, la tarea NO puede cerrarse.
-   - Si respuesta es NO → ir a **Paso 8 (FAIL)**.
+6. Request mandatory developer feedback and scoring (via console)
+   - Present `metrics.md` to the user.
+   - Request explicit confirmation (SI/NO).
+   - Request developer score (1-10) for EACH participating agent.
+   - **MANDATORY GATE**: Without these scores, the task CANNOT be closed.
+   - If response is NO → go to **Step 8 (FAIL)**.
 
 7. PASS
-   - Informar que la Fase 7 está completada correctamente.
-   - Registrar validación en `metrics.md`.
-   - El `architect-agent` **DEBE realizar explícitamente** las siguientes acciones:
-     - Marcar la Fase 7 como completada en el `task.md`.
-     - Establecer `task.lifecycle.phases.phase-7-evaluation.completed = true`.
-     - Establecer `task.lifecycle.phases.phase-7-evaluation.validated_at = <ISO-8601>`.
-     - Actualizar `task.phase.updated_at = <ISO-8601>`.
-     - Actualizar el estado:
+   - Report that Phase 7 is correctly completed.
+   - Record validation in `metrics.md`.
+   - The `architect-agent` **MUST explicitly perform** the following actions:
+     - Mark Phase 7 as completed in `task.md`.
+     - Set `task.lifecycle.phases.phase-7-evaluation.completed = true`.
+     - Set `task.lifecycle.phases.phase-7-evaluation.validated_at = <ISO-8601>`.
+     - Update `task.phase.updated_at = <ISO-8601>`.
+     - Update the state:
        - `task.phase.current = aliases.tasklifecycle-long.phases.phase_8.id`
-   - Esta actualización **NO es automática** y **NO puede ser inferida**.
-   - Hasta que este cambio no se refleje en el `task.md`, **no se puede iniciar la Fase 8**.
-   - Indicar rutas:
+   - This update is **NOT automatic** and **CANNOT be inferred**.
+   - Until this change is reflected in `task.md`, **Phase 8 cannot be started**.
+   - Indicate paths:
      - `metrics.md`
      - `agent-scores.md`
-     - `task.md` actualizado
+     - `task.md` updated
 
 ---
 
-## FAIL (OBLIGATORIO)
+## FAIL (MANDATORY)
 
-8. Declarar Fase 7 como **NO completada**
-   - Casos de FAIL:
-     - fase incorrecta
-     - faltan informes requeridos
-     - no se pudieron crear metricas
-     - desarrollador rechaza la evaluación
-   - Accion minima: corregir inputs y reintentar
-   - Terminar bloqueado: no avanzar de fase.
+8. Declare Phase 7 as **NOT completed**
+   - FAIL cases:
+     - incorrect phase
+     - missing required reports
+     - could not create metrics
+     - developer rejects the evaluation
+   - Minimum action: fix inputs and retry
+   - Terminate blocked: do not advance phase.
 
 ---
 
 ## Gate (REQUIRED)
 
-Requisitos (todos obligatorios):
-1. Existe `.agent/artifacts/<taskId>-<taskTitle>/metrics.md`.
-2. El `metrics.md` inicia con el prefijo del `architect-agent`.
-3. `metrics.md` contiene la validación del desarrollador (`Aprobado: SI`).
-4. `metrics.md` contiene la puntuación del desarrollador (0-5).
-5. Existe `.agent/artifacts/<taskId>-<taskTitle>/agent-scores.md` actualizado.
-6. `task.md` refleja:
-   - Fase 7 completada
+Requirements (all mandatory):
+1. `.agent/artifacts/<taskId>-<taskTitle>/metrics.md` exists.
+2. The `metrics.md` starts with the `architect-agent` prefix.
+3. `metrics.md` contains the developer's validation (`Approved: SI`).
+4. `metrics.md` contains the developer's score (0-5).
+5. `.agent/artifacts/<taskId>-<taskTitle>/agent-scores.md` updated exists.
+6. `task.md` reflects:
+   - Phase 7 completed
    - `task.phase.current == aliases.tasklifecycle-long.phases.phase_8.id`
    - `task.lifecycle.phases.phase-7-evaluation.completed == true`
-   - `task.lifecycle.phases.phase-7-evaluation.validated_at` no nulo
-   - `task.phase.updated_at` no nulo
+   - `task.lifecycle.phases.phase-7-evaluation.validated_at` not null
+   - `task.phase.updated_at` not null
 
-Si Gate FAIL:
-- Ejecutar **Paso 8 (FAIL)**.
+If Gate FAIL:
+- Execute **Step 8 (FAIL)**.

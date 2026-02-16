@@ -1,6 +1,6 @@
 ---
 id: workflow.tasklifecycle-long.phase-5-verification
-description: Fase 5 del ciclo de tarea. Verifica la implementación con tests (unitarios y E2E si aplica) y reporta métricas y cobertura. NO corrige código; si hay errores, delega una nueva tarea de corrección al agente responsable.
+description: Phase 5 of the task lifecycle. Verifies the implementation with tests (unit and E2E if applicable) and reports metrics and coverage. DOES NOT fix code; if errors are found, delegates a new correction task to the responsible agent.
 owner: architect-agent
 version: 1.0.0
 severity: PERMANENT
@@ -12,167 +12,166 @@ blocking: true
 # WORKFLOW: tasklifecycle.phase-5-verification
 
 ## Input (REQUIRED)
-- Existe el informe de revisión del arquitecto creado en Fase 4:
+- The architect's review report created in Phase 4 exists:
   - `.agent/artifacts/<taskId>-<taskTitle>/architect/review.md`
-- Existe la current task:
+- The current task exists:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
-- El `task.md` **DEBE** reflejar:
+- The `task.md` **MUST** reflect:
   - `task.phase.current == aliases.tasklifecycle-long.phases.phase_5.id`
 
 > [!IMPORTANT]
-> **Constitución activa (OBLIGATORIO)**:
-> - Cargar `constitution.clean_code` antes de iniciar
-> - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
+> **Active constitution (MANDATORY)**:
+> - Load `constitution.clean_code` before starting
+> - Load `constitution.agents_behavior` (section 7: Gates, section 8: Constitution)
 
 ## Output (REQUIRED)
-- Informe detallado de verificación y testing:
+- Detailed verification and testing report:
   - `.agent/artifacts/<taskId>-<taskTitle>/verification.md`
-- Actualización del estado en:
+- State update in:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 
 ---
 
-## Objetivo (ONLY)
-## Objetivo (ONLY)
-- Verificar la implementación mediante tests (unitarios y E2E si aplica).
-- **SIEMPRE** validar unit tests y test E2E si aplica.
-- Reportar resultados de testing, cobertura y métricas de performance (si aplica).
-- Confirmar cumplimiento de los porcentajes de testing definidos en el plan cuando existan.
-- Obtener aprobación explícita del desarrollador (SI/NO) para avanzar.
+## Objective (ONLY)
+- Verify the implementation through tests (unit and E2E if applicable).
+- **ALWAYS** validate unit tests and E2E tests if applicable.
+- Report testing results, coverage, and performance metrics (if applicable).
+- Confirm compliance with testing percentages defined in the plan when they exist.
+- Obtain explicit developer approval (SI/NO) to advance.
 
-> Esta fase **NO implementa código**.  
-> Esta fase **NO corrige errores**; delega correcciones como nuevas tareas.  
-> Esta fase **NO redefine alcance**.
+> This phase **DOES NOT implement code**.  
+> This phase **DOES NOT fix errors**; it delegates corrections as new tasks.  
+> This phase **DOES NOT redefine scope**.
 
 ---
 
-## Template (OBLIGATORIO)
-- El informe de resultados **DEBE** crearse usando el template:
+## Template (MANDATORY)
+- The results report **MUST** be created using the template:
   - `templates.verification`
-- Si el template no existe o no se puede cargar → **FAIL**.
+- If the template does not exist or cannot be loaded → **FAIL**.
 
 ---
 
-## Pasos obligatorios
+## Mandatory Steps
 
-0. Activar `qa-agent` y usar prefijo obligatorio en cada mensaje.
+0. Activate `qa-agent` and use the mandatory prefix in every message.
 
-1. Asignar rol de verificacion
-   - El `qa-agent` **DEBE** ejecutar esta fase de verificacion.
-   - El `architect-agent` **DEBE** supervisar y validar el resultado.
+1. Assign verification role
+   - The `qa-agent` **MUST** execute this verification phase.
+   - The `architect-agent` **MUST** supervise and validate the result.
 
-2. Verificar inputs
-   - Existe `architect/review.md`
-   - Existe `task.md`
+2. Verify inputs
+   - `architect/review.md` exists
+   - `task.md` exists
    - `task.phase.current == aliases.tasklifecycle-long.phases.phase_5.id`
-   - Si falla → ir a **Paso 11 (FAIL)**.
+   - If it fails → go to **Step 11 (FAIL)**.
 
-3. Cargar template de verificación
-   - Cargar `templates.verification`
-   - Si no existe o no se puede leer → ir a **Paso 11 (FAIL)**.
+3. Load verification template
+   - Load `templates.verification`
+   - If it does not exist or cannot be read → go to **Step 11 (FAIL)**.
 
-4. Ejecutar testing
-   - Ejecutar tests segun la estrategia obligatoria definida en:
+4. Execute testing
+   - Run tests according to the mandatory strategy defined in:
      - `constitution.clean_code`
-   - Recopilar métricas de coverage y performance si aplica.
+   - Collect coverage and performance metrics if applicable.
 
-5. Crear informe de verificación
-   - Crear:
+5. Create verification report
+   - Create:
      - `.agent/artifacts/<taskId>-<taskTitle>/verification.md`
-   - El informe **DEBE** incluir:
-     - resultados de tests (pass/fail)
-     - cobertura (porcentaje y scope)
-     - métricas de performance (si aplica)
-     - evidencia de cumplimiento de thresholds definidos en el plan
-   - Si no hay tests en la tarea, el informe **DEBE** reflejar:
-     - informes revisados
-     - evidencias disponibles
-     - justificación de ausencia de tests
+   - The report **MUST** include:
+     - test results (pass/fail)
+     - coverage (percentage and scope)
+     - performance metrics (if applicable)
+     - evidence of compliance with thresholds defined in the plan
+   - If there are no tests in the task, the report **MUST** reflect:
+     - reviewed reports
+     - available evidence
+     - justification for the absence of tests
 
-6. Validar thresholds del plan (si aplica)
-   - Confirmar que se cumplen los porcentajes de test definidos en `plan.md` cuando existan.
-   - Si no se cumplen → ir a **Paso 11 (FAIL)**.
+6. Validate plan thresholds (if applicable)
+   - Confirm that test percentages defined in `plan.md` are met when they exist.
+   - If not met → go to **Step 11 (FAIL)**.
 
-7. Solicitar aprobación del desarrollador (OBLIGATORIA, por consola)
-   - El desarrollador **DEBE** emitir una decisión binaria:
-     - **SI** → aprobado
-     - **NO** → rechazado
-   - Registrar la decisión en `verification.md` con el formato:
+7. Request developer approval (MANDATORY, via console)
+   - The developer **MUST** issue a binary decision:
+     - **SI** → approved
+     - **NO** → rejected
+   - Record the decision in `verification.md` with the format:
      ```yaml
      approval:
        developer:
          decision: SI | NO
          date: <ISO-8601>
-         comments: <opcional>
+         comments: <optional>
      ```
-   - Si `decision != SI` → ir a **Paso 11 (FAIL)**.
+   - If `decision != SI` → go to **Step 11 (FAIL)**.
 
 8. PASS
-   - Informar que la Fase 5 está completada correctamente.
-   - El `architect-agent` **DEBE realizar explícitamente** las siguientes acciones:
-     - Marcar la Fase 5 como completada en el `task.md`.
-     - Establecer `task.lifecycle.phases.phase-5-verification.completed = true`.
-     - Establecer `task.lifecycle.phases.phase-5-verification.validated_at = <ISO-8601>`.
-     - Actualizar `task.phase.updated_at = <ISO-8601>`.
-     - Actualizar el estado:
+   - Report that Phase 5 is correctly completed.
+   - The `architect-agent` **MUST explicitly perform** the following actions:
+     - Mark Phase 5 as completed in `task.md`.
+     - Set `task.lifecycle.phases.phase-5-verification.completed = true`.
+     - Set `task.lifecycle.phases.phase-5-verification.validated_at = <ISO-8601>`.
+     - Update `task.phase.updated_at = <ISO-8601>`.
+     - Update the state:
        - `task.phase.current = aliases.tasklifecycle-long.phases.phase_6.id`
-   - Esta actualización **NO es automática** y **NO puede ser inferida**.
-   - Hasta que este cambio no se refleje en el `task.md`, **no se puede iniciar la Fase 6**.
-   - Indicar rutas:
+   - This update is **NOT automatic** and **CANNOT be inferred**.
+   - Until this change is reflected in `task.md`, **Phase 6 cannot be started**.
+   - Indicate paths:
      - `verification.md`
-     - `task.md` actualizado
+     - `task.md` updated
 
 ---
 
-## FAIL (OBLIGATORIO)
+## FAIL (MANDATORY)
 
-### 11. Declarar Fase 5 como **NO completada**
+### 11. Declare Phase 5 as **NOT completed**
 
-Casos de FAIL:
-- Informe de review inexistente.
-- Fase incorrecta.
-- Fallo al crear `verification.md`.
-- Thresholds de testing no cumplidos (si aplica).
-- Tests fallidos.
-- Aprobación del desarrollador = NO o inexistente.
+FAIL cases:
+- Non-existent review report.
+- Incorrect phase.
+- Failure creating `verification.md`.
+- Testing thresholds not met (if applicable).
+- Failed tests.
+- Developer approval = NO or missing.
 
-### 12. Delegar corrección (NO corregir código)
+### 12. Delegate correction (DO NOT fix code)
 
 > [!CAUTION]
-> La Fase 5 **NUNCA corrige código**. Solo notifica y delega.
+> Phase 5 **NEVER fixes code**. It only notifies and delegates.
 
-Si se detectan errores en tests:
-1. Identificar la tarea de Fase 4 responsable del código fallido.
-2. Identificar el agente que ejecutó esa tarea.
-3. Crear una **nueva tarea de corrección** en:
+If test errors are detected:
+1. Identify the Phase 4 task responsible for the failed code.
+2. Identify the agent that executed that task.
+3. Create a **new correction task** in:
    - `.agent/artifacts/<taskId>-<taskTitle>/agent-tasks/fix-<N>-<agent>-<issue>.md`
-4. La tarea de corrección **DEBE** usar `templates.agent_task`.
-5. El flujo vuelve a Fase 4 para ejecutar la tarea de corrección.
-6. Solo cuando la corrección pase Gate, se re-ejecuta Fase 5.
+4. The correction task **MUST** use `templates.agent_task`.
+5. The flow returns to Phase 4 to execute the correction task.
+6. Only when the correction passes Gate, Phase 5 is re-executed.
 
-Terminar bloqueado: no avanzar de fase.
+Terminate blocked: do not advance phase.
 
 ---
 
 ## Gate (REQUIRED)
 
-Requisitos (todos obligatorios):
-1. Existe `.agent/artifacts/<taskId>-<taskTitle>/verification.md`.
-2. El informe refleja resultados completos y trazables de testing.
-3. El `verification.md` inicia con el prefijo del `qa-agent`.
-4. El informe contiene **evidencia de ejecución de tests**:
-   - Logs de salida de comandos de test (`npm test`, `pnpm test`, etc.)
-   - O screenshots/grabaciones de E2E
-   - O justificación documentada si la tarea no requiere tests
-5. Se cumplen los porcentajes de test definidos en el plan (si aplica).
-6. Existe aprobación explícita del desarrollador:
+Requirements (all mandatory):
+1. `.agent/artifacts/<taskId>-<taskTitle>/verification.md` exists.
+2. The report reflects complete and traceable testing results.
+3. The `verification.md` starts with the `qa-agent` prefix.
+4. The report contains **evidence of test execution**:
+   - Test command output logs (`npm test`, `pnpm test`, etc.)
+   - Or E2E screenshots/recordings
+   - Or documented justification if the task does not require tests
+5. Test percentages defined in the plan are met (if applicable).
+6. Explicit developer approval exists:
    - `approval.developer.decision == SI`
-7. `task.md` refleja:
-   - Fase 5 completada
+7. `task.md` reflects:
+   - Phase 5 completed
    - `task.phase.current == aliases.tasklifecycle-long.phases.phase_6.id`
    - `task.lifecycle.phases.phase-5-verification.completed == true`
-   - `task.lifecycle.phases.phase-5-verification.validated_at` no nulo
-   - `task.phase.updated_at` no nulo
+   - `task.lifecycle.phases.phase-5-verification.validated_at` not null
+   - `task.phase.updated_at` not null
 
-Si Gate FAIL:
-- Ejecutar **Paso 11 (FAIL)**.
+If Gate FAIL:
+- Execute **Step 11 (FAIL)**.

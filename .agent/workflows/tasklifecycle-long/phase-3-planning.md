@@ -1,6 +1,6 @@
 ---
 id: workflow.tasklifecycle-long.phase-3-planning
-description: Fase 3 del ciclo de tarea. Define el plan de implementación basado en el análisis previo, asigna responsabilidades por agente, detalla testing, demo, estimaciones y puntos críticos. Requiere aprobación explícita del desarrollador.
+description: Phase 3 of the task lifecycle. Defines the implementation plan based on prior analysis, assigns responsibilities per agent, details testing, demo, estimations, and critical points. Requires explicit developer approval.
 owner: architect-agent
 version: 1.0.0
 severity: PERMANENT
@@ -12,170 +12,170 @@ blocking: true
 # WORKFLOW: tasklifecycle.phase-3-planning
 
 ## Input (REQUIRED)
-- Existe el artefacto de análisis creado en Fase 2:
+- The analysis artifact created in Phase 2 exists:
   - `.agent/artifacts/<taskId>-<taskTitle>/analysis.md`
-- Existe la current task:
+- The current task exists:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
-- El `task.md` **DEBE** reflejar:
+- The `task.md` **MUST** reflect:
   - `task.phase.current == aliases.tasklifecycle-long.phases.phase_3.id`
 
 > [!IMPORTANT]
-> **Constitución activa (OBLIGATORIO)**:
-> - Cargar `constitution.clean_code` antes de iniciar
-> - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
+> **Active constitution (MANDATORY)**:
+> - Load `constitution.clean_code` before starting
+> - Load `constitution.agents_behavior` (section 7: Gates, section 8: Constitution)
 
 ## Output (REQUIRED)
-- Crear el plan de implementación:
+- Create the implementation plan:
   - `.agent/artifacts/<taskId>-<taskTitle>/plan.md`
-- Actualizar el estado en la current task:
+- Update the state in the current task:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 
-## Objetivo (ONLY)
-Crear un **plan de implementación detallado** para ejecutar el diseño definido en Fase 2, que:
-- traduzca el análisis en pasos ejecutables
-- asigne responsabilidades claras por agente y subárea
-- defina cómo se validará la tarea (tests y verificaciones)
-- describa la demo final (si aplica)
-- estime pesos/esfuerzo de implementación
-- explique cómo se resolverán los puntos críticos identificados
+## Objective (ONLY)
+Create a **detailed implementation plan** to execute the design defined in Phase 2, that:
+- translates the analysis into executable steps
+- assigns clear responsibilities per agent and sub-area
+- defines how the task will be validated (tests and verifications)
+- describes the final demo (if applicable)
+- estimates implementation effort/weight
+- explains how identified critical points will be resolved
 
-> Esta fase **NO implementa código**.  
-> Esta fase **REQUIERE aprobación explícita y severa del desarrollador (SI / NO)**.
+> This phase **DOES NOT implement code**.  
+> This phase **REQUIRES strict explicit developer approval (SI / NO)**.
 
-## Template (OBLIGATORIO)
-- El plan **DEBE** crearse usando el template:
+## Template (MANDATORY)
+- The plan **MUST** be created using the template:
   - `templates.planning`
-- El template **NO DEBE** modificarse.
-- Si el template no existe o no se puede cargar → **FAIL**.
+- The template **MUST NOT** be modified.
+- If the template does not exist or cannot be loaded → **FAIL**.
 
 ---
 
-## Pasos obligatorios
-0. Activar `architect-agent` y usar prefijo obligatorio en cada mensaje.
+## Mandatory Steps
+0. Activate `architect-agent` and use the mandatory prefix in every message.
 
-1. Verificar inputs
-   - Existe `.agent/artifacts/<taskId>-<taskTitle>/analysis.md`
-   - Existe `.agent/artifacts/<taskId>-<taskTitle>/task.md`
+1. Verify inputs
+   - `.agent/artifacts/<taskId>-<taskTitle>/analysis.md` exists
+   - `.agent/artifacts/<taskId>-<taskTitle>/task.md` exists
    - `task.phase.current == aliases.tasklifecycle-long.phases.phase_3.id`
-   - Si falla → ir a **Paso 11 (FAIL)**.
+   - If it fails → go to **Step 11 (FAIL)**.
 
-2. Cargar template de planificación
-   - Cargar `templates.planning`
-   - Si no existe o no se puede leer → ir a **Paso 11 (FAIL)**.
+2. Load planning template
+   - Load `templates.planning`
+   - If it does not exist or cannot be read → go to **Step 11 (FAIL)**.
 
-3. Crear instancia del plan
-   - Copiar el template a:
+3. Create plan instance
+   - Copy the template to:
      - `.agent/artifacts/<taskId>-<taskTitle>/plan.md`
-   - Rellenar todas las secciones usando `analysis.md` como contrato.
+   - Fill all sections using `analysis.md` as the contract.
 
-4. Definir pasos de implementación
-   - Descomponer la tarea en pasos claros y ordenados.
-   - Indicar dependencias y orden de ejecución.
+4. Define implementation steps
+   - Decompose the task into clear and ordered steps.
+   - Indicate dependencies and execution order.
 
-5. Asignar responsabilidades
-   - Para cada paso o subárea:
-     - agente responsable
-     - entregables esperados
-   - Si el analisis requiere crear/modificar/eliminar componentes:
-     - definir quien lo ejecuta (agente responsable)
-     - definir COMO se hara
-     - definir el tool o skill a usar por alias (si existe) y el motivo
-   - Si el analisis requiere crear demo:
-     - definir estructura esperada (alineada con `constitution.clean_code`)
-   - Definir el dispatch de dominios (si aplica) en `plan.workflows.*`
-   - Definir dispatch secundario (si aplica) en `plan.dispatch[]`
+5. Assign responsibilities
+   - For each step or sub-area:
+     - responsible agent
+     - expected deliverables
+   - If the analysis requires creating/modifying/deleting components:
+     - define who executes it (responsible agent)
+     - define HOW it will be done
+     - define the tool or skill to use by alias (if it exists) and the reason
+   - If the analysis requires creating a demo:
+     - define expected structure (aligned with `constitution.clean_code`)
+   - Define the domain dispatch (if applicable) in `plan.workflows.*`
+   - Define secondary dispatch (if applicable) in `plan.dispatch[]`
 
-6. Estrategia de testing y validación
-   - Definir tipos de tests:
-     - unitarios
-     - integración
-     - end-to-end (si aplica)
-   - Indicar tooling obligatorio según:
+6. Testing and validation strategy
+   - Define test types:
+     - unit
+     - integration
+     - end-to-end (if applicable)
+   - Indicate mandatory tooling according to:
      - `constitution.clean_code`
-   - Relacionar tests con acceptance criteria.
+   - Relate tests to acceptance criteria.
 
-7. Plan de demo (si aplica)
-   - Qué se mostrará
-   - Cómo se validará frente al desarrollador/usuario
+7. Demo plan (if applicable)
+   - What will be shown
+   - How it will be validated with the developer/user
 
-8. Estimación y puntos críticos
-   - Estimar esfuerzo/peso por bloque
-   - Identificar puntos críticos
-   - Explicar cómo se resolverán
+8. Estimation and critical points
+   - Estimate effort/weight per block
+   - Identify critical points
+   - Explain how they will be resolved
 
-9. Solicitar aprobación del desarrollador (OBLIGATORIO, por consola)
-   - El desarrollador **DEBE** emitir una decisión binaria:
-     - **SI** (aprobado)
-     - **NO** (rechazado)
-   - Registrar la decisión en `plan.md`:
+9. Request developer approval (MANDATORY, via console)
+   - The developer **MUST** issue a binary decision:
+     - **SI** (approved)
+     - **NO** (rejected)
+   - Record the decision in `plan.md`:
      ```yaml
      approval:
        developer:
          decision: SI | NO
          date: <ISO-8601>
-         comments: <opcional>
+         comments: <optional>
      ```
-   - Si `decision != SI` → ir a **Paso 11 (FAIL)**.
+   - If `decision != SI` → go to **Step 11 (FAIL)**.
 
 10. PASS
-    - Informar que la Fase 3 está completada correctamente.
-    - El `architect-agent` **DEBE realizar explícitamente** las siguientes acciones:
-      - Marcar la Fase 3 como completada en el `task.md`.
-      - Establecer `task.lifecycle.phases.phase-3-planning.completed = true`.
-      - Establecer `task.lifecycle.phases.phase-3-planning.validated_at = <ISO-8601>`.
-      - Actualizar `task.phase.updated_at = <ISO-8601>`.
-      - Actualizar el estado:
+    - Report that Phase 3 is correctly completed.
+    - The `architect-agent` **MUST explicitly perform** the following actions:
+      - Mark Phase 3 as completed in `task.md`.
+      - Set `task.lifecycle.phases.phase-3-planning.completed = true`.
+      - Set `task.lifecycle.phases.phase-3-planning.validated_at = <ISO-8601>`.
+      - Update `task.phase.updated_at = <ISO-8601>`.
+      - Update the state:
         - `task.phase.current = aliases.tasklifecycle-long.phases.phase_4.id`
-    - Esta actualización **NO es automática** y **NO puede ser inferida**.
-    - Hasta que este cambio no se refleje en el `task.md`, **no se puede iniciar la Fase 4**.
-    - Indicar rutas:
+    - This update is **NOT automatic** and **CANNOT be inferred**.
+    - Until this change is reflected in `task.md`, **Phase 4 cannot be started**.
+    - Indicate paths:
       - `plan.md`
-      - `task.md` actualizado
+      - `task.md` updated
 
 ---
 
-## FAIL (OBLIGATORIO)
+## FAIL (MANDATORY)
 
-11. Declarar Fase 3 como **NO completada**
-    - Indicar exactamente qué falló:
-      - analysis.md inexistente
-      - fase incorrecta
-      - template de planning inexistente
-      - fallo al crear `plan.md`
-      - aprobación del desarrollador = NO o inexistente
-    - Pedir la acción mínima:
-      - completar Fase 2
-      - corregir fase actual
-      - corregir permisos/rutas
-      - revisar el plan y reenviar para aprobación
-    - Terminar bloqueado: no avanzar de fase.
+11. Declare Phase 3 as **NOT completed**
+    - Indicate exactly what failed:
+      - non-existent analysis.md
+      - incorrect phase
+      - non-existent planning template
+      - failure creating `plan.md`
+      - developer approval = NO or missing
+    - Request the minimum action:
+      - complete Phase 2
+      - fix current phase
+      - fix permissions/paths
+      - review the plan and resubmit for approval
+    - Terminate blocked: do not advance phase.
 
 ---
 
 ## Gate (REQUIRED)
 
-Requisitos (todos obligatorios):
-1. Existe `.agent/artifacts/<taskId>-<taskTitle>/plan.md`.
-2. El plan sigue la estructura del template `templates.planning`.
-3. El `plan.md` inicia con el prefijo del `architect-agent`.
-4. El plan es coherente con `analysis.md`.
-5. Si el analisis requiere crear/modificar/eliminar componentes, el plan define:
-   - responsable
-   - como se implementa
-   - mejor herramienta disponible (preferir tools declarados; si no existe, justificar alternativa)
-   - tool elegido por alias y motivo
-6. Si aplica, el plan define `plan.workflows.*` con el dispatch de dominios.
-7. Si aplica, el plan define `plan.dispatch[]` con dispatch secundario.
-8. Si el analisis requiere crear demo, el plan define:
-   - estructura alineada con `constitution.clean_code`
-9. Existe aprobación explícita del desarrollador:
+Requirements (all mandatory):
+1. `.agent/artifacts/<taskId>-<taskTitle>/plan.md` exists.
+2. The plan follows the `templates.planning` template structure.
+3. The `plan.md` starts with the `architect-agent` prefix.
+4. The plan is coherent with `analysis.md`.
+5. If the analysis requires creating/modifying/deleting components, the plan defines:
+   - responsible
+   - how it is implemented
+   - best available tool (prefer declared tools; if none exists, justify alternative)
+   - chosen tool by alias and reason
+6. If applicable, the plan defines `plan.workflows.*` with domain dispatch.
+7. If applicable, the plan defines `plan.dispatch[]` with secondary dispatch.
+8. If the analysis requires creating a demo, the plan defines:
+   - structure aligned with `constitution.clean_code`
+9. Explicit developer approval exists:
    - `approval.developer.decision == SI`
-10. `task.md` refleja:
-   - Fase 3 completada
+10. `task.md` reflects:
+   - Phase 3 completed
    - `task.phase.current == aliases.tasklifecycle-long.phases.phase_4.id`
    - `task.lifecycle.phases.phase-3-planning.completed == true`
-   - `task.lifecycle.phases.phase-3-planning.validated_at` no nulo
-   - `task.phase.updated_at` no nulo
+   - `task.lifecycle.phases.phase-3-planning.validated_at` not null
+   - `task.phase.updated_at` not null
 
-Si Gate FAIL:
-- Ejecutar **Paso 11 (FAIL)**.
+If Gate FAIL:
+- Execute **Step 11 (FAIL)**.

@@ -1,6 +1,6 @@
 ---
 id: workflow.tasklifecycle-long.phase-0-acceptance-criteria
-description: Convierte el task candidate en una tarea definitiva. El arquitecto define los acceptance criteria mediante 5 preguntas obligatorias basadas en la tarea y su objetivo, y crea el current task necesario para iniciar el ciclo de vida.
+description: Converts the task candidate into a definitive task. The architect defines acceptance criteria through 5 mandatory questions based on the task and its objective, and creates the current task required to start the lifecycle.
 owner: architect-agent
 version: 1.2.1
 severity: PERMANENT
@@ -12,162 +12,162 @@ blocking: true
 # WORKFLOW: tasklifecycle.phase-0-acceptance-criteria
 
 ## Input (REQUIRED)
-- Task candidate creado por `workflows.tasklifecycle-long`:
+- Task candidate created by `workflows.tasklifecycle-long`:
   - `artifacts.candidate.task`
-- El `task.md` candidate **DEBE** incluir:
-  - descripción de la tarea
-  - objetivo de la tarea
+- The `task.md` candidate **MUST** include:
+  - task description
+  - task objective
 
 > [!IMPORTANT]
-> **Constitución activa (OBLIGATORIO)**:
-> - Cargar `constitution.clean_code` antes de iniciar
-> - Cargar `constitution.agents_behavior` (sección 7: Gates, sección 8: Constitución)
+> **Active constitution (MANDATORY)**:
+> - Load `constitution.clean_code` before starting
+> - Load `constitution.agents_behavior` (section 7: Gates, section 8: Constitution)
 
 ## Output (REQUIRED)
-- Current task (definitiva) con acceptance criteria completos:
+- Current task (definitive) with complete acceptance criteria:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 
-## Template (OBLIGATORIO)
-- La current task **DEBE** crearse usando el template:
+## Template (MANDATORY)
+- The current task **MUST** be created using the template:
   - `templates.task`
-- Si el template no existe o no se puede cargar → **FAIL**.
+- If the template does not exist or cannot be loaded → **FAIL**.
 
-## Objetivo (ONLY)
-- Pasar de **task candidate** a **current task** (definitiva).
-- **Calcular el `taskId` definitivo**.
-- Definir acceptance criteria **obligatorios** a partir de 5 preguntas al desarrollador.
-- Registrar los acceptance criteria dentro del fichero de current task.
+## Objective (ONLY)
+- Move from **task candidate** to **current task** (definitive).
+- **Calculate the definitive `taskId`**.
+- Define **mandatory** acceptance criteria from 5 questions to the developer.
+- Record acceptance criteria within the current task file.
 
-## Pasos obligatorios
-0. Activar `architect-agent` y usar prefijo obligatorio en cada mensaje.
-1. Cargar y leer el task candidate:
+## Mandatory Steps
+0. Activate `architect-agent` and use the mandatory prefix in every message.
+1. Load and read the task candidate:
    - `artifacts.candidate.task`
-   - Extraer:
-     - descripción de la tarea
-     - objetivo de la tarea
-   - Si faltan → ir a **Paso 10 (FAIL)**.
+   - Extract:
+     - task description
+     - task objective
+   - If missing → go to **Step 10 (FAIL)**.
 
-2. Cargar template contractual de task
-   - Cargar `templates.task`
-   - Si no existe o no se puede cargar → ir a **Paso 10 (FAIL)**.
+2. Load contractual task template
+   - Load `templates.task`
+   - If it does not exist or cannot be loaded → go to **Step 10 (FAIL)**.
 
-3. **Calcular `taskId` (OBLIGATORIO – architect)**
-   - El `architect-agent` **DEBE** ejecutar el siguiente comando:
+3. **Calculate `taskId` (MANDATORY – architect)**
+   - The `architect-agent` **MUST** execute the following command:
      ```bash
      ls .agent/artifacts/ | grep -E "^[0-9]" | sort -n | tail -1 | cut -d'-' -f1
      ```
-   - El output muestra el último taskId (ej: "8")
-   - El nuevo `taskId = output + 1` (ej: si output es "8", nuevo taskId es "9")
-   - Si no hay output (sin tareas previas) → `taskId = 1`
-   - El valor final de `taskId` es **obligatorio** para continuar.
+   - The output shows the last taskId (e.g.: "8")
+   - The new `taskId = output + 1` (e.g.: if output is "8", new taskId is "9")
+   - If there is no output (no previous tasks) → `taskId = 1`
+   - The final `taskId` value is **mandatory** to continue.
 
-4. Definir `taskTitle` (architect)
-   - Derivar `taskTitle` desde la solicitud del desarrollador (candidate).
-   - Normalizar para filesystem:
-     - minúsculas
-     - espacios → `-`
-     - sin caracteres especiales
+4. Define `taskTitle` (architect)
+   - Derive `taskTitle` from the developer's request (candidate).
+   - Normalize for filesystem:
+     - lowercase
+     - spaces → `-`
+     - no special characters
 
-5. Formular preguntas de clarificación (OBLIGATORIO, adaptativas a la tarea)
-   - El `architect-agent` **DEBE** analizar:
+5. Formulate clarification questions (MANDATORY, adaptive to the task)
+   - The `architect-agent` **MUST** analyze:
      - `task.description`
      - `task.goal`
-   - A partir de ese análisis, **DEBE formular exactamente 5 preguntas** cuyo objetivo sea:
-     - eliminar ambigüedades
-     - completar información faltante
-     - permitir definir acceptance criteria verificables
-   - Las preguntas:
-     - **NO deben** duplicar información ya explícita
-     - **DEBEN** estar directamente relacionadas con la tarea concreta
-     - **PUEDEN** variar según el contexto de la tarea
+   - Based on that analysis, **MUST formulate exactly 5 questions** whose purpose is to:
+     - eliminate ambiguities
+     - complete missing information
+     - enable defining verifiable acceptance criteria
+   - The questions:
+     - **MUST NOT** duplicate already explicit information
+     - **MUST** be directly related to the specific task
+     - **MAY** vary depending on the task context
 
-6. Validar respuestas y cerrar definición (OBLIGATORIO)
-   - Confirmar que las 5 preguntas formuladas tienen respuesta explícita.
-   - A partir de las respuestas, el `architect-agent` **DEBE**:
-     - consolidar una definición completa de la tarea
-     - derivar acceptance criteria verificables
-   - Si alguna respuesta falta o sigue existiendo ambigüedad → ir a **Paso 10 (FAIL)**.
+6. Validate responses and close definition (MANDATORY)
+   - Confirm that all 5 formulated questions have explicit answers.
+   - Based on the responses, the `architect-agent` **MUST**:
+     - consolidate a complete task definition
+     - derive verifiable acceptance criteria
+   - If any response is missing or ambiguity persists → go to **Step 10 (FAIL)**.
 
-7. Crear current task (OBLIGATORIO)
-   - Crear el directorio de la tarea (si no existe):
+7. Create current task (MANDATORY)
+   - Create the task directory (if it does not exist):
      - `.agent/artifacts/<taskId>-<taskTitle>/`
-   - Crear el fichero de estado:
-     - `.agent/artifacts/<taskId>-<taskTitle>/task.md` (usando `templates.task`)
-   - Crear el fichero de aceptación (NUEVO):
-     - `.agent/artifacts/<taskId>-<taskTitle>/acceptance.md` (usando `templates.acceptance`)
-   - El `task.md` **solo contendrá**:
-     - metadatos (id, title, owner, strategy)
-     - historial de fases
-     - alias `task.acceptance` apuntando al nuevo fichero
-   - El `acceptance.md` **contendrá**:
-     - definición consolidada
-     - las 5 respuestas detalladas
-     - checklist de criterios verificables (AC)
-   - Si no se puede crear/escribir → ir a **Paso 10 (FAIL)**.
+   - Create the state file:
+     - `.agent/artifacts/<taskId>-<taskTitle>/task.md` (using `templates.task`)
+   - Create the acceptance file (NEW):
+     - `.agent/artifacts/<taskId>-<taskTitle>/acceptance.md` (using `templates.acceptance`)
+   - The `task.md` **will only contain**:
+     - metadata (id, title, owner, strategy)
+     - phase history
+     - alias `task.acceptance` pointing to the new file
+   - The `acceptance.md` **will contain**:
+     - consolidated definition
+     - the 5 detailed answers
+     - verifiable acceptance criteria (AC) checklist
+   - If it cannot be created/written → go to **Step 10 (FAIL)**.
 
-8. Solicitar aprobacion del desarrollador (OBLIGATORIA, por consola)
-   - El desarrollador **DEBE** aprobar explicitamente:
+8. Request developer approval (MANDATORY, via console)
+   - The developer **MUST** explicitly approve:
      - Acceptance criteria
-     - Current task creada
-   - Registrar la decision en `acceptance.md`:
+     - Current task created
+   - Record the decision in `acceptance.md`:
      ```yaml
      approval:
        developer:
          decision: SI | NO
          date: <ISO-8601>
-         comments: <opcional>
+         comments: <optional>
      ```
-   - Si `decision != SI` → ir a **Paso 10 (FAIL)**.
+   - If `decision != SI` → go to **Step 10 (FAIL)**.
 
 9. PASS
-   - Informar que la Fase 0 está completada correctamente.
-   - El `architect-agent` **DEBE realizar explícitamente** las siguientes acciones:
-    - Marcar la Fase 0 como completada en el `task.md`.
-    - Establecer `task.lifecycle.phases.phase-0-acceptance-criteria.validated_at = <ISO-8601>`.
-    - Actualizar `task.phase.updated_at = <ISO-8601>`.
-    - Actualizar el estado:
+   - Report that Phase 0 is correctly completed.
+   - The `architect-agent` **MUST explicitly perform** the following actions:
+    - Mark Phase 0 as completed in `task.md`.
+    - Set `task.lifecycle.phases.phase-0-acceptance-criteria.validated_at = <ISO-8601>`.
+    - Update `task.phase.updated_at = <ISO-8601>`.
+    - Update the state:
       - `task.phase.current = aliases.tasklifecycle-long.phases.phase_1.id`
-   - Esta actualización **NO es automática** y **NO puede ser inferida**.
-   - Hasta que este cambio no se refleje en el `task.md`, **no se puede iniciar la Fase 1**.
+   - This update is **NOT automatic** and **CANNOT be inferred**.
+   - Until this change is reflected in `task.md`, **Phase 1 cannot be started**.
 
-10. FAIL (obligatorio)
-   - Declarar Fase 0 como **NO completada**.
-   - Indicar exactamente qué falló:
-     - falta candidate
-     - template inaccesible (`templates.task`)
-     - falta descripción/objetivo
-     - no se pudo calcular `taskId`
-     - respuestas incompletas (menos de 5)
-     - no se pudo crear current task
-   - Pedir la acción mínima:
-     - completar datos del candidate
-     - responder preguntas faltantes
-     - corregir permisos/rutas de artifacts
-   - Terminar bloqueado: no avanzar de fase.
+10. FAIL (mandatory)
+   - Declare Phase 0 as **NOT completed**.
+   - Indicate exactly what failed:
+     - missing candidate
+     - inaccessible template (`templates.task`)
+     - missing description/objective
+     - could not calculate `taskId`
+     - incomplete responses (fewer than 5)
+     - could not create current task
+   - Request the minimum action:
+     - complete candidate data
+     - answer missing questions
+     - fix artifacts permissions/paths
+   - Terminate blocked: do not advance phase.
 
 ## Gate (REQUIRED)
 
-Requisitos (todos obligatorios):
-1. Existe el directorio y el fichero de estado:
+Requirements (all mandatory):
+1. The directory and state file exist:
    - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
-2. Existe el artefacto de aceptación:
+2. The acceptance artifact exists:
    - `.agent/artifacts/<taskId>-<taskTitle>/acceptance.md`
-3. Ambos siguen sus respectivos templates.
-4. El `acceptance.md` inicia con el prefijo del `architect-agent`.
-5. El `taskId` es secuencial:
-   - Ejecutar: `ls .agent/artifacts/ | grep -E "^[0-9]" | sort -n | tail -1 | cut -d'-' -f1`
-   - El taskId del nuevo directorio debe ser exactamente `output + 1`
-6. El current task incluye acceptance criteria completos y verificables.
-7. Existe aprobacion explicita del desarrollador (por consola) registrada en `acceptance.md`:
+3. Both follow their respective templates.
+4. The `acceptance.md` starts with the `architect-agent` prefix.
+5. The `taskId` is sequential:
+   - Execute: `ls .agent/artifacts/ | grep -E "^[0-9]" | sort -n | tail -1 | cut -d'-' -f1`
+   - The taskId of the new directory must be exactly `output + 1`
+6. The current task includes complete and verifiable acceptance criteria.
+7. Explicit developer approval (via console) is recorded in `acceptance.md`:
    - `approval.developer.decision == SI`
-8. El `architect-agent` ha marcado explícitamente:
-   - la Fase 0 como completada
+8. The `architect-agent` has explicitly marked:
+   - Phase 0 as completed
    - `task.phase.current == aliases.tasklifecycle-long.phases.phase_1.id`
-9. `task.md` refleja timestamp y estado:
+9. `task.md` reflects timestamp and state:
    - `task.lifecycle.phases.phase-0-acceptance-criteria.completed == true`
-   - `task.lifecycle.phases.phase-0-acceptance-criteria.validated_at` no nulo
-   - `task.phase.updated_at` no nulo
-10. Las 5 preguntas obligatorias fueron realizadas y respondidas por el desarrollador.
+   - `task.lifecycle.phases.phase-0-acceptance-criteria.validated_at` not null
+   - `task.phase.updated_at` not null
+10. The 5 mandatory questions were asked and answered by the developer.
 
-Si Gate FAIL:
-- Ejecutar **FAIL**.
+If Gate FAIL:
+- Execute **FAIL**.

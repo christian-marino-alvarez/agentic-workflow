@@ -9,42 +9,42 @@ task_number: {{N}}
 
 # Agent Task — {{N}}-{{agent}}-{{taskName}}
 
-## Identificacion del agente (OBLIGATORIA)
-Primera linea del documento:
-`<icono> **<nombre-agente>**: <mensaje>`
+## Agent Identification (MANDATORY)
+First line of the document:
+`<icon> **<agent-name>**: <message>`
 
 ## Input (REQUIRED)
-- **Objetivo**: {{objective}}
-- **Alcance**: {{scope}}
-- **Dependencias**: {{dependencies}}
+- **Objective**: {{objective}}
+- **Scope**: {{scope}}
+- **Dependencies**: {{dependencies}}
 
 ---
 
-## Reasoning (OBLIGATORIO)
+## Reasoning (MANDATORY)
 
 > [!IMPORTANT]
-> El agente **DEBE** completar esta sección ANTES de ejecutar.
-> Documentar el razonamiento mejora la calidad y permite detectar errores temprano.
+> The agent **MUST** complete this section BEFORE executing.
+> Documenting the reasoning improves quality and allows early error detection.
 
-### Análisis del objetivo
-- ¿Qué se pide exactamente?
-- ¿Hay ambigüedades o dependencias?
+### Objective analysis
+- What is being asked exactly?
+- Are there ambiguities or dependencies?
 
-### Opciones consideradas
-- **Opción A**: (descripción)
-- **Opción B**: (descripción)
-- *(añadir más si aplica)*
+### Options considered
+- **Option A**: (description)
+- **Option B**: (description)
+- *(add more if applicable)*
 
-### Decisión tomada
-- Opción elegida: (A/B/...)
-- Justificación: (por qué esta opción)
+### Decision made
+- Chosen option: (A/B/...)
+- Justification: (why this option)
 
 ---
 
 ## Output (REQUIRED)
-- **Entregables**:
+- **Deliverables**:
   - {{deliverables}}
-- **Evidencia requerida**:
+- **Required evidence**:
   - {{evidence}}
 
 ---
@@ -63,41 +63,41 @@ execution:
 
 ## Implementation Report
 
-> Esta sección la completa el agente asignado durante la ejecución.
+> This section is completed by the assigned agent during execution.
 
-### Cambios realizados
-- (Archivos modificados, funciones añadidas, etc.)
+### Changes made
+- (Modified files, added functions, etc.)
 
-### Decisiones técnicas
-- (Decisiones clave y justificación)
+### Technical decisions
+- (Key decisions and justification)
 
-### Evidencia
-- (Logs, capturas, tests ejecutados)
+### Evidence
+- (Logs, screenshots, tests executed)
 
-### Desviaciones del objetivo
-- (Si las hay, justificación)
+### Deviations from objective
+- (If any, justification)
 
 ---
 
 ## Gate (REQUIRED)
 
-El desarrollador **DEBE** aprobar esta tarea antes de que el arquitecto asigne la siguiente.
+The developer **MUST** approve this task before the architect assigns the next one.
 
 ```yaml
 approval:
   developer:
     decision: SI | NO
     date: <ISO-8601>
-    comments: <opcional>
+    comments: <optional>
 ```
 
 ---
 
-## Reglas contractuales
+## Contractual Rules
 
-1. Esta tarea **NO puede marcarse como completada** sin Gate PASS (`decision: SI`).
-2. Si Gate FAIL (`decision: NO`):
-   - El arquitecto define acciones correctivas.
-   - Se genera una nueva tarea de corrección si procede.
-3. El agente asignado **NO puede modificar** el Input ni el Output definidos por el arquitecto.
-4. El Gate es **síncrono y bloqueante**: el flujo se detiene hasta obtener respuesta del desarrollador.
+1. This task **CANNOT be marked as completed** without Gate PASS (`decision: SI`).
+2. If Gate FAIL (`decision: NO`):
+   - The architect defines corrective actions.
+   - A new correction task is generated if applicable.
+3. The assigned agent **CANNOT modify** the Input or Output defined by the architect.
+4. The Gate is **synchronous and blocking**: the flow stops until a developer response is obtained.

@@ -1,17 +1,17 @@
 # Acceptance Criteria — {{task.id}}-{{task.title}}
 
-## Identificacion del agente (OBLIGATORIA)
-Primera linea del documento:
-`<icono> **<nombre-agente>**: <mensaje>`
+## Agent Identification (MANDATORY)
+First line of the document:
+`<icon> **<agent-name>**: <message>`
 
-## 1. Definición Consolidada
+## 1. Consolidated Definition
 {{consolidated_definition}}
 
-## 2. Respuestas a Preguntas de Clarificación
-> Esta sección documenta las respuestas del desarrollador a las 5 preguntas formuladas por el architect-agent.
+## 2. Answers to Clarification Questions
+> This section documents the developer's answers to the 5 questions formulated by the architect-agent.
 
-| # | Pregunta (formulada por architect) | Respuesta (del desarrollador) |
-|---|-----------------------------------|-------------------------------|
+| # | Question (formulated by architect) | Answer (from developer) |
+|---|-----------------------------------|------------------------|
 | 1 | {{question.1}} | {{answer.1}} |
 | 2 | {{question.2}} | {{answer.2}} |
 | 3 | {{question.3}} | {{answer.3}} |
@@ -20,28 +20,28 @@ Primera linea del documento:
 
 ---
 
-## 3. Criterios de Aceptación Verificables
-> Listado de criterios derivados de las respuestas anteriores que deben ser verificados en la Fase 5.
+## 3. Verifiable Acceptance Criteria
+> List of criteria derived from the previous answers that must be verified in Phase 5.
 
-1. Alcance:
+1. Scope:
    - {{acceptance.scope}}
 
-2. Entradas / Datos:
+2. Inputs / Data:
    - {{acceptance.inputs}}
 
-3. Salidas / Resultado esperado:
+3. Outputs / Expected Result:
    - {{acceptance.outputs}}
 
-4. Restricciones:
+4. Constraints:
    - {{acceptance.constraints}}
 
-5. Criterio de aceptación (Done):
+5. Acceptance Criterion (Done):
    - {{acceptance.done}}
 
 ---
 
-## Aprobación (Gate 0)
-Este documento constituye el contrato de la tarea. Su aprobación es bloqueante para pasar a Phase 1.
+## Approval (Gate 0)
+This document constitutes the task contract. Its approval is blocking to proceed to Phase 1.
 
 ```yaml
 approval:
@@ -53,12 +53,12 @@ approval:
 
 ---
 
-## Historial de validaciones (Phase 0)
+## Validation History (Phase 0)
 ```yaml
 history:
   - phase: "phase-0-acceptance-criteria"
     action: "completed"
     validated_by: "architect-agent"
     timestamp: "{{timestamp}}"
-    notes: "Acceptance criteria definidos"
+    notes: "Acceptance criteria defined"
 ```

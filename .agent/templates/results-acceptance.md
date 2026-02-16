@@ -11,155 +11,155 @@ related_verification: .agent/artifacts/<taskId>-<taskTitle>/verification.md
 
 # Final Results Report — <taskId>-<taskTitle>
 
-## Identificacion del agente (OBLIGATORIA)
-Primera linea del documento:
-`<icono> **<nombre-agente>**: <mensaje>`
+## Agent Identification (MANDATORY)
+First line of the document:
+`<icon> **<agent-name>**: <message>`
 
-## 1. Resumen ejecutivo (para decisión)
-Este documento presenta **el resultado final completo de la tarea**, consolidando:
-- lo que se planificó
-- lo que se implementó
-- cómo se revisó
-- cómo se verificó
+## 1. Executive Summary (for decision)
+This document presents **the complete final result of the task**, consolidating:
+- what was planned
+- what was implemented
+- how it was reviewed
+- how it was verified
 
-**Conclusión rápida**
-- Estado general: ☐ SATISFACTORIO ☐ NO SATISFACTORIO
-- Recomendación del arquitecto: ☐ Aceptar ☐ Iterar
-
----
-
-## 2. Contexto de la tarea
-### 2.1 Objetivo original
-(Extraído de `task.md`)
-
-- Objetivo:
-- Alcance definido:
-- Fuera de alcance:
-
-### 2.2 Acceptance Criteria acordados
-Listado de los AC definidos en Fase 0.
-
-| ID | Descripción | Estado final |
-|----|-------------|--------------|
-| AC-1 | | ✅ Cumplido / ❌ No |
-| AC-2 | | ✅ Cumplido / ❌ No |
+**Quick Conclusion**
+- Overall status: ☐ SATISFACTORY ☐ NOT SATISFACTORY
+- Architect recommendation: ☐ Accept ☐ Iterate
 
 ---
 
-## 3. Planificación (qué se acordó hacer)
-Resumen del **plan aprobado** en Fase 2.
+## 2. Task Context
+### 2.1 Original Objective
+(Extracted from `task.md`)
 
-- Estrategia general
-- Fases y pasos principales
-- Agentes involucrados y responsabilidades
-- Estrategia de testing acordada
-- Plan de demo (si aplica)
+- Objective:
+- Defined scope:
+- Out of scope:
 
-> Referencia: `plan.md`
+### 2.2 Agreed Acceptance Criteria
+List of ACs defined in Phase 0.
 
----
-
-## 4. Implementación (qué se hizo realmente)
-Descripción clara de la implementación ejecutada.
-
-### 4.1 Subtareas por agente
-Para cada agente participante:
-
-**Agente:** `<agent-name>`
-- Responsabilidad asignada:
-- Subtareas ejecutadas:
-- Artefactos generados:
-- Cambios relevantes:
-
-(Repetir por cada agente)
-
-### 4.2 Cambios técnicos relevantes
-- Nuevos componentes
-- Cambios estructurales
-- APIs afectadas
-- Compatibilidad entre navegadores (si aplica)
+| ID | Description | Final Status |
+|----|-------------|-------------|
+| AC-1 | | ✅ Met / ❌ Not Met |
+| AC-2 | | ✅ Met / ❌ Not Met |
 
 ---
 
-## 5. Revisión arquitectónica
-Resumen del informe de revisión del arquitecto.
+## 3. Planning (what was agreed to do)
+Summary of the **approved plan** from Phase 2.
 
-- Coherencia con el plan: ☐ Sí ☐ No
-- Cumplimiento de arquitectura: ☐ Sí ☐ No
-- Cumplimiento de clean code: ☐ Sí ☐ No
-- Desviaciones detectadas:
-  - Ninguna / Detalladas abajo
+- General strategy
+- Main phases and steps
+- Involved agents and responsibilities
+- Agreed testing strategy
+- Demo plan (if applicable)
 
-**Conclusiones del arquitecto**
-- Impacto en el sistema
-- Riesgos residuales
-- Deuda técnica (si existe)
-
-> Referencia: `architect/review.md`
+> Reference: `plan.md`
 
 ---
 
-## 6. Verificación y validación
-Resultados de la verificación funcional.
+## 4. Implementation (what was actually done)
+Clear description of the executed implementation.
 
-### 6.1 Tests ejecutados
-- Unitarios:
-- Integración:
+### 4.1 Subtasks by Agent
+For each participating agent:
+
+**Agent:** `<agent-name>`
+- Assigned responsibility:
+- Executed subtasks:
+- Generated artifacts:
+- Relevant changes:
+
+(Repeat for each agent)
+
+### 4.2 Relevant Technical Changes
+- New components
+- Structural changes
+- Affected APIs
+- Cross-browser compatibility (if applicable)
+
+---
+
+## 5. Architectural Review
+Summary of the architect's review report.
+
+- Coherence with plan: ☐ Yes ☐ No
+- Architecture compliance: ☐ Yes ☐ No
+- Clean code compliance: ☐ Yes ☐ No
+- Detected deviations:
+  - None / Detailed below
+
+**Architect's Conclusions**
+- System impact
+- Residual risks
+- Technical debt (if any)
+
+> Reference: `architect/review.md`
+
+---
+
+## 6. Verification and Validation
+Functional verification results.
+
+### 6.1 Tests Executed
+- Unit:
+- Integration:
 - End-to-End / Manual:
-- Resultado global: ☐ OK ☐ NO OK
+- Overall result: ☐ OK ☐ NOT OK
 
-### 6.2 Demo (si aplica)
-- Qué se demostró
-- Resultado de la demo
-- Observaciones del desarrollador
+### 6.2 Demo (if applicable)
+- What was demonstrated
+- Demo result
+- Developer observations
 
-> Referencia: `verification.md`
+> Reference: `verification.md`
 
 ---
 
-## 7. Estado final de Acceptance Criteria
-Evaluación definitiva.
+## 7. Final Acceptance Criteria Status
+Definitive evaluation.
 
-| Acceptance Criteria | Resultado | Evidencia |
-|---------------------|-----------|-----------|
+| Acceptance Criteria | Result | Evidence |
+|---------------------|--------|----------|
 | AC-1 | ✅ / ❌ | |
 | AC-2 | ✅ / ❌ | |
 
-> Todos los AC **DEBEN** estar cumplidos para aceptar la tarea.
+> All ACs **MUST** be met to accept the task.
 
 ---
 
-## 8. Incidencias y desviaciones
-Listado consolidado de problemas encontrados durante el ciclo.
+## 8. Incidents and Deviations
+Consolidated list of problems found during the cycle.
 
-- Incidencia:
-  - Fase donde se detectó
-  - Impacto
-  - Resolución aplicada
-- Incidencia:
-  - (Repetir)
+- Incident:
+  - Phase where detected
+  - Impact
+  - Applied resolution
+- Incident:
+  - (Repeat)
 
-Si no hubo incidencias, indicar explícitamente:
-> “No se detectaron incidencias relevantes”.
-
----
-
-## 9. Valoración global
-Evaluación final del resultado.
-
-- Calidad técnica: ☐ Alta ☐ Media ☐ Baja
-- Alineación con lo solicitado: ☐ Total ☐ Parcial ☐ Insuficiente
-- Estabilidad de la solución: ☐ Alta ☐ Media ☐ Baja
-- Mantenibilidad: ☐ Alta ☐ Media ☐ Baja
+If there were no incidents, indicate explicitly:
+> "No relevant incidents were detected."
 
 ---
 
-## 10. Decisión final del desarrollador (OBLIGATORIA)
-Esta decisión **cierra la fase**.
+## 9. Overall Assessment
+Final result evaluation.
+
+- Technical quality: ☐ High ☐ Medium ☐ Low
+- Alignment with request: ☐ Total ☐ Partial ☐ Insufficient
+- Solution stability: ☐ High ☐ Medium ☐ Low
+- Maintainability: ☐ High ☐ Medium ☐ Low
+
+---
+
+## 10. Final Developer Decision (MANDATORY)
+This decision **closes the phase**.
 
 ```yaml
 approval:
   developer:
     decision: SI | NO
     date: <ISO-8601>
-    comments: <opcional>
+    comments: <optional>

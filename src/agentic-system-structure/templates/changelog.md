@@ -9,18 +9,18 @@ target_branch: <branch-name>
 
 # Changelog — <taskId>-<taskTitle>
 
-## 1. Resumen general
-Descripción breve y clara de los cambios introducidos por esta tarea.
+## 1. General Summary
+Brief and clear description of the changes introduced by this task.
 
-- **Objetivo de la tarea**:
-- **Impacto principal**:
-- **Áreas afectadas** (componentes, workflows, etc.):
+- **Task objective**:
+- **Main impact**:
+- **Affected areas** (components, workflows, etc.):
 
 ---
 
-## 2. Commits incluidos
-Listado completo y ordenado de los commits realizados.
+## 2. Included Commits
+Complete and ordered list of commits performed.
 
 ### Commit 1
 - **Hash**: `<commit-hash>`
-- **Mensaje (Conventional Commit)**:
+- **Message (Conventional Commit)**:

@@ -41,6 +41,11 @@ agent:
     init: .agent/workflows/init.md
     tasklifecycle-long: .agent/workflows/tasklifecycle-long/index.md
     tasklifecycle-short: .agent/workflows/tasklifecycle-short/index.md
+    coding:
+      backend: .agent/workflows/coding/coding-backend.md
+      background: .agent/workflows/coding/coding-background.md
+      view: .agent/workflows/coding/coding-view.md
+      integration: .agent/workflows/coding/coding-integration.md
 
   templates:
     task: .agent/templates/task.md
@@ -61,6 +66,9 @@ agent:
     supplemental_report: .agent/templates/supplemental-report.md
     brief: .agent/templates/brief.md
     closure: .agent/templates/closure.md
+    coding:
+      layer_report: .agent/templates/coding/coding-layer-report.md
+      integration_report: .agent/templates/coding/coding-integration-report.md
 
   artifacts:
     candidate:

@@ -17,11 +17,18 @@ export * as ViewHtml from './view/templates/html.js';
  */
 export abstract class App {
   /**
+   * VS Code extension context, provides access to extension resources and APIs.
+   */
+  protected readonly context: vscode.ExtensionContext;
+
+  /**
    * Registry for all active modules in the extension.
    */
   private modules: Map<string, vscode.WebviewViewProvider> = new Map();
 
-  constructor(protected readonly context: vscode.ExtensionContext) {
+  constructor(context: vscode.ExtensionContext) {
+    // Explicit assignment for clarity
+    this.context = context;
     Logger.init('Agentic Workflow');
   }
 

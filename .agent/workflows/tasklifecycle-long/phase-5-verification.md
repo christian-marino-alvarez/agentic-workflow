@@ -108,12 +108,16 @@ blocking: true
    - Si `decision != SI` → ir a **Paso 11 (FAIL)**.
 
 8. PASS
-   - Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md`:
-     - marcar Fase 5 como completada
-     - establecer `task.lifecycle.phases.phase-5-verification.validated_at = <ISO-8601>`
-     - actualizar `task.phase.updated_at = <ISO-8601>`
-     - avanzar:
+   - Informar que la Fase 5 está completada correctamente.
+   - El `architect-agent` **DEBE realizar explícitamente** las siguientes acciones:
+     - Marcar la Fase 5 como completada en el `task.md`.
+     - Establecer `task.lifecycle.phases.phase-5-verification.completed = true`.
+     - Establecer `task.lifecycle.phases.phase-5-verification.validated_at = <ISO-8601>`.
+     - Actualizar `task.phase.updated_at = <ISO-8601>`.
+     - Actualizar el estado:
        - `task.phase.current = aliases.tasklifecycle-long.phases.phase_6.id`
+   - Esta actualización **NO es automática** y **NO puede ser inferida**.
+   - Hasta que este cambio no se refleje en el `task.md`, **no se puede iniciar la Fase 6**.
    - Indicar rutas:
      - `verification.md`
      - `task.md` actualizado

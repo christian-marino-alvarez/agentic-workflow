@@ -118,12 +118,17 @@ Crear un **plan de implementación detallado** para ejecutar el diseño definido
    - Si `decision != SI` → ir a **Paso 11 (FAIL)**.
 
 10. PASS
-    - Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md`:
-      - marcar Fase 3 como completada
-      - establecer `task.lifecycle.phases.phase-3-planning.validated_at = <ISO-8601>`
-      - actualizar `task.phase.updated_at = <ISO-8601>`
-      - avanzar `task.phase.current = aliases.tasklifecycle-long.phases.phase_4.id`
-    - Indicar rutas finales:
+    - Informar que la Fase 3 está completada correctamente.
+    - El `architect-agent` **DEBE realizar explícitamente** las siguientes acciones:
+      - Marcar la Fase 3 como completada en el `task.md`.
+      - Establecer `task.lifecycle.phases.phase-3-planning.completed = true`.
+      - Establecer `task.lifecycle.phases.phase-3-planning.validated_at = <ISO-8601>`.
+      - Actualizar `task.phase.updated_at = <ISO-8601>`.
+      - Actualizar el estado:
+        - `task.phase.current = aliases.tasklifecycle-long.phases.phase_4.id`
+    - Esta actualización **NO es automática** y **NO puede ser inferida**.
+    - Hasta que este cambio no se refleje en el `task.md`, **no se puede iniciar la Fase 4**.
+    - Indicar rutas:
       - `plan.md`
       - `task.md` actualizado
 

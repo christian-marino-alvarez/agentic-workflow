@@ -78,11 +78,18 @@ Si hay cambios de código:
 - Solicitar aprobación del desarrollador para push.
 
 ### 8. PASS
-- Marcar tarea como **COMPLETADA**.
-- Generar changelog (si aplica).
-- Actualizar task.md con estado final.
+- Informar que la Fase 3 (Closure) está completada correctamente.
+- El `architect-agent` **DEBE realizar explícitamente** las siguientes acciones:
+  - Marcar la tarea como **COMPLETADA** en el `task.md`.
+  - Establecer `task.lifecycle.phases.short-phase-3-closure.completed = true`.
   - Establecer `task.lifecycle.phases.short-phase-3-closure.validated_at = <ISO-8601>`.
   - Actualizar `task.phase.updated_at = <ISO-8601>`.
+  - Marcar la tarea como **técnicamente cerrada**.
+- Esta actualización **NO es automática** y **NO puede ser inferida**.
+- Generar changelog (si aplica).
+- Indicar rutas:
+  - `closure.md`
+  - `task.md` actualizado
 
 ---
 

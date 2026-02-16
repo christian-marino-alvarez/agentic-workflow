@@ -88,14 +88,19 @@ Ejemplos válidos:
  - Confirmar que el push fue exitoso.
 
 7. PASS
- - Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md`:
-   - marcar Fase 8 como completada
-   - establecer `task.lifecycle.phases.phase-8-commit-push.validated_at = <ISO-8601>`
-   - actualizar `task.phase.updated_at = <ISO-8601>`
-   - marcar la tarea como **técnicamente cerrada**
+ - Informar que la Fase 8 está completada correctamente.
+ - El `architect-agent` **DEBE realizar explícitamente** las siguientes acciones:
+   - Marcar la Fase 8 como completada en el `task.md`.
+   - Establecer `task.lifecycle.phases.phase-8-commit-push.completed = true`.
+   - Establecer `task.lifecycle.phases.phase-8-commit-push.validated_at = <ISO-8601>`.
+   - Actualizar `task.phase.updated_at = <ISO-8601>`.
+   - Marcar la tarea como **técnicamente cerrada**.
+ - Esta actualización **NO es automática** y **NO puede ser inferida**.
  - Indicar:
    - rama destino
    - referencia de commits
+   - `changelog.md`
+   - `task.md` actualizado
 
 ---
 

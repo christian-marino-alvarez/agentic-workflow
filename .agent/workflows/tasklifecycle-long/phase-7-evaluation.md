@@ -82,12 +82,21 @@ blocking: true
    - Si respuesta es NO → ir a **Paso 8 (FAIL)**.
 
 7. PASS
+   - Informar que la Fase 7 está completada correctamente.
    - Registrar validación en `metrics.md`.
-   - Actualizar `.agent/artifacts/<taskId>-<taskTitle>/task.md`:
-     - marcar Fase 7 como completada
-     - establecer `task.lifecycle.phases.phase-7-evaluation.validated_at = <ISO-8601>`
-     - actualizar `task.phase.updated_at = <ISO-8601>`
-     - avanzar `task.phase.current = aliases.tasklifecycle-long.phases.phase_8.id`
+   - El `architect-agent` **DEBE realizar explícitamente** las siguientes acciones:
+     - Marcar la Fase 7 como completada en el `task.md`.
+     - Establecer `task.lifecycle.phases.phase-7-evaluation.completed = true`.
+     - Establecer `task.lifecycle.phases.phase-7-evaluation.validated_at = <ISO-8601>`.
+     - Actualizar `task.phase.updated_at = <ISO-8601>`.
+     - Actualizar el estado:
+       - `task.phase.current = aliases.tasklifecycle-long.phases.phase_8.id`
+   - Esta actualización **NO es automática** y **NO puede ser inferida**.
+   - Hasta que este cambio no se refleje en el `task.md`, **no se puede iniciar la Fase 8**.
+   - Indicar rutas:
+     - `metrics.md`
+     - `agent-scores.md`
+     - `task.md` actualizado
 
 ---
 

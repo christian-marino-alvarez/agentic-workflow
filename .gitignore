@@ -1,6 +1,5 @@
 node_modules
 dist
-.agent
 .agent.backup_*
 .backups/npm-packages/*.tgz
 .DS_Store

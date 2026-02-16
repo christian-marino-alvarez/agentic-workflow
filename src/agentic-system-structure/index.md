@@ -8,9 +8,9 @@ description: "UNIFIED ROOT INDEX. Lists ALL system aliases in a single file."
 
 # UNIFIED INDEX — .agent
 
-## Objetivo
-Este fichero es la **Fuente de Verdad Única** para la ubicación de ficheros en el sistema `.agent`.
-Contiene **TODOS** los alias de Rules, Workflows, Templates y Artifacts.
+## Objective
+This file is the **Single Source of Truth** for file locations in the `.agent` system.
+It contains **ALL** aliases for Rules, Workflows, Templates, and Artifacts.
 
 ## Aliases (YAML)
 ```yaml
@@ -77,6 +77,6 @@ agent:
       task: .agent/artifacts/candidate/task.md
 ```
 
-## Reglas
-- **No existen sub-índices válidos**. Todo debe estar aquí.
-- Si añades un fichero al sistema, **DEBES** registrarlo aquí.
+## Rules
+- **No valid sub-indexes exist**. Everything must be here.
+- If you add a file to the system, you **MUST** register it here.

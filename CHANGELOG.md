@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.24.0-beta.3](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.23.0-beta.3...agentic-workflow-v1.24.0-beta.3) (2026-02-16)
+
+
+### Features
+
+* add coding workflows for backend, background, view, and integration ([fdc9f09](https://github.com/christian-marino-alvarez/agentic-workflow/commit/fdc9f09b8405529fc812f5fbff41711b6073028d))
+* configure npm workspaces for app, core, and cli modules ([854387c](https://github.com/christian-marino-alvarez/agentic-workflow/commit/854387ca766b9932d1d31d008eb5cf1238978479))
+* **e2e:** Playwright E2E tests, webview fixes, governance updates ([7b463c3](https://github.com/christian-marino-alvarez/agentic-workflow/commit/7b463c39a5fe6a79d9c0dc111a18cc162208ccc0))
+
+
+### Bug Fixes
+
+* add explicit PASS steps to coding workflows ([8d8ba8e](https://github.com/christian-marino-alvarez/agentic-workflow/commit/8d8ba8e3a38a6f328688e7a357bef8bfb1f0ecda))
+
 ## [1.22.0-beta.6](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.22.0-beta.5...agentic-workflow-v1.22.0-beta.6) (2026-02-02)
 
 ### Features

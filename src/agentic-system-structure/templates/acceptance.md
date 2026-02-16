@@ -1,9 +1,3 @@
----
-kind: template
-name: acceptance
-source: agentic-system-structure
----
-
 # Acceptance Criteria — {{task.id}}-{{task.title}}
 
 ## Identificacion del agente (OBLIGATORIA)

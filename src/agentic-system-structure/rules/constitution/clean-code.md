@@ -1,9 +1,3 @@
----
-kind: rule
-name: clean-code
-source: agentic-system-structure
----
-
 # Clean Code Rules
 
 type: rules
@@ -184,6 +178,11 @@ Any deviation is a violation.
 - Code MUST be verifiable in isolation.
 - Hidden side effects are forbidden.
 - Deterministic behavior is mandatory.
+
+## 11.1 TypeScript Compile Gate (MANDATORY)
+
+- `npm run compile` MUST succeed before any phase gate can be approved.
+- If compile fails, the phase is considered **BLOCKED** until fixed.
 
 ---
 

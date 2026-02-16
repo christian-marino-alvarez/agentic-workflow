@@ -16,6 +16,7 @@
 - **Standalone & Portable**: Works in any project provided the IDE agent can read Markdown files.
 - **CLI-First**: Fully functional via command line, decoupling the agentic system from specific IDE extensions.
 
+
 ## 📦 Installation
 
 ```bash

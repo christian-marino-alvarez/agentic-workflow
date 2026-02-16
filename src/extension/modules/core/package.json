@@ -1,0 +1,13 @@
+{
+  "name": "@agentic-workflow/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "fastify": "^5.7.4",
+    "lit": "^3.3.2"
+  },
+  "peerDependencies": {
+    "@types/vscode": "^1.108.1"
+  }
+}

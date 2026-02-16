@@ -1,0 +1,10 @@
+{
+  "name": "@agentic-workflow/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./index.ts",
+  "dependencies": {
+    "@clack/prompts": "^0.7.0"
+  }
+}

@@ -1,9 +1,3 @@
----
-kind: artifact
-name: acceptance
-source: agentic-system-structure
----
-
 # Acceptance Criteria — task-20260128-reorganize-structure
 
 ## Identificacion del agente (OBLIGATORIA)

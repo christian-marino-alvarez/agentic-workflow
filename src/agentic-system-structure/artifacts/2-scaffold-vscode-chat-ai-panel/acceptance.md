@@ -1,9 +1,3 @@
----
-kind: artifact
-name: acceptance
-source: agentic-system-structure
----
-
 🏛️ **architect-agent**: Acceptance criteria definidos para el scaffolding del chat AI en la extension de VS Code.
 
 # Acceptance Criteria — 2-scaffold-vscode-chat-ai-panel

@@ -64,7 +64,7 @@ execution:
 
 ### Cambios realizados
 - Creado directorio `src/agentic-system-structure`.
-- Movido `src/cli`, `src/infrastructure`, `src/rules`, `src/templates`, `src/workflows`, `src/artifacts`, `src/index.md` a la nueva ubicación.
+- Movido `src/cli`, `src/core`, `src/rules`, `src/templates`, `src/workflows`, `src/artifacts`, `src/index.md` a la nueva ubicación.
 
 ### Decisiones técnicas
 - Uso de `mv` con múltiples argumentos para atomizar la operación.

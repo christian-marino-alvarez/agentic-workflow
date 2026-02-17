@@ -1,9 +1,3 @@
----
-kind: artifact
-name: 3-dev-agent-marketplace-evidence
-source: agentic-system-structure
----
-
 🧑‍💻 **dev-agent**: Tarea asignada para documentar evidencia de Marketplace.
 
 ---

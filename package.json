@@ -36,6 +36,18 @@
           "name": "Agent Chat",
           "icon": "media/agent-chat.svg",
           "type": "webview"
+        },
+        {
+          "id": "auth-view",
+          "name": "Auth",
+          "type": "webview",
+          "visibility": "hidden"
+        },
+        {
+          "id": "settings-view",
+          "name": "Settings",
+          "type": "webview",
+          "visibility": "hidden"
         }
       ]
     },

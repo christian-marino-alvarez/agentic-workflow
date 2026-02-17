@@ -16,6 +16,9 @@
     "src/**/*"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    ".vscode-test",
+    "src/cli/scaffolding/**/templates",
+    "src/agentic-system-structure"
   ]
 }

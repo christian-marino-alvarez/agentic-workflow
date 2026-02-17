@@ -16,13 +16,17 @@ export type MessageOrigin = typeof MessageOrigin[keyof typeof MessageOrigin];
 
 /**
  * Standardized Message structure for cross-component communication.
+ * - `id`: Unique identifier for this message (used for correlation).
+ * - `correlationId`: If this is a response, links back to the original request's `id`.
  */
 export interface Message {
+  id: string;
   to: string;
   from: string;
   origin: MessageOrigin;
   timestamp: number;
   payload: Payload;
+  correlationId?: string;
 }
 
 export type MessageHandler = (message: Message) => void | Promise<void>;

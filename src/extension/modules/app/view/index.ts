@@ -1,42 +1,34 @@
 import { View } from '../../core/view/index.js';
 import { customElement, state } from 'lit/decorators.js';
+import { html } from 'lit';
 import { styles } from './templates/css.js';
 import { render } from './templates/html.js';
+import '../../settings/view/index.js';
+import { NAME } from '../constants.js';
 
-@customElement('main-view')
+@customElement(`${NAME}-view`)
 export class AppView extends View {
+  protected override readonly moduleName = NAME;
   static override styles = styles;
 
   @state()
-  public lastPong: string = '-';
-
-  @state()
-  public pendingRequests: number = 0;
+  public activeTab: string = 'settings';
 
   override render() {
-    return render.call(this);
+    return render(this);
   }
 
-  override connectedCallback() {
-    super.connectedCallback();
-    this.log('MainView Connected');
+  /**
+   * Handle incoming global app messages.
+   */
+  public override async listen(message: any): Promise<void> {
+    const { command, data } = message.payload || {};
 
-    // Listen for backend responses forwarded by background
-    this.onMessage((msg: any) => {
-      if (msg.payload.command === 'ping::response') {
-        this.log('Received Pong from Backend');
-        const timestamp = new Date(msg.payload.data.result.timestamp).toLocaleTimeString();
-        this.lastPong = timestamp;
-        this.pendingRequests = Math.max(0, this.pendingRequests - 1);
-        this.requestUpdate();
-      }
-    });
-  }
-
-  public ping() {
-    this.log('Ping Button Clicked');
-    this.pendingRequests++;
-    this.requestUpdate();
-    this.sendMessage('main::background', 'ping', { timestamp: Date.now() });
+    switch (command) {
+      // Add global app command handlers here
+      case 'ping::response':
+        this.log('Ping response received:', data);
+        break;
+    }
   }
 }

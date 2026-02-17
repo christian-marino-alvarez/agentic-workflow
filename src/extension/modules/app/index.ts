@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+
 import { App as CoreApp } from '../core/index.js';
 import { AppBackground } from './background/index.js';
 
@@ -8,7 +9,7 @@ import { AppBackground } from './background/index.js';
  */
 export class App extends CoreApp {
 
-  constructor(context: vscode.ExtensionContext) {
+  constructor(context: any) {
     super(context);
   }
 
@@ -17,7 +18,7 @@ export class App extends CoreApp {
    */
   public async activate(): Promise<void> {
     // 1. Register UI Module (Background manages Sidecar spawn)
-    const background = new AppBackground(this.context.extensionUri);
+    const background = new AppBackground(this.context);
     this.register('mainView', background);
 
     this.log('Application Shell Activated');

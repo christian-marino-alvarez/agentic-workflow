@@ -51,7 +51,12 @@ export abstract class AbstractBackend {
     this.server.post('/command', async (request: FastifyRequest, reply: FastifyReply) => {
       const { command, data } = request.body as any;
       try {
-        const result = await this.handleCommand(command, data);
+        // Native ping handler
+        if (command === 'ping') {
+          return { success: true, result: { pong: true, layer: 'backend', module: this.moduleName, timestamp: Date.now() } };
+        }
+
+        const result = await this.listen(command, data);
         return { success: true, result };
       } catch (error) {
         console.error(`[${this.name}] Command Error (${command}):`, error);
@@ -62,9 +67,9 @@ export abstract class AbstractBackend {
 
   /**
    * Handle incoming commands from the Extension Host.
-   * Must be implemented by subclasses.
+   * Override in subclasses to process commands.
    */
-  protected abstract handleCommand(command: string, data: any): Promise<any>;
+  protected abstract listen(command: string, data: any): Promise<any>;
 
   /**
    * Start the server.

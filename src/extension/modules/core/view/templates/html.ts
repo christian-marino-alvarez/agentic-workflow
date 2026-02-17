@@ -12,7 +12,7 @@ export function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-RANDOM' vscode-resource: vscode-webview-resource: https: http:;">
+      <meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src vscode-resource: vscode-webview-resource: https: http:; img-src vscode-resource: vscode-webview-resource: https: http: data:; style-src 'unsafe-inline' vscode-resource: vscode-webview-resource: https: http:; script-src 'nonce-RANDOM' 'unsafe-eval' vscode-resource: vscode-webview-resource: https: http:;">
       <title>Agentic Workflow</title>
       <style>
         body { margin: 0; padding: 0; }

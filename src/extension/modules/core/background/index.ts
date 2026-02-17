@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { spawn, ChildProcess, exec } from 'child_process';
 import * as vscode from 'vscode';
 import { MessagingBackground } from '../messaging/background.js';
@@ -5,13 +6,25 @@ import { MessageOrigin, LayerScope } from '../constants.js';
 import { Message } from '../types.js';
 import { Logger } from '../logger.js';
 
+/** Default timeout for awaiting a response (ms) */
+const REQUEST_TIMEOUT = 10_000;
+
+/** Pending request entry */
+interface PendingRequest {
+  resolve: (data: any) => void;
+  reject: (error: Error) => void;
+  timer: ReturnType<typeof setTimeout>;
+}
+
 /**
  * Unified Background layer base (Logic + UI Controller).
  * Manages logic communication and acts as the Webview Provider.
+ * Supports request-response pattern via correlation IDs.
  */
 export abstract class Background implements vscode.WebviewViewProvider {
   private messenger: MessagingBackground = new MessagingBackground();
   private sidecarProcess?: ChildProcess;
+  private pendingRequests = new Map<string, PendingRequest>();
   protected disposables: { dispose: () => void }[] = [];
   protected readonly scope = LayerScope.Background;
   protected readonly identity: string;
@@ -22,15 +35,77 @@ export abstract class Background implements vscode.WebviewViewProvider {
     protected readonly viewTagName: string
   ) {
     this.identity = `${this.moduleName}::${this.scope}`;
+
+    // Wire message subscription → listen()
+    this.messenger.subscribe(this.identity, async (msg: Message) => {
+      // Check if this is a response to a pending request
+      if (msg.correlationId && this.pendingRequests.has(msg.correlationId)) {
+        const pending = this.pendingRequests.get(msg.correlationId)!;
+        clearTimeout(pending.timer);
+        this.pendingRequests.delete(msg.correlationId);
+        pending.resolve(msg.payload?.data);
+        return;
+      }
+
+      const { command } = msg.payload || {};
+
+      // Native ping handler
+      if (command === 'ping') {
+        this.reply(
+          msg.from || 'view',
+          'ping::response',
+          { pong: true, layer: 'background', module: this.moduleName, timestamp: Date.now() },
+          msg.id
+        );
+        return;
+      }
+
+      // Native log handler
+      if (command === 'log') {
+        const { message, args } = msg.payload.data || {};
+        // Forward to output channel via Logger, prefixed with [View]
+        Logger.log(`[View] ${message}`, ...(args || []));
+        return;
+      }
+
+      // Delegate to subclass listen() — if it returns data, auto-reply
+      try {
+        const result = await this.listen(msg);
+        if (result !== undefined && msg.id) {
+          this.reply(msg.from || 'view', `${command}::response`, result, msg.id);
+        }
+      } catch (error: any) {
+        this.log(`Error in listen (${command}):`, error.message);
+        if (msg.id) {
+          this.reply(msg.from || 'view', `${command}::response`, { success: false, error: error.message }, msg.id);
+        }
+      }
+    });
   }
 
   /**
-   * Spawn a sidecar process for this backend.
+   * Ping the Backend sidecar and await the pong response.
+   * Native connectivity check.
+   */
+  public async ping(): Promise<any> {
+    return this.sendMessage(`${this.moduleName}::backend`, 'ping');
+  }
+
+  /**
+   * Override in subclasses to handle incoming messages.
+   * Return data to auto-reply with correlationId, or void for no reply.
+   */
+  public listen(message: Message): Promise<any> | void {
+    // Base implementation — no-op. Subclasses override.
+  }
+
+  /**
+   * Run the Backend sidecar process for this module.
    * Standardizes lifecycle and logging for all node-based backends.
    */
-  protected async spawnSidecar(scriptPath: string, port: number = 3000): Promise<void> {
+  protected async runBackend(scriptPath: string, port: number = 3000): Promise<void> {
     if (this.sidecarProcess) {
-      this.log('Sidecar already running, skipping spawn.');
+      this.log('Backend sidecar already running, skipping spawn.');
       return;
     }
 
@@ -42,11 +117,12 @@ export abstract class Background implements vscode.WebviewViewProvider {
     });
 
     this.sidecarProcess.stdout?.on('data', (data) => {
-      this.log(`[Sidecar] ${data.toString().trim()}`);
+      // Direct log via Logger to use ::backend tag instead of ::background
+      Logger.log(`[${this.moduleName}::backend] ${data.toString().trim()}`);
     });
 
     this.sidecarProcess.stderr?.on('data', (data) => {
-      this.log(`[Sidecar Error] ${data.toString().trim()}`);
+      Logger.log(`[${this.moduleName}::backend] [ERROR] ${data.toString().trim()}`);
     });
 
     this.sidecarProcess.on('exit', (code) => {
@@ -66,23 +142,82 @@ export abstract class Background implements vscode.WebviewViewProvider {
   }
 
   /**
-   * Send a message through the private messenger.
+   * Send a message and await the correlated response.
+   *
+   * @param to          Target scope
+   * @param command     Command identifier
+   * @param data        Payload data
+   * @param timeout     Max wait time in ms (default 10s)
+   * @returns           The response payload data
    */
-  public sendMessage(to: string, command: string, data: any = {}): void {
+  public sendMessage(to: string, command: string, data: any = {}, timeout = REQUEST_TIMEOUT): Promise<any> {
+    const id = randomUUID();
+
     this.messenger.emit({
+      id,
       from: this.identity,
       to,
       origin: MessageOrigin.Server,
       timestamp: Date.now(),
       payload: { command, data }
     });
+
+    this.log(`→ ${command}`);
+
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.pendingRequests.delete(id);
+        reject(new Error(`[Background:${this.moduleName}] Timeout waiting for response to "${command}" (${timeout}ms)`));
+      }, timeout);
+
+      this.pendingRequests.set(id, { resolve, reject, timer });
+    });
   }
 
   /**
-   * Listen for messages targeted specifically to this identity.
+   * Send a response message (fire-and-forget, no correlation needed).
+   * Used internally by handle() to send responses back.
    */
-  public onMessage(handler: (message: Message) => void): { dispose: () => void } {
-    return this.messenger.subscribe(this.identity, handler);
+  private reply(to: string, command: string, data: any, correlationId: string): void {
+    this.messenger.emit({
+      id: randomUUID(),
+      from: this.identity,
+      to,
+      origin: MessageOrigin.Server,
+      timestamp: Date.now(),
+      payload: { command, data },
+      correlationId
+    });
+  }
+
+  /**
+   * Register a request-response handler for a specific command.
+   * The handler receives the request data and returns the response data.
+   * The response is automatically sent back with the correlationId.
+   */
+  public handle(command: string, handler: (data: any) => Promise<any>): { dispose: () => void } {
+    return this.messenger.subscribe(this.identity, async (message: Message) => {
+      if (message.payload.command !== command) { return; }
+
+      this.log(`Handling: ${command}`);
+      try {
+        const result = await handler(message.payload.data);
+        this.reply(
+          message.from || 'view',
+          `${command}::response`,
+          result,
+          message.id
+        );
+      } catch (error: any) {
+        this.log(`Error handling ${command}:`, error.message);
+        this.reply(
+          message.from || 'view',
+          `${command}::response`,
+          { success: false, error: error.message },
+          message.id
+        );
+      }
+    });
   }
 
   // --- WebviewViewProvider Implementation ---
@@ -119,6 +254,12 @@ export abstract class Background implements vscode.WebviewViewProvider {
       this.sidecarProcess.kill();
       this.sidecarProcess = undefined;
     }
+    // Clear pending requests
+    this.pendingRequests.forEach(({ timer, reject }) => {
+      clearTimeout(timer);
+      reject(new Error('Disposed'));
+    });
+    this.pendingRequests.clear();
     this.messenger.dispose();
     this.disposables.forEach(d => d.dispose());
   }
@@ -131,7 +272,7 @@ export abstract class Background implements vscode.WebviewViewProvider {
     return new Promise((resolve) => {
       exec(`lsof -i :${port} -t`, (err, stdout) => {
         if (err || !stdout) {
-          resolve(); // No process found or error finding/killing
+          resolve();
           return;
         }
 
@@ -153,6 +294,6 @@ export abstract class Background implements vscode.WebviewViewProvider {
    * Standardized logger for the Background layer.
    */
   protected log(message: string, ...args: any[]): void {
-    Logger.log(`[Background:${this.moduleName}] ${message}`, ...args);
+    Logger.log(`[${this.moduleName}::background] ${message}`, ...args);
   }
 }

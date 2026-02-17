@@ -1,11 +1,12 @@
 import * as vscode from 'vscode';
 import { Logger } from './logger.js';
 
-// export * from './backend/index.js'; // Removed to isolate Fastify from Extension Host
+export * from './backend/index.js'; // Abstract Backend
 export * from './constants.js';
 export type { Message, MessageHandler, Payload, IMessageTransport } from './types.js';
 export { Logger } from './logger.js';
 export * from './messaging/index.js';
+export * from './messaging/types.js'; // Export Messaging Types
 export * from './background/index.js';
 export { View } from './view/index.js';
 export * as ViewHtml from './view/templates/html.js';

@@ -1,21 +1,18 @@
 import { AbstractBackend } from '../../core/backend/index.js';
 
+import { NAME } from '../constants.js';
+
 /**
  * App Module Backend Server.
  * Runs in the Sidecar process.
  */
 export class AppServer extends AbstractBackend {
   constructor() {
-    super('app', { name: 'AppSidecar' });
+    super(NAME, { name: 'AppSidecar' });
   }
 
-  protected async handleCommand(command: string, data: any): Promise<any> {
+  protected async listen(command: string, data: any): Promise<any> {
     console.log(`[AppSidecar] Handling Command: ${command}`, JSON.stringify(data));
-
-    if (command === 'ping') {
-      return { pong: true, timestamp: Date.now() };
-    }
-
     return { success: true, message: 'Command received', command };
   }
 }

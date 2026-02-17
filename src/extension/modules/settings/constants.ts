@@ -19,8 +19,8 @@ export const SETTINGS_MODULE: IModule = {
  * Defines the targets for sendMessage calls.
  */
 export const SCOPES = {
-  /** Background handler that processes Settings requests (AppBackground) */
-  BACKGROUND: 'app',
+  /** Background handler that processes Settings requests */
+  BACKGROUND: 'settings',
   /** View layer target for responses */
   VIEW: 'view',
 };

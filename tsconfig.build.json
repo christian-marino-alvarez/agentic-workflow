@@ -4,7 +4,6 @@
     "node_modules",
     "**/*.test.ts",
     "src/extension/**",
-    "src/agentic-system-structure/skills/generators/module/templates",
     "src/cli/scaffolding/generators/module/templates"
   ]
 }

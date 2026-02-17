@@ -1,7 +1,10 @@
 import { intro, outro, spinner, note } from '@clack/prompts';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { resolveCorePath, resolveInstalledCorePath } from '../../core/mapping/resolver.js';
+import {
+  resolveCorePath,
+  resolveInstalledCorePath
+} from '../../infrastructure/mapping/resolver.js';
 
 /**
  * Lógica central para la creación de componentes sin dependencias de UI (Clack).

@@ -1,0 +1,14 @@
+{
+  "name": "@agentic-workflow/app",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./index.ts",
+  "dependencies": {
+    "@agentic-workflow/core": "0.0.0",
+    "lit": "^3.3.2"
+  },
+  "peerDependencies": {
+    "@types/vscode": "^1.108.1"
+  }
+}

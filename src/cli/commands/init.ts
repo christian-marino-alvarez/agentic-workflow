@@ -1,16 +1,21 @@
 import { intro, outro, spinner, confirm, note } from '@clack/prompts';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { detectAgentSystem } from '../../core/migration/detector.js';
-import { resolveCorePath, resolveInstalledCorePath } from '../../core/mapping/resolver.js';
-import { performBackup } from '../../core/utils/backup.js';
+import { detectAgentSystem } from '../../infrastructure/migration/detector.js';
+import {
+  resolveCorePath,
+  resolveInstalledCorePath
+} from '../../infrastructure/mapping/resolver.js';
+import { performBackup } from '../../infrastructure/utils/backup.js';
+import { startRuntimeMcpServer } from '../../runtime/mcp/server.js';
 
-export async function initCommand(options: { nonInteractive?: boolean } = {}) {
+export async function initCommand(options: { nonInteractive?: boolean; startMcp?: boolean } = {}) {
   intro('Agentic Workflow Initialization');
 
   const cwd = process.cwd();
   const agentDir = path.join(cwd, '.agent');
   const nonInteractive = Boolean(options.nonInteractive);
+  const startMcp = Boolean(options.startMcp);
 
   // 1. Existing System Detection
   const systemType = await detectAgentSystem(cwd);
@@ -19,8 +24,8 @@ export async function initCommand(options: { nonInteractive?: boolean } = {}) {
     const shouldUpdate = nonInteractive
       ? true
       : await confirm({
-          message: 'A legacy .agent system has been detected. Do you want to migrate it to the latest portable version?',
-        });
+        message: 'A legacy .agent system has been detected. Do you want to migrate it to the latest portable version?',
+      });
 
     if (!shouldUpdate || typeof shouldUpdate === 'symbol') {
       outro('Initialization cancelled by user.');
@@ -40,8 +45,8 @@ export async function initCommand(options: { nonInteractive?: boolean } = {}) {
     const reinit = nonInteractive
       ? true
       : await confirm({
-          message: 'Do you want to force a re-initialization? (A backup will be created)',
-        });
+        message: 'Do you want to force a re-initialization? (A backup will be created)',
+      });
     if (!reinit || typeof reinit === 'symbol') {
       outro('Process finished.');
       return;
@@ -49,7 +54,11 @@ export async function initCommand(options: { nonInteractive?: boolean } = {}) {
     const sBackup = spinner();
     sBackup.start('Creating backup...');
     const resultBackup = await performBackup(cwd);
-    sBackup.stop(`Backup created at: ${path.relative(cwd, resultBackup)}`);
+    if (resultBackup) {
+      sBackup.stop(`Backup created at: ${path.relative(cwd, resultBackup)}`);
+    } else {
+      sBackup.stop('No backup was required.');
+    }
   }
 
   // 2. Cleanup Legacy Files (Enforce Purity)
@@ -71,12 +80,18 @@ export async function initCommand(options: { nonInteractive?: boolean } = {}) {
 
     await scaffoldAgentWorkspace(corePath, agentDir);
     await writeAgentsEntry(cwd);
+    await fs.mkdir(path.join(cwd, '.backups'), { recursive: true });
 
     s.stop('Configuration complete.');
 
     note(`Core copied from: ${corePath}\nLocal .agent created with full core files.`, 'Installed');
 
     outro('Agentic System initialized successfully.');
+
+    if (startMcp) {
+      note('Starting MCP server (foreground)...', 'MCP');
+      await startRuntimeMcpServer();
+    }
 
   } catch (error) {
     s.stop('Initialization failed.');

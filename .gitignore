@@ -1,7 +1,7 @@
 node_modules
 dist
-.agent
 .agent.backup_*
+.backups/npm-packages/*.tgz
 .DS_Store
 *.log
 npm-debug.log*
@@ -10,3 +10,6 @@ yarn-error.log*
 .env
 .env.local
 .vscode
+
+.vscode-test/
+test-results/

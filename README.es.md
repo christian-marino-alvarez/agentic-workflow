@@ -21,6 +21,14 @@
 npm install @christianmaf80/agentic-workflow
 ```
 
+## 🤖 Inicia con Ayuda de IA
+
+Si estás con un asistente de IA (como Cursor, Windsurf o Copilot), puedes arrancar todo el sistema directamente desde el chat:
+
+> **Tú:** "Por favor, ejecuta el comando `init` para agentic-workflow"
+
+El agente usará sus herramientas de terminal para configurar el entorno, crear la estructura `.agent` y preparar el proyecto para ciclos gobernados sin que tengas que escribir ni un solo comando.
+
 ## 🛠️ Comandos del CLI
 
 ### `init`

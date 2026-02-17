@@ -14,12 +14,22 @@
 - **Local Core Snapshot**: Copies core rules and workflows into `.agent/` so runtime no longer depends on `node_modules` access.
 - **Zero-Tolerance Governance**: Automatic performance penalties for protocol violations.
 - **Standalone & Portable**: Works in any project provided the IDE agent can read Markdown files.
+- **CLI-First**: Fully functional via command line, decoupling the agentic system from specific IDE extensions.
+
 
 ## 📦 Installation
 
 ```bash
 npm install @christianmaf80/agentic-workflow
 ```
+
+## 🤖 Start with AI Assist
+
+If you are using this framework with an AI coding assistant (like Cursor, Windsurf, or Copilot), you can bootstrap the entire system directly from the chat:
+
+> **You:** "Please run the `init` command for agentic-workflow"
+
+The agent will use its terminal tools to set up the environment, create the `.agent` structure, and prepare the project for governed cycles without you typing a single command.
 
 ## 🛠️ CLI Commands
 

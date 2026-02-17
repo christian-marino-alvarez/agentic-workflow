@@ -1,89 +1,168 @@
 {
-    "name": "@christianmaf80/agentic-workflow",
-    "version": "1.18.3",
-    "description": "Portable agentic workflow orchestration system with strict identity and gate discipline",
-    "type": "module",
-    "displayName": "Agentic Workflow VSCode",
-    "main": "./dist/extension.js",
-    "engines": {
-        "vscode": "^1.108.1"
+  "name": "@christianmaf80/agentic-workflow",
+  "version": "1.24.0-beta.4",
+  "description": "Portable agentic workflow orchestration system with strict identity and gate discipline",
+  "type": "module",
+  "workspaces": [
+    "src/extension/modules/core",
+    "src/extension/modules/app",
+    "src/cli"
+  ],
+  "displayName": "Agentic Workflow",
+  "main": "./dist/extension/extension.js",
+  "engines": {
+    "vscode": "^1.108.2"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:mainView"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "main",
+          "title": "Agent Chat",
+          "icon": "media/agent-chat.svg"
+        }
+      ]
     },
-    "categories": [
-        "Other"
-    ],
-    "activationEvents": [],
-    "contributes": {
-        "commands": [
-            {
-                "command": "agentic-workflow.helloWorld",
-                "title": "Hello World"
+    "views": {
+      "main": [
+        {
+          "id": "mainView",
+          "name": "Agent Chat",
+          "icon": "media/agent-chat.svg",
+          "type": "webview"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Agentic Workflow",
+      "properties": {
+        "agenticWorkflow.models": {
+          "type": "array",
+          "default": [],
+          "description": "List of LLM models configured for Agentic Workflow",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "modelName": {
+                "type": "string"
+              },
+              "provider": {
+                "type": "string",
+                "enum": [
+                  "gemini",
+                  "codex",
+                  "claude"
+                ]
+              },
+              "apiKey": {
+                "type": "string"
+              },
+              "maxTokens": {
+                "type": "number"
+              },
+              "temperature": {
+                "type": "number"
+              }
             }
-        ]
-    },
-    "bin": {
-        "agentic-workflow": "bin/cli.js"
-    },
-    "files": [
-        "dist/cli",
-        "dist/core",
-        "dist/rules",
-        "dist/workflows",
-        "dist/templates",
-        "dist/artifacts",
-        "dist/index.md",
-        "bin",
-        "README.md",
-        "LICENSE",
-        "RELEASE_PROCESS.md"
-    ],
-    "scripts": {
-        "build": "node scripts/clean-dist.mjs && tsc && npm run copy-assets",
-        "copy-assets": "cp -r src/rules src/workflows src/templates src/artifacts dist/ && cp src/index.md dist/index.md",
-        "start": "node dist/index.js",
-        "publish:npm": "npm publish --registry https://registry.npmjs.org --access public",
-        "publish:github": "npm publish --registry https://npm.pkg.github.com",
-        "vscode:prepublish": "npm run compile",
-        "compile": "tsc -p ./",
-        "watch": "tsc -watch -p ./",
-        "pretest": "npm run compile && npm run lint",
-        "lint": "eslint src",
-        "test": "vscode-test"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/christian-marino-alvarez/agentic-workflow.git"
-    },
-    "bugs": {
-        "url": "https://github.com/christian-marino-alvarez/agentic-workflow/issues"
-    },
-    "homepage": "https://github.com/christian-marino-alvarez/agentic-workflow#readme",
-    "keywords": [
-        "agent",
-        "workflow",
-        "orchestration",
-        "ai",
-        "llm",
-        "agentic",
-        "governance"
-    ],
-    "author": "Christian Marino Alvarez",
-    "license": "ISC",
-    "dependencies": {
-        "@clack/prompts": "^0.7.0",
-        "commander": "^11.1.0",
-        "gray-matter": "^4.0.3"
-    },
-    "devDependencies": {
-        "@types/mocha": "^10.0.10",
-        "@types/node": "^20.10.6",
-        "@types/vscode": "^1.108.1",
-        "@vscode/test-cli": "^0.0.12",
-        "@vscode/test-electron": "^2.5.2",
-        "eslint": "^9.39.2",
-        "typescript": "^5.9.3",
-        "typescript-eslint": "^8.52.0"
-    },
-    "overrides": {
-        "diff": "8.0.3"
+          }
+        },
+        "agenticWorkflow.activeModelId": {
+          "type": "string",
+          "default": "",
+          "description": "ID of the currently active LLM model"
+        }
+      }
     }
+  },
+  "bin": {
+    "agentic-workflow": "bin/cli.js"
+  },
+  "files": [
+    "dist/cli",
+    "dist/core",
+    "dist/infrastructure",
+    "dist/agent",
+    "dist/runtime",
+    "bin",
+    "README.md",
+    "LICENSE",
+    "RELEASE_PROCESS.md"
+  ],
+  "scripts": {
+    "build": "node scripts/clean-dist.mjs && tsc -p tsconfig.build.json && npm run copy-assets",
+    "copy-assets": "mkdir -p dist/agent && cp -r src/agentic-system-structure/rules src/agentic-system-structure/workflows src/agentic-system-structure/templates src/agentic-system-structure/artifacts dist/agent/ && cp src/agentic-system-structure/index.md dist/agent/index.md",
+    "start": "node dist/index.js",
+    "publish:npm": "npm publish --registry https://registry.npmjs.org --access public",
+    "publish:github": "npm publish --registry https://npm.pkg.github.com",
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./ && node scripts/build-view.mjs",
+    "watch": "tsc -watch -p ./ & node scripts/build-view.mjs --watch",
+    "lint": "eslint src",
+    "test": "npx playwright test",
+    "test:e2e": "npx playwright test",
+    "test:e2e:legacy": "vscode-test",
+    "test:unit": "vitest run src/extension",
+    "package": "npm pack && mv *.tgz .backups/npm-packages/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/christian-marino-alvarez/agentic-workflow.git"
+  },
+  "bugs": {
+    "url": "https://github.com/christian-marino-alvarez/agentic-workflow/issues"
+  },
+  "homepage": "https://github.com/christian-marino-alvarez/agentic-workflow#readme",
+  "keywords": [
+    "agent",
+    "workflow",
+    "orchestration",
+    "ai",
+    "llm",
+    "agentic",
+    "governance"
+  ],
+  "author": "Christian Marino Alvarez",
+  "license": "ISC",
+  "dependencies": {
+    "@clack/prompts": "^0.7.0",
+    "@fastify/cors": "^11.2.0",
+    "@material/web": "^2.4.1",
+    "commander": "^11.1.0",
+    "fastify": "^5.7.4",
+    "gray-matter": "^4.0.3",
+    "lit": "^3.3.2",
+    "openai": "^6.17.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^20.10.6",
+    "@types/vscode": "^1.108.1",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2",
+    "esbuild": "^0.27.3",
+    "eslint": "^9.39.2",
+    "glob": "^13.0.3",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.52.0",
+    "vitest": "^4.0.18",
+    "yeoman-generator": "^7.5.1",
+    "yo": "^6.0.0"
+  },
+  "overrides": {
+    "diff": "8.0.3"
+  }
 }

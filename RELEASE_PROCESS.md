@@ -19,9 +19,9 @@ The project uses GitHub Actions for automated releases to npm.
      - Merges to `develop` -> `beta` tag.
      - Merges to `main` -> `latest` tag.
    - If validations pass, it publishes the package to npm.
-
 ### Manual Steps for Release
 1. Update version: `npm version prerelease --preid=beta` (or appropriate semver command).
 2. Update `CHANGELOG.md`.
-3. Create a branch: `git checkout -b ci/publish-beta-x.x.x`.
-4. Push and create PR.
+3. (Optional) Generate local package: `npm run package`. The `.tgz` file will be moved to `.backups/npm-packages/`.
+4. Create a branch: `git checkout -b ci/publish-beta-x.x.x`.
+5. Push and create PR.

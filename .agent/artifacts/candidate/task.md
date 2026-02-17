@@ -1,5 +1,14 @@
+---
+id: candidate
+title: review-and-update-backlog
+owner: architect-agent
+strategy: long
+---
+
 # Task Candidate
 
-- title: Re-implement Setup/Config (D1)
-- description: Re-implement the Setup and Configuration domain (D1) to align with the new modular architecture. This includes implementing a real `SettingsStorage` in the Core Background layer and recreating the Configuration UI using Lit components, ensuring strict separation of concerns and proper state management.
-- goal: Implement persistent SettingsStorage and a new Lit-based Configuration UI.
+## Task Description
+The user requests a review of the backlog status based on the current project state. The current `ROADMAP-BACKLOG.md` appears outdated (last audit Feb 15, but valid significant work has occurred since then, including CI fixes, E2E tests, and generic refactoring).
+
+## Objective
+Update `ROADMAP-BACKLOG.md` to accurately reflect the current completion status of tasks, specifically key domains like D8 (E2E), D3 (Backend), and D7 (CI/CD), and identifying any new tasks or completed items from recent history.

@@ -1,6 +1,6 @@
 # init bootstrap
 
-- command: /init
+- command: init
 - role.architect: architect-agent
 - constitution.loaded.in_context: true
 
@@ -18,7 +18,7 @@ constitution:
     - .agent/rules/constitution/clean-code.md
     - .agent/rules/constitution/agents-behavior.md
 language:
-  value: Spanish
+  value: es
   confirmed: true
 strategy: long
 ```

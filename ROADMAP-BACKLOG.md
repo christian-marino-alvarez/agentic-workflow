@@ -3,17 +3,17 @@
 ## 🌍 Global Status
 | Domain | Status | Completed | Total |
 |---|---|---|---|
-| **D1: Settings & OAuth** | 🏗️ Architecture | 0 | 5 |
+| **D1: Settings & OAuth** | 🏗️ Architecture | 1 | 5 |
 | **D2: UI (Chat/Workflows)** | 🏗️ Concept | 0 | 6 |
 | **D3: Backend (Agents)** | 🏗️ Concept | 0 | 4 |
 | **D4: Runtime & Execution** | 🏗️ Concept | 0 | 2 |
 | **D7: Release/CI-CD** | ✅ Stable | 2 | 2 |
 | **D8: E2E Testing** | ✅ Stable | 4 | 4 |
 
-**Total**: 6/21 tasks completed
+**Total**: 7/21 tasks completed
 
 ## 🎯 Priority High - Critical Path
-- [ ] **T017**: D1 - OAuth Authentication Provider (vscode.authentication)
+- [x] **T017**: D1 - OAuth Authentication Provider (vscode.authentication)
 - [ ] **T018**: D1 - Model Registry UI (API Key + OAuth Tokens)
 - [ ] **T019**: D3 - Agent Factory & Role-Model Binding
 - [ ] **T032**: D4 - Runtime Server (File I/O & Sandbox)
@@ -25,7 +25,7 @@
 
 ### D1: Settings & Configuration (OAuth)
 > Focus: Secure token management and Model Registry.
-- [ ] **T017**: OAuth Provider Implementation
+- [x] **T017**: OAuth Provider Implementation
   - Implement `AuthenticationProvider` for GitHub/Auth0.
   - Integration with `vscode.authentication`.
 - [ ] **T018**: Model Registry UI
@@ -89,4 +89,4 @@
 2.  **T019 (Factory)**: Required to actually use the models.
 3.  **T020 (Filters)**: Quick win for UI usability.
 
-**Last Updated**: 2026-02-17 by architect-agent (Task 16)
+**Last Updated**: 2026-02-17 by architect-agent (Task 17)

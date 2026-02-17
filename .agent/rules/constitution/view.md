@@ -21,19 +21,22 @@ description: "Governs UI. STRICT: Lit framework Only, structured triad (index/ht
 
 ## 3. Structure
 - **Component File**: `view/<name>.ts` (Logic & State).
-- **Templates**: `view/templates/<templateName>/` folder.
-  - `html.ts`: Export `render(view: View)` function.
-  - `css.ts`: Export `styles` (Lit CSS).
-- **Multi-View**: Components can switch templates dynamically.
+- **Templates Directory**: `view/templates/` **MANDATORY**.
+  - **Standard Pattern**: `view/templates/<templateName>/` (for complex views).
+  - **App Pattern**: `view/templates/html.ts` + `view/templates/css.ts` (for simple single-view modules).
+  - **Exports**: `html.ts` must export `render`, `css.ts` must export `styles`.
 
 ## 4. Prohibition
 - **No Inline Styles/HTML**: All markup and styles must be in `templates/`.
 - **No Direct DOM Manipulation**: Use Lit data binding.
+- **No "Empty" Views**: A View must implement at least a basic status template.
+
+
 
 ## 5. Communication
 - **Event Bus**: Emit to Background via `sendMessage`.
 - **Request-Response**: `sendMessage()` returns a `Promise` resolving to the response.
-- **Handling**: Override `async listen(message)` to handle incoming events.
+- **Handling**: Override `async listen(message)` to handle incoming events and **state changes** (e.g., `LOGIN/LOGOUT` commands from View).
 - **Connectivity**: Use `await this.ping()` for native health check.
 - **Forbidden**: 
   - Direct `vscode.postMessage` (use `sendMessage`).

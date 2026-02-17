@@ -86,6 +86,10 @@ Create a deep **analysis** report that:
 
 7. Define agents and sub-areas
    - List required agents.
+   - **MANDATORY**: Verify that each agent exists in `.agent/rules/roles/`.
+   - If a required agent does NOT exist:
+     - STOP and ask the developer: "Should I create a new agent X or use existing agent Y?"
+     - Update `index.md` and create `rules/roles/<agent>.md` if a new one is authorized.
    - Define responsibilities and handoffs.
    - Identify if creating, modifying, or deleting components is required.
    - Identify if creating a demo is required and its structural impact.

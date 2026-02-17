@@ -17,6 +17,8 @@ blocking: true
 - Constitution loaded:
   - `constitution.background` (MANDATORY)
   - `constitution.clean_code` (MANDATORY)
+  - `.agent/rules/constitution/architecture/index.md` (MANDATORY)
+  - `constitution.agents_behavior` (MANDATORY)
 - Role activated:
   - `roles.background`
 

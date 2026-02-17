@@ -1,5 +1,6 @@
 ---
-trigger: model_decision
+id: constitution.architecture
+trigger: always_on
 description: "Enforces Domain-Driven Design via Modular Architecture. Modules must be self-contained with their own Data, Logic, and View."
 ---
 
@@ -24,6 +25,8 @@ Every Module **MUST** adhere to the following structure:
 
 ## 2. Structure (MANDATORY)
 Each module **MUST** contain at minimum:
+- **Inheritance**: All layers (Background, Backend, View) **MUST** inherit from their respective Core base classes (`Core.Background`, `Core.AbstractBackend`, `Core.View`).
+- **Registration**: All modules **MUST** be registered in the `App` class.
 - **Background** (`background/index.ts`): **REQUIRED** - View Controller (manages View lifecycle and message routing).
 
 Optional layers:
@@ -64,3 +67,11 @@ Optional layers:
 ## 8. UI Pattern
 - **Tabs**: The primary navigation pattern is a Tab Bar managed by the Shell.
 - **Views**: Each Module provides a main Web Component (e.g., `<settings-view>`) that the Shell renders when active.
+
+## 9. Anti-Patterns (STRICTLY FORBIDDEN)
+1. **App-as-Module**: Placing domain logic (e.g., `Settings`, `Auth`) inside `App` classes.
+   - *Correction*: Move logic to a dedicated Module (`src/extension/modules/<domain>`).
+2. **Headless-in-App**: Registering a module in `App` without a corresponding `View` implementation.
+   - *Rule*: If it's in `App.register()`, it **MUST** have a `view/` directory with a Lit Component.
+3. **Unstructured View**: Creating a View without the standard `templates/` directory structure.
+   - *Rule*: Follow `constitution.view` strictly.

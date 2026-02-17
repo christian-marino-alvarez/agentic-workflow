@@ -16,6 +16,7 @@ description: "Governs extension orchestration. STRICT: Register in App, use Mess
 - **Gateway**: **ONLY** layer authorized to import `vscode`.
 
 ## 2. Standards
+- **Inheritance**: MUST inherit from `Core.Background`.
 - **Registration**: All modules **MUST** register via `App.register(id, provider)`.
 - **Messaging**: 
   - Override `async listen(message)` in subclasses.

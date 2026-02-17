@@ -75,6 +75,8 @@ Create a **detailed implementation plan** to execute the design defined in Phase
 5. Assign responsibilities
    - For each step or sub-area:
      - responsible agent
+     - **MANDATORY**: Verify that the agent exists in `.agent/rules/roles/`.
+     - **FAIL** if assigning tasks to a non-existent agent.
      - expected deliverables
    - If the analysis requires creating/modifying/deleting components:
      - define who executes it (responsible agent)

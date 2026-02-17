@@ -23,6 +23,8 @@ blocking: true
   - `constitution.background` (MANDATORY)
   - `constitution.view` (MANDATORY)
   - `constitution.clean_code` (MANDATORY)
+  - `.agent/rules/constitution/architecture/index.md` (MANDATORY)
+  - `constitution.agents_behavior` (MANDATORY)
 
 > [!IMPORTANT]
 > **This workflow runs AFTER all layer-specific coding workflows.** It validates that the 3 layers communicate correctly and comply with all constitutions. The architect is the owner.

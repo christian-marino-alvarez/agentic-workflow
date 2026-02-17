@@ -21,6 +21,7 @@ description: "Governs server-side module logic. STRICT: Extend AbstractServer, N
 - **Sidecar**: Isolate heavy processing for potential serialization.
 
 ## 3. Communication
-- **Inbound**: via `MessageHandler`.
-- **Outbound**: via abstract `transport`.
+- **Inbound**: Implement `protected async listen(command, data)`.
+- **Outbound**: Returns Promise result or throws Error (transport agnostic).
+- **Ping**: Handled natively by `AbstractBackend`.
 - **No View Access**: NEVER communicate directly with View.

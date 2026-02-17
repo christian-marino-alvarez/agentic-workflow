@@ -1,9 +1,3 @@
----
-kind: artifact
-name: research
-source: agentic-system-structure
----
-
 🔍 **researcher-agent**: Informe de investigacion preparado para la fase 1.
 
 ---

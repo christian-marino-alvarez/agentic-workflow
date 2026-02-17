@@ -1,9 +1,3 @@
----
-kind: artifact
-name: metrics
-source: agentic-system-structure
----
-
 🏛️ **architect-agent**: Metricas de evaluacion de agentes.
 
 ---

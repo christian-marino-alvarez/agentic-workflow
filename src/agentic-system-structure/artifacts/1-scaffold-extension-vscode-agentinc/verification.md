@@ -1,9 +1,3 @@
----
-kind: artifact
-name: verification
-source: agentic-system-structure
----
-
 🛡️ **qa-agent**: Informe de verificacion de scaffold VS Code.
 
 ---

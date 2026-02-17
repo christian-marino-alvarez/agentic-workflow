@@ -11,14 +11,28 @@ trigger: /scaffold-module <module-name>
 ## Steps
 
 1. **Invoke Skill**
-   - Use `run_command` to execute the Yeoman generator from `.agent/skills/scaffolding`.
-   - Command: `npx yo ./.agent/skills/scaffolding/generators/module --name <module-name>`
+   - Use `run_command` to execute the Yeoman generator from `src/cli/scaffolding`.
+    "CommandLine": "npx yo ./src/cli/scaffolding/generators/module {{ module_name }} --force"
 
 2. **Validation**
    - Verify creation of:
      - `src/extension/modules/<module-name>/index.ts`
      - `src/extension/modules/<module-name>/view/index.ts`
-     - `src/extension/modules/<module-name>/backend/service.ts`
+     - `src/extension/modules/<module-name>/view/templates/main/html.ts`
+     - `src/extension/modules/<module-name>/view/templates/main/css.ts`
+     - `src/extension/modules/<module-name>/background/index.ts`
+     - `src/extension/modules/<module-name>/backend/index.ts`
 
-3. **Report**
-   - Confirm successful generation to the user.
+3. **TypeScript Compilation**
+   - Run `npm run compile` to verify no TypeScript errors.
+   - **CRITICAL**: Module MUST compile without errors.
+   - If compilation fails, fix errors before proceeding.
+
+4. **ESLint Validation**
+   - Run `npm run lint` (or equivalent) to verify no linting errors.
+   - **CRITICAL**: Module MUST pass linting.
+   - If linting fails, fix errors before proceeding.
+
+5. **Report**
+   - Confirm successful generation and validation to the user.
+   - Report any errors encountered during validation.

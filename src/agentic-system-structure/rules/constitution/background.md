@@ -17,9 +17,14 @@ description: "Governs extension orchestration. STRICT: Register in App, use Mess
 
 ## 2. Standards
 - **Registration**: All modules **MUST** register via `App.register(id, provider)`.
-- **Messaging**: **MANDATORY** use of `core/messaging` for View communication.
+- **Messaging**: 
+  - Override `async listen(message)` in subclasses.
+  - Return data from `listen` to automatically reply to requests.
+  - Use `await this.sendMessage()` for correlated requests to sidecars/views.
 - **Type Safety**: Use shared `Message` interface from `core/types`.
 
 ## 3. Architecture
 - **Dependency Injection**: Inject services into providers.
 - **Lifecycle**: Respect VS Code activation/deactivation.
+- **Sidecars**: Use `runBackend(scriptPath)` to spawn node processes.
+- **Health Check**: Use `await this.ping()` to check sidecar connectivity.

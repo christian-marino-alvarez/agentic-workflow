@@ -1,0 +1,1 @@
+import './<%= name %>-view.js';

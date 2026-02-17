@@ -3,6 +3,8 @@
   "exclude": [
     "node_modules",
     "**/*.test.ts",
-    "src/extension/**"
+    "src/extension/**",
+    "src/agentic-system-structure/skills/generators/**/templates",
+    "src/cli/scaffolding/generators/**/templates"
   ]
 }

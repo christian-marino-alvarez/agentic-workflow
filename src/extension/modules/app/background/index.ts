@@ -1,46 +1,65 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { Background, ViewHtml, Message } from '../../core/index.js';
+import { Settings } from '../../settings/backend/index.js';
+import { MESSAGES } from '../../settings/constants.js';
+
+import { NAME } from '../constants.js';
 
 /**
  * Concrete implementation of Background acting as the App Shell.
  */
 export class AppBackground extends Background {
-  constructor(extensionUri: vscode.Uri) {
-    super('main', extensionUri, 'main-view');
+  private readonly settings: Settings;
+
+  constructor(context: vscode.ExtensionContext) {
+    super(NAME, context.extensionUri, `${NAME}-view`);
     this.log('Initialized');
 
-    // Spawn the new AppServer sidecar
-    // Spawn the new AppServer sidecar
-    console.log('[DEBUG] extensionUri:', extensionUri);
-    console.log('[DEBUG] extensionUri.fsPath:', extensionUri?.fsPath);
-    if (!extensionUri?.fsPath) {
-      console.error('[FATAL] extensionUri.fsPath is missing!');
-    }
+    // Initialize services
+    this.settings = new Settings(context);
+
+    // --- Sidecar ---
 
     if (process.env.VSCODE_TEST_MODE === 'true') {
       this.log('TEST MODE: Skipping sidecar spawn');
     } else {
-      const scriptPath = path.join(extensionUri.fsPath, 'dist-backend/extension/modules/app/backend/index.js');
-      this.spawnSidecar(scriptPath, 3000).catch(err => {
-        this.log('FATAL: Failed to spawn sidecar', err);
+      const scriptPath = path.join(context.extensionUri.fsPath, 'dist-backend/extension/modules/app/backend/index.js');
+      this.runBackend(scriptPath, 3000).catch(err => {
+        this.log('FATAL: Failed to run backend sidecar', err);
       });
     }
+  }
 
-    // Handle incoming messages
-    this.onMessage((message: Message) => {
-      this.log(`Received Message: ${message.payload.command}`, message.payload.data);
+  /**
+   * Handle incoming messages from the View layer.
+   */
+  public override async listen(message: Message): Promise<void> {
+    const { command, data } = message.payload;
 
-      if (message.payload.command === 'ping') {
-        this.log('Forwarding to sidecar...');
-        this.sendMessage('app::backend', 'ping', message.payload.data);
+    switch (command) {
+      case MESSAGES.GET_REQUEST: {
+        const models = await this.settings.getModels();
+        const activeModelId = await this.settings.getActiveModelId();
+        return { success: true, models, activeModelId } as any;
       }
 
-      if (message.payload.command === 'ping::response') {
-        this.log('Forwarding response to View...', message.payload.data);
-        this.sendMessage('view', 'ping::response', message.payload.data);
+      case MESSAGES.SAVE_REQUEST: {
+        await this.settings.saveModel(data);
+        return { success: true } as any;
       }
-    });
+
+      case MESSAGES.DELETE_REQUEST: {
+        await this.settings.deleteModel(data);
+        return { success: true } as any;
+      }
+
+      case MESSAGES.SELECT_REQUEST: {
+        await this.settings.setActiveModel(data);
+        const activeId = await this.settings.getActiveModelId();
+        return { success: true, activeId } as any;
+      }
+    }
   }
 
   protected getHtmlForWebview(webview: vscode.Webview): string {

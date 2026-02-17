@@ -1,9 +1,3 @@
----
-kind: artifact
-name: acceptance
-source: agentic-system-structure
----
-
 🏛️ **architect-agent**: Acceptance criteria definidos para nuevo proyecto vscode-agentic.
 
 # Acceptance Criteria — 3-new-vscode-agentic-activitybar-chat

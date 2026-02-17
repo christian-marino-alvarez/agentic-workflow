@@ -25,13 +25,13 @@ export abstract class AbstractVirtualBackend implements VirtualBackend {
     console.log(`[VirtualBackend:${this.moduleName}] Registering at ${routePrefix}`);
 
     server.register(async (instance: FastifyInstance) => {
-      this.configureRoutes(instance);
+      this.listen(instance);
     }, { prefix: routePrefix });
   }
 
   /**
-   * Implement route configuration here.
+   * Override in subclasses to register routes on the scoped Fastify instance.
    * @param instance Scoped Fastify instance (with prefix).
    */
-  protected abstract configureRoutes(instance: FastifyInstance): void;
+  protected abstract listen(instance: FastifyInstance): void;
 }

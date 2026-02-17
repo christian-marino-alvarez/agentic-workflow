@@ -1,6 +1,7 @@
 import { Messaging } from './index.js';
 import { Message } from '../types.js';
 import { MessageOrigin, LayerScope } from '../constants.js';
+import { randomUUID } from 'crypto';
 
 /**
  * Specialized messenger for Backend services.
@@ -52,6 +53,7 @@ export class MessagingBackend extends Messaging {
         const data = await response.json();
         // console.log('[MessagingBackend] Response received', data);
         this.emit({
+          id: randomUUID(),
           from: 'sidecar',
           to: message.from,
           origin: MessageOrigin.Server,
@@ -98,6 +100,7 @@ export class MessagingBackend extends Messaging {
             try {
               const data = JSON.parse(line.trim().slice(6));
               this.emit({
+                id: randomUUID(),
                 from: 'sidecar',
                 to: message.from,
                 origin: MessageOrigin.Server,

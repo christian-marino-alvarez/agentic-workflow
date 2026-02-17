@@ -55,8 +55,12 @@ export class MessagingBackground extends MessagingBackend {
    * Subscribe to messages targeted to a specific identity.
    */
   public subscribe(identity: string, callback: (message: Message) => void): { dispose: () => void } {
+    // Extract module name from identity (e.g., "main::background" -> "main")
+    const moduleName = identity.split('::')[0];
+
     return this.on(message => {
-      if (message.to === identity || message.to === 'all') {
+      // Accept messages to: exact identity, module name only, or 'all'
+      if (message.to === identity || message.to === moduleName || message.to === 'all') {
         callback(message);
       }
     });

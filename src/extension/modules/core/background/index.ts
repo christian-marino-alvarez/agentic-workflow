@@ -296,4 +296,24 @@ export abstract class Background implements vscode.WebviewViewProvider {
   protected log(message: string, ...args: any[]): void {
     Logger.log(`[${this.moduleName}::background] ${message}`, ...args);
   }
+
+  /**
+   * Abstracted Authentication getter.
+   * Allows modules to request sessions without importing 'vscode'.
+   */
+  protected async getSession(
+    providerId: string,
+    scopes: readonly string[],
+    options?: { createIfNone?: boolean }
+  ): Promise<import('../types.js').IAuthenticationSession | undefined> {
+    const session = await vscode.authentication.getSession(providerId, scopes, options);
+    if (!session) return undefined;
+
+    return {
+      id: session.id,
+      accessToken: session.accessToken,
+      account: { label: session.account.label, id: session.account.id },
+      scopes: session.scopes
+    };
+  }
 }

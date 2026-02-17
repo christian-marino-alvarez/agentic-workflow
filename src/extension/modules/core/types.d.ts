@@ -36,6 +36,18 @@ export type MessageHandler = (message: Message) => void | Promise<void>;
  */
 export interface IMessageTransport {
   postMessage(message: any): void | Promise<any>;
+  postMessage(message: any): void | Promise<any>;
   onMessage(callback: MessageHandler): Disposable;
+}
+
+/**
+ * Agnostic Authentication Session interface.
+ * Decouples modules from vscode.AuthenticationSession.
+ */
+export interface IAuthenticationSession {
+  id: string;
+  accessToken: string;
+  account: { label: string; id: string };
+  scopes: readonly string[];
 }
 

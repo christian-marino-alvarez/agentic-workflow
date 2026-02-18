@@ -116,6 +116,7 @@ test.beforeAll(async () => {
   electronApp = await electron.launch({
     executablePath: VSCODE_PATH,
     args: [
+      PROJECT_ROOT,                              // open workspace so roles are discoverable
       '--extensionDevelopmentPath=' + PROJECT_ROOT,
       '--disable-gpu',
       '--no-sandbox',
@@ -146,9 +147,14 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-  const pid = electronApp?.process()?.pid;
-  if (pid) {
-    process.kill(pid, 'SIGKILL');
+  try {
+    await electronApp?.close();
+  } catch {
+    // Force kill if graceful close fails
+    const pid = electronApp?.process()?.pid;
+    if (pid) {
+      process.kill(pid, 'SIGKILL');
+    }
   }
 });
 
@@ -381,3 +387,229 @@ test.describe.serial('Settings Module E2E', () => {
   });
 
 });
+
+// ─── Agents Section Tests ───────────────────────────────────
+
+test.describe.serial('Settings Module E2E - Agents Section', () => {
+
+  test('Agents: Should render the Agents section with role cards', async () => {
+    const result = await evalInSettings(window, (sr) => {
+      const section = sr.querySelector('.role-binding-section');
+      const h2 = section?.querySelector('h2');
+      const cards = sr.querySelectorAll('.role-binding-section .model-card');
+      return {
+        hasSectionHeader: h2?.textContent?.trim() === 'Agents',
+        cardCount: cards.length,
+        firstRoleName: cards[0]?.querySelector('.model-name')?.textContent?.trim() || '',
+      };
+    });
+
+    expect(result.hasSectionHeader).toBe(true);
+    expect(result.cardCount).toBeGreaterThan(0);
+    expect(result.firstRoleName.length).toBeGreaterThan(0);
+
+    await window.screenshot({ path: path.join(PROJECT_ROOT, '.vscode-test/pw-settings-05-agents-list.png') });
+  });
+
+  test('Agents: Each card should have a power button and a model selector', async () => {
+    const result = await evalInSettings(window, (sr) => {
+      const cards = sr.querySelectorAll('.role-binding-section .model-card');
+      const checks: { role: string; hasPowerBtn: boolean; hasSelect: boolean }[] = [];
+      for (const card of cards) {
+        checks.push({
+          role: card.querySelector('.model-name')?.textContent?.trim() || '',
+          hasPowerBtn: !!card.querySelector('.power-btn'),
+          hasSelect: !!card.querySelector('select.select-input'),
+        });
+      }
+      return checks;
+    });
+
+    expect(result.length).toBeGreaterThan(0);
+    for (const check of result) {
+      expect(check.hasPowerBtn).toBe(true);
+      expect(check.hasSelect).toBe(true);
+    }
+  });
+
+  test('Agents: Power button first click should enter pending state', async () => {
+    // Get the first role name
+    const firstRole = await evalInSettings(window, (sr) => {
+      const card = sr.querySelector('.role-binding-section .model-card');
+      return card?.querySelector('.model-name')?.textContent?.trim() || '';
+    });
+    expect(firstRole.length).toBeGreaterThan(0);
+
+    // Click the power button once
+    await evalInSettings(window, (sr) => {
+      const card = sr.querySelector('.role-binding-section .model-card');
+      const btn = card?.querySelector('.power-btn') as HTMLElement;
+      btn?.click();
+    });
+
+    await window.waitForTimeout(500);
+
+    // Verify pending state: button should have class "pending" and show label text
+    const pendingState = await evalInSettings(window, (sr) => {
+      const card = sr.querySelector('.role-binding-section .model-card');
+      const btn = card?.querySelector('.power-btn');
+      const label = card?.querySelector('.power-btn-label');
+      return {
+        isPending: btn?.classList.contains('pending') ?? false,
+        labelText: label?.textContent?.trim() || '',
+      };
+    });
+
+    expect(pendingState.isPending).toBe(true);
+    expect(pendingState.labelText).toMatch(/Deactivate\?|Activate\?/);
+
+    await window.screenshot({ path: path.join(PROJECT_ROOT, '.vscode-test/pw-settings-06-agent-pending.png') });
+  });
+
+  test('Agents: Power button second click should deactivate the agent', async () => {
+    // Click again to confirm deactivation
+    await evalInSettings(window, (sr) => {
+      const card = sr.querySelector('.role-binding-section .model-card');
+      const btn = card?.querySelector('.power-btn.pending') as HTMLElement;
+      btn?.click();
+    });
+
+    await window.waitForTimeout(500);
+
+    // Verify disabled state: card should have "disabled" class, select should be disabled
+    const disabledState = await evalInSettings(window, (sr) => {
+      const card = sr.querySelector('.role-binding-section .model-card');
+      const select = card?.querySelector('select.select-input') as HTMLSelectElement;
+      const btn = card?.querySelector('.power-btn');
+      return {
+        cardIsDisabled: card?.classList.contains('disabled') ?? false,
+        selectIsDisabled: select?.disabled ?? false,
+        btnIsOff: btn?.classList.contains('off') ?? false,
+      };
+    });
+
+    expect(disabledState.cardIsDisabled).toBe(true);
+    expect(disabledState.selectIsDisabled).toBe(true);
+    expect(disabledState.btnIsOff).toBe(true);
+
+    await window.screenshot({ path: path.join(PROJECT_ROOT, '.vscode-test/pw-settings-07-agent-disabled.png') });
+  });
+
+  test('Agents: Power button should re-activate the agent (two-click confirm)', async () => {
+    // First click on disabled agent — enters pending state for activation
+    await evalInSettings(window, (sr) => {
+      const card = sr.querySelector('.role-binding-section .model-card.disabled');
+      const btn = card?.querySelector('.power-btn.off') as HTMLElement;
+      btn?.click();
+    });
+
+    await window.waitForTimeout(500);
+
+    // Verify pending state shows "Activate?"
+    const pendingLabel = await evalInSettings(window, (sr) => {
+      const card = sr.querySelector('.role-binding-section .model-card');
+      return card?.querySelector('.power-btn-label')?.textContent?.trim() || '';
+    });
+    expect(pendingLabel).toBe('Activate?');
+
+    // Second click — confirm activation
+    await evalInSettings(window, (sr) => {
+      const card = sr.querySelector('.role-binding-section .model-card');
+      const btn = card?.querySelector('.power-btn.pending') as HTMLElement;
+      btn?.click();
+    });
+
+    await window.waitForTimeout(500);
+
+    // Verify re-activated: card should NOT have "disabled" class
+    const reactivated = await evalInSettings(window, (sr) => {
+      const card = sr.querySelector('.role-binding-section .model-card');
+      const select = card?.querySelector('select.select-input') as HTMLSelectElement;
+      return {
+        cardIsDisabled: card?.classList.contains('disabled') ?? false,
+        selectIsDisabled: select?.disabled ?? false,
+      };
+    });
+
+    expect(reactivated.cardIsDisabled).toBe(false);
+    expect(reactivated.selectIsDisabled).toBe(false);
+
+    await window.screenshot({ path: path.join(PROJECT_ROOT, '.vscode-test/pw-settings-08-agent-reactivated.png') });
+  });
+
+  test('Agents: Pending state should auto-cancel after timeout', async () => {
+    // Click power button once to enter pending state
+    await evalInSettings(window, (sr) => {
+      const card = sr.querySelector('.role-binding-section .model-card');
+      const btn = card?.querySelector('.power-btn') as HTMLElement;
+      btn?.click();
+    });
+
+    await window.waitForTimeout(500);
+
+    // Verify pending
+    const isPending = await evalInSettings(window, (sr) => {
+      const card = sr.querySelector('.role-binding-section .model-card');
+      return card?.querySelector('.power-btn.pending') !== null;
+    });
+    expect(isPending).toBe(true);
+
+    // Wait for auto-cancel (3s timeout + buffer)
+    await window.waitForTimeout(3500);
+
+    // Verify pending state is gone
+    const isStillPending = await evalInSettings(window, (sr) => {
+      const card = sr.querySelector('.role-binding-section .model-card');
+      return card?.querySelector('.power-btn.pending') !== null;
+    });
+    expect(isStillPending).toBe(false);
+
+    await window.screenshot({ path: path.join(PROJECT_ROOT, '.vscode-test/pw-settings-09-agent-autocancelled.png') });
+  });
+
+  test('Agents: Model selector should bind a model to a role', async () => {
+    // Get first card's role name and available options
+    const roleInfo = await evalInSettings(window, (sr) => {
+      const card = sr.querySelector('.role-binding-section .model-card');
+      const role = card?.querySelector('.model-name')?.textContent?.trim() || '';
+      const select = card?.querySelector('select.select-input') as HTMLSelectElement;
+      const options = Array.from(select?.options || []).map(o => ({ value: o.value, text: o.text }));
+      return { role, options };
+    });
+
+    // Only test binding if there are models available
+    if (roleInfo.options.length <= 1) {
+      // No models to bind — skip gracefully
+      console.log('No models available to test binding, skipping');
+      return;
+    }
+
+    // Select the first non-empty option
+    const targetOption = roleInfo.options.find(o => o.value !== '');
+    if (!targetOption) { return; }
+
+    await evalInSettings(window, (sr) => {
+      const card = sr.querySelector('.role-binding-section .model-card');
+      const select = card?.querySelector('select.select-input') as HTMLSelectElement;
+      if (select && select.options.length > 1) {
+        select.value = select.options[1].value;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
+
+    await window.waitForTimeout(1000);
+
+    // Verify the selection persisted in the UI
+    const selectedValue = await evalInSettings(window, (sr) => {
+      const card = sr.querySelector('.role-binding-section .model-card');
+      const select = card?.querySelector('select.select-input') as HTMLSelectElement;
+      return select?.value || '';
+    });
+
+    expect(selectedValue).not.toBe('');
+
+    await window.screenshot({ path: path.join(PROJECT_ROOT, '.vscode-test/pw-settings-10-agent-binding.png') });
+  });
+
+});
+

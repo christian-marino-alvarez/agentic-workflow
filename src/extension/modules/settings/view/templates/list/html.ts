@@ -32,17 +32,14 @@ export function renderList(view: Settings) {
 }
 
 function renderModelCard(view: Settings, model: LLMModelConfig) {
-  const isActive = model.id === view.activeModelId;
-
   return html`
-    <div class="model-card ${isActive ? 'active-model' : ''}">
+    <div class="model-card">
       <div class="model-icon-left">
         ${getProviderIcon(model.provider)}
       </div>
       <div class="model-info">
         <div class="model-header">
            <h3 class="model-name">${model.name || 'Unnamed Model'}</h3>
-           ${isActive ? html`<span class="badge-active" title="Fallback model when no role is assigned">Default</span>` : ''}
         </div>
         <div class="model-details">
            <span class="model-provider-name">${model.provider}</span>
@@ -57,32 +54,22 @@ function renderModelCard(view: Settings, model: LLMModelConfig) {
         </div>
       </div>
       <div class="model-actions">
-        ${!isActive ? html`
-          <button class="action-btn select" @click=${(e: Event) => {
-        e.stopPropagation();
-        view.userActionSelected(model.id);
-      }} title="Use as default fallback model">
-            Set Default
-          </button>
-        ` : ''}
         <button class="action-btn edit" @click=${(e: Event) => {
       e.stopPropagation();
       view.userActionEdited(model.id);
     }} title="Edit model">
           Edit
         </button>
-        ${!isActive ? html`
-          <button 
-            class="action-btn delete ${view.pendingDeleteId === model.id ? 'confirm-delete' : ''}" 
-            @click=${(e: Event) => {
-        e.stopPropagation();
-        view.userActionDeleted(model.id);
-      }} 
-            title="${view.pendingDeleteId === model.id ? 'Click again to confirm' : 'Delete model'}"
-          >
-            ${view.pendingDeleteId === model.id ? 'Confirm' : 'Delete'}
-          </button>
-        ` : ''}
+        <button 
+          class="action-btn delete ${view.pendingDeleteId === model.id ? 'confirm-delete' : ''}" 
+          @click=${(e: Event) => {
+      e.stopPropagation();
+      view.userActionDeleted(model.id);
+    }} 
+          title="${view.pendingDeleteId === model.id ? 'Click again to confirm' : 'Delete model'}"
+        >
+          ${view.pendingDeleteId === model.id ? 'Confirm' : 'Delete'}
+        </button>
       </div>
     </div>
   `;

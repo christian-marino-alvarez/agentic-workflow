@@ -166,8 +166,6 @@ export class SettingsBackground extends Background {
         return this.handleSaveRequest(data);
       case MESSAGES.DELETE_REQUEST:
         return this.handleDeleteRequest(data);
-      case MESSAGES.SELECT_REQUEST:
-        return this.handleSelectRequest(data);
       case MESSAGES.TEST_CONNECTION_REQUEST:
         return this.handleTestConnectionRequest(data);
       case MESSAGES.SAVE_GOOGLE_CLIENT_ID:
@@ -182,7 +180,9 @@ export class SettingsBackground extends Background {
         return this.handleGetOpenAICredentials();
       case MESSAGES.REMOVE_OPENAI_CREDENTIALS:
         return this.handleRemoveOpenAICredentials();
-      case 'OPEN_EXTERNAL':
+      case MESSAGES.REMOVE_OPENAI_CREDENTIALS:
+        return this.handleRemoveOpenAICredentials();
+      case MESSAGES.OPEN_EXTERNAL:
         return this.handleOpenExternal(data);
       case MESSAGES.GET_ROLES:
       case MESSAGES.REFRESH_ROLES:
@@ -191,6 +191,10 @@ export class SettingsBackground extends Background {
         return this.handleSaveBinding(data);
       case MESSAGES.GET_BINDING:
         return this.handleGetBinding();
+      case MESSAGES.SAVE_DISABLED_ROLES:
+        return this.handleSaveDisabledRoles(data);
+      case MESSAGES.GET_DISABLED_ROLES:
+        return this.handleGetDisabledRoles();
     }
   }
 
@@ -210,12 +214,6 @@ export class SettingsBackground extends Background {
   private async handleDeleteRequest(data: any) {
     await this.deleteModel(data);
     return { success: true };
-  }
-
-  private async handleSelectRequest(data: any) {
-    await this.setActiveModel(data);
-    const activeId = await this.getActiveModelId();
-    return { success: true, activeId };
   }
 
   private async handleTestConnectionRequest(data: any) {
@@ -314,6 +312,17 @@ export class SettingsBackground extends Background {
   private async handleGetBinding() {
     const bindings = this.configService.get('roleBindings', {});
     return { success: true, bindings };
+  }
+
+  private async handleSaveDisabledRoles(data: any) {
+    if (!Array.isArray(data)) { return { success: false }; }
+    await this.configService.update('disabledRoles', data, vscode.ConfigurationTarget.Global);
+    return { success: true };
+  }
+
+  private async handleGetDisabledRoles() {
+    const disabledRoles = this.configService.get<string[]>('disabledRoles', []);
+    return { success: true, disabledRoles };
   }
 
   // ─── OAuth Verification ────────────────────────────────

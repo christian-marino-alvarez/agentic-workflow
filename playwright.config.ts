@@ -1,7 +1,11 @@
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  testDir: './test/e2e',
+  testDir: '.',
+  testMatch: [
+    'test/e2e/**/*.spec.ts',
+    'src/extension/modules/**/test/e2e/**/*.spec.ts',
+  ],
   timeout: 60_000,
   retries: 0,
   workers: 1,
@@ -10,5 +14,5 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   // Allow extra time for Electron cleanup (sidecar process)
-  globalTimeout: 120_000,
+  globalTimeout: 300_000,
 });

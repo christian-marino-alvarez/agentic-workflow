@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.27.0-beta.3](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.26.0-beta.3...agentic-workflow-v1.27.0-beta.3) (2026-02-18)
+
+
+### Features
+
+* **auth:** add OpenAI OAuth 2.0 + PKCE support ([5a19c55](https://github.com/christian-marino-alvarez/agentic-workflow/commit/5a19c551d396d08bc24342e6edd32414c0d1040a))
+* **settings:** agent activation toggle with two-click confirm ([3569345](https://github.com/christian-marino-alvarez/agentic-workflow/commit/356934545648a7aae7f9d0e5f9fd77faacb7b4da))
+* **ui:** refine role icons and descriptions ([4fe59c6](https://github.com/christian-marino-alvarez/agentic-workflow/commit/4fe59c62acbf3158e2593244a7d9a693c9fa4c80))
+
+
+### Bug Fixes
+
+* **auth:** declare openaiClientId in package.json configuration ([1bbdf65](https://github.com/christian-marino-alvarez/agentic-workflow/commit/1bbdf65eacc9d83c9ece2adac5a275d8e7af9792))
+* **settings:** fix OAuth timeout and remove OpenAI OAuth option ([9a3fce6](https://github.com/christian-marino-alvarez/agentic-workflow/commit/9a3fce6db5d00443ee00a917ac5b2df957f98f0c))
+* **settings:** resolve duplicate OAuth login prompts and secure state management ([a0b93e2](https://github.com/christian-marino-alvarez/agentic-workflow/commit/a0b93e2b0fc59cee4559589bc71e78490cb0a885))
+
 ## [1.26.0-beta.3](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.25.0-beta.3...agentic-workflow-v1.26.0-beta.3) (2026-02-17)
 
 

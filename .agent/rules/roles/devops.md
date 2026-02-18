@@ -1,6 +1,7 @@
 ---
 id: role.devops
 icon: ⚙️
+description: Infrastructure specialist managing CI/CD pipelines, tooling, and project scaffolding.
 responsibility: Infrastructure, CI/CD, Scaffolding
 ---
 

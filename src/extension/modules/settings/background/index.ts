@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 import { Background, ViewHtml, Message } from '../../core/index.js';
 import { ConfigurationService } from '../../core/backend/config-service.js';
 import { SecretStorageService } from '../../core/backend/secret-service.js';
@@ -13,6 +15,7 @@ import {
   GOOGLE_TOKENINFO_URL, GOOGLE_SCOPES,
   OPENAI_SCOPES, OPENAI_CLIENT_ID_KEY
 } from '../../auth/constants.js';
+import matter from 'gray-matter';
 
 /**
  * Settings Background - Controls the Settings View
@@ -181,6 +184,13 @@ export class SettingsBackground extends Background {
         return this.handleRemoveOpenAICredentials();
       case 'OPEN_EXTERNAL':
         return this.handleOpenExternal(data);
+      case MESSAGES.GET_ROLES:
+      case MESSAGES.REFRESH_ROLES:
+        return this.handleGetRoles();
+      case MESSAGES.SAVE_BINDING:
+        return this.handleSaveBinding(data);
+      case MESSAGES.GET_BINDING:
+        return this.handleGetBinding();
     }
   }
 
@@ -239,6 +249,73 @@ export class SettingsBackground extends Background {
     return { success: true };
   }
 
+  // ─── Role Discovery ────────────────────────────────────
+
+  private async handleGetRoles() {
+    try {
+      const workspaceFolders = vscode.workspace.workspaceFolders;
+      if (!workspaceFolders) {
+        return { success: true, roles: [] };
+      }
+
+      const rootPath = workspaceFolders[0].uri.fsPath;
+      const rolesPath = path.join(rootPath, '.agent', 'rules', 'roles');
+
+      // Ensure directory exists
+      try {
+        await fs.access(rolesPath);
+      } catch {
+        // If not exists, return empty
+        return { success: true, roles: [] };
+      }
+
+      const files = await fs.readdir(rolesPath);
+      const roles = [];
+
+      for (const file of files) {
+        if (!file.endsWith('.md')) { continue; }
+
+        const roleName = file.replace('.md', '');
+        let icon: string | undefined;
+        let description: string | undefined;
+
+        try {
+          const filePath = path.join(rolesPath, file);
+          const content = await fs.readFile(filePath, 'utf8');
+          const parsed = matter(content);
+          if (parsed.data) {
+            if (parsed.data.icon) {
+              icon = parsed.data.icon;
+            }
+            if (parsed.data.description) {
+              description = parsed.data.description;
+            }
+          }
+        } catch (err) {
+          console.warn(`Failed to parse frontmatter for role ${roleName}`, err);
+        }
+
+        roles.push({ name: roleName, icon, description });
+      }
+
+      return { success: true, roles };
+    } catch (error: any) {
+      this.log('Error discovering roles:', error.message, error.stack);
+      return { success: false, error: error.message };
+    }
+  }
+
+  private async handleSaveBinding(data: any) {
+    if (!data) { return { success: false }; }
+    await this.configService.update('roleBindings', data, vscode.ConfigurationTarget.Global);
+    return { success: true };
+  }
+
+  private async handleGetBinding() {
+    const bindings = this.configService.get('roleBindings', {});
+    return { success: true, bindings };
+  }
+
   // ─── OAuth Verification ────────────────────────────────
 
   private static isLoggingIn = false;
@@ -269,7 +346,7 @@ export class SettingsBackground extends Background {
         session = sessions[0];
       }
 
-      this.log(`Validating token for session: ${session.id.substring(0, 8)}...`);
+      this.log('Validating token for session...');
       const tokenInfoRes = await fetch(
         `${GOOGLE_TOKENINFO_URL}?access_token=${session.accessToken}`
       );
@@ -354,7 +431,7 @@ export class SettingsBackground extends Background {
         session = sessions[0];
       }
 
-      this.log(`Validating OpenAI token for session: ${session.id.substring(0, 8)}...`);
+      this.log('Validating OpenAI token for session...');
       const modelsRes = await fetch('https://api.openai.com/v1/models', {
         headers: { 'Authorization': `Bearer ${session.accessToken}` },
       });

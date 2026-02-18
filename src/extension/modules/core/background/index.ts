@@ -156,7 +156,7 @@ export abstract class Background implements vscode.WebviewViewProvider {
     });
 
     this.sidecarProcess.stdout?.on('data', (data) => {
-      // Direct log via Logger to use ::backend tag instead of ::background
+      // Direct log via Logger to use :backend tag instead of :background
       Logger.log(`[${this.moduleName}::backend] ${data.toString().trim()}`);
     });
 
@@ -217,7 +217,7 @@ export abstract class Background implements vscode.WebviewViewProvider {
    * Send a response message (fire-and-forget, no correlation needed).
    * Used internally by handle() to send responses back.
    */
-  private reply(to: string, command: string, data: any, correlationId: string): void {
+  protected reply(to: string, command: string, data: any, correlationId: string): void {
     this.messenger.emit({
       id: randomUUID(),
       from: this.identity,

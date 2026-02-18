@@ -9,6 +9,7 @@ owner: architect-agent
 version: 2.0.0
 severity: PERMANENT
 scope: global
+description: Technical authority and owner of project lifecycle, architecture, quality standards, and decision validation.
 
 capabilities:
   skills: []

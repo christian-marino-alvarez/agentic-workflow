@@ -5,6 +5,7 @@ import { renderSkeleton } from '../skeleton/html.js';
 import { renderList } from '../list/html.js';
 import { renderForm } from '../form/html.js';
 import { renderOAuthSetup } from '../oauth-setup/html.js';
+import { renderRoleBinding } from '../role-binding/html.js';
 
 // --- Template Functions ---
 
@@ -59,6 +60,8 @@ function templateList(view: Settings): TemplateResult {
       ` : ''}
       <div class="main-content">
         ${renderList(view)}
+        <div class="divider"></div>
+        ${renderRoleBinding(view)}
       </div>
     </div>
   `;

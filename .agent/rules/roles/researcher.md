@@ -1,5 +1,6 @@
 ---
 trigger: model_decision
+description: Technical researcher responsible for Phase 1 analysis, alternatives, and risk assessment.
 ---
 
 ---

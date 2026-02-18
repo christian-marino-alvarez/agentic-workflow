@@ -156,12 +156,20 @@ export const styles = css`
   .settings-list-container {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 16px;
+    gap: 8px;
+    padding: 12px 16px;
+  }
+
+  /* Divider */
+  .divider {
+    height: 1px;
+    background-color: var(--vscode-settings-dropdownBorder);
+    margin: 12px 16px;
+    opacity: 0.3;
   }
 
   .model-card {
-    background-color: var(--vscode-list-hoverBackground);
+    background-color: var(--vscode-editor-background);
     border: 1px solid var(--vscode-widget-border);
     border-radius: 6px;
     padding: 12px 16px;
@@ -170,6 +178,11 @@ export const styles = css`
     align-items: center;
     gap: 16px;
     transition: all 0.2s;
+  }
+
+  .model-card:hover {
+    background-color: var(--vscode-list-hoverBackground);
+    border-color: var(--vscode-focusBorder);
   }
   /* Active Model State with Pastel Touch */
   .model-card.active-model {
@@ -569,9 +582,5 @@ export const styles = css`
     color: var(--vscode-testing-iconFailed, #f48771);
     border: 1px solid var(--vscode-testing-iconFailed, #f48771)40;
   }
-
-  .oauth-setup-footer {
-    padding-top: 8px;
-    border-top: 1px solid var(--vscode-widget-border);
-  }
 `;
+

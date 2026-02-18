@@ -12,7 +12,7 @@ export interface ServerOptions {
  * Handles lifecycle, messaging bridge, and standard middleware.
  */
 export abstract class AbstractBackend {
-  protected server: FastifyInstance;
+  public server: FastifyInstance;
   protected readonly port: number;
   protected readonly host: string;
   protected readonly name: string;
@@ -77,9 +77,9 @@ export abstract class AbstractBackend {
   public async start(): Promise<void> {
     try {
       await this.server.listen({ port: this.port, host: this.host });
-      console.log(`[${this.name}] Listening on http://${this.host}:${this.port}`);
+      console.log(`[${this.moduleName}::backend] Listening on http://${this.host}:${this.port}`);
     } catch (err) {
-      console.error(`[${this.name}] Fatal Error:`, err);
+      console.error(`[${this.moduleName}::backend] Fatal Error:`, err);
       process.exit(1);
     }
   }

@@ -1,5 +1,6 @@
 ---
 trigger: model_decision
+description: Runtime and CLI tool specialist for the agentic-workflow system and execution engine.
 ---
 
 # ROLE: neo-agent

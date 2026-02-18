@@ -6,7 +6,10 @@ import {
   NAME, MESSAGES,
   GOOGLE_CLIENT_ID_KEY, GOOGLE_CLIENT_SECRET_KEY, GOOGLE_AUTH_URL, GOOGLE_TOKEN_URL,
   GOOGLE_SCOPES, AUTH_PROVIDER_ID, AUTH_PROVIDER_LABEL,
-  SECRET_KEYS
+  SECRET_KEYS,
+  OPENAI_CLIENT_ID_KEY, OPENAI_AUTH_URL, OPENAI_TOKEN_URL, OPENAI_USERINFO_URL,
+  OPENAI_SCOPES, OPENAI_AUTH_PROVIDER_ID, OPENAI_AUTH_PROVIDER_LABEL,
+  OPENAI_SECRET_KEYS
 } from '../constants.js';
 
 /**
@@ -22,15 +25,16 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
   onDidChangeSessions: vscode.Event<vscode.AuthenticationProviderAuthenticationSessionsChangeEvent>;
   private _onDidChangeSessions = new vscode.EventEmitter<vscode.AuthenticationProviderAuthenticationSessionsChangeEvent>();
 
-  // Session store
+  // Session stores (one per provider)
   private _sessions: vscode.AuthenticationSession[] = [];
+  private _openaiSessions: vscode.AuthenticationSession[] = [];
 
   private constructor(context: vscode.ExtensionContext) {
     super(NAME.toLowerCase(), context.extensionUri, 'auth-view');
     this.context = context;
     this.onDidChangeSessions = this._onDidChangeSessions.event;
 
-    // Register as a VS Code authentication provider
+    // Register as a VS Code authentication provider (Google)
     this.disposables.push(
       vscode.authentication.registerAuthenticationProvider(
         AUTH_PROVIDER_ID,
@@ -42,9 +46,12 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
 
     this.log('Auth Provider Registered');
 
-    // Attempt to restore session from SecretStorage on startup
+    // Attempt to restore sessions from SecretStorage on startup
     this.restoreSession().catch(err => {
-      this.log('Could not restore session:', err.message);
+      this.log('Could not restore Google session:', err.message);
+    });
+    this.restoreOpenAISession().catch(err => {
+      this.log('Could not restore OpenAI session:', err.message);
     });
   }
 
@@ -386,6 +393,283 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
       this.log('Session restored for:', session.account.label);
     } catch {
       this.log('Failed to parse stored account info');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // ─── OpenAI OAuth 2.0 + PKCE (Public Client) ─────────────
+  // ═══════════════════════════════════════════════════════════
+
+  /**
+   * Get active OpenAI sessions.
+   */
+  public async getOpenAISessions(): Promise<vscode.AuthenticationSession[]> {
+    this.log('getOpenAISessions called');
+    return this._openaiSessions;
+  }
+
+  /**
+   * Create a new session via OpenAI OAuth 2.0 + PKCE (public client).
+   * Opens the user's browser for OpenAI login, receives the auth code
+   * via a local callback server, and exchanges it for tokens.
+   * No client_secret is needed (PKCE public client flow).
+   */
+  public async createOpenAISession(scopes: readonly string[]): Promise<vscode.AuthenticationSession> {
+    this.log('createOpenAISession called — starting OpenAI OAuth PKCE flow');
+
+    // ─── Pre-flight: Check if Client ID is configured ───
+    const clientId = this.getOpenAIClientId();
+    if (!clientId) {
+      throw new Error('OPENAI_OAUTH_SETUP_REQUIRED');
+    }
+
+    // 1. Generate PKCE pair
+    const codeVerifier = this.generateCodeVerifier();
+    const codeChallenge = this.generateCodeChallenge(codeVerifier);
+
+    // 2. Start local callback server
+    const { port, codePromise, server } = await this.startCallbackServer();
+    this.log(`OpenAI callback server listening on port ${port}`);
+
+    // 3. Build auth URL and open browser
+    const redirectUri = `http://localhost:${port}/callback`;
+    const state = crypto.randomUUID();
+
+    const authUrl = new URL(OPENAI_AUTH_URL);
+    authUrl.searchParams.set('client_id', clientId);
+    authUrl.searchParams.set('redirect_uri', redirectUri);
+    authUrl.searchParams.set('response_type', 'code');
+    authUrl.searchParams.set('scope', OPENAI_SCOPES.join(' '));
+    authUrl.searchParams.set('code_challenge', codeChallenge);
+    authUrl.searchParams.set('code_challenge_method', 'S256');
+    authUrl.searchParams.set('state', state);
+
+    this.log('Opening browser for OpenAI login...');
+    const opened = await vscode.env.openExternal(vscode.Uri.parse(authUrl.toString()));
+    if (!opened) {
+      server.close();
+      throw new Error('Failed to open browser for OpenAI authentication');
+    }
+
+    // 4. Wait for the authorization code (with 120s timeout)
+    let authCode: string;
+    try {
+      authCode = await Promise.race([
+        codePromise,
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('OpenAI OAuth login timed out (120s)')), 120_000)
+        )
+      ]);
+    } catch (error: any) {
+      server.close();
+      if (error.message?.includes('invalid_client')) {
+        throw new Error('OPENAI_OAUTH_SETUP_REQUIRED');
+      }
+      throw error;
+    } finally {
+      server.close();
+    }
+
+    this.log('OpenAI authorization code received, exchanging for tokens...');
+
+    // 5. Exchange code for tokens (public client — no client_secret)
+    const tokens = await this.exchangeOpenAICodeForTokens(authCode, codeVerifier, redirectUri);
+
+    // 6. Get user info
+    const userInfo = await this.getOpenAIUserInfo(tokens.access_token);
+
+    // 7. Persist tokens in SecretStorage
+    await this.context.secrets.store(OPENAI_SECRET_KEYS.ACCESS_TOKEN, tokens.access_token);
+    if (tokens.refresh_token) {
+      await this.context.secrets.store(OPENAI_SECRET_KEYS.REFRESH_TOKEN, tokens.refresh_token);
+    }
+    await this.context.secrets.store(OPENAI_SECRET_KEYS.ACCOUNT_INFO, JSON.stringify(userInfo));
+
+    // 8. Create the VS Code AuthenticationSession
+    const session: vscode.AuthenticationSession = {
+      id: `openai-${Date.now()}`,
+      accessToken: tokens.access_token,
+      account: {
+        id: userInfo.email || userInfo.id || 'openai-user',
+        label: userInfo.name || userInfo.email || 'OpenAI User',
+      },
+      scopes: scopes as string[],
+    };
+
+    this._openaiSessions = [session];
+    this.log('OpenAI session created:', session.account.label);
+    return session;
+  }
+
+  public async removeOpenAISession(sessionId: string): Promise<void> {
+    this.log('removeOpenAISession called', sessionId);
+
+    const index = this._openaiSessions.findIndex(s => s.id === sessionId);
+    if (index > -1) {
+      this._openaiSessions.splice(index, 1);
+    }
+
+    // Clear stored tokens
+    await this.context.secrets.delete(OPENAI_SECRET_KEYS.ACCESS_TOKEN);
+    await this.context.secrets.delete(OPENAI_SECRET_KEYS.REFRESH_TOKEN);
+    await this.context.secrets.delete(OPENAI_SECRET_KEYS.ACCOUNT_INFO);
+
+    this.log('OpenAI session removed and tokens cleared');
+  }
+
+  /**
+   * Remove all stored OpenAI OAuth credentials and tokens.
+   */
+  public async removeOpenAICredentials(): Promise<void> {
+    await this.context.secrets.delete(OPENAI_SECRET_KEYS.ACCESS_TOKEN);
+    await this.context.secrets.delete(OPENAI_SECRET_KEYS.REFRESH_TOKEN);
+    await this.context.secrets.delete(OPENAI_SECRET_KEYS.ACCOUNT_INFO);
+    this._openaiSessions = [];
+    this.log('OpenAI OAuth credentials removed');
+  }
+
+  // ─── OpenAI Client ID ──────────────────────────────────
+
+  private getOpenAIClientId(): string {
+    return vscode.workspace.getConfiguration().get<string>(OPENAI_CLIENT_ID_KEY, '');
+  }
+
+  /**
+   * Save OpenAI OAuth Client ID to VS Code global settings.
+   * OpenAI uses public client (PKCE) — no client_secret needed.
+   */
+  public async saveOpenAICredentials(clientId: string): Promise<void> {
+    const config = vscode.workspace.getConfiguration();
+    await config.update(OPENAI_CLIENT_ID_KEY, clientId, vscode.ConfigurationTarget.Global);
+    this.log('OpenAI OAuth Client ID saved to settings');
+  }
+
+  // ─── OpenAI Token Exchange (Public Client — no secret) ──
+
+  private async exchangeOpenAICodeForTokens(
+    code: string,
+    codeVerifier: string,
+    redirectUri: string
+  ): Promise<{ access_token: string; refresh_token?: string }> {
+    this.log('OpenAI token exchange: redirectUri =', redirectUri);
+
+    const body = new URLSearchParams({
+      code,
+      client_id: this.getOpenAIClientId(),
+      code_verifier: codeVerifier,
+      redirect_uri: redirectUri,
+      grant_type: 'authorization_code',
+    });
+    // Note: No client_secret — OpenAI PKCE is a public client flow
+
+    const response = await fetch(OPENAI_TOKEN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      this.log('OpenAI token exchange FAILED:', response.status, errorBody);
+
+      let userMessage = `Token exchange failed (${response.status})`;
+      try {
+        const parsed = JSON.parse(errorBody);
+        if (parsed.error === 'invalid_client') {
+          userMessage = 'Invalid Client ID. Check your OpenAI OAuth credentials.';
+        } else if (parsed.error === 'invalid_grant') {
+          userMessage = 'Authorization code expired or already used. Please try again.';
+        } else if (parsed.error_description) {
+          userMessage = parsed.error_description;
+        }
+      } catch { /* not JSON */ }
+
+      throw new Error(userMessage);
+    }
+
+    this.log('OpenAI token exchange successful');
+    return response.json();
+  }
+
+  /**
+   * Refresh an expired OpenAI access token.
+   */
+  public async refreshOpenAIAccessToken(): Promise<string | null> {
+    const refreshToken = await this.context.secrets.get(OPENAI_SECRET_KEYS.REFRESH_TOKEN);
+    if (!refreshToken) {
+      this.log('No OpenAI refresh token available');
+      return null;
+    }
+
+    const body = new URLSearchParams({
+      client_id: this.getOpenAIClientId(),
+      refresh_token: refreshToken,
+      grant_type: 'refresh_token',
+    });
+
+    const response = await fetch(OPENAI_TOKEN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
+    });
+
+    if (!response.ok) {
+      this.log('OpenAI token refresh failed:', response.status);
+      return null;
+    }
+
+    const data: any = await response.json();
+    const newToken = data.access_token;
+
+    await this.context.secrets.store(OPENAI_SECRET_KEYS.ACCESS_TOKEN, newToken);
+    if (this._openaiSessions.length > 0) {
+      this._openaiSessions[0] = { ...this._openaiSessions[0], accessToken: newToken };
+    }
+
+    this.log('OpenAI access token refreshed');
+    return newToken;
+  }
+
+  // ─── OpenAI User Info ──────────────────────────────────
+
+  private async getOpenAIUserInfo(accessToken: string): Promise<{ id?: string; email?: string; name?: string }> {
+    const response = await fetch(OPENAI_USERINFO_URL, {
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+    });
+
+    if (!response.ok) {
+      return { email: 'unknown@openai.com', name: 'OpenAI User' };
+    }
+
+    return response.json();
+  }
+
+  // ─── OpenAI Session Restore ─────────────────────────────
+
+  private async restoreOpenAISession(): Promise<void> {
+    const accessToken = await this.context.secrets.get(OPENAI_SECRET_KEYS.ACCESS_TOKEN);
+    const accountInfoStr = await this.context.secrets.get(OPENAI_SECRET_KEYS.ACCOUNT_INFO);
+
+    if (!accessToken || !accountInfoStr) {
+      return; // No stored OpenAI session
+    }
+
+    try {
+      const accountInfo = JSON.parse(accountInfoStr);
+      const session: vscode.AuthenticationSession = {
+        id: `openai-restored-${Date.now()}`,
+        accessToken,
+        account: {
+          id: accountInfo.email || accountInfo.id || 'openai-user',
+          label: accountInfo.name || accountInfo.email || 'OpenAI User',
+        },
+        scopes: OPENAI_SCOPES,
+      };
+
+      this._openaiSessions = [session];
+      this.log('OpenAI session restored for:', session.account.label);
+    } catch {
+      this.log('Failed to parse stored OpenAI account info');
     }
   }
 

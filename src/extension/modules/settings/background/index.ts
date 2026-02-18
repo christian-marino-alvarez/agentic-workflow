@@ -1,7 +1,13 @@
 import * as vscode from 'vscode';
 import { Background, ViewHtml, Message } from '../../core/index.js';
-import { MESSAGES, PROVIDERS } from '../constants.js';
-import { Settings } from '../backend/index.js';
+import { ConfigurationService } from '../../core/backend/config-service.js';
+import { SecretStorageService } from '../../core/backend/secret-service.js';
+import { LLMModelConfig } from '../types.js';
+import { randomUUID } from 'crypto';
+import {
+  NAME, MESSAGES, PROVIDERS, AUTH_TYPES,
+  PROVIDER_URLS, PROVIDER_HEADERS
+} from '../constants.js';
 import { Auth } from '../../auth/background/index.js';
 import {
   GOOGLE_TOKENINFO_URL, GOOGLE_SCOPES,
@@ -9,22 +15,144 @@ import {
 } from '../../auth/constants.js';
 
 /**
- * Settings Background - Controls the Settings View.
- * NOTE: Currently unused — Settings is handled by AppBackground.
- * Kept for potential future standalone module use.
+ * Settings Background - Controls the Settings View
+ * and manages LLM model configuration (CRUD + verification).
  */
 export class SettingsBackground extends Background {
-  private readonly settings: Settings;
+  private readonly configService: ConfigurationService;
+  private readonly secretService: SecretStorageService;
+  private models: LLMModelConfig[] = [];
 
   constructor(context: vscode.ExtensionContext) {
     super('settings', context.extensionUri, 'settings-view');
+    this.configService = new ConfigurationService('agenticWorkflow');
+    this.secretService = new SecretStorageService(context.secrets);
+    this.loadModels();
     this.log('SettingsBackground initialized');
-    this.settings = new Settings(context);
   }
 
-  /**
-   * Handle incoming messages from the View layer.
-   */
+  // ─── Model CRUD ─────────────────────────────────────────
+
+  private async loadModels(): Promise<void> {
+    this.models = this.configService.get<LLMModelConfig[]>('models', []) || [];
+    for (const model of this.models) {
+      if (model.id) {
+        const key = await this.secretService.get(`model.${model.id}.apiKey`);
+        if (key) {
+          model.apiKey = key;
+        }
+      }
+    }
+  }
+
+  async getModels(): Promise<LLMModelConfig[]> {
+    await this.loadModels();
+    return this.models;
+  }
+
+  async saveModel(model: LLMModelConfig): Promise<string> {
+    await this.loadModels();
+
+    if (!model.id) {
+      model.id = randomUUID();
+    }
+
+    const existingIndex = this.models.findIndex(m => m.id === model.id);
+
+    if (model.apiKey) {
+      await this.secretService.store(`model.${model.id}.apiKey`, model.apiKey);
+      model.apiKey = undefined;
+    }
+
+    if (existingIndex >= 0) {
+      this.models[existingIndex] = { ...this.models[existingIndex], ...model };
+    } else {
+      this.models.push(model);
+    }
+
+    await this.configService.update('models', this.models, vscode.ConfigurationTarget.Global);
+    await this.loadModels();
+    return model.id;
+  }
+
+  async deleteModel(id: string): Promise<void> {
+    await this.loadModels();
+    this.models = this.models.filter(m => m.id !== id);
+    await this.configService.update('models', this.models, vscode.ConfigurationTarget.Global);
+    await this.secretService.delete(`model.${id}.apiKey`);
+  }
+
+  private _activeModelId: string | undefined;
+
+  async setActiveModel(id: string): Promise<void> {
+    this._activeModelId = id;
+    await this.configService.update('activeModelId', id, vscode.ConfigurationTarget.Global);
+  }
+
+  async getActiveModelId(): Promise<string | undefined> {
+    if (this._activeModelId !== undefined) {
+      return this._activeModelId;
+    }
+    this._activeModelId = this.configService.get<string>('activeModelId');
+    return this._activeModelId;
+  }
+
+  // ─── Connection Verification ─────────────────────────────
+
+  async verifyConnection(model: LLMModelConfig): Promise<{ success: boolean; message?: string }> {
+    try {
+      if (model.authType === AUTH_TYPES.OAUTH && model.provider === PROVIDERS.GEMINI) {
+        return await this.verifyOAuthConnection();
+      }
+      if (model.authType === AUTH_TYPES.OAUTH && model.provider === PROVIDERS.CODEX) {
+        return await this.verifyOpenAIOAuthConnection();
+      }
+
+      const key = model.apiKey;
+      if (!key) {
+        return { success: false, message: 'Missing API Key' };
+      }
+
+      const { url, options } = this.getVerificationRequest(model.provider, key);
+      const res = await fetch(url, options);
+      return { success: res.ok, message: res.ok ? 'Connection Successful' : `Error: ${res.statusText}` };
+    } catch (error: any) {
+      console.error('Connection verification failed:', error);
+      return { success: false, message: error.message };
+    }
+  }
+
+  private getVerificationRequest(provider: string, key: string): { url: string; options: RequestInit } {
+    switch (provider) {
+      case PROVIDERS.CODEX:
+        return {
+          url: PROVIDER_URLS.CODEX,
+          options: {
+            headers: { [PROVIDER_HEADERS.CODEX.AUTH_KEY]: `${PROVIDER_HEADERS.CODEX.AUTH_PREFIX} ${key}` }
+          }
+        };
+      case PROVIDERS.GEMINI:
+        return {
+          url: `${PROVIDER_URLS.GEMINI}?key=${key}`,
+          options: {}
+        };
+      case PROVIDERS.CLAUDE:
+        return {
+          url: PROVIDER_URLS.CLAUDE,
+          options: {
+            headers: {
+              [PROVIDER_HEADERS.CLAUDE.API_KEY]: key,
+              [PROVIDER_HEADERS.CLAUDE.VERSION_KEY]: PROVIDER_HEADERS.CLAUDE.VERSION_VALUE
+            }
+          }
+        };
+      default:
+        throw new Error('Unknown provider');
+    }
+  }
+
+  // ─── Message Routing ───────────────────────────────────
+
   public override async listen(message: Message): Promise<any> {
     const { command, data } = message.payload;
 
@@ -45,7 +173,6 @@ export class SettingsBackground extends Background {
         return this.handleGetGoogleCredentials();
       case MESSAGES.REMOVE_GOOGLE_CREDENTIALS:
         return this.handleRemoveGoogleCredentials();
-      // OpenAI OAuth
       case MESSAGES.SAVE_OPENAI_CLIENT_ID:
         return this.handleSaveOpenAIClientId(data);
       case MESSAGES.GET_OPENAI_CREDENTIALS:
@@ -57,43 +184,32 @@ export class SettingsBackground extends Background {
     }
   }
 
-  // --- Handlers ---
+  // ─── Handlers ───────────────────────────────────────────
 
   private async handleGetRequest() {
-    const models = await this.settings.getModels();
-    const activeModelId = await this.settings.getActiveModelId();
+    const models = await this.getModels();
+    const activeModelId = await this.getActiveModelId();
     return { success: true, models, activeModelId };
   }
 
   private async handleSaveRequest(data: any) {
-    const id = await this.settings.saveModel(data);
+    const id = await this.saveModel(data);
     return { success: true, id };
   }
 
   private async handleDeleteRequest(data: any) {
-    await this.settings.deleteModel(data);
+    await this.deleteModel(data);
     return { success: true };
   }
 
   private async handleSelectRequest(data: any) {
-    await this.settings.setActiveModel(data);
-    const activeId = await this.settings.getActiveModelId();
+    await this.setActiveModel(data);
+    const activeId = await this.getActiveModelId();
     return { success: true, activeId };
   }
 
   private async handleTestConnectionRequest(data: any) {
-    // OAuth models MUST be verified in the Extension Host (Background),
-    // because the sidecar Backend has no access to vscode.authentication.
-    if (data?.authType === 'oauth') {
-      if (data?.provider === PROVIDERS.GEMINI) {
-        return await this.verifyOAuthConnection();
-      }
-      if (data?.provider === PROVIDERS.CODEX) {
-        return await this.verifyOpenAIOAuthConnection();
-      }
-    }
-    // API key models: delegate to the sidecar Backend
-    return await this.settings.verifyConnection(data);
+    return await this.verifyConnection(data);
   }
 
   private async handleSaveGoogleClientId(data: any) {
@@ -113,7 +229,6 @@ export class SettingsBackground extends Background {
     const config = vscode.workspace.getConfiguration();
     await config.update('agenticWorkflow.googleClientId', undefined, vscode.ConfigurationTarget.Global);
     await config.update('agenticWorkflow.googleClientSecret', undefined, vscode.ConfigurationTarget.Global);
-    // Also remove cached tokens from SecretStorage
     const auth = Auth.getInstance();
     await auth.removeGoogleCredentials();
     return { success: true };
@@ -124,12 +239,10 @@ export class SettingsBackground extends Background {
     return { success: true };
   }
 
+  // ─── OAuth Verification ────────────────────────────────
+
   private static isLoggingIn = false;
 
-  /**
-   * Verify OAuth connection in the Extension Host.
-   * The sidecar Backend cannot use vscode.authentication — this must run here.
-   */
   private async verifyOAuthConnection(): Promise<{ success: boolean; message: string }> {
     if (SettingsBackground.isLoggingIn) {
       return { success: false, message: 'Login flow already in progress. Please check your browser.' };
@@ -141,14 +254,11 @@ export class SettingsBackground extends Background {
 
       let session: vscode.AuthenticationSession;
 
-      // 1. No session? Start login flow.
       if (!sessions || sessions.length === 0) {
         this.log('No active Google session. Initiating login...');
         SettingsBackground.isLoggingIn = true;
         try {
           session = await auth.createSession(GOOGLE_SCOPES);
-          // Session created successfully means we have valid tokens.
-          // Return immediately to avoid redundant validation/refresh logic.
           return { success: true, message: `Authenticated as ${session.account.label}` };
         } catch (e: any) {
           return { success: false, message: `Login failed: ${e.message}` };
@@ -159,7 +269,6 @@ export class SettingsBackground extends Background {
         session = sessions[0];
       }
 
-      // 2. Validate token
       this.log(`Validating token for session: ${session.id.substring(0, 8)}...`);
       const tokenInfoRes = await fetch(
         `${GOOGLE_TOKENINFO_URL}?access_token=${session.accessToken}`
@@ -167,20 +276,16 @@ export class SettingsBackground extends Background {
 
       if (!tokenInfoRes.ok) {
         this.log(`Token validation failed: ${tokenInfoRes.status} ${tokenInfoRes.statusText}`);
-
-        // 3. Try Refresh
         this.log('Access token invalid, attempting refresh...');
         const newToken = await auth.refreshAccessToken();
 
         if (!newToken) {
           this.log('Refresh failed. Token expired. Initiating re-login...');
-          // remove old session and re-login
           await auth.removeSession(session.id);
 
           SettingsBackground.isLoggingIn = true;
           try {
             session = await auth.createSession(GOOGLE_SCOPES);
-            // Session created successfully means we have new tokens
             return { success: true, message: `Authenticated as ${session.account.label} (re-login)` };
           } catch (e: any) {
             return { success: false, message: `Re-login failed: ${e.message}` };
@@ -201,7 +306,7 @@ export class SettingsBackground extends Background {
     }
   }
 
-  // ─── OpenAI OAuth Handlers ──────────────────────────────
+  // ─── OpenAI OAuth ──────────────────────────────────────
 
   private async handleSaveOpenAIClientId(data: any) {
     const auth = Auth.getInstance();
@@ -223,10 +328,6 @@ export class SettingsBackground extends Background {
     return { success: true };
   }
 
-  /**
-   * Verify OpenAI OAuth connection in the Extension Host.
-   * Mirrors verifyOAuthConnection but for the OpenAI provider.
-   */
   private async verifyOpenAIOAuthConnection(): Promise<{ success: boolean; message: string }> {
     if (SettingsBackground.isLoggingIn) {
       return { success: false, message: 'Login flow already in progress. Please check your browser.' };
@@ -238,7 +339,6 @@ export class SettingsBackground extends Background {
 
       let session: vscode.AuthenticationSession;
 
-      // 1. No session? Start login flow.
       if (!sessions || sessions.length === 0) {
         this.log('No active OpenAI session. Initiating login...');
         SettingsBackground.isLoggingIn = true;
@@ -254,7 +354,6 @@ export class SettingsBackground extends Background {
         session = sessions[0];
       }
 
-      // 2. Validate by calling /v1/models with the token
       this.log(`Validating OpenAI token for session: ${session.id.substring(0, 8)}...`);
       const modelsRes = await fetch('https://api.openai.com/v1/models', {
         headers: { 'Authorization': `Bearer ${session.accessToken}` },
@@ -262,8 +361,6 @@ export class SettingsBackground extends Background {
 
       if (!modelsRes.ok) {
         this.log(`OpenAI token validation failed: ${modelsRes.status}`);
-
-        // 3. Try Refresh
         this.log('OpenAI access token invalid, attempting refresh...');
         const newToken = await auth.refreshOpenAIAccessToken();
 
@@ -294,18 +391,13 @@ export class SettingsBackground extends Background {
     }
   }
 
-  /**
-   * Store a reference to the shared App Webview for title/badge updates.
-   * IMPORTANT: Do NOT call resolveWebviewView or setWebview here —
-   * that would attach a second messenger listener to the same webview,
-   * causing every message to be processed twice.
-   */
+  // ─── Webview ───────────────────────────────────────────
+
   public setWebviewViewRef(webviewView: vscode.WebviewView): void {
     this._webviewView = webviewView;
     this.log('SettingsBackground attached to shared Main View (ref only)');
   }
 
-  // Helper method if needed to generate HTML for standalone use
   protected getHtmlForWebview(webview: vscode.Webview): string {
     const scriptPath = 'dist/extension/modules/settings/view/index.js';
     return ViewHtml.getWebviewHtml(webview, this._extensionUri, this.viewTagName, scriptPath);

@@ -35,7 +35,14 @@ vi.mock('vscode', () => ({
       appendLine: vi.fn(),
       show: vi.fn()
     }))
-  }
+  },
+  workspace: {
+    getConfiguration: vi.fn(() => ({
+      get: vi.fn(() => []),
+      update: vi.fn()
+    }))
+  },
+  ConfigurationTarget: { Global: 1 }
 }));
 
 // Mock Core modules

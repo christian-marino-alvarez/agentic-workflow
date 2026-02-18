@@ -3,18 +3,18 @@
 ## 🌍 Global Status
 | Domain | Status | Completed | Total |
 |---|---|---|---|
-| **D1: Settings & OAuth** | 🏗️ Architecture | 2 | 5 |
+| **D1: Settings & OAuth** | 🏗️ Architecture | 3 | 8 |
 | **D2: UI (Chat/Workflows)** | 🏗️ Concept | 0 | 6 |
 | **D3: Backend (Agents)** | 🏗️ Concept | 0 | 4 |
 | **D4: Runtime & Execution** | 🏗️ Concept | 0 | 2 |
 | **D7: Release/CI-CD** | ✅ Stable | 2 | 2 |
 | **D8: E2E Testing** | ✅ Stable | 4 | 4 |
 
-**Total**: 8/21 tasks completed
+**Total**: 9/24 tasks completed
 
 ## 🎯 Priority High - Critical Path
 - [x] **T017**: D1 - OAuth Authentication Provider (vscode.authentication)
-- [ ] **T018**: D1 - Model Registry UI (API Key + OAuth Tokens)
+- [x] **T018**: D1 - Model Registry UI (API Key + OAuth Tokens)
 - [ ] **T019**: D3 - Agent Factory & Role-Model Binding
 - [ ] **T032**: D4 - Runtime Server (File I/O & Sandbox)
 - [ ] **T020**: D2 - Chat Filters (Agent/Thread)
@@ -30,15 +30,22 @@
   - Integration with `vscode.authentication`. ✅
   - ⚠️ OpenAI does NOT support third-party OAuth (API keys only).
   - OAuth timeout fix: 10s → 120s for browser login flows.
-- [ ] **T018**: Model Registry UI
-  - CRUD for LLM Models (Name, Provider, AuthType).
-  - Secure storage of API Keys vs OAuth Tokens.
+- [x] **T018**: Model Registry UI
+  - CRUD for LLM Models (Name, Provider, AuthType). ✅
+  - Secure storage of API Keys vs OAuth Tokens. ✅
 - [ ] **T021**: Settings Migration
   - Migrate current `settings.json` to new Registry format.
 - [ ] **T022**: Profile Management
   - Allow switching between "Work" (Codex) and "Research" (Claude) profiles.
 - [x] **T023**: Settings Validation
   - Verify API Keys/Tokens on save. ✅ (Test Connection for API key + OAuth)
+- [ ] **T034**: Default Model per Task Type
+  - Allow assigning a default model per workflow phase/agent role.
+- [ ] **T035**: Import/Export Configuration
+  - Export model registry to JSON/YAML. Import from file.
+- [ ] **T036**: Advanced Validation
+  - Model capability detection (vision, code, etc.).
+  - Token limit warnings on model selection.
 
 ### D2: UI & User Experience (Advanced)
 > Focus: Visual Workflows and Enhanced Chat.
@@ -87,8 +94,8 @@
 ---
 
 ## 🚀 Next Suggested Steps
-1.  **T018 (Model Registry UI)**: Enhanced CRUD and token management.
-2.  **T019 (Factory)**: Required to actually use the models.
-3.  **T020 (Filters)**: Quick win for UI usability.
+1.  **T019 (Agent Factory)**: Required to actually use the models.
+2.  **T020 (Chat Filters)**: Quick win for UI usability.
+3.  **T022 (Profile Management)**: Work/Research profile switching.
 
-**Last Updated**: 2026-02-18 by architect-agent (OpenAI OAuth investigation + timeout fix)
+**Last Updated**: 2026-02-18 by architect-agent (T018 completed, T023 completed)

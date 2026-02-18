@@ -5,6 +5,8 @@ import { templates } from './templates/index.js';
 import { MESSAGES, SCOPES, NAME, DELETE_TIMEOUT, AUTH_TYPES, PROVIDERS, ViewState } from '../constants.js';
 import { styles } from './templates/css.js';
 
+import { styles as roleBindingStyles } from './templates/role-binding/index.js';
+
 const GOOGLE_CLIENT_ID_KEY = 'agenticWorkflow.googleClientId';
 const GOOGLE_CLIENT_SECRET_KEY = 'agenticWorkflow.googleClientSecret';
 const OPENAI_CLIENT_ID_KEY = 'agenticWorkflow.openaiClientId';
@@ -24,6 +26,10 @@ export class Settings extends View {
   @state() accessor isTestingConnection = false;
   @state() accessor connectionTestResult: { success: boolean, message?: string } | undefined;
 
+  // Role Binding State
+  @state() accessor roles: { name: string, icon?: string, description?: string }[] = [];
+  @state() accessor roleBindings: Record<string, string> = {};
+
   // OAuth Setup Wizard state
   @state() accessor googleClientIdInput: string = '';
   @state() accessor googleClientSecretInput: string = '';
@@ -39,7 +45,7 @@ export class Settings extends View {
 
   private deleteTimeout: any; // Timer for auto-cancel delete
 
-  static override styles = styles;
+  static override styles = [styles, roleBindingStyles];
   protected override readonly moduleName = NAME;
 
   /**
@@ -57,7 +63,11 @@ export class Settings extends View {
    */
   override async firstUpdated() {
     this.log('First render complete, requesting providers...');
-    await this.loadModels();
+    await Promise.all([
+      this.loadModels(),
+      this.refreshRoles(),
+      this.loadBindings()
+    ]);
   }
 
   // --- Data Operations (Request-Response) ---
@@ -97,6 +107,36 @@ export class Settings extends View {
     } finally {
       this.log('loadModels() finished. viewState =', this.viewState);
     }
+  }
+
+  // --- Role Binding Operations ---
+
+  async refreshRoles() {
+    try {
+      const result = await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.REFRESH_ROLES);
+      if (result && result.roles) {
+        this.roles = result.roles;
+      }
+    } catch (error: any) {
+      this.log('Error refreshing roles:', error);
+    }
+  }
+
+  async loadBindings() {
+    try {
+      const result = await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.GET_BINDING);
+      if (result && result.bindings) {
+        this.roleBindings = result.bindings;
+      }
+    } catch (error: any) {
+      this.log('Error loading bindings:', error);
+    }
+  }
+
+  async updateBinding(role: string, modelId: string) {
+    const newBindings = { ...this.roleBindings, [role]: modelId };
+    this.roleBindings = newBindings;
+    await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.SAVE_BINDING, newBindings);
   }
 
   /**
@@ -140,7 +180,11 @@ export class Settings extends View {
   async userActionRefresh() {
     this.log('userActionRefresh');
     this.viewState = ViewState.LOADING;
-    await this.loadModels();
+    await Promise.all([
+      this.loadModels(),
+      this.refreshRoles(),
+      this.loadBindings()
+    ]);
   }
 
   userActionAdded() {

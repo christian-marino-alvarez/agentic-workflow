@@ -1,6 +1,6 @@
 ---
 trigger: model_decision
-description: Agente de QA del ciclo de tarea. Se ejecuta durante implementacion, verificacion y antes del commit final para disenar y validar tests, garantizando calidad sin regresiones.
+description: Quality Assurance specialist responsible for testing strategies, regression prevention, and validation gates.
 ---
 
 ---

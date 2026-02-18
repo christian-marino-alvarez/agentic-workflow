@@ -68,6 +68,6 @@ export abstract class App {
    * Standardized logger for the Application layer.
    */
   protected log(message: string, ...args: any[]): void {
-    Logger.log(`[App] ${message}`, ...args);
+    Logger.log(`[app::main] ${message}`, ...args);
   }
 }

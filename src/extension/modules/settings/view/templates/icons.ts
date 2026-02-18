@@ -23,7 +23,51 @@ export const PROVIDER_ICONS = {
   default: html`<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/></svg>`
 };
 
+import * as Roles from './role-icons.js';
+
+export const ROLE_ICONS: Record<string, any> = {
+  'architect': Roles.architect(),
+  'tech-lead': Roles.techLead(),
+  'coder': Roles.coder(),
+  'code-reviewer': Roles.codeReviewer(),
+  'qa': Roles.qa(),
+  'product-owner': Roles.productOwner(),
+  'technical-writer': Roles.technicalWriter(),
+  'backend': Roles.backend(),
+  'background': Roles.background(),
+  'engine': Roles.engine(),
+  'neo': Roles.neo(),
+  'view': Roles.view(),
+  'vscode-specialist': Roles.vscodeSpecialist(),
+  'designer': Roles.designer(),
+  'devops': Roles.devops(),
+  'security': Roles.security(),
+  'analyst': Roles.analyst(),
+  'researcher': Roles.researcher(),
+  'scrum-master': Roles.scrumMaster(),
+  'default': Roles.defaultIcon()
+};
+
 export function getProviderIcon(provider: string) {
   const key = (provider || '').toLowerCase();
   return PROVIDER_ICONS[key as keyof typeof PROVIDER_ICONS] || PROVIDER_ICONS.default;
+}
+
+import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
+
+export function getRoleIcon(role: string, customIcon?: string) {
+  if (customIcon) {
+    if (customIcon.trim().startsWith('<svg')) {
+      return html`${unsafeSVG(customIcon)}`;
+    }
+    if (customIcon.startsWith('codicon-')) {
+      return html`<span class="codicon ${customIcon}" style="font-size: 20px;"></span>`;
+    }
+    // Assume it's a URL or path
+    return html`<img src="${customIcon}" style="width: 20px; height: 20px;" />`;
+  }
+
+  // Normalize role name to find icon
+  const key = Object.keys(ROLE_ICONS).find(k => role.toLowerCase().includes(k));
+  return ROLE_ICONS[key || 'default'];
 }

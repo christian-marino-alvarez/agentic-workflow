@@ -42,7 +42,7 @@ function renderModelCard(view: Settings, model: LLMModelConfig) {
       <div class="model-info">
         <div class="model-header">
            <h3 class="model-name">${model.name || 'Unnamed Model'}</h3>
-           ${isActive ? html`<span class="badge-active">Active</span>` : ''}
+           ${isActive ? html`<span class="badge-active" title="Fallback model when no role is assigned">Default</span>` : ''}
         </div>
         <div class="model-details">
            <span class="model-provider-name">${model.provider}</span>
@@ -61,8 +61,8 @@ function renderModelCard(view: Settings, model: LLMModelConfig) {
           <button class="action-btn select" @click=${(e: Event) => {
         e.stopPropagation();
         view.userActionSelected(model.id);
-      }} title="Select this model">
-            Select
+      }} title="Use as default fallback model">
+            Set Default
           </button>
         ` : ''}
         <button class="action-btn edit" @click=${(e: Event) => {

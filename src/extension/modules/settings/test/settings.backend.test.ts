@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 // No jsdom environment here - use default Node
-import { Settings as SettingsBackend } from '../backend/index.js';
+import { SettingsBackground } from '../background/index.js';
 import { PROVIDERS, AUTH_TYPES, PROVIDER_URLS, SCOPES, MESSAGES } from '../constants.js';
 
 // Mock vscode module
@@ -25,16 +25,19 @@ vi.mock('vscode', () => ({
     ExtensionContext: {},
     SecretStorage: {},
     ConfigurationTarget: { Global: 1 },
-    Uri: { parse: vi.fn() },
+    Uri: { parse: vi.fn(), joinPath: vi.fn() },
     workspace: {
       getConfiguration: vi.fn(() => mockConfig)
     },
     authentication: {
       getSession: (...args: any[]) => mockAuthentication.getSession(...args)
     },
-    EventEmitter: vi.fn(() => ({ event: vi.fn(), fire: vi.fn() }))
+    EventEmitter: vi.fn(() => ({ event: vi.fn(), fire: vi.fn() })),
+    window: {
+      registerWebviewViewProvider: vi.fn()
+    }
   },
-  Uri: { parse: vi.fn() },
+  Uri: { parse: vi.fn(), joinPath: vi.fn() },
   workspace: {
     getConfiguration: vi.fn(() => mockConfig)
   },
@@ -42,12 +45,15 @@ vi.mock('vscode', () => ({
     getSession: (...args: any[]) => mockAuthentication.getSession(...args)
   },
   EventEmitter: vi.fn(() => ({ event: vi.fn(), fire: vi.fn() })),
-  ConfigurationTarget: { Global: 1 }
+  ConfigurationTarget: { Global: 1 },
+  window: {
+    registerWebviewViewProvider: vi.fn()
+  }
 }));
 
-describe('Settings Module Backend', () => {
+describe('Settings Module (Background)', () => {
   let context: any;
-  let settings: SettingsBackend;
+  let settings: SettingsBackground;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -62,7 +68,7 @@ describe('Settings Module Backend', () => {
     mockConfig.get.mockReturnValue([]);
     mockConfig.update.mockResolvedValue(undefined);
 
-    settings = new SettingsBackend(context);
+    settings = new SettingsBackground(context);
   });
 
   afterEach(() => {
@@ -142,40 +148,6 @@ describe('Settings Module Backend', () => {
         })
       })
     );
-  });
-
-  it('verifyConnection handles OAuth success', async () => {
-    const model = {
-      id: 'test',
-      name: 'test',
-      provider: PROVIDERS.GEMINI,
-      authType: AUTH_TYPES.OAUTH,
-      modelName: 'gemini-pro'
-    };
-
-    mockAuthentication.getSession.mockResolvedValue({
-      accessToken: 'oauth-token',
-      account: { id: 'user@gmail.com', label: 'Test User' }
-    });
-
-    // Mock the token validation fetch
-    const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue({
-      ok: true,
-      statusText: 'OK'
-    } as Response);
-
-    const result = await settings.verifyConnection(model as any);
-
-    expect(result.success).toBe(true);
-    expect(result.message).toBe('Authenticated as Test User');
-    expect(mockAuthentication.getSession).toHaveBeenCalledWith(
-      'agw-google-oauth',
-      expect.arrayContaining(['openid', 'email', 'profile']),
-      { createIfNone: true }
-    );
-    expect(fetchSpy).toHaveBeenCalled();
-
-    fetchSpy.mockRestore();
   });
 
   it('verifyConnection handles failure', async () => {

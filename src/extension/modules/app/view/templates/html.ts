@@ -4,24 +4,27 @@ import { AppView } from '../index.js';
 export function render(view: AppView) {
   return html`
     <nav class="tab-bar">
-      <button 
-        class="tab-item ${view.activeTab === 'settings' ? 'active' : ''}"
-        @click=${() => view.activeTab = 'settings'}
-      >
-        SETTINGS
-      </button>
-      <button 
-        class="tab-item ${view.activeTab === 'chat' ? 'active' : ''}"
-        @click=${() => view.activeTab = 'chat'}
-      >
-        CHAT
-      </button>
-      <button 
-        class="tab-item ${view.activeTab === 'history' ? 'active' : ''}"
-        @click=${() => view.activeTab = 'history'}
-      >
-        HISTORY
-      </button>
+      <div class="tab-items">
+        <button 
+          class="tab-item ${view.activeTab === 'settings' ? 'active' : ''}"
+          @click=${() => view.activeTab = 'settings'}
+        >
+          SETTINGS
+        </button>
+        <button 
+          class="tab-item ${view.activeTab === 'chat' ? 'active' : ''}"
+          @click=${() => view.activeTab = 'chat'}
+        >
+          CHAT
+        </button>
+        <button 
+          class="tab-item ${view.activeTab === 'history' ? 'active' : ''}"
+          @click=${() => view.activeTab = 'history'}
+        >
+          HISTORY
+        </button>
+      </div>
+      ${view.isSecure ? html`<span class="secure-badge">🔒 Secure</span>` : ''}
     </nav>
 
     <div class="content-area">

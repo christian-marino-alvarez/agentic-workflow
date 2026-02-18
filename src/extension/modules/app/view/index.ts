@@ -14,6 +14,17 @@ export class AppView extends View {
   @state()
   public activeTab: string = 'settings';
 
+  @state()
+  public isSecure: boolean = false;
+
+  override connectedCallback() {
+    super.connectedCallback();
+    // Listen for secure state changes from Settings View
+    this.addEventListener('secure-state-changed', ((e: CustomEvent) => {
+      this.isSecure = e.detail?.secure ?? false;
+    }) as EventListener);
+  }
+
   override render() {
     return render(this);
   }

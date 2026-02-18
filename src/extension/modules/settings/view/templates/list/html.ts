@@ -1,4 +1,4 @@
-import { html } from 'lit';
+import { html, nothing } from 'lit';
 import { Settings } from '../../index.js';
 import { LLMModelConfig } from '../../../types.js';
 import { getProviderIcon } from '../icons.js';
@@ -46,6 +46,14 @@ function renderModelCard(view: Settings, model: LLMModelConfig) {
         </div>
         <div class="model-details">
            <span class="model-provider-name">${model.provider}</span>
+           <span class="badge-auth-type ${model.authType === 'oauth' ? 'oauth' : 'apikey'}">
+             ${model.authType === 'oauth'
+      ? (view.verifiedModelIds.has(model.id) ? '🔐 OAuth' : '👤 OAuth')
+      : '🔑 API Key'}
+           </span>
+           ${view.verifiedModelIds.has(model.id) ? html`
+             <span class="badge-verified">✓ Verified</span>
+           ` : nothing}
         </div>
       </div>
       <div class="model-actions">

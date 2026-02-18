@@ -77,6 +77,32 @@ export const styles = css`
     vertical-align: middle;
   }
 
+  .badge-auth-type {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 8px;
+    opacity: 0.85;
+  }
+
+  .badge-auth-type.oauth {
+    background-color: rgba(78, 154, 241, 0.15);
+    color: var(--vscode-textLink-foreground, #4e9af1);
+  }
+
+  .badge-auth-type.apikey {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--vscode-descriptionForeground);
+  }
+
+  .badge-verified {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 8px;
+    background-color: rgba(115, 201, 145, 0.15);
+    color: var(--vscode-testing-iconPassed, #73c991);
+    font-weight: 600;
+  }
+
   @media (min-width: 500px) {
     .model-card {
       flex-direction: row;

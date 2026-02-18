@@ -7,6 +7,7 @@ import { styles } from './templates/css.js';
 
 const GOOGLE_CLIENT_ID_KEY = 'agenticWorkflow.googleClientId';
 const GOOGLE_CLIENT_SECRET_KEY = 'agenticWorkflow.googleClientSecret';
+const OPENAI_CLIENT_ID_KEY = 'agenticWorkflow.openaiClientId';
 
 @customElement(`${NAME}-view`)
 export class Settings extends View {
@@ -29,6 +30,9 @@ export class Settings extends View {
   @state() accessor oauthSetupMessage: string | undefined;
   @state() accessor oauthSetupSuccess: boolean = false;
   @state() accessor oauthTokenExpired: boolean = false;
+
+  // OpenAI OAuth state
+  @state() accessor openaiClientIdInput: string = '';
 
   // Track verified models for visual badge in list
   @state() accessor verifiedModelIds: Set<string> = new Set();
@@ -148,6 +152,7 @@ export class Settings extends View {
     this.formProvider = PROVIDERS.GEMINI;
     this.viewState = ViewState.FORM;
     this.loadGoogleCredentials();
+    this.loadOpenAICredentials();
   }
 
   userActionEdited(id: string) {
@@ -161,6 +166,7 @@ export class Settings extends View {
     }
     this.viewState = ViewState.FORM;
     this.loadGoogleCredentials();
+    this.loadOpenAICredentials();
   }
 
   private async loadGoogleCredentials() {
@@ -389,9 +395,12 @@ export class Settings extends View {
 
   /** True if Google OAuth credentials are stored in VS Code settings */
   get hasGoogleCredentials(): boolean {
-    // Access VS Code settings via the acquireVsCodeApi bridge
-    // We check if the stored values are non-empty
     return !!(this.googleClientIdInput || this.googleClientSecretInput);
+  }
+
+  /** True if OpenAI OAuth Client ID is configured */
+  get hasOpenAICredentials(): boolean {
+    return !!this.openaiClientIdInput;
   }
 
   userActionOpenOAuthSetup() {
@@ -470,6 +479,74 @@ export class Settings extends View {
   userActionBackToForm() {
     this.oauthSetupMessage = undefined;
     this.viewState = ViewState.FORM;
+  }
+
+  // --- OpenAI OAuth Actions ---
+
+  private async loadOpenAICredentials() {
+    try {
+      const result = await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.GET_OPENAI_CREDENTIALS, {});
+      if (result) {
+        this.openaiClientIdInput = result.clientId || '';
+      }
+    } catch {
+      // Non-critical
+    }
+  }
+
+  userActionOpenOpenAIOAuthSetup() {
+    this.oauthSetupMessage = undefined;
+    // Reuse the same OAUTH_SETUP ViewState — the wizard template can detect provider
+    this.viewState = ViewState.OAUTH_SETUP;
+  }
+
+  async userActionRemoveOpenAICredentials() {
+    try {
+      await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.REMOVE_OPENAI_CREDENTIALS, {});
+      this.openaiClientIdInput = '';
+
+      // Clear verified state for OpenAI OAuth models
+      const newVerifiedSet = new Set(this.verifiedModelIds);
+      this.models.forEach(m => {
+        if (m.authType === AUTH_TYPES.OAUTH && m.provider === PROVIDERS.CODEX) {
+          newVerifiedSet.delete(m.id);
+        }
+      });
+      this.verifiedModelIds = newVerifiedSet;
+
+      const activeModel = this.models.find(m => m.id === this.activeModelId);
+      if (activeModel?.authType === AUTH_TYPES.OAUTH && activeModel?.provider === PROVIDERS.CODEX) {
+        this.setSecureState(false);
+      }
+    } catch (error: any) {
+      this.log('Failed to remove OpenAI credentials:', error.message);
+    }
+  }
+
+  async userActionSaveOpenAICredentials() {
+    const idInput = this.shadowRoot?.querySelector('#openaiClientId') as HTMLInputElement;
+    const clientId = idInput?.value?.trim();
+
+    if (!clientId) {
+      this.oauthSetupSuccess = false;
+      this.oauthSetupMessage = 'Client ID is required.';
+      return;
+    }
+
+    try {
+      await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.SAVE_OPENAI_CLIENT_ID, { clientId });
+      this.oauthSetupSuccess = true;
+      this.oauthSetupMessage = '✅ Client ID saved! You can now use OAuth with OpenAI.';
+      this.openaiClientIdInput = clientId;
+
+      setTimeout(() => {
+        this.oauthSetupMessage = undefined;
+        this.viewState = ViewState.FORM;
+      }, 1500);
+    } catch (error: any) {
+      this.oauthSetupSuccess = false;
+      this.oauthSetupMessage = `Failed to save: ${error.message}`;
+    }
   }
 
   override render() {

@@ -24,6 +24,11 @@ export abstract class View extends LitElement {
   /** Map of pending requests awaiting responses, keyed by message id */
   private pendingRequests = new Map<string, PendingRequest>();
 
+  /**
+   * Lazy singleton accessor for the VS Code Webview API.
+   * Safe for Node.js (Extension Host) — only acquires in browser context.
+   * Uses window.vscodeApi as cache to guarantee single acquisition.
+   */
   protected get vscode() {
     if (!(window as any).vscodeApi) {
       if ((window as any).acquireVsCodeApi) {

@@ -289,7 +289,9 @@ export class Settings extends View {
     this.connectionTestResult = undefined;
 
     try {
-      const result = await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.TEST_CONNECTION_REQUEST, testModel);
+      // OAuth flows open a browser for login — much longer than 10s default timeout
+      const timeout = testModel.authType === 'oauth' ? 120_000 : undefined;
+      const result = await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.TEST_CONNECTION_REQUEST, testModel, timeout);
       // If auth module signals setup is needed, navigate to wizard
       if (result?.message?.includes('OAUTH_SETUP_REQUIRED')) {
         this.viewState = ViewState.OAUTH_SETUP;

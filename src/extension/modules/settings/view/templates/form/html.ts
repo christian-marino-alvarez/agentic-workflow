@@ -8,8 +8,7 @@ export function renderForm(view: Settings) {
   const isEdit = !!view.editingModel;
   const currentAuthType = view.formAuthType;
   const currentProvider = view.formProvider || model.provider || PROVIDERS.GEMINI;
-  const supportsOAuth = currentProvider === PROVIDERS.GEMINI || currentProvider === PROVIDERS.CODEX;
-  const oauthProviderLabel = currentProvider === PROVIDERS.CODEX ? 'OpenAI' : 'Google';
+  const supportsOAuth = currentProvider === PROVIDERS.GEMINI;
 
   return html`
     <div class="form-container">
@@ -51,7 +50,7 @@ export function renderForm(view: Settings) {
                 <input type="radio" name="authType" value="${AUTH_TYPES.OAUTH}" 
                   ?checked=${currentAuthType === AUTH_TYPES.OAUTH}
                   @change=${(e: Event) => view.userActionAuthTypeChanged(e)}>
-                OAuth (${oauthProviderLabel})
+                OAuth (Google)
               </label>
             </div>
           </div>
@@ -66,38 +65,7 @@ export function renderForm(view: Settings) {
 
         ${currentAuthType === AUTH_TYPES.OAUTH ? html`
             <div class="form-group">
-              <label>${oauthProviderLabel} OAuth Credentials</label>
-              ${currentProvider === PROVIDERS.CODEX ? html`
-                <div class="oauth-credentials-status ${view.hasOpenAICredentials ? 'configured' : 'missing'}">
-                  <div class="oauth-cred-info">
-                    <span class="oauth-status-dot"></span>
-                    <div>
-                      ${view.hasOpenAICredentials ? html`
-                        <span class="oauth-cred-label">Configured</span>
-                        <span class="oauth-cred-id">${view.openaiClientIdInput
-            ? view.openaiClientIdInput.substring(0, 12) + '…'
-            : 'Client ID set'}</span>
-                      ` : html`
-                        <span class="oauth-cred-label">Not configured</span>
-                        <span class="oauth-cred-id">Add your OpenAI Client ID to use OAuth</span>
-                      `}
-                    </div>
-                  </div>
-                  <div class="oauth-cred-actions">
-                    <button type="button" class="btn-configure-oauth"
-                      @click=${() => view.userActionOpenOpenAIOAuthSetup()}>
-                      ${view.hasOpenAICredentials ? '✏ Edit' : '+ Configure'}
-                    </button>
-                    ${view.hasOpenAICredentials ? html`
-                      <button type="button" class="btn-remove-oauth"
-                        @click=${() => view.userActionRemoveOpenAICredentials()}>
-                        Remove
-                      </button>
-                    ` : ''}
-                  </div>
-                </div>
-                <p class="oauth-hint">Test Connection will open OpenAI sign-in in your browser.</p>
-              ` : html`
+              <label>Google OAuth Credentials</label>
               <div class="oauth-credentials-status ${view.oauthTokenExpired ? 'expired' : view.hasGoogleCredentials ? 'configured' : 'missing'}">
                 <div class="oauth-cred-info">
                   <span class="oauth-status-dot"></span>
@@ -108,8 +76,8 @@ export function renderForm(view: Settings) {
                     ` : view.hasGoogleCredentials ? html`
                       <span class="oauth-cred-label">Configured</span>
                       <span class="oauth-cred-id">${view.googleClientIdInput
-            ? view.googleClientIdInput.substring(0, 12) + '…'
-            : 'Client ID set'}</span>
+          ? view.googleClientIdInput.substring(0, 12) + '…'
+          : 'Client ID set'}</span>
                     ` : html`
                       <span class="oauth-cred-label">Not configured</span>
                       <span class="oauth-cred-id">Add your Client ID & Secret to use OAuth</span>
@@ -130,7 +98,6 @@ export function renderForm(view: Settings) {
                 </div>
               </div>
               <p class="oauth-hint">Test Connection will open Google sign-in in your browser.</p>
-              `}
             </div>
         ` : ''}
 

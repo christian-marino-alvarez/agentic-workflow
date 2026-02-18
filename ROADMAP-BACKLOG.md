@@ -3,14 +3,14 @@
 ## 🌍 Global Status
 | Domain | Status | Completed | Total |
 |---|---|---|---|
-| **D1: Settings & OAuth** | 🏗️ Architecture | 1 | 5 |
+| **D1: Settings & OAuth** | 🏗️ Architecture | 2 | 5 |
 | **D2: UI (Chat/Workflows)** | 🏗️ Concept | 0 | 6 |
 | **D3: Backend (Agents)** | 🏗️ Concept | 0 | 4 |
 | **D4: Runtime & Execution** | 🏗️ Concept | 0 | 2 |
 | **D7: Release/CI-CD** | ✅ Stable | 2 | 2 |
 | **D8: E2E Testing** | ✅ Stable | 4 | 4 |
 
-**Total**: 7/21 tasks completed
+**Total**: 8/21 tasks completed
 
 ## 🎯 Priority High - Critical Path
 - [x] **T017**: D1 - OAuth Authentication Provider (vscode.authentication)
@@ -26,8 +26,10 @@
 ### D1: Settings & Configuration (OAuth)
 > Focus: Secure token management and Model Registry.
 - [x] **T017**: OAuth Provider Implementation
-  - Implement `AuthenticationProvider` for GitHub/Auth0.
-  - Integration with `vscode.authentication`.
+  - Implement `AuthenticationProvider` for Google OAuth + PKCE. ✅
+  - Integration with `vscode.authentication`. ✅
+  - ⚠️ OpenAI does NOT support third-party OAuth (API keys only).
+  - OAuth timeout fix: 10s → 120s for browser login flows.
 - [ ] **T018**: Model Registry UI
   - CRUD for LLM Models (Name, Provider, AuthType).
   - Secure storage of API Keys vs OAuth Tokens.
@@ -35,8 +37,8 @@
   - Migrate current `settings.json` to new Registry format.
 - [ ] **T022**: Profile Management
   - Allow switching between "Work" (Codex) and "Research" (Claude) profiles.
-- [ ] **T023**: Settings Validation
-  - Verify API Keys/Tokens on save.
+- [x] **T023**: Settings Validation
+  - Verify API Keys/Tokens on save. ✅ (Test Connection for API key + OAuth)
 
 ### D2: UI & User Experience (Advanced)
 > Focus: Visual Workflows and Enhanced Chat.
@@ -85,8 +87,8 @@
 ---
 
 ## 🚀 Next Suggested Steps
-1.  **T017 (OAuth)**: Fundamental for secure model access.
+1.  **T018 (Model Registry UI)**: Enhanced CRUD and token management.
 2.  **T019 (Factory)**: Required to actually use the models.
 3.  **T020 (Filters)**: Quick win for UI usability.
 
-**Last Updated**: 2026-02-17 by architect-agent (Task 17)
+**Last Updated**: 2026-02-18 by architect-agent (OpenAI OAuth investigation + timeout fix)

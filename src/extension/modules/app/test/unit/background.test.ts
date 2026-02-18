@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AppBackground } from '../../background/index.js';
 import { MessagingBackground } from '../../../core/messaging/background.js';
 import { Logger, Message } from '../../../core/index.js';
+import * as path from 'path';
 
 // Mock MessagingBackground
 vi.mock('../../../core/messaging/background.js', () => {
@@ -51,44 +52,58 @@ vi.mock('../../../core/index.js', async (importOriginal: () => Promise<any>) => 
 describe('AppBackground', () => {
   let background: AppBackground;
   let messengerMock: any;
+  let contextMock: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    const mockUri = { fsPath: '/mock/uri', path: '/mock/uri', scheme: 'file', authority: '', query: '', fragment: '', with: vi.fn(), toString: vi.fn() };
-    console.log('Creating AppBackground with', mockUri);
-    background = new AppBackground(mockUri as any);
+
+    // Fix: AppBackground constructor expects context, NOT uri
+    contextMock = {
+      extensionUri: {
+        fsPath: '/mock/uri',
+        path: '/mock/uri',
+        scheme: 'file',
+        with: vi.fn(),
+        toString: vi.fn()
+      },
+      subscriptions: [],
+      asAbsolutePath: vi.fn()
+    };
+
+    console.log('Creating AppBackground with mock context');
+    background = new AppBackground(contextMock);
     messengerMock = (MessagingBackground as any).mock.instances[0];
   });
 
-  it('should initialize with "main" module name and "main-view" tag', () => {
-    expect((background as any).moduleName).toBe('main');
-    expect((background as any).viewTagName).toBe('main-view');
+  it('should initialize with "app" module name and "app-view" tag', () => {
+    expect((background as any).moduleName).toBe('app');
+    expect((background as any).viewTagName).toBe('app-view');
   });
 
   it('should log "Initialized" on construction', () => {
-    expect(Logger.log).toHaveBeenCalledWith('[Background:main] Initialized');
+    expect(Logger.log).toHaveBeenCalledWith('[app::background] Initialized');
   });
 
   it('should subscribe to messages on construction', () => {
-    expect(messengerMock.subscribe).toHaveBeenCalledWith('main::background', expect.any(Function));
+    expect(messengerMock.subscribe).toHaveBeenCalledWith('app::background', expect.any(Function));
   });
 
-  it('should log received messages', () => {
+  it('should process "log" command', () => {
     const messageHandler = (MessagingBackground as any).handler;
     expect(messageHandler).toBeDefined();
 
     const mockMessage = {
       payload: {
-        command: 'ping',
-        data: { test: true }
+        command: 'log',
+        data: { message: 'Test Log', args: [123] }
       }
     };
 
     messageHandler(mockMessage);
 
     expect(Logger.log).toHaveBeenCalledWith(
-      '[Background:main] Received Message: ping',
-      { test: true }
+      '[View] Test Log',
+      123
     );
   });
 });

@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { App as CoreApp } from '../core/index.js';
 import { AppBackground } from './background/index.js';
 import { Background as AuthBackground } from '../auth/index.js';
-import { SettingsBackground } from '../settings/index.js';
+
 
 /**
  * Concrete Application Entry Point.
@@ -27,9 +27,10 @@ export class App extends CoreApp {
     const auth = AuthBackground.getInstance(this.context);
     this.register('auth-view', auth);
 
-    // 3. Register Settings Module
-    const settings = new SettingsBackground(this.context);
-    this.register('settings-view', settings);
+    // NOTE: Settings module is managed internally by AppBackground,
+    // which creates its own SettingsBackground and delegates messages to it.
+    // Do NOT register a standalone SettingsBackground here — it would create
+    // a duplicate instance that processes every message twice.
 
     this.log('Application Shell Activated');
   }

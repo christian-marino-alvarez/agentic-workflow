@@ -44,6 +44,20 @@ export const styles = css`
     align-items: center;
   }
 
+  .secure-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--vscode-testing-iconPassed, #73c991);
+    padding: 2px 8px;
+    border: 1px solid var(--vscode-testing-iconPassed, #73c991);
+    border-radius: 10px;
+    background-color: rgba(115, 201, 145, 0.08);
+    letter-spacing: 0.3px;
+  }
+
   .icon-btn {
     background: transparent;
     border: none;
@@ -371,5 +385,193 @@ export const styles = css`
     border-radius: 4px;
     margin-bottom: 16px;
     font-size: 13px;
+  }
+
+  /* Radio Group */
+  .radio-group {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+
+  .radio-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+
+  .radio-option input {
+    margin: 0;
+    cursor: pointer;
+  }
+
+  /* Test Connection */
+  .connection-test-section {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .btn-test {
+    background-color: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: 1px solid var(--vscode-button-border, var(--vscode-widget-border));
+    padding: 6px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+
+  .btn-test:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .test-status {
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .test-status.success {
+    color: var(--vscode-testing-iconPassed, #73c991);
+  }
+
+  .test-status.error {
+    color: var(--vscode-testing-iconFailed, #f48771);
+  }
+
+  /* === OAuth Setup Wizard === */
+
+  .oauth-setup {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .oauth-setup-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .oauth-setup-header h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .oauth-setup-icon {
+    font-size: 24px;
+  }
+
+  .oauth-setup-desc {
+    margin: 0;
+    font-size: 13px;
+    color: var(--vscode-descriptionForeground);
+    line-height: 1.5;
+  }
+
+  .oauth-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .oauth-step {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    background: var(--vscode-editor-background);
+    border: 1px solid var(--vscode-widget-border);
+    border-radius: 6px;
+  }
+
+  .step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    border-radius: 50%;
+    background: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .step-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .step-content strong {
+    font-size: 13px;
+  }
+
+  .step-content p {
+    margin: 0;
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    line-height: 1.4;
+  }
+
+  .step-content code {
+    background: var(--vscode-textCodeBlock-background);
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 12px;
+  }
+
+  .oauth-input-group {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .oauth-client-input {
+    flex: 1;
+    padding: 6px 10px;
+    font-size: 12px;
+    border: 1px solid var(--vscode-input-border);
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border-radius: 4px;
+    outline: none;
+  }
+
+  .oauth-client-input:focus {
+    border-color: var(--vscode-focusBorder);
+  }
+
+  .oauth-setup-result {
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+
+  .oauth-setup-result.success {
+    background: var(--vscode-testing-iconPassed, #73c991)20;
+    color: var(--vscode-testing-iconPassed, #73c991);
+    border: 1px solid var(--vscode-testing-iconPassed, #73c991)40;
+  }
+
+  .oauth-setup-result.error {
+    background: var(--vscode-testing-iconFailed, #f48771)20;
+    color: var(--vscode-testing-iconFailed, #f48771);
+    border: 1px solid var(--vscode-testing-iconFailed, #f48771)40;
+  }
+
+  .oauth-setup-footer {
+    padding-top: 8px;
+    border-top: 1px solid var(--vscode-widget-border);
   }
 `;

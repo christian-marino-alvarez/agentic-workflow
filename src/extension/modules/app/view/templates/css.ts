@@ -14,12 +14,34 @@ export const styles = [
     
     .tab-bar {
       display: flex;
+      justify-content: space-between;
       background-color: var(--vscode-editor-background);
       border-bottom: 1px solid var(--vscode-panel-border);
-      padding: 0;
+      padding: 0 8px 0 0;
       margin: 0;
       height: 35px;
       align-items: center;
+    }
+
+    .tab-items {
+      display: flex;
+      height: 100%;
+      align-items: center;
+    }
+
+    .secure-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--vscode-testing-iconPassed, #73c991);
+      padding: 2px 8px;
+      border: 1px solid var(--vscode-testing-iconPassed, #73c991);
+      border-radius: 10px;
+      background-color: rgba(115, 201, 145, 0.08);
+      letter-spacing: 0.3px;
+      white-space: nowrap;
     }
 
     .tab-item {

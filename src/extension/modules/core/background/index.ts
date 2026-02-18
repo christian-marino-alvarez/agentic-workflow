@@ -22,12 +22,13 @@ interface PendingRequest {
  * Supports request-response pattern via correlation IDs.
  */
 export abstract class Background implements vscode.WebviewViewProvider {
-  private messenger: MessagingBackground = new MessagingBackground();
+  protected messenger: MessagingBackground = new MessagingBackground();
   private sidecarProcess?: ChildProcess;
   private pendingRequests = new Map<string, PendingRequest>();
   protected disposables: { dispose: () => void }[] = [];
   protected readonly scope = LayerScope.Background;
   protected readonly identity: string;
+  protected _webviewView?: vscode.WebviewView;
 
   constructor(
     protected readonly moduleName: string,
@@ -65,6 +66,44 @@ export abstract class Background implements vscode.WebviewViewProvider {
         const { message, args } = msg.payload.data || {};
         // Forward to output channel via Logger, prefixed with [View]
         Logger.log(`[View] ${message}`, ...(args || []));
+        return;
+      }
+
+      // Native SET_TITLE handler — updates the webview panel title
+      if (command === 'SET_TITLE') {
+        const { title } = msg.payload.data || {};
+        if (this._webviewView && typeof title === 'string') {
+          this._webviewView.title = title;
+        }
+        if (msg.id) {
+          this.reply(msg.from || 'view', 'SET_TITLE::response', { success: true }, msg.id);
+        }
+        return;
+      }
+
+      // Native SET_BADGE handler — sets a badge on the webview panel
+      if (command === 'SET_BADGE') {
+        const { value, tooltip } = msg.payload.data || {};
+        if (this._webviewView) {
+          this._webviewView.badge = value !== null && value !== undefined
+            ? { value: Number(value), tooltip: tooltip || '' }
+            : undefined;
+        }
+        if (msg.id) {
+          this.reply(msg.from || 'view', 'SET_BADGE::response', { success: true }, msg.id);
+        }
+        return;
+      }
+
+      // Native SET_DESCRIPTION handler — sets secondary text next to the panel title
+      if (command === 'SET_DESCRIPTION') {
+        const { description } = msg.payload.data || {};
+        if (this._webviewView) {
+          this._webviewView.description = typeof description === 'string' ? description : undefined;
+        }
+        if (msg.id) {
+          this.reply(msg.from || 'view', 'SET_DESCRIPTION::response', { success: true }, msg.id);
+        }
         return;
       }
 
@@ -228,6 +267,7 @@ export abstract class Background implements vscode.WebviewViewProvider {
     _token: vscode.CancellationToken,
   ): void {
     this.log('resolveWebviewView called');
+    this._webviewView = webviewView;
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [this._extensionUri]

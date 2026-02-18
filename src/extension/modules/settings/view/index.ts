@@ -2,18 +2,36 @@ import { View } from '../../core/view/index.js';
 import { customElement, state } from 'lit/decorators.js';
 import { LLMModelConfig } from '../types.js';
 import { templates } from './templates/index.js';
-import { MESSAGES, SCOPES, NAME, DELETE_TIMEOUT } from '../constants.js';
+import { MESSAGES, SCOPES, NAME, DELETE_TIMEOUT, AUTH_TYPES, PROVIDERS, ViewState } from '../constants.js';
 import { styles } from './templates/css.js';
+
+const GOOGLE_CLIENT_ID_KEY = 'agenticWorkflow.googleClientId';
+const GOOGLE_CLIENT_SECRET_KEY = 'agenticWorkflow.googleClientSecret';
 
 @customElement(`${NAME}-view`)
 export class Settings extends View {
   @state() accessor models: LLMModelConfig[] = [];
   @state() accessor activeModelId: string | undefined;
   @state() accessor editingModel: LLMModelConfig | undefined;
-  @state() accessor showForm = false;
-  @state() accessor isLoading = true;
+  @state() accessor viewState: ViewState = ViewState.LOADING;
   @state() accessor pendingDeleteId: string | undefined;
   @state() accessor errorMessage: string | undefined;
+
+  // New State for Form & Validation
+  @state() accessor formAuthType: string = AUTH_TYPES.API_KEY;
+  @state() accessor formProvider: string = PROVIDERS.GEMINI;
+  @state() accessor isTestingConnection = false;
+  @state() accessor connectionTestResult: { success: boolean, message?: string } | undefined;
+
+  // OAuth Setup Wizard state
+  @state() accessor googleClientIdInput: string = '';
+  @state() accessor googleClientSecretInput: string = '';
+  @state() accessor oauthSetupMessage: string | undefined;
+  @state() accessor oauthSetupSuccess: boolean = false;
+  @state() accessor oauthTokenExpired: boolean = false;
+
+  // Track verified models for visual badge in list
+  @state() accessor verifiedModelIds: Set<string> = new Set();
 
   private deleteTimeout: any; // Timer for auto-cancel delete
 
@@ -42,7 +60,12 @@ export class Settings extends View {
 
   private async loadModels(): Promise<void> {
     this.log('Starting loadModels()...');
-    this.isLoading = true;
+
+    // Only set loading if we are not already in form or list (initial load)
+    if (this.viewState === ViewState.LOADING) {
+      // Keep loading
+    }
+
     await new Promise(resolve => setTimeout(resolve, 1000)); // Force 1s delay for skeleton
     try {
       this.log('Sending GET_REQUEST to background...');
@@ -51,12 +74,60 @@ export class Settings extends View {
       this.log('Models loaded:', data.models?.length, 'active:', data.activeModelId);
       this.models = data.models || [];
       this.activeModelId = data.activeModelId;
+
+      // Navigate to List if not already there (unless we are in form handling?)
+      // Actually, loadModels usually implies a refresh or init.
+      // If we were in FORM, we probably stay there? No, usually refresh goes to list.
+      if (this.viewState === ViewState.LOADING) {
+        this.viewState = ViewState.LIST;
+      }
+
+      // Auto-verify OAuth session for the active model on startup
+      const activeModel = this.models.find(m => m.id === this.activeModelId);
+      if (activeModel?.authType === 'oauth') {
+        this.autoVerifyOAuth(activeModel);
+      }
     } catch (error: any) {
       this.log('Error loading models:', error.message, error);
+      this.viewState = ViewState.LIST; // Fallback to list even on error
     } finally {
-      this.isLoading = false;
-      this.log('loadModels() finished. isLoading =', this.isLoading);
-      // requestUpdate removed
+      this.log('loadModels() finished. viewState =', this.viewState);
+    }
+  }
+
+  /**
+   * Helper to update the secure state (badge + title) based on verification.
+   */
+  private setSecureState(isSecure: boolean) {
+    // Notify App View (badge in tab bar)
+    this.dispatchEvent(new CustomEvent('secure-state-changed', {
+      bubbles: true,
+      composed: true,
+      detail: { secure: isSecure }
+    }));
+
+    // Notify Background (panel title)
+    this.sendMessage(SCOPES.BACKGROUND, 'SET_TITLE', {
+      title: isSecure ? '🔒 Secure' : 'Agent Chat'
+    });
+  }
+
+  /**
+   * Silently verify OAuth session on startup — dispatches secure event if valid.
+   */
+  private async autoVerifyOAuth(model: any): Promise<void> {
+    try {
+      const result = await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.TEST_CONNECTION_REQUEST, {
+        provider: model.provider,
+        authType: model.authType,
+        apiKey: null,
+      });
+      if (result?.success) {
+        this.verifiedModelIds = new Set([...this.verifiedModelIds, model.id]);
+        this.setSecureState(true);
+      }
+    } catch {
+      // Silent — don't block startup
     }
   }
 
@@ -64,6 +135,7 @@ export class Settings extends View {
 
   async userActionRefresh() {
     this.log('userActionRefresh');
+    this.viewState = ViewState.LOADING;
     await this.loadModels();
   }
 
@@ -71,14 +143,36 @@ export class Settings extends View {
     this.log('userActionAdded');
     this.editingModel = undefined;
     this.errorMessage = undefined;
-    this.showForm = true;
+    this.connectionTestResult = undefined;
+    this.formAuthType = AUTH_TYPES.API_KEY;
+    this.formProvider = PROVIDERS.GEMINI;
+    this.viewState = ViewState.FORM;
+    this.loadGoogleCredentials();
   }
 
   userActionEdited(id: string) {
     this.log('userActionEdited:', id);
     this.errorMessage = undefined;
+    this.connectionTestResult = undefined;
     this.editingModel = this.models.find(m => m.id === id);
-    this.showForm = true;
+    if (this.editingModel) {
+      this.formAuthType = this.editingModel.authType || AUTH_TYPES.API_KEY;
+      this.formProvider = this.editingModel.provider || PROVIDERS.GEMINI;
+    }
+    this.viewState = ViewState.FORM;
+    this.loadGoogleCredentials();
+  }
+
+  private async loadGoogleCredentials() {
+    try {
+      const result = await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.GET_GOOGLE_CREDENTIALS, {});
+      if (result) {
+        this.googleClientIdInput = result.clientId || '';
+        this.googleClientSecretInput = result.clientSecret || '';
+      }
+    } catch {
+      // Non-critical — credentials just won't show as configured
+    }
   }
 
   async userActionDeleted(id: string) {
@@ -91,14 +185,15 @@ export class Settings extends View {
     if (this.pendingDeleteId === id) {
       this.log('Confirming delete:', id);
       this.pendingDeleteId = undefined;
-      this.isLoading = true; // Show loading effect
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Force visible delay (1s)
+      // Optimistic update or show loading?
+      // For delete, maybe just stay in List but show busy?
+      // Let's just await.
       try {
         await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.DELETE_REQUEST, id);
-        await this.loadModels(); // This will eventually set isLoading = false and update
+        this.viewState = ViewState.LOADING; // Show loading during reload
+        await this.loadModels();
       } catch (error: any) {
         this.log('Error deleting model:', error.message);
-        this.isLoading = false;
       }
     } else {
       this.pendingDeleteId = id;
@@ -127,7 +222,10 @@ export class Settings extends View {
     // Optimistic update
     const previousId = this.activeModelId;
     this.activeModelId = id;
-    // this.requestUpdate(); // Removed: Redundant with @state
+
+    // Update secure state based on verification status
+    const isVerified = this.verifiedModelIds.has(id);
+    this.setSecureState(isVerified);
 
     try {
       await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.SELECT_REQUEST, id);
@@ -135,19 +233,116 @@ export class Settings extends View {
       this.log('Error selecting model:', error.message);
       // Revert on error
       this.activeModelId = previousId;
+      // Revert secure state? Probably
+      if (previousId) {
+        const keyVerified = this.verifiedModelIds.has(previousId);
+        this.setSecureState(keyVerified);
+      } else {
+        this.setSecureState(false);
+      }
     }
   }
 
   userActionCancelled() {
-    this.showForm = false;
+    this.viewState = ViewState.LIST;
     this.editingModel = undefined;
+    this.connectionTestResult = undefined;
+  }
+
+  userActionAuthTypeChanged(e: Event) {
+    const target = e.target as HTMLInputElement;
+    this.formAuthType = target.value;
+  }
+
+  userActionProviderChanged(e: Event) {
+    const target = e.target as HTMLSelectElement;
+    this.formProvider = target.value;
+    // Auto-set to API Key for providers that don't support OAuth
+    if (target.value !== PROVIDERS.GEMINI) {
+      this.formAuthType = AUTH_TYPES.API_KEY;
+    }
+    this.connectionTestResult = undefined;
+  }
+
+  async userActionTestConnection() {
+    // Construct partial model from form data for testing
+    const form = this.shadowRoot?.querySelector('form');
+    if (!form) {
+      return;
+    }
+
+    const formData = new FormData(form);
+    const testModel: Partial<LLMModelConfig> = {
+      provider: formData.get('provider') as any,
+      authType: this.formAuthType as any,
+      apiKey: formData.get('apiKey') as string,
+    };
+
+    this.log('Testing connection...', testModel);
+    this.isTestingConnection = true;
+    this.connectionTestResult = undefined;
+
+    try {
+      const result = await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.TEST_CONNECTION_REQUEST, testModel);
+      // If auth module signals setup is needed, navigate to wizard
+      if (result?.message?.includes('OAUTH_SETUP_REQUIRED')) {
+        this.viewState = ViewState.OAUTH_SETUP;
+        return;
+      }
+      // Detect expired token
+      if (!result?.success && result?.message?.toLowerCase().includes('expir')) {
+        this.oauthTokenExpired = true;
+      } else {
+        this.oauthTokenExpired = false;
+      }
+      this.connectionTestResult = result;
+      // Mark model as verified if test succeeded
+      if (result?.success && this.editingModel?.id) {
+        this.verifiedModelIds = new Set([...this.verifiedModelIds, this.editingModel.id]);
+
+        // If testing active model, set secure
+        if (this.editingModel.id === this.activeModelId) {
+          this.setSecureState(true);
+        }
+      } else if (this.editingModel?.id) {
+        // Test failed -> Clear verified status
+        const newSet = new Set(this.verifiedModelIds);
+        if (newSet.has(this.editingModel.id)) {
+          newSet.delete(this.editingModel.id);
+          this.verifiedModelIds = newSet;
+        }
+
+        // If active model failed, clear secure
+        if (this.editingModel.id === this.activeModelId) {
+          this.setSecureState(false);
+        }
+      }
+    } catch (error: any) {
+      this.log('Error testing connection:', error.message);
+      this.errorMessage = error.message;
+      this.connectionTestResult = { success: false, message: error.message };
+
+      // Also clear secure state on error
+      if (this.editingModel?.id && this.editingModel.id === this.activeModelId) {
+        this.setSecureState(false);
+      }
+      // Also check thrown errors for setup required signal
+      if (error.message?.includes('OAUTH_SETUP_REQUIRED')) {
+        this.viewState = ViewState.OAUTH_SETUP;
+        return;
+      }
+      this.connectionTestResult = { success: false, message: error.message };
+    } finally {
+      this.isTestingConnection = false;
+    }
   }
 
   async userActionAccepted(e: Event) {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
-    const provider = formData.get('provider') as 'gemini' | 'codex' | 'claude';
+    const provider = formData.get('provider') as any;
     const name = formData.get('name') as string;
+    // authType is tracked in state formAuthType
 
     // Validation: Check for duplicate names
     const isDuplicate = this.models.some(m =>
@@ -164,25 +359,121 @@ export class Settings extends View {
     const model: LLMModelConfig = {
       id: this.editingModel?.id || '', // Let backend generate ID if empty
       name: name,
-      modelName: name,
+      modelName: name, // Simplified mapping for now
       provider: provider,
+      authType: this.formAuthType as any,
       apiKey: formData.get('apiKey') as string,
       maxTokens: 4096,
       temperature: 0.7,
     };
 
     try {
-      await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.SAVE_REQUEST, model);
-      this.showForm = false;
+      const result = await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.SAVE_REQUEST, model);
+
+      // If we authenticated successfully during editing, mark as verified immediately
+      if (this.connectionTestResult?.success && result?.id) {
+        this.verifiedModelIds = new Set([...this.verifiedModelIds, result.id]);
+      }
+
+      this.viewState = ViewState.LOADING; // Show loading while reloading
       this.editingModel = undefined;
+      this.connectionTestResult = undefined;
       await this.loadModels();
     } catch (error: any) {
       this.log('Error saving model:', error.message);
+      this.errorMessage = error.message;
     }
   }
 
+  // --- OAuth Setup Wizard Actions ---
+
+  /** True if Google OAuth credentials are stored in VS Code settings */
+  get hasGoogleCredentials(): boolean {
+    // Access VS Code settings via the acquireVsCodeApi bridge
+    // We check if the stored values are non-empty
+    return !!(this.googleClientIdInput || this.googleClientSecretInput);
+  }
+
+  userActionOpenOAuthSetup() {
+    this.oauthSetupMessage = undefined;
+    this.viewState = ViewState.OAUTH_SETUP;
+  }
+
+  async userActionRemoveGoogleCredentials() {
+    try {
+      await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.REMOVE_GOOGLE_CREDENTIALS, {});
+      this.googleClientIdInput = '';
+      this.googleClientSecretInput = '';
+      this.oauthTokenExpired = false;
+
+      // Clear verified state for all OAuth models
+      const newVerifiedSet = new Set(this.verifiedModelIds);
+      this.models.forEach(m => {
+        if (m.authType === AUTH_TYPES.OAUTH) {
+          newVerifiedSet.delete(m.id);
+        }
+      });
+      this.verifiedModelIds = newVerifiedSet;
+
+      // If active model was OAuth, clear global secure state
+      const activeModel = this.models.find(m => m.id === this.activeModelId);
+      if (activeModel?.authType === AUTH_TYPES.OAUTH) {
+        this.setSecureState(false);
+      }
+    } catch (error: any) {
+      this.log('Failed to remove credentials:', error.message);
+    }
+  }
+
+  userActionOpenExternal(url: string) {
+    this.log('Opening external URL:', url);
+    // Post to background to open external URL via vscode.env.openExternal
+    this.sendMessage(SCOPES.BACKGROUND, 'OPEN_EXTERNAL', { url });
+  }
+
+  async userActionSaveGoogleCredentials() {
+    const idInput = this.shadowRoot?.querySelector('#googleClientId') as HTMLInputElement;
+    const secretInput = this.shadowRoot?.querySelector('#googleClientSecret') as HTMLInputElement;
+    const clientId = idInput?.value?.trim();
+    const clientSecret = secretInput?.value?.trim();
+
+    if (!clientId || !clientId.includes('.apps.googleusercontent.com')) {
+      this.oauthSetupSuccess = false;
+      this.oauthSetupMessage = 'Invalid Client ID. It should end with .apps.googleusercontent.com';
+      return;
+    }
+
+    if (!clientSecret) {
+      this.oauthSetupSuccess = false;
+      this.oauthSetupMessage = 'Client Secret is required.';
+      return;
+    }
+
+    try {
+      await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.SAVE_GOOGLE_CLIENT_ID, { clientId, clientSecret });
+      this.oauthSetupSuccess = true;
+      this.oauthSetupMessage = '✅ Credentials saved! You can now use OAuth with Gemini.';
+      this.googleClientIdInput = clientId;
+      this.googleClientSecretInput = clientSecret;
+
+      // Auto-navigate back to form after 1.5s
+      setTimeout(() => {
+        this.oauthSetupMessage = undefined;
+        this.viewState = ViewState.FORM;
+      }, 1500);
+    } catch (error: any) {
+      this.oauthSetupSuccess = false;
+      this.oauthSetupMessage = `Failed to save: ${error.message}`;
+    }
+  }
+
+  userActionBackToForm() {
+    this.oauthSetupMessage = undefined;
+    this.viewState = ViewState.FORM;
+  }
+
   override render() {
-    this.log('Rendering Settings view. isLoading:', this.isLoading, 'Models:', this.models.length, 'ShowForm:', this.showForm);
+    this.log('Rendering Settings view. State:', this.viewState, 'Models:', this.models.length);
     return templates.main.render(this);
   }
 }

@@ -29,6 +29,7 @@ export class Settings extends View {
   // Role Binding State
   @state() accessor roles: { name: string, icon?: string, description?: string }[] = [];
   @state() accessor roleBindings: Record<string, string> = {};
+  @state() accessor disabledRoles: Set<string> = new Set();
 
   // OAuth Setup Wizard state
   @state() accessor googleClientIdInput: string = '';
@@ -44,6 +45,8 @@ export class Settings extends View {
   @state() accessor verifiedModelIds: Set<string> = new Set();
 
   private deleteTimeout: any; // Timer for auto-cancel delete
+  @state() accessor pendingToggleRole: string | undefined;
+  private toggleTimeout: any; // Timer for auto-cancel toggle
 
   static override styles = [styles, roleBindingStyles];
   protected override readonly moduleName = NAME;
@@ -66,7 +69,8 @@ export class Settings extends View {
     await Promise.all([
       this.loadModels(),
       this.refreshRoles(),
-      this.loadBindings()
+      this.loadBindings(),
+      this.loadDisabledRoles()
     ]);
   }
 
@@ -130,6 +134,46 @@ export class Settings extends View {
       }
     } catch (error: any) {
       this.log('Error loading bindings:', error);
+    }
+  }
+
+  async loadDisabledRoles() {
+    try {
+      const result = await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.GET_DISABLED_ROLES);
+      if (result && result.disabledRoles) {
+        this.disabledRoles = new Set(result.disabledRoles);
+      }
+    } catch (error: any) {
+      this.log('Error loading disabled roles:', error);
+    }
+  }
+
+  async toggleRole(role: string) {
+    // Clear any existing timeout
+    if (this.toggleTimeout) {
+      clearTimeout(this.toggleTimeout);
+      this.toggleTimeout = undefined;
+    }
+
+    if (this.pendingToggleRole === role) {
+      // Second click — confirm the toggle
+      this.pendingToggleRole = undefined;
+      const newDisabled = new Set(this.disabledRoles);
+      if (newDisabled.has(role)) {
+        newDisabled.delete(role);
+      } else {
+        newDisabled.add(role);
+      }
+      this.disabledRoles = newDisabled;
+      await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.SAVE_DISABLED_ROLES, Array.from(newDisabled));
+    } else {
+      // First click — enter pending state
+      this.pendingToggleRole = role;
+      this.toggleTimeout = setTimeout(() => {
+        if (this.pendingToggleRole === role) {
+          this.pendingToggleRole = undefined;
+        }
+      }, 3000);
     }
   }
 
@@ -265,32 +309,6 @@ export class Settings extends View {
       this.deleteTimeout = undefined;
     }
     this.pendingDeleteId = undefined;
-  }
-
-  async userActionSelected(id: string) {
-    this.log('userActionSelected:', id);
-    // Optimistic update
-    const previousId = this.activeModelId;
-    this.activeModelId = id;
-
-    // Update secure state based on verification status
-    const isVerified = this.verifiedModelIds.has(id);
-    this.setSecureState(isVerified);
-
-    try {
-      await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.SELECT_REQUEST, id);
-    } catch (error: any) {
-      this.log('Error selecting model:', error.message);
-      // Revert on error
-      this.activeModelId = previousId;
-      // Revert secure state? Probably
-      if (previousId) {
-        const keyVerified = this.verifiedModelIds.has(previousId);
-        this.setSecureState(keyVerified);
-      } else {
-        this.setSecureState(false);
-      }
-    }
   }
 
   userActionCancelled() {
@@ -483,7 +501,7 @@ export class Settings extends View {
   userActionOpenExternal(url: string) {
     this.log('Opening external URL:', url);
     // Post to background to open external URL via vscode.env.openExternal
-    this.sendMessage(SCOPES.BACKGROUND, 'OPEN_EXTERNAL', { url });
+    this.sendMessage(SCOPES.BACKGROUND, MESSAGES.OPEN_EXTERNAL, { url });
   }
 
   async userActionSaveGoogleCredentials() {

@@ -61,10 +61,4 @@ describe('Settings Module View', () => {
     expect((view as any).sendMessage).toHaveBeenCalledWith(SCOPES.BACKGROUND, MESSAGES.DELETE_REQUEST, id);
   });
 
-  it('userActionSelected sends select request', async () => {
-    await view.userActionSelected('m1');
-    expect(view.activeModelId).toBe('m1');
-    expect((view as any).sendMessage).toHaveBeenCalledWith(SCOPES.BACKGROUND, MESSAGES.SELECT_REQUEST, 'm1');
-  });
-
 });

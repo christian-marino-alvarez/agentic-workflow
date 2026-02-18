@@ -9,6 +9,8 @@ import { NAME } from '../constants.js';
  * Concrete implementation of Background acting as the App Shell.
  */
 import { SettingsBackground } from '../../settings/background/index.js';
+import { RuntimeBackground } from '../../runtime/background/index.js';
+import { ChatBackground } from '../../chat/background/index.js';
 
 /**
  * Concrete implementation of Background acting as the App Shell.
@@ -22,6 +24,8 @@ export class AppBackground extends Background {
 
     // Initialize domain-specific backgrounds
     this.settingsBg = new SettingsBackground(context);
+    new RuntimeBackground(context); // Starts Sidecar 2 on port 3001
+    new ChatBackground(context); // Connects to 'chat-view' (Task 4)
 
     // --- Sidecar ---
     if (process.env.VSCODE_TEST_MODE === 'true') {

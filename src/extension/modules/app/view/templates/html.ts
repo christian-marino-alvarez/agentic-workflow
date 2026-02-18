@@ -7,13 +7,13 @@ export function render(view: AppView) {
       <div class="tab-items">
         <button 
           class="tab-item ${view.activeTab === 'settings' ? 'active' : ''}"
-          @click=${() => view.activeTab = 'settings'}
+          @click=${() => { console.log('Switching to Settings'); view.activeTab = 'settings'; }}
         >
           SETTINGS
         </button>
         <button 
           class="tab-item ${view.activeTab === 'chat' ? 'active' : ''}"
-          @click=${() => view.activeTab = 'chat'}
+          @click=${() => { console.log('Switching to Chat'); view.activeTab = 'chat'; }}
         >
           CHAT
         </button>
@@ -29,7 +29,7 @@ export function render(view: AppView) {
 
     <div class="content-area">
       ${view.activeTab === 'settings' ? html`<settings-view></settings-view>` : ''}
-      ${view.activeTab === 'chat' ? html`<div class="placeholder">Chat Module (Coming Soon)</div>` : ''}
+      ${view.activeTab === 'chat' ? html`<chat-view></chat-view>` : ''}
       ${view.activeTab === 'history' ? html`<div class="placeholder">History Module (Coming Soon)</div>` : ''}
     </div>
   `;

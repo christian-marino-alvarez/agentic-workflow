@@ -73,6 +73,13 @@ export const styles = [
       flex: 1;
       overflow: hidden;
       position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .content-area > * {
+      flex: 1;
+      min-height: 0;
     }
 
     .placeholder {

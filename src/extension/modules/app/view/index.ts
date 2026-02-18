@@ -4,6 +4,7 @@ import { html } from 'lit';
 import { styles } from './templates/css.js';
 import { render } from './templates/html.js';
 import '../../settings/view/index.js';
+import '../../chat/view/index.js';
 import { NAME } from '../constants.js';
 
 @customElement(`${NAME}-view`)

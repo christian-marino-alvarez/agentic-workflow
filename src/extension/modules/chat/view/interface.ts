@@ -8,6 +8,7 @@ export interface IChatView {
   agentFilter: string;
   activeWorkflow: string;
   isLoading: boolean;
+  appVersion: string;
 
   handleInput(e: InputEvent): void;
   handleKeyDown(e: KeyboardEvent): void;

@@ -21,7 +21,7 @@
       "activitybar": [
         {
           "id": "main",
-          "title": "Agent Chat",
+          "title": "Agentic Workflow",
           "icon": "media/agent-chat.svg"
         }
       ]
@@ -30,7 +30,7 @@
       "main": [
         {
           "id": "mainView",
-          "name": "Agent Chat",
+          "name": "Agentic Workflow",
           "icon": "media/agent-chat.svg",
           "type": "webview"
         }

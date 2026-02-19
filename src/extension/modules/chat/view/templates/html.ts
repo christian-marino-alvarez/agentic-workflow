@@ -89,7 +89,7 @@ export function render(view: IChatView): TemplateResult {
     </div>
     <div class="input-group layout-col">
       <div class="workflow-info">
-        <span class="codicon codicon-git-branch" style="color: var(--vscode-textLink-foreground);"></span>
+        <span class="codicon codicon-project" style="color: var(--vscode-textLink-foreground);"></span>
         <span style="color: #ffffff;">Workflow: ${view.activeWorkflow}</span>
       </div>
       <div class="input-row layout-row">

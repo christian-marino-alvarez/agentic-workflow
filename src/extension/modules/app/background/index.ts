@@ -74,7 +74,7 @@ export class AppBackground extends Background {
         const auth = Auth.getInstance();
         const sessions = await auth.getSessions(['openid', 'email', 'profile']);
         if (sessions && sessions.length > 0) {
-          webviewView.title = '🔒 Secure';
+          webviewView.title = 'AGENTIC WORKFLOW: 🔒 Secure';
           webviewView.badge = undefined; // Ensure no badge is shown
           this.log('Panel title set — OAuth session active');
         } else {

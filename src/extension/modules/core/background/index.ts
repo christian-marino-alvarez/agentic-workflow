@@ -64,8 +64,8 @@ export abstract class Background implements vscode.WebviewViewProvider {
       // Native log handler
       if (command === 'log') {
         const { message, args } = msg.payload.data || {};
-        // Forward to output channel via Logger, prefixed with [View]
-        Logger.log(`[View] ${message}`, ...(args || []));
+        // Forward to output channel via Logger
+        Logger.log(message, ...(args || []));
         return;
       }
 

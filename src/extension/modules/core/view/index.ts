@@ -126,7 +126,8 @@ export abstract class View extends LitElement {
    * Standardized logger for the View layer.
    */
   protected log(message: string, ...args: any[]): void {
-    const formattedMsg = `[${this.moduleName}::view] ${message}`;
+    const capitalizedName = this.moduleName.charAt(0).toUpperCase() + this.moduleName.slice(1);
+    const formattedMsg = `[${capitalizedName}::view] ${message}`;
     console.log(`%c${formattedMsg}`, LOG_STYLE.View, ...args);
 
     // Forward to background for output channel logging

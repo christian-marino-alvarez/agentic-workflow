@@ -37,6 +37,19 @@ export class ChatBackground extends Background {
     };
 
     // Simulate async response from Agent
+    // Simulate async response from Agent with Status updates
+    setTimeout(() => {
+      this.emitStatus('Thinking...');
+    }, 500);
+
+    setTimeout(() => {
+      this.emitStatus('Reading context (init.md)...');
+    }, 1500);
+
+    setTimeout(() => {
+      this.emitStatus('Refactoring code...');
+    }, 2500);
+
     setTimeout(() => {
       this.messenger.emit({
         id: randomUUID(),
@@ -47,11 +60,11 @@ export class ChatBackground extends Background {
         payload: {
           command: MESSAGES.RECEIVE_MESSAGE,
           data: {
-            text: `(Mock) Received: "${data.text}". Action forwarded to Runtime. Agent: ${data.agentRole || 'architect'}`
+            text: `(Mock) Received: "${data.text}". \n\nI am the **Architect** agent. \nI have processed your request.`
           }
         }
       });
-    }, 800);
+    }, 3500);
 
     return { success: true };
   }
@@ -77,5 +90,18 @@ export class ChatBackground extends Background {
   protected getHtmlForWebview(webview: vscode.Webview): string {
     const scriptPath = 'dist/extension/modules/chat/view/index.js';
     return ViewHtml.getWebviewHtml(webview, this._extensionUri, this.viewTagName, scriptPath);
+  }
+  private emitStatus(status: string) {
+    this.messenger.emit({
+      id: randomUUID(),
+      from: 'chat::background',
+      to: 'chat::view',
+      timestamp: Date.now(),
+      origin: MessageOrigin.Server,
+      payload: {
+        command: 'AGENT_STATUS',
+        data: { status }
+      }
+    });
   }
 }

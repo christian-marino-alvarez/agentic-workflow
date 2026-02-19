@@ -5,6 +5,7 @@ import { styles } from './templates/css.js';
 import { render } from './templates/html.js';
 import { MESSAGES, NAME } from '../constants.js';
 import { MESSAGES as SETTINGS_MESSAGES } from '../../settings/constants.js';
+import { getRoleIcon } from '../../settings/view/templates/icons.js';
 
 console.log('[chat::view] Module loading...');
 
@@ -117,12 +118,13 @@ export class ChatView extends View {
 
   private getIcon(role?: string) {
     if (role === 'user') {
-      return html`<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4Zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10Z"/></svg>`;
+      return html`<svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4Zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10Z"/></svg>`;
     }
-    if (role === 'architect') {
-      return html`<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M6 1v3H1v10h14V4h-5V1H6zm1 3h2V2H7v2zm-3.5 8v-1h9v1h-9zm0-2v-1h9v1h-9zm0-2v-1h9v1h-9z"/></svg>`; // Building iconish
+    if (role === 'system') {
+      return html`<svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a2 2 0 0 1 2 2v2H6V3a2 2 0 0 1 2-2zm3 4V3a3 3 0 1 0-6 0v2a3 3 0 0 0-3 3v7h12V8a3 3 0 0 0-3-3zM7 14v-2h2v2H7zm0-3V9h2v2H7z"/></svg>`;
     }
-    return html`<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a2 2 0 0 1 2 2v2H6V3a2 2 0 0 1 2-2zm3 4V3a3 3 0 1 0-6 0v2a3 3 0 0 0-3 3v7h12V8a3 3 0 0 0-3-3zM7 14v-2h2v2H7zm0-3V9h2v2H7z"/></svg>`; // Robot/System
+    // Use the same icon as Settings > Agents
+    return getRoleIcon(role || 'architect');
   }
 
   override render() {

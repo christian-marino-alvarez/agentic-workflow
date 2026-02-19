@@ -42,11 +42,16 @@ export abstract class Background implements vscode.WebviewViewProvider {
 
     try {
       const pkgPath = path.join(this._extensionUri.fsPath, 'package.json');
-      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-      this.appVersion = pkg.version || '0.0.0';
-    } catch (e) {
-      this.appVersion = '0.0.0';
-      console.error('Failed to read package.json version', e);
+      if (fs.existsSync(pkgPath)) {
+        const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+        this.appVersion = pkg.version || '0.0.0-no-version';
+      } else {
+        this.appVersion = '0.0.0-not-found';
+        console.error(`package.json not found at ${pkgPath}`);
+      }
+    } catch (e: any) {
+      this.appVersion = '0.0.0-exception';
+      console.error('Failed to read package.json version', e.message);
     }
 
     // Wire message subscription → listen()

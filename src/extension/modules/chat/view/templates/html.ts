@@ -104,8 +104,6 @@ export function render(view: IChatView): TemplateResult {
         <button class="btn btn-primary" @click="${() => view.sendChatMessage()}">Send</button>
       </div>
     </div>
-    <div class="footer layout-row" style="justify-content: flex-start; padding: 4px 10px; font-size: 10px; color: var(--vscode-descriptionForeground); opacity: 0.7;">
-      v${view.appVersion}
     </div>
   `;
 }

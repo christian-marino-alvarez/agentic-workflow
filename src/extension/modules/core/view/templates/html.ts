@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
  * Generates the HTML content for the Webview.
  * This acts as the bootloader for the Lit/React application.
  */
-export function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri, viewTagName: string, scriptPath: string): string {
+export function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri, viewTagName: string, scriptPath: string, version: string = '0.0.0'): string {
   const mainViewScriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, scriptPath));
   const excludeCodiconsUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'codicons', 'codicon.css'));
 
@@ -17,11 +17,22 @@ export function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri
       <title>Agentic Workflow</title>
       <link href="${excludeCodiconsUri}" rel="stylesheet" />
       <style>
-        body { margin: 0; padding: 0; }
+        body { margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; }
+        ${viewTagName} { flex: 1; overflow: hidden; }
+        .global-footer {
+          padding: 4px 10px;
+          font-size: 10px;
+          color: var(--vscode-descriptionForeground);
+          background-color: var(--vscode-sideBar-background);
+          border-top: 1px solid var(--vscode-sideBarSectionHeader-border);
+          opacity: 0.7;
+          flex-shrink: 0;
+        }
       </style>
     </head>
     <body style="background: transparent;">
       <${viewTagName}></${viewTagName}>
+      <div class="global-footer">v${version}</div>
       <script nonce="RANDOM">
         console.log('[Webview] Booting...');
         window.addEventListener('error', (e) => {

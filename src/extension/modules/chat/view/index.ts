@@ -41,6 +41,9 @@ export class ChatView extends View {
   @state()
   public isLoading: boolean = false;
 
+  @state()
+  public appVersion: string = '';
+
   private get participatingRoles(): string[] {
     const roles = new Set(this.history.map(m => m.role).filter(r => r && r !== 'user' && r !== 'system') as string[]);
     return Array.from(roles);
@@ -89,6 +92,7 @@ export class ChatView extends View {
     try {
       const response = await this.sendMessage(NAME, MESSAGES.LOAD_INIT);
       if (response && response.content) {
+        this.appVersion = response.version || '';
         const snippet = response.content.substring(0, 100) + '...';
         this.history = [...this.history, { sender: 'System', text: `Loaded init.md:\n${snippet}` }];
       }

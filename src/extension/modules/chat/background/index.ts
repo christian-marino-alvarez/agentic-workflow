@@ -80,7 +80,13 @@ export class ChatBackground extends Background {
       const initPath = vscode.Uri.file(path.join(rootPath, '.agent', 'workflows', 'init.md'));
 
       const content = await vscode.workspace.fs.readFile(initPath);
-      return { success: true, content: content.toString() };
+
+
+      // Read package.json for version
+      const packageJsonPath = vscode.Uri.joinPath(this._extensionUri, 'package.json');
+      const packageJson = JSON.parse((await vscode.workspace.fs.readFile(packageJsonPath)).toString());
+
+      return { success: true, content: content.toString(), version: packageJson.version };
     } catch (error) {
       this.log('Error loading init.md', error);
       return { error: 'Failed to load init.md' };

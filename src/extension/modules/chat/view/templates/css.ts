@@ -59,9 +59,16 @@ export const styles = css`
 
     /* Model Selector */
     .model-selector {
-      gap: 8px;
+      gap: 12px;
       align-items: center;
       padding-top: 4px;
+    }
+
+    .selector-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
     }
 
     .model-label {
@@ -209,6 +216,21 @@ export const styles = css`
       border-top: 1px solid var(--vscode-widget-border);
       gap: 10px;
       background-color: var(--vscode-editor-background);
+    }
+
+    .workflow-info {
+      font-size: 11px;
+      color: var(--vscode-descriptionForeground);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding-bottom: 4px;
+      font-weight: 500;
+    }
+
+    .input-row {
+      width: 100%;
+      gap: 10px;
     }
 
     .input-control {

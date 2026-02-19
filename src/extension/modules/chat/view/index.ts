@@ -32,6 +32,17 @@ export class ChatView extends View {
   @state()
   public selectedModelId: string = '';
 
+  @state()
+  public agentFilter: string = 'all';
+
+  @state()
+  public activeWorkflow: string = 'T032: Runtime Server & Action Sandbox';
+
+  private get participatingRoles(): string[] {
+    const roles = new Set(this.history.map(m => m.role).filter(r => r && r !== 'user' && r !== 'system') as string[]);
+    return Array.from(roles);
+  }
+
   override firstUpdated() {
     this.log('Chat view mounted');
     this.initWorkflow();
@@ -58,6 +69,11 @@ export class ChatView extends View {
     this.selectedModelId = (e.target as HTMLSelectElement).value;
     const model = this.models.find(m => m.id === this.selectedModelId);
     this.log('Model changed to:', model?.name || this.selectedModelId);
+  }
+
+  public handleFilterChange(e: Event) {
+    this.agentFilter = (e.target as HTMLSelectElement).value;
+    this.requestUpdate();
   }
 
   /**
@@ -149,42 +165,63 @@ export class ChatView extends View {
           </div>
         </div>
         <div class="model-selector layout-row">
-          <label class="model-label">Model:</label>
-          <select class="model-dropdown" .value="${this.selectedModelId}" @change="${this.handleModelChange}">
-            ${this.models.length === 0
-        ? html`<option value="" disabled selected>Loading models...</option>`
+          <div class="selector-group">
+            <label class="model-label">Model:</label>
+            <select class="model-dropdown" .value="${this.selectedModelId}" @change="${this.handleModelChange}">
+              ${this.models.length === 0
+        ? html`<option value="" disabled selected>Loading...</option>`
         : this.models.map(m => html`
-                  <option value="${m.id}" ?selected="${m.id === this.selectedModelId}">
-                    ${m.name} (${m.provider})
-                  </option>
-                `)
+                    <option value="${m.id}" ?selected="${m.id === this.selectedModelId}">
+                      ${m.name}
+                    </option>
+                  `)
       }
-          </select>
+            </select>
+          </div>
+          <div class="selector-group">
+            <label class="model-label">Filter:</label>
+            <select class="model-dropdown" .value="${this.agentFilter}" @change="${this.handleFilterChange}">
+              <option value="all">All Agents</option>
+              ${this.participatingRoles.map(role => html`
+                <option value="${role}" ?selected="${role === this.agentFilter}">
+                  ${role.charAt(0).toUpperCase() + role.slice(1)}
+                </option>
+              `)}
+            </select>
+          </div>
         </div>
       </div>
       <div class="history layout-scroll chat-container layout-col">
-        ${this.history.map(msg => {
-        const typeClass = msg.role === 'user' ? 'msg-user' : (msg.role === 'architect' ? 'msg-agent' : 'msg-system');
-        return html`
-            <div class="msg-bubble ${typeClass}">
-                <div class="msg-header">
-                    <span class="msg-icon">${this.getIcon(msg.role)}</span>
-                    <span class="msg-sender">${msg.sender}</span>
-                </div>
-                <div class="msg-content">${msg.text}</div>
-            </div>`;
-      })}
+        ${this.history
+        .filter(msg => this.agentFilter === 'all' || msg.role === 'user' || msg.role === 'system' || msg.role === this.agentFilter)
+        .map(msg => {
+          const typeClass = msg.role === 'user' ? 'msg-user' : (msg.role === 'architect' ? 'msg-agent' : 'msg-system');
+          return html`
+              <div class="msg-bubble ${typeClass}">
+                  <div class="msg-header">
+                      <span class="msg-icon">${this.getIcon(msg.role)}</span>
+                      <span class="msg-sender">${msg.sender}</span>
+                  </div>
+                  <div class="msg-content">${msg.text}</div>
+              </div>`;
+        })}
       </div>
-      <div class="input-group layout-row">
-        <input
-          class="input-control"
-          type="text"
-          .value="${this.inputText}"
-          @input="${this.handleInput}"
-          @keydown="${this.handleKeyDown}"
-          placeholder="Ask the Architect..."
-        />
-        <button class="btn btn-primary" @click="${this.sendChatMessage}">Send</button>
+      <div class="input-group layout-col">
+        <div class="workflow-info">
+          <span class="codicon codicon-git-branch"></span>
+          <span>Workflow: ${this.activeWorkflow}</span>
+        </div>
+        <div class="input-row layout-row">
+          <input
+            class="input-control"
+            type="text"
+            .value="${this.inputText}"
+            @input="${this.handleInput}"
+            @keydown="${this.handleKeyDown}"
+            placeholder="Ask the Architect..."
+          />
+          <button class="btn btn-primary" @click="${this.sendChatMessage}">Send</button>
+        </div>
       </div>
     `;
   }

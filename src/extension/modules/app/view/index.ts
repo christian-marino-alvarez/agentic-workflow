@@ -1,5 +1,5 @@
 import { View } from '../../core/view/index.js';
-import { customElement, state } from 'lit/decorators.js';
+import { customElement, state, property } from 'lit/decorators.js';
 import { html } from 'lit';
 import { styles } from './templates/css.js';
 import { render } from './templates/html.js';
@@ -17,6 +17,9 @@ export class AppView extends View {
 
   @state()
   public isSecure: boolean = false;
+
+  @property({ type: String })
+  public appVersion: string = '';
 
   override connectedCallback() {
     super.connectedCallback();

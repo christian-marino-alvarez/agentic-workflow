@@ -30,7 +30,7 @@ export abstract class Background implements vscode.WebviewViewProvider {
   protected disposables: { dispose: () => void }[] = [];
   protected readonly scope = LayerScope.Background;
   protected readonly identity: string;
-  protected readonly appVersion: string;
+  protected appVersion: string;
   protected _webviewView?: vscode.WebviewView;
 
   constructor(

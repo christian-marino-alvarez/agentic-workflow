@@ -20,7 +20,7 @@ export class ChatView extends View {
 
   @state()
   public history: Array<{ sender: string, text: string, role?: string, status?: string }> = [
-    { sender: 'System', text: 'Chat Module Initialized. Active Agent: Architect', role: 'system' }
+    { sender: 'Architect', text: 'I am the Architect Agent. I am ready to help you manage your workflow.', role: 'architect' }
   ];
 
   @state()
@@ -28,6 +28,9 @@ export class ChatView extends View {
 
   @state()
   public models: Array<{ id: string, name: string, provider: string }> = [];
+
+  @state()
+  public attachments: string[] = [];
 
   @state()
   public selectedModelId: string = '';
@@ -43,6 +46,18 @@ export class ChatView extends View {
 
   @state()
   public appVersion: string = '';
+
+  @state()
+  public agentPermissions: Record<string, 'sandbox' | 'full'> = {
+    'architect': 'sandbox'
+  };
+
+  public togglePermission(role: string) {
+    const current = this.agentPermissions[role] || 'sandbox';
+    const next = current === 'sandbox' ? 'full' : 'sandbox';
+    this.agentPermissions = { ...this.agentPermissions, [role]: next };
+    this.log(`Permission toggled for ${role}: ${next}`);
+  }
 
   private get participatingRoles(): string[] {
     const roles = new Set(this.history.map(m => m.role).filter(r => r && r !== 'user' && r !== 'system') as string[]);
@@ -94,11 +109,11 @@ export class ChatView extends View {
       if (response && response.content) {
         this.appVersion = response.version || '';
         const snippet = response.content.substring(0, 100) + '...';
-        this.history = [...this.history, { sender: 'System', text: `Loaded init.md:\n${snippet}` }];
+        this.history = [...this.history, { sender: 'Architect', text: `I have loaded your workflow context:\n\n${snippet}`, role: 'architect' }];
       }
     } catch (error) {
       this.log('Error loading init workflow', error);
-      this.history = [...this.history, { sender: 'System', text: 'Error loading init.md' }];
+      this.history = [...this.history, { sender: 'System', text: 'Error loading workflow context.', role: 'system' }];
     }
   }
 
@@ -126,6 +141,15 @@ export class ChatView extends View {
       }
     }
 
+    if (command === 'SELECT_FILES_RESPONSE') {
+      const { files } = data;
+      if (files && Array.isArray(files)) {
+        // Add unique files
+        const newFiles = files.filter((f: string) => !this.attachments.includes(f));
+        this.attachments = [...this.attachments, ...newFiles];
+      }
+    }
+
     if (command === 'AGENT_STATUS') {
       const { status } = data;
       this.isLoading = false; // Stop skeleton, show status on message
@@ -148,6 +172,14 @@ export class ChatView extends View {
     this.inputText = (e.target as HTMLInputElement).value;
   }
 
+  public handleAttachFile() {
+    this.sendMessage(NAME, 'SELECT_FILES');
+  }
+
+  public removeAttachment(path: string) {
+    this.attachments = this.attachments.filter(f => f !== path);
+  }
+
   public handleKeyDown(e: KeyboardEvent) {
     if (e.key === 'Enter') {
       this.sendChatMessage();
@@ -155,7 +187,7 @@ export class ChatView extends View {
   }
 
   public async sendChatMessage() {
-    if (!this.inputText.trim()) { return; }
+    if (!this.inputText.trim() && this.attachments.length === 0) { return; }
 
     const text = this.inputText;
     this.history = [...this.history, { sender: 'Me', text, role: 'user' }];
@@ -164,7 +196,16 @@ export class ChatView extends View {
     try {
       this.isLoading = true;
       // Send and await ACK (success: true)
-      await this.sendMessage(NAME, MESSAGES.SEND_MESSAGE, { text, agentRole: 'architect' });
+      await this.sendMessage(NAME, MESSAGES.SEND_MESSAGE, {
+        text,
+        agentRole: 'architect',
+        modelId: this.selectedModelId,
+        agentFilter: this.agentFilter,
+        workflow: this.activeWorkflow,
+        attachments: this.attachments
+      });
+
+      this.attachments = [];
     } catch (error) {
       this.isLoading = false;
       this.log('Error sending message', error);

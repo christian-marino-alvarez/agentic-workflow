@@ -20,7 +20,8 @@ export class App extends CoreApp {
    */
   public async activate(): Promise<void> {
     // 1. Register UI Module (Background manages Sidecar spawn)
-    const background = new AppBackground(this.context);
+    const version = vscode.extensions.getExtension('christian-marino-alvarez.agentic-workflow')?.packageJSON.version || '0.0.0';
+    const background = new AppBackground(this.context, version);
     this.register('mainView', background);
 
     // 2. Register Auth Module

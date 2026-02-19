@@ -21,6 +21,8 @@ export function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri
         ${viewTagName} { flex: 1; overflow: hidden; }
         .global-footer {
           padding: 4px 10px;
+          display: flex;
+          justify-content: flex-end;
           font-size: 10px;
           color: var(--vscode-descriptionForeground);
           background-color: var(--vscode-sideBar-background);
@@ -31,10 +33,11 @@ export function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri
       </style>
     </head>
     <body style="background: transparent;">
-      <${viewTagName}></${viewTagName}>
-      <div class="global-footer">v${version}</div>
+      <${viewTagName} appVersion="${version}"></${viewTagName}>
       <script nonce="RANDOM">
         console.log('[Webview] Booting...');
+        console.log('[Webview] Version: ${version}');
+        console.log('[Webview] Codicon URI: ${excludeCodiconsUri}');
         window.addEventListener('error', (e) => {
             console.error('[Webview] Global Error:', e.message, e.filename, e.lineno);
         });

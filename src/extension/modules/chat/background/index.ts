@@ -9,7 +9,13 @@ import { randomUUID } from 'crypto';
 export class ChatBackground extends Background {
   constructor(context: vscode.ExtensionContext) {
     super(NAME, context.extensionUri, 'chat-view');
-    this.log('Initialized');
+    try {
+      const ext = vscode.extensions.getExtension('christian-marino-alvarez.agentic-workflow');
+      this.appVersion = ext?.packageJSON?.version || '0.0.0-error';
+    } catch (e) {
+      this.appVersion = '0.0.0-ex';
+    }
+    this.log('Initialized v' + this.appVersion);
   }
 
   public override async listen(message: Message): Promise<any> {
@@ -18,6 +24,8 @@ export class ChatBackground extends Background {
         return this.handleSendMessage(message.payload.data);
       case MESSAGES.LOAD_INIT:
         return this.handleLoadInit();
+      case MESSAGES.SELECT_FILES:
+        return this.handleSelectFiles();
       default:
         return super.listen(message);
     }
@@ -91,6 +99,32 @@ export class ChatBackground extends Background {
       this.log('Error loading init.md', error);
       return { error: 'Failed to load init.md' };
     }
+  }
+
+  private async handleSelectFiles(): Promise<any> {
+    const files = await vscode.window.showOpenDialog({
+      canSelectMany: true,
+      openLabel: 'Attach',
+      filters: {
+        'Code Files': ['ts', 'js', 'json', 'md', 'py', 'java', 'c', 'cpp', 'h', 'cs', 'go', 'rs', 'php', 'html', 'css', 'scss', 'xml', 'yaml', 'yml', 'sql', 'txt']
+      }
+    });
+
+    if (files && files.length > 0) {
+      // Return file paths
+      this.messenger.emit({
+        id: randomUUID(),
+        from: 'chat::background',
+        to: 'chat::view',
+        timestamp: Date.now(),
+        origin: MessageOrigin.Server,
+        payload: {
+          command: MESSAGES.SELECT_FILES_RESPONSE,
+          data: { files: files.map(f => f.fsPath) }
+        }
+      });
+    }
+    return { success: true };
   }
 
   protected getHtmlForWebview(webview: vscode.Webview): string {

@@ -65,6 +65,6 @@ export class RuntimeBackground extends Background {
   protected getHtmlForWebview(webview: vscode.Webview): string {
     // Standard View loading pattern
     const scriptPath = 'dist/extension/modules/runtime/view/index.js';
-    return ViewHtml.getWebviewHtml(webview, this._extensionUri, this.viewTagName, scriptPath);
+    return ViewHtml.getWebviewHtml(webview, this._extensionUri, this.viewTagName, scriptPath, this.appVersion);
   }
 }

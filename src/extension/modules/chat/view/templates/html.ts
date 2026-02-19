@@ -47,6 +47,7 @@ export function render(view: IChatView): TemplateResult {
     }
           </select>
         </div>
+        </div>
         <div class="selector-group">
           <label class="model-label">Filter:</label>
           <select class="model-dropdown" .value="${view.agentFilter}" @change="${(e: Event) => view.handleFilterChange(e)}">
@@ -57,6 +58,18 @@ export function render(view: IChatView): TemplateResult {
               </option>
             `)}
           </select>
+          ${view.agentFilter !== 'all' ? html`
+            <button class="btn-icon" 
+              title="${view.agentPermissions[view.agentFilter] === 'full' ? 'Full Access (Click to Sandbox)' : 'Sandbox Mode (Click to Grant Full Access)'}"
+              @click="${() => view.togglePermission(view.agentFilter)}"
+              style="color: ${view.agentPermissions[view.agentFilter] === 'full' ? 'var(--vscode-testing-iconFailed)' : 'var(--vscode-testing-iconPassed)'}"
+            >
+              ${view.agentPermissions[view.agentFilter] === 'full'
+        ? html`<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M11 1a2 2 0 0 0-2 2v4a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h6V3a2 2 0 0 0-2-2 2 2 0 0 0-2 2v2H3V3a4 4 0 1 1 8 0v4h2a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-1v-2h1v-5h-2v-2h2V3a4 4 0 0 0-4-4z"/></svg>` // Unlock (approx)
+        : html`<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/></svg>` // Lock
+      }
+            </button>
+          ` : ''}
         </div>
       </div>
     </div>
@@ -88,20 +101,45 @@ export function render(view: IChatView): TemplateResult {
       ` : ''}
     </div>
     <div class="input-group layout-col">
-      <div class="workflow-info">
-        <span class="codicon codicon-project" style="color: var(--vscode-textLink-foreground);"></span>
-        <span style="color: #ffffff;">Workflow: ${view.activeWorkflow}</span>
+      <div class="workflow-info" style="display: flex; align-items: center; gap: 6px; padding: 0 4px; margin-bottom: 4px;">
+        <svg width="14" height="14" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#3794ff">
+          <path d="M13.5 1H11V2H13.5C14.3284 2 15 2.67157 15 3.5V13.5C15 14.3284 14.3284 15 13.5 15H2.5C1.67157 15 1 14.3284 1 13.5V3.5C1 2.67157 1.67157 2 2.5 2H5V1H2.5C1.11929 1 0 2.11929 0 3.5V13.5C0 14.8807 1.11929 16 2.5 16H13.5C14.8807 16 16 14.8807 16 13.5V3.5C16 2.11929 14.8807 1 13.5 1ZM6 1H10V3H6V1ZM3 6H13V7H3V6ZM3 9H13V10H3V9ZM3 12H10V13H3V12Z"/>
+        </svg>
+        <span style="color: #ffffff; font-weight: 500;">${view.activeWorkflow}</span>
       </div>
-      <div class="input-row layout-row">
-        <input
-          class="input-control"
-          type="text"
-          .value="${view.inputText}"
-          @input="${(e: InputEvent) => view.handleInput(e)}"
-          @keydown="${(e: KeyboardEvent) => view.handleKeyDown(e)}"
-          placeholder="Ask the Architect..."
-        />
-        <button class="btn btn-primary" @click="${() => view.sendChatMessage()}">Send</button>
+      <div class="input-row layout-col">
+        <!-- Attachments Chips -->
+        ${view.attachments.length > 0 ? html`
+          <div class="attachments-list" style="display: flex; gap: 4px; padding: 4px; flex-wrap: wrap;">
+            ${view.attachments.map(path => html`
+              <div class="chip" style="display: flex; align-items: center; gap: 4px; background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); padding: 2px 6px; border-radius: 4px; font-size: 10px;">
+                <span class="codicon codicon-file"></span>
+                <span style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  ${path.split('/').pop()}
+                </span>
+                <span class="codicon codicon-close" style="cursor: pointer;" @click="${() => view.removeAttachment(path)}"></span>
+              </div>
+            `)}
+          </div>
+        ` : ''}
+
+        <div style="display: flex; gap: 4px; align-items: center;">
+             <button class="btn-icon" title="Attach Context" style="background: none; border: none; color: var(--vscode-foreground); cursor: pointer; padding: 4px; border: 1px solid var(--vscode-input-border); border-radius: 4px; margin-right: 4px;" @click="${() => view.handleAttachFile()}">
+               <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                 <path d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 1 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0V3z"/>
+               </svg>
+             </button>
+            <input
+              class="input-control"
+              type="text"
+              style="flex: 1;"
+              .value="${view.inputText}"
+              @input="${(e: InputEvent) => view.handleInput(e)}"
+              @keydown="${(e: KeyboardEvent) => view.handleKeyDown(e)}"
+              placeholder="Ask the Architect..."
+            />
+            <button class="btn btn-primary" @click="${() => view.sendChatMessage()}">Send</button>
+        </div>
       </div>
     </div>
     </div>

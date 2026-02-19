@@ -18,8 +18,9 @@ import { ChatBackground } from '../../chat/background/index.js';
 export class AppBackground extends Background {
   private settingsBg: SettingsBackground;
 
-  constructor(context: vscode.ExtensionContext) {
+  constructor(context: vscode.ExtensionContext, appVersion: string) {
     super(NAME, context.extensionUri, `${NAME}-view`);
+    this.appVersion = appVersion;
     this.log('Initialized');
 
     // Initialize domain-specific backgrounds
@@ -91,6 +92,6 @@ export class AppBackground extends Background {
 
   protected getHtmlForWebview(webview: vscode.Webview): string {
     const scriptPath = 'dist/extension/modules/app/view/index.js';
-    return ViewHtml.getWebviewHtml(webview, this._extensionUri, this.viewTagName, scriptPath);
+    return ViewHtml.getWebviewHtml(webview, this._extensionUri, this.viewTagName, scriptPath, this.appVersion);
   }
 }

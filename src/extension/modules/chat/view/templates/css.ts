@@ -281,6 +281,22 @@ export const styles = css`
       background-color: #d35400;
     }
 
+    .btn-icon {
+      background: none;
+      border: none;
+      color: var(--vscode-foreground);
+      cursor: pointer;
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+    }
+
+    .btn-icon:hover {
+      background-color: var(--vscode-toolbar-hoverBackground);
+    }
+
     /* Skeleton Loading */
     @keyframes pulse {
       0%, 100% { opacity: 0.8; }

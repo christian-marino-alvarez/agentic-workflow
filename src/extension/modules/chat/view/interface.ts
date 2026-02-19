@@ -9,10 +9,16 @@ export interface IChatView {
   activeWorkflow: string;
   isLoading: boolean;
   appVersion: string;
+  attachments: string[];
+  agentPermissions: Record<string, 'sandbox' | 'full'>;
+
+  togglePermission(role: string): void;
 
   handleInput(e: InputEvent): void;
   handleKeyDown(e: KeyboardEvent): void;
   sendChatMessage(): void;
   handleModelChange(e: Event): void;
   handleFilterChange(e: Event): void;
+  handleAttachFile(): void;
+  removeAttachment(path: string): void;
 }

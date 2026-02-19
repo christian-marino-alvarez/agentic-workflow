@@ -161,6 +161,14 @@ export const styles = css`
       margin-bottom: 4px;
     }
 
+    .msg-status {
+      font-weight: normal;
+      font-style: italic;
+      opacity: 0.8;
+      font-size: 11px;
+      margin-left: 4px;
+    }
+
     .msg-icon {
       display: inline-flex;
       align-items: center;
@@ -220,7 +228,6 @@ export const styles = css`
 
     .workflow-info {
       font-size: 11px;
-      color: var(--vscode-descriptionForeground);
       display: flex;
       align-items: center;
       gap: 6px;
@@ -273,4 +280,38 @@ export const styles = css`
     .btn-primary:hover {
       background-color: #d35400;
     }
+
+    /* Skeleton Loading */
+    @keyframes pulse {
+      0%, 100% { opacity: 0.8; }
+      50% { opacity: 0.4; }
+    }
+
+    .skeleton {
+      animation: pulse 1.5s ease-in-out infinite;
+      pointer-events: none;
+      gap: 8px;
+    }
+
+    .skeleton-header {
+      height: 12px;
+      width: 80px;
+      background-color: var(--vscode-input-background);
+      border-radius: 2px;
+    }
+
+    .skeleton-content {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .skeleton-line {
+      height: 10px;
+      background-color: var(--vscode-input-background);
+      border-radius: 2px;
+    }
+
+    .skeleton-line.full { width: 90%; }
+    .skeleton-line.half { width: 50%; }
 `;

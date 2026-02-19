@@ -32,5 +32,9 @@ export function render(view: AppView) {
       ${view.activeTab === 'chat' ? html`<chat-view></chat-view>` : ''}
       ${view.activeTab === 'history' ? html`<div class="placeholder">History Module (Coming Soon)</div>` : ''}
     </div>
+    <div class="global-footer" style="padding: 4px 10px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; font-size: 10px; color: var(--vscode-descriptionForeground); background-color: var(--vscode-sideBar-background); border-top: 1px solid var(--vscode-sideBarSectionHeader-border); opacity: 0.7; flex-shrink: 0;">
+      <span>&copy; Christian Mariño</span>
+      <span>v${view.appVersion}</span>
+    </div>
   `;
 }

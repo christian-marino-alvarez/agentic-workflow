@@ -486,6 +486,6 @@ export class SettingsBackground extends Background {
 
   protected getHtmlForWebview(webview: vscode.Webview): string {
     const scriptPath = 'dist/extension/modules/settings/view/index.js';
-    return ViewHtml.getWebviewHtml(webview, this._extensionUri, this.viewTagName, scriptPath);
+    return ViewHtml.getWebviewHtml(webview, this._extensionUri, this.viewTagName, scriptPath, this.appVersion);
   }
 }

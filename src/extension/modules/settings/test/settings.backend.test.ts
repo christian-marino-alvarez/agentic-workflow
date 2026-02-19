@@ -68,6 +68,7 @@ describe('Settings Module (Background)', () => {
     mockConfig.get.mockReturnValue([]);
     mockConfig.update.mockResolvedValue(undefined);
 
+    // Initialize SettingsBackground
     settings = new SettingsBackground(context);
   });
 

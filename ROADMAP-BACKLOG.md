@@ -4,17 +4,18 @@
 | Domain | Status | Completed | Total |
 |---|---|---|---|
 | **D1: Settings & OAuth** | 🏗️ Architecture | 3 | 8 |
-| **D2: UI (Chat/Workflows)** | 🏗️ Concept | 0 | 6 |
-| **D3: Backend (Agents)** | 🏗️ Concept | 0 | 4 |
+| **D2: UI (Chat/Workflows)** | 🏗️ Concept | 1 | 7 |
+| **D3: Backend (Agents)** | 🏗️ Concept | 1 | 5 |
 | **D4: Runtime & Execution** | 🏗️ Concept | 0 | 2 |
-| **D7: Release/CI-CD** | ✅ Stable | 2 | 2 |
+| **D7: Release/CI-CD** | ✅ Stable | 3 | 3 |
 | **D8: E2E Testing** | ✅ Stable | 4 | 4 |
 
-**Total**: 9/24 tasks completed
+**Total**: 12/29 tasks completed
 
 ## 🎯 Priority High - Critical Path
 - [x] **T017**: D1 - OAuth Authentication Provider (vscode.authentication)
 - [x] **T018**: D1 - Model Registry UI (API Key + OAuth Tokens)
+- [x] **T010**: D3 - Chat Session Endpoint
 - [ ] **T019**: D3 - Agent Factory & Role-Model Binding
 - [ ] **T032**: D4 - Runtime Server (File I/O & Sandbox)
 - [ ] **T020**: D2 - Chat Filters (Agent/Thread)
@@ -65,9 +66,15 @@
   - Real-time status in VS Code Status Bar.
 - [ ] **T028**: Theme Synchronization
   - Ensure all Lit components (Graph/Timeline) match VS Code Theme.
+- [x] **T037**: App Version & Footer Refactor
+  - Centralize version logic in App class. ✅
+  - Move footer to AppView template. ✅
 
 ### D3: Backend & Agent Orchestration
 > Focus: Dynamic Agent Instantiation.
+- [x] **T010**: Chat Session Endpoint
+  - Ensure `ChatBackendClient` targets correct `/sessions` endpoint. ✅
+  - Functional chat flow restored. ✅
 - [ ] **T019**: Agent Factory
   - Logic to instantiate Agents based on `Role + Model` configuration.
   - `LLMService` router extension.
@@ -90,6 +97,8 @@
 ### D7 & D8 (Maintenance)
 - [x] CI/CD Pipelines (Done)
 - [x] E2E Base Suite (Done)
+- [x] **T038**: Fix CI Build Errors
+  - Resolved TypeScript errors in CI. ✅
 
 ---
 
@@ -98,4 +107,4 @@
 2.  **T020 (Chat Filters)**: Quick win for UI usability.
 3.  **T022 (Profile Management)**: Work/Research profile switching.
 
-**Last Updated**: 2026-02-18 by architect-agent (T018 completed, T023 completed)
+**Last Updated**: 2026-02-19 by architect-agent (T010, T037, T038 completed)

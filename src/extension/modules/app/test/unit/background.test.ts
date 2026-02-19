@@ -78,7 +78,7 @@ describe('AppBackground', () => {
     };
 
     console.log('Creating AppBackground with mock context');
-    background = new AppBackground(contextMock);
+    background = new AppBackground(contextMock, '0.0.0-test');
     messengerMock = (MessagingBackground as any).mock.instances[0];
   });
 

@@ -4,6 +4,7 @@ import { html } from 'lit';
 import { styles } from './templates/css.js';
 import { render } from './templates/html.js';
 import { MESSAGES, NAME } from '../constants.js';
+import { MESSAGES as SETTINGS_MESSAGES } from '../../settings/constants.js';
 
 console.log('[chat::view] Module loading...');
 
@@ -24,9 +25,38 @@ export class ChatView extends View {
   @state()
   public inputText: string = '';
 
+  @state()
+  public models: Array<{ id: string, name: string, provider: string }> = [];
+
+  @state()
+  public selectedModelId: string = '';
+
   override firstUpdated() {
     this.log('Chat view mounted');
     this.initWorkflow();
+    this.loadModels();
+  }
+
+  /**
+   * Load available models from Settings backend
+   */
+  private async loadModels() {
+    try {
+      const data = await this.sendMessage('settings', SETTINGS_MESSAGES.GET_REQUEST);
+      if (data && data.models) {
+        this.models = data.models;
+        this.selectedModelId = data.activeModelId || (data.models[0]?.id ?? '');
+        this.log('Models loaded:', this.models.length);
+      }
+    } catch (error) {
+      this.log('Error loading models', error);
+    }
+  }
+
+  public handleModelChange(e: Event) {
+    this.selectedModelId = (e.target as HTMLSelectElement).value;
+    const model = this.models.find(m => m.id === this.selectedModelId);
+    this.log('Model changed to:', model?.name || this.selectedModelId);
   }
 
   /**
@@ -97,18 +127,43 @@ export class ChatView extends View {
 
   override render() {
     console.log('[chat::view] render() called');
+    const selectedModel = this.models.find(m => m.id === this.selectedModelId);
     return html`
-      <div class="header layout-row">
-        <h2 class="header-title">
-            ${this.getIcon('architect')}
-            <span>Architect Agent</span>
-        </h2>
-        <span class="header-status">● Ready</span>
+      <div class="header layout-col">
+        <div class="header-top layout-row">
+          <h2 class="header-title">
+              ${this.getIcon('architect')}
+              <span>Architect Agent</span>
+          </h2>
+          <div class="actions-group">
+            <span class="secure-badge" title="Secure session active">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              Secure
+            </span>
+            <span class="header-status">● Ready</span>
+          </div>
+        </div>
+        <div class="model-selector layout-row">
+          <label class="model-label">Model:</label>
+          <select class="model-dropdown" .value="${this.selectedModelId}" @change="${this.handleModelChange}">
+            ${this.models.length === 0
+        ? html`<option value="" disabled selected>Loading models...</option>`
+        : this.models.map(m => html`
+                  <option value="${m.id}" ?selected="${m.id === this.selectedModelId}">
+                    ${m.name} (${m.provider})
+                  </option>
+                `)
+      }
+          </select>
+        </div>
       </div>
       <div class="history layout-scroll chat-container layout-col">
         ${this.history.map(msg => {
-      const typeClass = msg.role === 'user' ? 'msg-user' : (msg.role === 'architect' ? 'msg-agent' : 'msg-system');
-      return html`
+        const typeClass = msg.role === 'user' ? 'msg-user' : (msg.role === 'architect' ? 'msg-agent' : 'msg-system');
+        return html`
             <div class="msg-bubble ${typeClass}">
                 <div class="msg-header">
                     <span class="msg-icon">${this.getIcon(msg.role)}</span>
@@ -116,7 +171,7 @@ export class ChatView extends View {
                 </div>
                 <div class="msg-content">${msg.text}</div>
             </div>`;
-    })}
+      })}
       </div>
       <div class="input-group layout-row">
         <input

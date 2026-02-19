@@ -40,8 +40,53 @@ export const styles = css`
     .header {
       padding: 12px 20px;
       border-bottom: 1px solid var(--vscode-widget-border);
-      justify-content: space-between;
       background-color: var(--vscode-editor-background);
+      gap: 8px;
+    }
+
+    .header-top {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .actions-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Model Selector */
+    .model-selector {
+      gap: 8px;
+      align-items: center;
+      padding-top: 4px;
+    }
+
+    .model-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--vscode-descriptionForeground);
+      white-space: nowrap;
+    }
+
+    .model-dropdown {
+      flex: 1;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-family: inherit;
+      background-color: var(--vscode-dropdown-background);
+      color: var(--vscode-dropdown-foreground);
+      border: 1px solid var(--vscode-dropdown-border);
+      border-radius: 4px;
+      outline: none;
+      cursor: pointer;
+      appearance: auto;
+    }
+
+    .model-dropdown:focus {
+      border-color: var(--vscode-focusBorder);
     }
     
     .header-title {
@@ -54,10 +99,28 @@ export const styles = css`
       gap: 8px;
     }
 
+    .header-title svg {
+      color: var(--vscode-textLink-foreground);
+    }
+
     .header-status {
         font-size: 11px;
         color: var(--vscode-descriptionForeground);
         font-weight: normal;
+    }
+
+    .secure-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--vscode-testing-iconPassed, #73c991);
+      padding: 2px 8px;
+      border: 1px solid var(--vscode-testing-iconPassed, #73c991);
+      border-radius: 10px;
+      background-color: rgba(115, 201, 145, 0.08);
+      letter-spacing: 0.3px;
     }
 
     /* Chat Area */
@@ -86,15 +149,24 @@ export const styles = css`
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 600;
-      opacity: 0.8;
-      margin-bottom: 2px;
+      margin-bottom: 4px;
+    }
+
+    .msg-icon {
+      display: inline-flex;
+      align-items: center;
     }
 
     .msg-icon svg {
-      width: 14px;
-      height: 14px;
+      width: 16px;
+      height: 16px;
+    }
+
+    .msg-content {
+      font-size: 13px;
+      line-height: 1.5;
     }
 
     .msg-system {

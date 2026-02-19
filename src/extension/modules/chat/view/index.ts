@@ -112,8 +112,17 @@ export class ChatView extends View {
     if (command === MESSAGES.RECEIVE_MESSAGE) {
       this.isLoading = false;
       if (data && data.text) {
-        // Remove any temporary status message if exists (optional logic, for now just append)
-        this.history = [...this.history, { sender: 'Architect', text: data.text, role: 'architect' }];
+        const lastMsg = this.history[this.history.length - 1];
+        if (lastMsg && lastMsg.role === 'architect' && lastMsg.status) {
+          // Merge into existing status message
+          this.history = [
+            ...this.history.slice(0, -1),
+            { ...lastMsg, text: data.text, status: undefined }
+          ];
+        } else {
+          // Append new message
+          this.history = [...this.history, { sender: 'Architect', text: data.text, role: 'architect' }];
+        }
       }
     }
 

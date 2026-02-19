@@ -1,5 +1,7 @@
 import { randomUUID } from 'crypto';
 import { spawn, ChildProcess, exec } from 'child_process';
+import * as fs from 'fs';
+import * as path from 'path';
 import * as vscode from 'vscode';
 import { MessagingBackground } from '../messaging/background.js';
 import { MessageOrigin, LayerScope } from '../constants.js';
@@ -28,6 +30,7 @@ export abstract class Background implements vscode.WebviewViewProvider {
   protected disposables: { dispose: () => void }[] = [];
   protected readonly scope = LayerScope.Background;
   protected readonly identity: string;
+  protected readonly appVersion: string;
   protected _webviewView?: vscode.WebviewView;
 
   constructor(
@@ -36,6 +39,15 @@ export abstract class Background implements vscode.WebviewViewProvider {
     protected readonly viewTagName: string
   ) {
     this.identity = `${this.moduleName}::${this.scope}`;
+
+    try {
+      const pkgPath = path.join(this._extensionUri.fsPath, 'package.json');
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+      this.appVersion = pkg.version || '0.0.0';
+    } catch (e) {
+      this.appVersion = '0.0.0';
+      console.error('Failed to read package.json version', e);
+    }
 
     // Wire message subscription → listen()
     this.messenger.subscribe(this.identity, async (msg: Message) => {

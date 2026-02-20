@@ -18,11 +18,39 @@ export class AppView extends View {
   @state()
   public tabTransitioning: boolean = true;
 
+  @state()
+  public historySessions: Array<{ id: string, title: string, timestamp: number, messageCount: number }> = [];
+
+  public getChatView(): any {
+    return this.renderRoot?.querySelector('chat-view') || document.querySelector('chat-view');
+  }
+
   public switchTab(tab: string) {
     if (tab === this.activeTab) { return; }
     this.tabTransitioning = true;
     this.activeTab = tab;
-    setTimeout(() => { this.tabTransitioning = false; }, 1000);
+
+    // When switching to History, eagerly save + load sessions
+    if (tab === 'history') {
+      const chatView = this.getChatView();
+      if (chatView?.saveCurrentSession) { chatView.saveCurrentSession(); }
+      // Request sessions and poll for update
+      if (chatView?.requestSessions) { chatView.requestSessions(); }
+      setTimeout(() => { this.refreshHistorySessions(); }, 300);
+    }
+
+    setTimeout(() => {
+      this.tabTransitioning = false;
+      // Re-read sessions after transition to ensure fresh data
+      if (tab === 'history') { this.refreshHistorySessions(); }
+    }, 1000);
+  }
+
+  public refreshHistorySessions() {
+    const chatView = this.getChatView();
+    if (chatView?.sessionList) {
+      this.historySessions = [...chatView.sessionList];
+    }
   }
 
   @state()
@@ -33,11 +61,9 @@ export class AppView extends View {
 
   override connectedCallback() {
     super.connectedCallback();
-    // Listen for secure state changes from Settings View
     this.addEventListener('secure-state-changed', ((e: CustomEvent) => {
       this.isSecure = e.detail?.secure ?? false;
     }) as EventListener);
-    // Initial 1s skeleton on first mount
     setTimeout(() => { this.tabTransitioning = false; }, 1000);
   }
 

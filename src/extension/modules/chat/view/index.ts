@@ -94,6 +94,33 @@ export class ChatView extends View {
   @state()
   public showTimeline: boolean = false;
 
+  // Execution timer
+  @state()
+  public elapsedSeconds: number = 0;
+
+  @state()
+  public activeTask: string = '';
+
+  @state()
+  public activeActivity: string = '';
+
+  private timerInterval: ReturnType<typeof setInterval> | null = null;
+
+  public startTimer() {
+    if (this.timerInterval) { return; }
+    this.timerInterval = setInterval(() => {
+      this.elapsedSeconds++;
+      this.requestUpdate();
+    }, 1000);
+  }
+
+  public pauseTimer() {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
+  }
+
   public toggleTimeline() {
     this.showTimeline = !this.showTimeline;
   }
@@ -315,7 +342,11 @@ export class ChatView extends View {
           lastMsg.status = undefined;
           this.history = historyCopy;
           // Auto-save when streaming completes
-          if (!isStreaming) { this.saveCurrentSession(); }
+          if (!isStreaming) {
+            this.saveCurrentSession();
+            this.activeActivity = '';
+            this.pauseTimer();
+          }
         } else {
           if (lastMsg && lastMsg.role === data.agentRole && lastMsg.status && lastMsg.text === '') {
             lastMsg.text = data.text;
@@ -462,6 +493,8 @@ export class ChatView extends View {
     const text = this.inputText;
     this.history = [...this.history, { sender: 'Me', text, role: 'user' }];
     this.inputText = '';
+    this.activeActivity = 'Procesando...';
+    this.startTimer();
 
     try {
       this.isLoading = true;

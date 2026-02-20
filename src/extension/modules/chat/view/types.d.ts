@@ -7,7 +7,7 @@ export interface TaskStep {
 }
 
 export interface IChatView {
-  history: Array<{ sender: string, text: string, role?: string, status?: string, isStreaming?: boolean }>;
+  history: Array<{ sender: string, text: string, role?: string, status?: string, isStreaming?: boolean, phase?: string }>;
   inputText: string;
   models: Array<{ id: string, name: string, provider: string }>;
   activeWorkflow: string;
@@ -19,7 +19,7 @@ export interface IChatView {
   attachments: string[];
   agentPermissions: Record<string, 'sandbox' | 'full'>;
 
-  // Agent switching
+  // Active agent (read-only status, no switching)
   selectedAgent: string;
   showAgentDropdown: boolean;
   availableAgents: Array<{ name: string; icon?: string; model?: { provider?: string; id?: string }; capabilities?: Record<string, boolean> }>;
@@ -31,6 +31,11 @@ export interface IChatView {
   // Task progress
   taskSteps: TaskStep[];
   showTimeline: boolean;
+
+  // Execution timer
+  elapsedSeconds: number;
+  activeTask: string;
+  activeActivity: string;
 
   togglePermission(role: string): void;
   testConnection(): void;

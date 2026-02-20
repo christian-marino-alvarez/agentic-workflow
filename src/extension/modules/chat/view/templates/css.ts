@@ -254,70 +254,124 @@ export const styles = css`
       font-size: 12px;
     }
 
-    /* Agent Bar (bottom, above input) */
-    .agent-bar {
+    /* Agent Status Bar (static, no dropdown) */
+    .agent-status-bar {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
       padding: 6px 0 4px 0;
       border-bottom: 1px solid var(--vscode-widget-border);
       margin-bottom: 4px;
     }
 
-    .agent-bar-details {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .agent-select-btn {
+    .agent-status-row {
       display: flex;
       align-items: center;
-      gap: 6px;
-      background: transparent;
-      border: 1px solid var(--vscode-widget-border);
-      border-radius: 4px;
-      color: var(--vscode-foreground);
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      padding: 4px 8px;
-      transition: all 0.15s ease;
+      justify-content: space-between;
+      gap: 8px;
     }
 
-    .agent-select-btn:hover {
-      background: var(--vscode-list-hoverBackground);
+    .agent-status-info {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
     }
 
-    .agent-select-btn.disabled {
-      opacity: 0.5;
-      border-color: var(--vscode-testing-iconFailed, #f14c4c);
-    }
-
-    .agent-select-btn svg {
+    .agent-status-info svg {
       width: 16px;
       height: 16px;
+      flex-shrink: 0;
       color: var(--vscode-textLink-foreground);
     }
 
-    .agent-model-label {
+    .agent-status-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--vscode-foreground);
+      white-space: nowrap;
+    }
+
+    .agent-status-sep {
+      color: var(--vscode-descriptionForeground);
+      opacity: 0.5;
+      font-size: 12px;
+    }
+
+    .agent-status-model {
       font-size: 10px;
       font-weight: 400;
       color: #1a1a1a;
       padding: 1px 6px;
       background: #ffffff;
       border-radius: 8px;
+      white-space: nowrap;
     }
 
-    .agent-no-model-label {
-      font-size: 10px;
-      color: var(--vscode-testing-iconFailed, #f14c4c);
-      margin-left: auto;
+    .agent-status-task {
+      font-size: 11px;
+      color: var(--vscode-descriptionForeground);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .agent-option.no-model {
-      /* Removed opacity 0.5 so agents without models are fully visible and clickable */
+    .agent-status-activity {
+      font-size: 11px;
+      color: var(--vscode-textLink-foreground);
+      font-style: italic;
+      white-space: nowrap;
+    }
+
+    .agent-status-activity.active {
+      animation: activityPulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes activityPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .agent-status-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .agent-timer {
+      font-size: 11px;
+      font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+      color: var(--vscode-descriptionForeground);
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: var(--vscode-editor-background);
+      border: 1px solid var(--vscode-widget-border);
+      opacity: 0.6;
+    }
+
+    .agent-timer.running {
+      color: var(--vscode-testing-iconPassed, #73c991);
+      border-color: var(--vscode-testing-iconPassed, #73c991);
+      opacity: 1;
+    }
+
+    .perm-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 2px;
+      line-height: 1;
+    }
+
+    .agent-status-caps {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      align-items: center;
     }
 
     /* Capability Labels */
@@ -363,24 +417,24 @@ export const styles = css`
 
     /* Chat Area */
     .chat-container {
-      padding: 20px;
-      gap: 16px;
+      padding: 12px;
+      gap: 10px;
       display: flex;
       flex-direction: column;
     }
 
     /* Message Bubble Component */
     .msg-bubble {
-      padding: 12px;
+      padding: 8px 10px;
       border-radius: 6px;
-      max-width: 85%;
+      max-width: 90%;
       font-size: 13px;
       line-height: 1.5;
       word-wrap: break-word;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 2px;
     }
 
     .msg-header {
@@ -588,9 +642,9 @@ export const styles = css`
 
     /* Input Group Component */
     .input-group {
-      padding: 16px 20px;
+      padding: 8px 12px;
       border-top: 1px solid var(--vscode-widget-border);
-      gap: 10px;
+      gap: 6px;
       background-color: var(--vscode-editor-background);
     }
 
@@ -937,5 +991,99 @@ export const styles = css`
       font-size: 0.88em;
       color: var(--vscode-descriptionForeground);
       padding: 4px 0;
+    }
+
+    /* Phase Markers */
+    .phase-marker {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 0;
+      margin: 4px 0;
+    }
+
+    .phase-marker-line {
+      flex: 1;
+      height: 1px;
+      background: var(--vscode-widget-border);
+    }
+
+    .phase-marker-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--vscode-textLink-foreground);
+      padding: 2px 10px;
+      border-radius: 10px;
+      background: color-mix(in srgb, var(--vscode-textLink-foreground) 10%, transparent);
+      border: 1px solid color-mix(in srgb, var(--vscode-textLink-foreground) 25%, transparent);
+      white-space: nowrap;
+    }
+
+    /* Vertical Phase Timeline (right sidebar) */
+    .chat-with-timeline {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .chat-with-timeline .history {
+      flex: 1;
+    }
+
+    .phase-timeline {
+      width: 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 4px;
+      flex-shrink: 0;
+      border-left: 1px solid var(--vscode-widget-border);
+    }
+
+    .phase-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--vscode-widget-border);
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .phase-dot.done {
+      background: var(--vscode-testing-iconPassed, #73c991);
+    }
+
+    .phase-dot.active {
+      background: var(--vscode-textLink-foreground, #3794ff);
+      box-shadow: 0 0 6px var(--vscode-textLink-foreground, #3794ff);
+      animation: phasePulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes phasePulse {
+      0%, 100% { box-shadow: 0 0 4px var(--vscode-textLink-foreground, #3794ff); }
+      50% { box-shadow: 0 0 10px var(--vscode-textLink-foreground, #3794ff); }
+    }
+
+    .phase-line {
+      width: 2px;
+      flex: 1;
+      min-height: 12px;
+      background: var(--vscode-widget-border);
+    }
+
+    .phase-line.done {
+      background: var(--vscode-testing-iconPassed, #73c991);
+    }
+
+    .phase-dot-label {
+      font-size: 7px;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      color: var(--vscode-descriptionForeground);
+      letter-spacing: 0.3px;
+      padding: 2px 0;
+      opacity: 0.7;
     }
 `;

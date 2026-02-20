@@ -274,6 +274,16 @@ function renderLoadingSkeleton() {
   `;
 }
 
+function renderPhaseMarker(phase: string) {
+  return html`
+    <div class="phase-marker">
+      <span class="phase-marker-line"></span>
+      <span class="phase-marker-label">${phase}</span>
+      <span class="phase-marker-line"></span>
+    </div>
+  `;
+}
+
 function renderHistory(view: IChatView) {
   // During initial 2s preload, show only skeleton (no empty history)
   if (view.initialLoading) {
@@ -283,79 +293,84 @@ function renderHistory(view: IChatView) {
       </div>
     `;
   }
+
+  // Build messages with phase markers inserted between phase transitions
+  const items: any[] = [];
+  let lastPhase = '';
+  for (const msg of view.history) {
+    if (msg.phase && msg.phase !== lastPhase) {
+      items.push(renderPhaseMarker(msg.phase));
+      lastPhase = msg.phase;
+    }
+    items.push(renderMessageBubble(msg));
+  }
+
   return html`
     <div class="history layout-scroll chat-container layout-col">
-      ${view.history.map(msg => renderMessageBubble(msg))}
+      ${items}
       ${view.isLoading ? renderLoadingSkeleton() : ''}
     </div>
   `;
 }
 
-// ─── Agent Selector (bottom, above input) ──────────────────
-function renderAgentSelector(view: IChatView) {
+// ─── Agent Status Bar (static, no dropdown) ──────────────────
+function formatTimer(seconds: number): string {
+  const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+  const s = (seconds % 60).toString().padStart(2, '0');
+  return `${m}:${s} `;
+}
+
+function renderAgentStatusBar(view: IChatView) {
   const agentLabel = view.selectedAgent.charAt(0).toUpperCase() + view.selectedAgent.slice(1);
   const currentAgent = view.availableAgents.find(a => a.name === view.selectedAgent);
   const capabilities = currentAgent?.capabilities || {};
   const capKeys = Object.keys(capabilities);
   const isSandbox = (view.agentPermissions[view.selectedAgent] || 'sandbox') === 'sandbox';
+  const hasActivity = !!view.activeActivity;
 
   return html`
-    <div class="agent-bar">
-      <div class="agent-selector" style="position: relative;">
-        <button class="agent-select-btn ${view.agentDisabled ? 'disabled' : ''}" @click=${() => view.toggleAgentDropdown()}>
+    < div class="agent-status-bar" >
+      <div class="agent-status-row" >
+        <div class="agent-status-info" >
           ${getIcon(view.selectedAgent)}
-          <span>${agentLabel}</span>
-          ${view.agentModelName ? html`<span class="agent-model-label">${view.agentModelName}</span>` : ''}
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" style="margin-left: 4px; opacity: 0.6;">
-            <path d="M7.976 10.072l4.357-4.357.62.618L8.284 11h-.618L3 6.333l.619-.618 4.357 4.357z"/>
-          </svg>
-        </button>
-        ${view.showAgentDropdown ? html`
-          <div class="agent-dropdown">
-            ${view.availableAgents.map(agent => {
-    const hasModel = !!(agent.model?.id);
-    return html`
-                <div class="agent-option ${agent.name === view.selectedAgent ? 'active' : ''} ${!hasModel ? 'no-model' : ''}"
-                  @click=${() => view.handleAgentChange(agent.name)}>
-                  ${getIcon(agent.name)}
-                  <span>${agent.name.charAt(0).toUpperCase() + agent.name.slice(1)}</span>
-                  ${!hasModel ? html`<span class="agent-no-model-label">No model</span>` : ''}
-                </div>
-              `;
-  })}
-          </div>
-        ` : ''}
-      </div>
-      <div class="agent-bar-details">
-        ${capKeys.length > 0 ? html`
-          <div class="agent-capabilities">
-            ${capKeys.map(cap => html`
-              <span class="cap-label ${capabilities[cap] ? 'active' : ''}">${cap}</span>
-            `)}
-          </div>
-        ` : ''}
-        <div class="permission-toggle" @click="${() => view.togglePermission(view.selectedAgent)}">
-          ${isSandbox
-      ? html`<span class="perm-label sandbox">🔒 Sandbox</span>`
-      : html`<span class="perm-label full-access">🔓 Full Access</span>`
-    }
-        </div>
-      </div>
+  <span class="agent-status-name" > ${agentLabel} </span>
+          ${view.agentModelName ? html`<span class="agent-status-sep">·</span><span class="agent-status-model">${view.agentModelName}</span>` : ''}
+          ${view.activeTask ? html`<span class="agent-status-sep">·</span><span class="agent-status-task">task: ${view.activeTask}</span>` : ''}
+          ${view.activeActivity ? html`<span class="agent-status-sep">·</span><span class="agent-status-activity ${hasActivity ? 'active' : ''}">${view.activeActivity}</span>` : ''}
+  </div>
+    < div class="agent-status-right" >
+      <span class="agent-timer ${hasActivity ? 'running' : ''}" title = "Execution time" >⏱ ${formatTimer(view.elapsedSeconds)} </span>
+        < button class="btn-icon perm-btn ${isSandbox ? 'sandbox' : 'full'}"
+  title = "${isSandbox ? 'Sandbox Mode' : 'Full Access'}"
+  @click="${() => view.togglePermission(view.selectedAgent)}"
+    >
+    ${isSandbox ? '🔒' : '🔓'}
+  </button>
     </div>
-  `;
+    </div>
+      ${capKeys.length > 0 ? html`
+        <div class="agent-status-caps">
+          ${capKeys.map(cap => html`
+            <span class="cap-label ${capabilities[cap] ? 'active' : ''}">${cap}</span>
+          `)}
+        </div>
+      ` : ''
+    }
+  </div>
+    `;
 }
 
 // ─── Attachments ──────────────────────────────────────────
 function renderAttachmentChip(view: IChatView, path: string) {
   return html`
-    <div class="chip" style="display: flex; align-items: center; gap: 4px; background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); padding: 2px 6px; border-radius: 4px; font-size: 10px;">
-      <span class="codicon codicon-file"></span>
-      <span style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-        ${path.split('/').pop()}
-      </span>
-      <span class="codicon codicon-close" style="cursor: pointer;" @click="${() => view.removeAttachment(path)}"></span>
-    </div>
-  `;
+    < div class="chip" style = "display: flex; align-items: center; gap: 4px; background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); padding: 2px 6px; border-radius: 4px; font-size: 10px;" >
+      <span class="codicon codicon-file" > </span>
+        < span style = "max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" >
+          ${path.split('/').pop()}
+  </span>
+    < span class="codicon codicon-close" style = "cursor: pointer;" @click="${() => view.removeAttachment(path)}" > </span>
+      </div>
+        `;
 }
 
 function renderAttachmentsList(view: IChatView) {
@@ -363,10 +378,10 @@ function renderAttachmentsList(view: IChatView) {
     return '';
   }
   return html`
-    <div class="attachments-list" style="display: flex; gap: 4px; padding: 4px; flex-wrap: wrap;">
-      ${view.attachments.map(path => renderAttachmentChip(view, path))}
-    </div>
-  `;
+      < div class="attachments-list" style = "display: flex; gap: 4px; padding: 4px; flex-wrap: wrap;" >
+        ${view.attachments.map(path => renderAttachmentChip(view, path))}
+  </div>
+    `;
 }
 
 // ─── Input Controls ──────────────────────────────────────
@@ -376,32 +391,32 @@ function renderInputControls(view: IChatView) {
     : `Ask the ${view.selectedAgent.charAt(0).toUpperCase() + view.selectedAgent.slice(1)} Agent...`;
 
   return html`
-    <div style="display: flex; gap: 4px; align-items: center;">
-      <button class="btn-icon" title="Attach Context" style="background: none; border: none; color: var(--vscode-foreground); cursor: pointer; padding: 4px; border: 1px solid var(--vscode-input-border); border-radius: 4px; margin-right: 4px;" @click="${() => view.handleAttachFile()}">
-        <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-          <path d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 1 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0V3z"/>
-        </svg>
-      </button>
-      <input
-        class="input-control"
-        type="text"
-        style="flex: 1;"
-        .value="${view.inputText}"
-        @input="${(e: InputEvent) => view.handleInput(e)}"
-        @keydown="${(e: KeyboardEvent) => view.handleKeyDown(e)}"
-        placeholder="${placeholder}"
-        ?disabled="${view.agentDisabled}"
-      />
-      <button class="btn btn-primary" @click="${() => view.sendChatMessage()}" ?disabled="${view.agentDisabled}">Send</button>
-    </div>
-  `;
+    < div style = "display: flex; gap: 4px; align-items: center;" >
+      <button class="btn-icon" title = "Attach Context" style = "background: none; border: none; color: var(--vscode-foreground); cursor: pointer; padding: 4px; border: 1px solid var(--vscode-input-border); border-radius: 4px; margin-right: 4px;" @click="${() => view.handleAttachFile()}" >
+        <svg width="16" height = "16" viewBox = "0 0 16 16" xmlns = "http://www.w3.org/2000/svg" fill = "currentColor" >
+          <path d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 1 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0V3z" />
+            </svg>
+            </button>
+            < input
+  class="input-control"
+  type = "text"
+  style = "flex: 1;"
+    .value = "${view.inputText}"
+  @input="${(e: InputEvent) => view.handleInput(e)}"
+  @keydown="${(e: KeyboardEvent) => view.handleKeyDown(e)}"
+  placeholder = "${placeholder}"
+    ? disabled = "${view.agentDisabled}"
+    />
+    <button class="btn btn-primary" @click="${() => view.sendChatMessage()}" ? disabled = "${view.agentDisabled}" > Send </button>
+      </div>
+        `;
 }
 
-// ─── Input Group: Agent Selector + Attachments + Input ───
+// ─── Input Group: Agent Status Bar + Attachments + Input ───
 function renderInputGroup(view: IChatView) {
   return html`
     <div class="input-group layout-col">
-      ${renderAgentSelector(view)}
+      ${renderAgentStatusBar(view)}
       <div class="input-row layout-col">
         ${renderAttachmentsList(view)}
         ${renderInputControls(view)}
@@ -410,11 +425,27 @@ function renderInputGroup(view: IChatView) {
   `;
 }
 
+// ─── Vertical Phase Timeline ──────────────────────────────────
+function renderPhaseTimeline(view: IChatView) {
+  if (view.taskSteps.length === 0) { return ''; }
+  return html`
+    <div class="phase-timeline">
+      ${view.taskSteps.map((step, i) => html`
+        <div class="phase-dot ${step.status}" title="${step.label}"></div>
+        ${i < view.taskSteps.length - 1 ? html`<div class="phase-line ${step.status === 'done' ? 'done' : ''}"></div>` : ''}
+      `)}
+    </div>
+  `;
+}
+
 // ─── Main Render ──────────────────────────────────────────
 export function render(view: IChatView): TemplateResult {
   return html`
     ${renderHeader(view)}
-    ${renderHistory(view)}
+    <div class="chat-with-timeline">
+      ${renderHistory(view)}
+      ${renderPhaseTimeline(view)}
+    </div>
     ${renderInputGroup(view)}
   `;
 }

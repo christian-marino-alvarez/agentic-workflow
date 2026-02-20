@@ -50,7 +50,7 @@ export class ChatView extends View {
   ];
 
   @state()
-  public isLoading: boolean = false;
+  public isLoading: boolean = true;
 
   @state()
   public appVersion: string = '';
@@ -128,10 +128,19 @@ export class ChatView extends View {
 
   override firstUpdated() {
     this.log('Chat view mounted');
-    this.initWorkflow();
-    this.loadModels();
-    this.loadAgents();
-    this.loadLastSession();
+
+    // Show skeleton for minimum 2s on initial load
+    const skeletonMinTime = new Promise(resolve => setTimeout(resolve, 2000));
+
+    Promise.all([
+      skeletonMinTime,
+      this.initWorkflow(),
+      this.loadModels(),
+      this.loadAgents(),
+      this.loadLastSession(),
+    ]).then(() => {
+      this.isLoading = false;
+    });
 
     // Listen for secure state changes from Settings
     window.addEventListener('secure-state-changed', ((e: CustomEvent) => {

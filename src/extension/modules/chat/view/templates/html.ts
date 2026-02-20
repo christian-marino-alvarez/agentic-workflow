@@ -1,6 +1,23 @@
 import { html, TemplateResult } from 'lit';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { marked } from 'marked';
 import { IChatView } from '../types.js';
 import { getRoleIcon } from '../../../settings/view/templates/icons.js';
+
+// Configure marked for chat-friendly output
+marked.setOptions({
+  gfm: true,
+  breaks: true,
+});
+
+function renderMarkdown(text: string): ReturnType<typeof unsafeHTML> {
+  try {
+    const htmlContent = marked.parse(text) as string;
+    return unsafeHTML(htmlContent);
+  } catch {
+    return unsafeHTML(`<p>${text}</p>`);
+  }
+}
 
 function getIcon(role?: string) {
   if (role === 'user') {
@@ -78,6 +95,7 @@ function renderHeader(view: IChatView) {
 // ─── Message Bubbles ──────────────────────────────────────
 function renderMessageBubble(msg: any) {
   const typeClass = msg.role === 'user' ? 'msg-user' : (msg.role === 'architect' ? 'msg-agent' : 'msg-system');
+  const isAgent = msg.role !== 'user' && msg.role !== 'system';
   return html`
     <div class="msg-bubble ${typeClass}">
         <div class="msg-header">
@@ -87,8 +105,8 @@ function renderMessageBubble(msg: any) {
               ${msg.status ? html`<span class="msg-status">(${msg.status})</span>` : ''}
             </span>
         </div>
-        <div class="msg-content">
-          ${msg.text}
+        <div class="msg-content ${isAgent ? 'markdown-body' : ''}">
+          ${isAgent && msg.text ? renderMarkdown(msg.text) : msg.text}
           ${msg.isStreaming ? html`<span class="streaming-cursor"></span>` : ''}
         </div>
     </div>

@@ -227,5 +227,42 @@ export const styles = [
       border-radius: 2px;
       margin-top: 6px;
     }
+
+    /* ─── Tab Switch Skeleton ──────────────────────── */
+    .tab-skeleton {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 20px;
+      height: 100%;
+      box-sizing: border-box;
+      animation: skeletonFadeIn 0.15s ease;
+    }
+    @keyframes skeletonFadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes skeletonPulse {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 0.35; }
+    }
+    .tab-skeleton-card {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 14px 16px;
+      border-radius: 6px;
+      background: var(--vscode-sideBar-background);
+      border: 1px solid var(--vscode-panel-border);
+      animation: skeletonPulse 1.2s ease-in-out infinite;
+    }
+    .tab-skeleton-line {
+      height: 12px;
+      background: var(--vscode-input-background);
+      border-radius: 3px;
+    }
+    .tab-skeleton-line.short {
+      height: 8px;
+    }
   `
 ];

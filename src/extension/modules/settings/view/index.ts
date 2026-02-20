@@ -96,7 +96,7 @@ export class Settings extends View {
       // Keep loading
     }
 
-    await new Promise(resolve => setTimeout(resolve, 2000)); // Force 2s delay for skeleton
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Force 1s delay for skeleton
     try {
       this.log('Sending GET_REQUEST to background...');
       const data = await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.GET_REQUEST);

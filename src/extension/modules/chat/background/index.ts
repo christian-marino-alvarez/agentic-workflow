@@ -61,9 +61,6 @@ export class ChatBackground extends Background {
     const role = data.agentRole || 'backend';
     this.log(`Message for role "${role}": ${data.text.substring(0, 50)}...`);
 
-    // Emit "thinking" status
-    this.emitStatus('Contacting LLM Sidecar...');
-
     // Format conversation history for LLM context
     const inputWithHistory = this.formatInputWithHistory(data.text, data.history);
 

@@ -104,6 +104,21 @@ export class ChatBackground extends Background {
 
       this.log(`Resolved model for ${role}: ${modelName} (provider: ${provider})`);
 
+      // 3. Load agent persona from the role definition file
+      let instructions: string | undefined;
+      try {
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (workspaceFolders) {
+          const rolePath = path.join(workspaceFolders[0].uri.fsPath, '.agent', 'rules', 'roles', `${role}.md`);
+          const fs = await import('fs/promises');
+          const roleContent = await fs.readFile(rolePath, 'utf-8');
+          instructions = roleContent;
+          this.log(`Loaded role persona for "${role}" (${roleContent.length} chars)`);
+        }
+      } catch (err: any) {
+        this.log(`No role file found for "${role}", using default persona: ${err.message}`);
+      }
+
       // Create request payload matching AgentRequest interface
       const payload = {
         role,
@@ -111,6 +126,7 @@ export class ChatBackground extends Background {
         binding: { [role]: modelName },
         apiKey,
         provider,
+        instructions,
         context: data.attachments ? data.attachments.map(att => ({ title: att._title, url: att._path })) : []
       };
 

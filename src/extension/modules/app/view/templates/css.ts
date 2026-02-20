@@ -135,7 +135,8 @@ export const styles = [
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 8px;
+      padding: 8px 12px;
     }
     .history-empty {
       text-align: center;

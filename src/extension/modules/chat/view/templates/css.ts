@@ -105,7 +105,7 @@ export const styles = css`
     .progress-text {
       font-size: 10px;
       font-weight: 600;
-      color: var(--vscode-foreground);
+      color: #4ec9b0;
       min-width: 28px;
       text-align: right;
     }

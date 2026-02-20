@@ -651,8 +651,9 @@ export const styles = css`
 
     /* Input Group Component */
     .input-group {
-      padding: 8px 12px;
+      padding: 8px 16px 10px 12px;
       border-top: 1px solid var(--vscode-widget-border);
+      box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.15);
       gap: 6px;
       background-color: var(--vscode-editor-background);
     }

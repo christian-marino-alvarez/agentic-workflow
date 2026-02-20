@@ -16,9 +16,7 @@ export class ChatView extends View {
   }
 
   @state()
-  public history: Array<{ sender: string, text: string, role?: string, status?: string, isStreaming?: boolean, toolEvents?: Array<any> }> = [
-    { sender: 'Architect', text: 'I am the Architect Agent. I am ready to help you manage your workflow.', role: 'architect', isStreaming: false }
-  ];
+  public history: Array<{ sender: string, text: string, role?: string, status?: string, isStreaming?: boolean, toolEvents?: Array<any> }> = [];
 
   @state()
   public inputText: string = '';
@@ -257,12 +255,10 @@ export class ChatView extends View {
       const response = await this.sendMessage(NAME, MESSAGES.LOAD_INIT);
       if (response && response.content) {
         this.appVersion = response.version || '';
-        const snippet = response.content.substring(0, 100) + '...';
-        this.history = [...this.history, { sender: 'Architect', text: `I have loaded your workflow context:\n\n${snippet}`, role: 'architect' }];
+        this.log('Workflow context loaded silently');
       }
     } catch (error) {
       this.log('Error loading init workflow', error);
-      this.history = [...this.history, { sender: 'System', text: 'Error loading workflow context.', role: 'system' }];
     }
   }
 
@@ -466,9 +462,7 @@ export class ChatView extends View {
     }
 
     // Start fresh
-    this.history = [
-      { sender: 'Architect', text: 'I am the Architect Agent. I am ready to help you manage your workflow.', role: 'architect', isStreaming: false }
-    ];
+    this.history = [];
     this.currentSessionId = '';
     try {
       const result = await this.sendMessage(NAME, MESSAGES.NEW_SESSION);

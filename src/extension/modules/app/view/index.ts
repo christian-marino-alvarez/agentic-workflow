@@ -54,6 +54,34 @@ export class AppView extends View {
   }
 
   @state()
+  public pendingDeleteSessionId: string | undefined;
+  private deleteTimeout: any;
+
+  public handleDeleteSession(sessionId: string) {
+    if (this.pendingDeleteSessionId === sessionId) {
+      // Second click — confirm delete
+      const chatView = this.getChatView();
+      if (chatView?.handleDeleteSession) {
+        chatView.handleDeleteSession(sessionId); // triggers second-click in ChatView too
+      }
+      this.pendingDeleteSessionId = undefined;
+      clearTimeout(this.deleteTimeout);
+      // Refresh list after delete completes
+      setTimeout(() => this.refreshHistorySessions(), 500);
+      return;
+    }
+
+    // First click — mark as pending
+    this.pendingDeleteSessionId = sessionId;
+    clearTimeout(this.deleteTimeout);
+    this.deleteTimeout = setTimeout(() => {
+      if (this.pendingDeleteSessionId === sessionId) {
+        this.pendingDeleteSessionId = undefined;
+      }
+    }, 3000);
+  }
+
+  @state()
   public isSecure: boolean = false;
 
   @property({ type: String })

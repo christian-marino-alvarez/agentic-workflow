@@ -290,6 +290,115 @@ export const styles = css`
       line-height: 1.5;
     }
 
+    /* ─── Markdown Rendering ─────────────────────────── */
+
+    .markdown-body p {
+      margin: 0 0 8px 0;
+    }
+
+    .markdown-body p:last-child {
+      margin-bottom: 0;
+    }
+
+    .markdown-body strong {
+      font-weight: 600;
+      color: var(--vscode-foreground);
+    }
+
+    .markdown-body em {
+      font-style: italic;
+    }
+
+    .markdown-body code {
+      font-family: var(--vscode-editor-font-family, 'Fira Code', monospace);
+      font-size: 12px;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 2px 5px;
+      border-radius: 3px;
+      color: var(--vscode-textPreformat-foreground, #d7ba7d);
+    }
+
+    .markdown-body pre {
+      background: var(--vscode-textCodeBlock-background, #1e1e1e);
+      border: 1px solid var(--vscode-widget-border, #333);
+      border-radius: 6px;
+      padding: 12px 14px;
+      margin: 8px 0;
+      overflow-x: auto;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .markdown-body pre code {
+      background: none;
+      padding: 0;
+      color: var(--vscode-editor-foreground);
+      font-size: 12px;
+    }
+
+    .markdown-body ul, .markdown-body ol {
+      margin: 6px 0;
+      padding-left: 20px;
+    }
+
+    .markdown-body li {
+      margin: 2px 0;
+    }
+
+    .markdown-body h1, .markdown-body h2, .markdown-body h3,
+    .markdown-body h4, .markdown-body h5, .markdown-body h6 {
+      margin: 12px 0 6px 0;
+      font-weight: 600;
+      color: var(--vscode-foreground);
+    }
+
+    .markdown-body h1 { font-size: 18px; }
+    .markdown-body h2 { font-size: 16px; }
+    .markdown-body h3 { font-size: 14px; }
+    .markdown-body h4, .markdown-body h5, .markdown-body h6 { font-size: 13px; }
+
+    .markdown-body blockquote {
+      margin: 8px 0;
+      padding: 6px 14px;
+      border-left: 3px solid var(--vscode-textLink-foreground, #3794ff);
+      color: var(--vscode-descriptionForeground);
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 0 4px 4px 0;
+    }
+
+    .markdown-body table {
+      border-collapse: collapse;
+      margin: 8px 0;
+      width: 100%;
+      font-size: 12px;
+    }
+
+    .markdown-body th, .markdown-body td {
+      border: 1px solid var(--vscode-widget-border, #333);
+      padding: 6px 10px;
+      text-align: left;
+    }
+
+    .markdown-body th {
+      background: rgba(255, 255, 255, 0.05);
+      font-weight: 600;
+    }
+
+    .markdown-body a {
+      color: var(--vscode-textLink-foreground, #3794ff);
+      text-decoration: none;
+    }
+
+    .markdown-body a:hover {
+      text-decoration: underline;
+    }
+
+    .markdown-body hr {
+      border: none;
+      border-top: 1px solid var(--vscode-widget-border, #333);
+      margin: 12px 0;
+    }
+
     .msg-system {
       align-self: center;
       background-color: transparent;

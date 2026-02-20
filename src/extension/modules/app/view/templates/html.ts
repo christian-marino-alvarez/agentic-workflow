@@ -97,7 +97,7 @@ function renderHistoryTab(view: AppView) {
       ? html`<div class="history-empty">No conversations yet</div>`
       : sessions.map((s: any) => {
         const isCurrent = s.id === currentId;
-        const isPendingDelete = chatView?.pendingDeleteSessionId === s.id;
+        const isPendingDelete = view.pendingDeleteSessionId === s.id;
         return html`
               <div class="history-card ${isCurrent ? 'current' : ''}"
                 @click=${() => {
@@ -118,9 +118,7 @@ function renderHistoryTab(view: AppView) {
                   title="${isPendingDelete ? 'Click again to confirm' : 'Delete'}"
                   @click=${(e: Event) => {
             e.stopPropagation();
-            const cv = view.getChatView();
-            if (cv?.handleDeleteSession) { cv.handleDeleteSession(s.id); }
-            setTimeout(() => view.refreshHistorySessions(), 300);
+            view.handleDeleteSession(s.id);
           }}
                 >${isPendingDelete ? 'Confirm?' : '🗑'}</button>
               </div>

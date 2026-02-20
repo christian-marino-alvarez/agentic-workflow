@@ -12,14 +12,16 @@ export class AppView extends View {
   protected override readonly moduleName = NAME;
   static override styles = styles;
 
-  @state()
-  public activeTab: string = 'chat';
+  @state() accessor activeTab: string = 'chat';
+  @state() accessor tabTransitioning: boolean = true;
+  @state() accessor historySessions: Array<{ id: string, title: string, timestamp: number, messageCount: number }> = [];
+  @state() accessor pendingDeleteSessionId: string | undefined;
+  @state() accessor isSecure: boolean = false;
 
-  @state()
-  public tabTransitioning: boolean = true;
+  @property({ type: String })
+  public appVersion: string = '';
 
-  @state()
-  public historySessions: Array<{ id: string, title: string, timestamp: number, messageCount: number }> = [];
+  private deleteTimeout: any;
 
   public getChatView(): any {
     return this.renderRoot?.querySelector('chat-view') || document.querySelector('chat-view');
@@ -30,18 +32,15 @@ export class AppView extends View {
     this.tabTransitioning = true;
     this.activeTab = tab;
 
-    // When switching to History, eagerly save + load sessions
     if (tab === 'history') {
       const chatView = this.getChatView();
       if (chatView?.saveCurrentSession) { chatView.saveCurrentSession(); }
-      // Request sessions and poll for update
       if (chatView?.requestSessions) { chatView.requestSessions(); }
       setTimeout(() => { this.refreshHistorySessions(); }, 300);
     }
 
     setTimeout(() => {
       this.tabTransitioning = false;
-      // Re-read sessions after transition to ensure fresh data
       if (tab === 'history') { this.refreshHistorySessions(); }
     }, 1000);
   }
@@ -53,27 +52,19 @@ export class AppView extends View {
     }
   }
 
-  @state()
-  public pendingDeleteSessionId: string | undefined;
-  private deleteTimeout: any;
-
   public handleDeleteSession(sessionId: string) {
     if (this.pendingDeleteSessionId === sessionId) {
-      // Second click — confirm delete
       const chatView = this.getChatView();
       if (chatView) {
-        // Pre-set so ChatView treats this as the confirm click
         chatView.pendingDeleteSessionId = sessionId;
         chatView.handleDeleteSession(sessionId);
       }
       this.pendingDeleteSessionId = undefined;
       clearTimeout(this.deleteTimeout);
-      // Refresh list after delete completes
       setTimeout(() => this.refreshHistorySessions(), 500);
       return;
     }
 
-    // First click — mark as pending
     this.pendingDeleteSessionId = sessionId;
     clearTimeout(this.deleteTimeout);
     this.deleteTimeout = setTimeout(() => {
@@ -82,12 +73,6 @@ export class AppView extends View {
       }
     }, 3000);
   }
-
-  @state()
-  public isSecure: boolean = false;
-
-  @property({ type: String })
-  public appVersion: string = '';
 
   override connectedCallback() {
     super.connectedCallback();
@@ -101,14 +86,9 @@ export class AppView extends View {
     return render(this);
   }
 
-  /**
-   * Handle incoming global app messages.
-   */
   public override async listen(message: any): Promise<void> {
     const { command, data } = message.payload || {};
-
     switch (command) {
-      // Add global app command handlers here
       case 'ping::response':
         this.log('Ping response received:', data);
         break;

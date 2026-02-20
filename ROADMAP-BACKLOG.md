@@ -3,20 +3,21 @@
 ## 🌍 Global Status
 | Domain | Status | Completed | Total |
 |---|---|---|---|
-| **D1: Settings & OAuth** | 🏗️ Architecture | 3 | 8 |
-| **D2: UI (Chat/Workflows)** | 🏗️ Concept | 1 | 7 |
-| **D3: Backend (Agents)** | 🏗️ Concept | 1 | 5 |
+| **D1: Settings & OAuth** | 🏗️ Architecture | 4 | 8 |
+| **D2: UI (Chat/Workflows)** | 🏗️ In Progress | 3 | 8 |
+| **D3: Backend (Agents)** | 🏗️ In Progress | 3 | 7 |
 | **D4: Runtime & Execution** | 🏗️ Concept | 0 | 2 |
 | **D7: Release/CI-CD** | ✅ Stable | 3 | 3 |
 | **D8: E2E Testing** | ✅ Stable | 4 | 4 |
 
-**Total**: 12/29 tasks completed
+**Total**: 17/32 tasks completed
 
 ## 🎯 Priority High - Critical Path
 - [x] **T017**: D1 - OAuth Authentication Provider (vscode.authentication)
 - [x] **T018**: D1 - Model Registry UI (API Key + OAuth Tokens)
 - [x] **T010**: D3 - Chat Session Endpoint
-- [ ] **T019**: D3 - Agent Factory & Role-Model Binding
+- [x] **T019**: D3 - Agent Factory & Role-Model Binding ✅
+- [ ] **T039**: D3 - Agent Delegation (Inter-Agent Task Routing) 🔥 **NEXT**
 - [ ] **T032**: D4 - Runtime Server (File I/O & Sandbox)
 - [ ] **T020**: D2 - Chat Filters (Agent/Thread)
 
@@ -40,6 +41,9 @@
   - Allow switching between "Work" (Codex) and "Research" (Claude) profiles.
 - [x] **T023**: Settings Validation
   - Verify API Keys/Tokens on save. ✅ (Test Connection for API key + OAuth)
+- [x] **T040**: Disabled Roles Configuration
+  - Register `disabledRoles` in package.json. ✅
+  - Chat dropdown filters out disabled agents. ✅
 - [ ] **T034**: Default Model per Task Type
   - Allow assigning a default model per workflow phase/agent role.
 - [ ] **T035**: Import/Export Configuration
@@ -50,6 +54,11 @@
 
 ### D2: UI & User Experience (Advanced)
 > Focus: Visual Workflows and Enhanced Chat.
+- [x] **T041**: Agent Dropdown UX
+  - Dropdown opens upward (above input). ✅
+  - All agents visible regardless of model assignment. ✅
+  - `index.md` excluded from role listing. ✅
+  - Max-height with scroll for many agents. ✅
 - [ ] **T024**: Workflow Viewer (Litegraph)
   - Integrate **Litegraph.js** into a Lit Component.
   - Read-only view of `.agent/workflows/*.md` (parsed to graph).
@@ -71,13 +80,27 @@
   - Move footer to AppView template. ✅
 
 ### D3: Backend & Agent Orchestration
-> Focus: Dynamic Agent Instantiation.
+> Focus: Dynamic Agent Instantiation & Multi-Agent Collaboration.
 - [x] **T010**: Chat Session Endpoint
   - Ensure `ChatBackendClient` targets correct `/sessions` endpoint. ✅
   - Functional chat flow restored. ✅
-- [ ] **T019**: Agent Factory
-  - Logic to instantiate Agents based on `Role + Model` configuration.
-  - `LLMService` router extension.
+- [x] **T019**: Agent Factory & Persona Injection
+  - Role-Model binding via Settings. ✅
+  - `LLMFactory.createAgent()` resolves provider + model dynamically. ✅
+  - Full role `.md` content injected as system prompt instructions. ✅
+  - Agent personality persists throughout conversation. ✅
+  - Attachment context appended to LLM input. ✅
+- [x] **T042**: Agent Selection & Context
+  - Chat dropdown shows all workspace roles. ✅
+  - Selected agent's role sent to sidecar. ✅
+  - Attached files included in LLM context. ✅
+  - System loading messages hidden (errors only). ✅
+- [ ] **T039**: Agent Delegation (Inter-Agent Task Routing) 🔥
+  - `delegateTask` tool for coordinator agents (architect).
+  - Sub-agent invocation within a single chat session.
+  - Delegation result returned as tool_result to coordinator.
+  - Visual indicator in chat ("🔀 Delegated to QA → ...").
+  - Recursion guard (max depth, no self-delegation).
 - [ ] **T029**: Role Definition Schema
   - Enhance `roles.yaml` to support forced model capabilities (e.g., "Requires Vision").
 - [ ] **T030**: Agent Lifecycle Events
@@ -103,8 +126,9 @@
 ---
 
 ## 🚀 Next Suggested Steps
-1.  **T019 (Agent Factory)**: Required to actually use the models.
-2.  **T020 (Chat Filters)**: Quick win for UI usability.
-3.  **T022 (Profile Management)**: Work/Research profile switching.
+1.  **T039 (Agent Delegation)**: Architect delegates to specialist agents autonomously. 🔥
+2.  **T030 (Lifecycle Events)**: Real-time visibility into agent actions during delegation.
+3.  **T020 (Chat Filters)**: Quick win for UI usability.
 
-**Last Updated**: 2026-02-19 by architect-agent (T010, T037, T038 completed)
+**Last Updated**: 2026-02-20 by architect-agent (T019, T040, T041, T042 completed)
+

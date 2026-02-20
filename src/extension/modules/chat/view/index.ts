@@ -543,6 +543,7 @@ export class ChatView extends View {
         taskTitle: this.activeWorkflow || undefined,
         elapsedSeconds: this.elapsedSeconds || 0,
         progress,
+        accessLevel: Object.values(this.agentPermissions).includes('full') ? 'full' : 'sandbox',
       });
       if (result?.sessionId) {
         this.currentSessionId = result.sessionId;

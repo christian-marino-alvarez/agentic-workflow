@@ -200,6 +200,17 @@ export const styles = [
       background: color-mix(in srgb, var(--vscode-testing-iconPassed) 12%, transparent);
       border-color: color-mix(in srgb, var(--vscode-testing-iconPassed) 25%, transparent);
     }
+    .history-security-icon {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .history-security-icon.safe {
+      color: var(--vscode-testing-iconPassed, #73c991);
+    }
+    .history-security-icon.warn {
+      color: var(--vscode-testing-iconFailed, #f48771);
+    }
     /* Action buttons (match Settings) */
     .action-btn {
       background-color: var(--vscode-button-secondaryBackground);

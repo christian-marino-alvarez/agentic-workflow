@@ -177,6 +177,7 @@ function renderAgentSelector(view: IChatView) {
   const currentAgent = view.availableAgents.find(a => a.name === view.selectedAgent);
   const capabilities = currentAgent?.capabilities || {};
   const capKeys = Object.keys(capabilities);
+  const isSandbox = (view.agentPermissions[view.selectedAgent] || 'sandbox') === 'sandbox';
 
   return html`
     <div class="agent-bar">
@@ -212,6 +213,12 @@ function renderAgentSelector(view: IChatView) {
           `)}
         </div>
       ` : ''}
+      <div class="permission-toggle" @click="${() => view.togglePermission(view.selectedAgent)}">
+        ${isSandbox
+      ? html`<span class="perm-label sandbox">🔒 Sandbox</span>`
+      : html`<span class="perm-label full-access">🔓 Full Access</span>`
+    }
+      </div>
     </div>
   `;
 }

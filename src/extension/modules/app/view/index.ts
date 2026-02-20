@@ -13,7 +13,7 @@ export class AppView extends View {
   static override styles = styles;
 
   @state()
-  public activeTab: string = 'settings';
+  public activeTab: string = 'chat';
 
   @state()
   public isSecure: boolean = false;

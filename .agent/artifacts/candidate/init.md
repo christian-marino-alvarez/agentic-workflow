@@ -20,5 +20,8 @@ constitution:
 language:
   value: español
   confirmed: true
-strategy: short
+strategy: long
+indexes_loaded:
+  - .agent/index.md
+timestamp: 2026-02-20T11:00:32+01:00
 ```

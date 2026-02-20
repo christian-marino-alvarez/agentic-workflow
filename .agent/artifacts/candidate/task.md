@@ -1,60 +1,24 @@
 ---
-id: t-commit-push-01
-title: Commit y Subir Cambios
+title: Agent Tools & Action Sandbox
+goal: >
+  Dotar a los agentes del Chat de tools reales (readFile, writeFile, runCommand, listDir)
+  para que puedan ejecutar acciones sobre el sistema de archivos y terminal.
+  Integrar con el sistema de permisos sandbox/full del Chat UI.
 owner: architect-agent
-strategy: short
+strategy: long
 ---
 
-# Task (Template)
+# Task Candidate: T032 — Agent Tools & Action Sandbox
 
-## Identification
-- id: t-commit-push-01
-- title: Commit y Subir Cambios
-- scope: current
-- owner: architect-agent
-
-## Origin
-- created_from:
-  - workflow: tasklifecycle-short
-  - source: init
-
-## Task Description
-Commit y subir los cambios actuales de la rama al repositorio remoto.
+## Description
+Los agentes actualmente solo hacen text-in → text-out. No pueden leer/escribir archivos
+ni ejecutar comandos. Esta tarea implementa las tools del OpenAI Agents SDK en el sidecar
+y las conecta con el sistema de permisos (sandbox/full access) del Chat UI.
 
 ## Objective
-Asegurar que todos los cambios pendientes sean confirmados y subidos correctamente.
-
-## Lifecycle State (SINGLE SOURCE OF TRUTH)
-
-```yaml
-task:
-  id: "t-commit-push-01"
-  title: "Commit y Subir Cambios"
-  strategy: "short"
-  artifacts:
-    supplemental: []
-  phase:
-    current: "short-phase-1-brief"
-    validated_by: "architect-agent"
-    updated_at: "2026-02-19T09:55:00+01:00"
-  lifecycle:
-    phases:
-      short-phase-1-brief:
-        completed: false
-        validated_by: null
-        validated_at: null
-      short-phase-2-implementation:
-        completed: false
-        validated_by: null
-        validated_at: null
-      short-phase-3-closure:
-        completed: false
-        validated_by: null
-        validated_at: null
-```
-
----
-
-## 2. Definition and Scope (Contract)
-- **Acceptance Criteria**: [acceptance.md](file:///.agent/artifacts/t-commit-push-01/acceptance.md)
-- **Alias**: `task.acceptance`
+Permitir que los agentes del Chat puedan:
+1. Leer archivos del proyecto
+2. Crear/escribir archivos
+3. Ejecutar comandos en terminal
+4. Listar directorios
+5. Todo controlado por el toggle sandbox/full del Chat UI

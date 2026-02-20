@@ -92,6 +92,42 @@ function renderHeader(view: IChatView) {
   `;
 }
 
+// ─── Tool Call Blocks ──────────────────────────────────────
+function renderToolEvents(events?: Array<any>) {
+  if (!events || events.length === 0) { return ''; }
+  return html`
+    <div class="tool-events">
+      ${events.map(ev => {
+    if (ev.type === 'tool_call') {
+      return html`
+            <details class="tool-call-block" open>
+              <summary class="tool-call-header">
+                <span class="tool-icon">⚡</span>
+                <span class="tool-name">${ev.name}</span>
+                <span class="tool-status ${ev.status}">${ev.status === 'running' ? '⏳' : '✅'}</span>
+              </summary>
+              ${ev.arguments ? html`<pre class="tool-args">${ev.arguments}</pre>` : ''}
+            </details>
+          `;
+    }
+    if (ev.type === 'tool_result') {
+      return html`
+            <details class="tool-result-block">
+              <summary class="tool-result-header">
+                <span class="tool-icon">✅</span>
+                <span class="tool-name">${ev.name}</span>
+                <span class="tool-label">result</span>
+              </summary>
+              <pre class="tool-output">${ev.output}</pre>
+            </details>
+          `;
+    }
+    return '';
+  })}
+    </div>
+  `;
+}
+
 // ─── Message Bubbles ──────────────────────────────────────
 function renderMessageBubble(msg: any) {
   const typeClass = msg.role === 'user' ? 'msg-user' : (msg.role === 'architect' ? 'msg-agent' : 'msg-system');
@@ -106,6 +142,7 @@ function renderMessageBubble(msg: any) {
             </span>
         </div>
         <div class="msg-content ${isAgent ? 'markdown-body' : ''}">
+          ${renderToolEvents(msg.toolEvents)}
           ${isAgent && msg.text ? renderMarkdown(msg.text) : msg.text}
           ${msg.isStreaming ? html`<span class="streaming-cursor"></span>` : ''}
         </div>

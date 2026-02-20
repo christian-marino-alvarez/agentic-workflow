@@ -4,6 +4,7 @@ import { AgentRequest, AgentResponse, RunRequest } from './types.js';
 import { Runner } from '@openai/agents';
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { API_ENDPOINTS, NAME, CLAUDE_MODELS } from '../constants.js';
+import { agentTools } from './tools/index.js';
 
 export class LLMVirtualBackend extends AbstractVirtualBackend {
   private factory: LLMFactory;
@@ -62,7 +63,7 @@ export class LLMVirtualBackend extends AbstractVirtualBackend {
     const { role, input, binding, context, apiKey, provider, instructions } = req.body;
 
     try {
-      const agent = await this.factory.createAgent(role, binding, [], apiKey, provider, instructions);
+      const agent = await this.factory.createAgent(role, binding, agentTools, apiKey, provider, instructions);
 
       const runner = new Runner({ tracingDisabled: true });
       const result = await runner.run(agent, input);
@@ -98,7 +99,7 @@ export class LLMVirtualBackend extends AbstractVirtualBackend {
     reply.raw.setHeader('Connection', 'keep-alive');
 
     try {
-      const agent = await this.factory.createAgent(role, binding, [], apiKey, provider, instructions);
+      const agent = await this.factory.createAgent(role, binding, agentTools, apiKey, provider, instructions);
       console.log(`[llm::backend] Agent created, starting stream...`);
 
       const runner = new Runner({ tracingDisabled: true });
@@ -118,7 +119,23 @@ export class LLMVirtualBackend extends AbstractVirtualBackend {
 
   private async pumpStreamEvents(result: AsyncIterable<any>, reply: FastifyReply): Promise<void> {
     for await (const chunk of result) {
-      if (chunk.type === 'raw_model_stream_event') {
+      if (chunk.type === 'run_item_stream_event') {
+        const item = chunk.item as any;
+        if (item.type === 'tool_call_item') {
+          reply.raw.write(`data: ${JSON.stringify({
+            type: 'tool_call',
+            name: item.name || item.rawItem?.name,
+            arguments: item.rawItem?.arguments,
+            status: 'running',
+          })}\n\n`);
+        } else if (item.type === 'tool_call_output_item') {
+          reply.raw.write(`data: ${JSON.stringify({
+            type: 'tool_result',
+            name: item.rawItem?.name,
+            output: typeof item.output === 'string' ? item.output : JSON.stringify(item.output),
+          })}\n\n`);
+        }
+      } else if (chunk.type === 'raw_model_stream_event') {
         const streamEvent = chunk.data as any;
         if (streamEvent.type === 'response.delta' || streamEvent.type === 'output_text_delta') {
           reply.raw.write(`data: ${JSON.stringify({ type: 'content', content: streamEvent.delta })}\n\n`);

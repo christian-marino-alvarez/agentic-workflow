@@ -16,6 +16,16 @@ export class AppView extends View {
   public activeTab: string = 'chat';
 
   @state()
+  public tabTransitioning: boolean = true;
+
+  public switchTab(tab: string) {
+    if (tab === this.activeTab) { return; }
+    this.tabTransitioning = true;
+    this.activeTab = tab;
+    setTimeout(() => { this.tabTransitioning = false; }, 1000);
+  }
+
+  @state()
   public isSecure: boolean = false;
 
   @property({ type: String })
@@ -27,6 +37,8 @@ export class AppView extends View {
     this.addEventListener('secure-state-changed', ((e: CustomEvent) => {
       this.isSecure = e.detail?.secure ?? false;
     }) as EventListener);
+    // Initial 1s skeleton on first mount
+    setTimeout(() => { this.tabTransitioning = false; }, 1000);
   }
 
   override render() {

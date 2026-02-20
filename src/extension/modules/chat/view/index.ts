@@ -137,10 +137,10 @@ export class ChatView extends View {
     this.loadAgents();
     this.loadLastSession();
 
-    // Guarantee 2s skeleton preload on initial mount
+    // Guarantee 1s skeleton preload on initial mount
     setTimeout(() => {
       this.initialLoading = false;
-    }, 2000);
+    }, 1000);
 
     // Listen for secure state changes from Settings
     window.addEventListener('secure-state-changed', ((e: CustomEvent) => {

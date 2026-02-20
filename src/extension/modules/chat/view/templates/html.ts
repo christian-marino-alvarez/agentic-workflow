@@ -275,6 +275,14 @@ function renderLoadingSkeleton() {
 }
 
 function renderHistory(view: IChatView) {
+  // During initial 2s preload, show only skeleton (no empty history)
+  if (view.initialLoading) {
+    return html`
+      <div class="history layout-scroll chat-container layout-col">
+        ${renderLoadingSkeleton()}
+      </div>
+    `;
+  }
   return html`
     <div class="history layout-scroll chat-container layout-col">
       ${view.history.map(msg => renderMessageBubble(msg))}

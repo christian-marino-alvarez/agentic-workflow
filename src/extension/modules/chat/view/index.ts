@@ -49,8 +49,10 @@ export class ChatView extends View {
     { name: 'backend' },
   ];
 
+  public isLoading: boolean = false;
+
   @state()
-  public isLoading: boolean = true;
+  public initialLoading: boolean = true;
 
   @state()
   public appVersion: string = '';
@@ -129,18 +131,16 @@ export class ChatView extends View {
   override firstUpdated() {
     this.log('Chat view mounted');
 
-    // Show skeleton for minimum 2s on initial load
-    const skeletonMinTime = new Promise(resolve => setTimeout(resolve, 2000));
+    // Run init tasks in parallel
+    this.initWorkflow();
+    this.loadModels();
+    this.loadAgents();
+    this.loadLastSession();
 
-    Promise.all([
-      skeletonMinTime,
-      this.initWorkflow(),
-      this.loadModels(),
-      this.loadAgents(),
-      this.loadLastSession(),
-    ]).then(() => {
-      this.isLoading = false;
-    });
+    // Guarantee 2s skeleton preload on initial mount
+    setTimeout(() => {
+      this.initialLoading = false;
+    }, 2000);
 
     // Listen for secure state changes from Settings
     window.addEventListener('secure-state-changed', ((e: CustomEvent) => {

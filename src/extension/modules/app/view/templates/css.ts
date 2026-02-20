@@ -146,8 +146,8 @@ export const styles = [
     }
     .history-card {
       display: flex;
-      align-items: center;
-      gap: 8px;
+      flex-direction: column;
+      gap: 6px;
       padding: 10px 12px;
       border-radius: 6px;
       background: var(--vscode-sideBar-background);
@@ -161,6 +161,11 @@ export const styles = [
     .history-card.current {
       border-color: var(--vscode-focusBorder);
       border-left: 3px solid var(--vscode-focusBorder);
+    }
+    .history-card-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     .history-card-info {
       flex: 1;
@@ -233,6 +238,53 @@ export const styles = [
       color: var(--vscode-testing-iconFailed, #f48771);
       background: color-mix(in srgb, var(--vscode-testing-iconFailed) 10%, transparent);
       border: 1px solid color-mix(in srgb, var(--vscode-testing-iconFailed) 25%, transparent);
+    }
+
+    /* Agent chips at bottom of card */
+    .history-card-agents {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .agent-chip {
+      font-size: 9px;
+      font-weight: 500;
+      padding: 1px 8px;
+      border-radius: 8px;
+      white-space: nowrap;
+      color: rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .agent-chip.role-architect {
+      color: #64b5f6; background: rgba(100, 181, 246, 0.12); border-color: rgba(100, 181, 246, 0.3);
+    }
+    .agent-chip.role-module {
+      color: #ce93d8; background: rgba(206, 147, 216, 0.12); border-color: rgba(206, 147, 216, 0.3);
+    }
+    .agent-chip.role-view {
+      color: #80cbc4; background: rgba(128, 203, 196, 0.12); border-color: rgba(128, 203, 196, 0.3);
+    }
+    .agent-chip.role-researcher {
+      color: #ffd54f; background: rgba(255, 213, 79, 0.12); border-color: rgba(255, 213, 79, 0.3);
+    }
+    .agent-chip.role-qa {
+      color: #f48fb1; background: rgba(244, 143, 177, 0.12); border-color: rgba(244, 143, 177, 0.3);
+    }
+    .agent-chip.role-driver {
+      color: #ffb74d; background: rgba(255, 183, 77, 0.12); border-color: rgba(255, 183, 77, 0.3);
+    }
+    .agent-chip.role-engine {
+      color: #4dd0e1; background: rgba(77, 208, 225, 0.12); border-color: rgba(77, 208, 225, 0.3);
+    }
+    .agent-chip.role-neo {
+      color: #aed581; background: rgba(174, 213, 129, 0.12); border-color: rgba(174, 213, 129, 0.3);
+    }
+    .agent-chip.role-backend {
+      color: #90a4ae; background: rgba(144, 164, 174, 0.12); border-color: rgba(144, 164, 174, 0.3);
+    }
+    .agent-chip.role-background {
+      color: #a1887f; background: rgba(161, 136, 127, 0.12); border-color: rgba(161, 136, 127, 0.3);
     }
     /* Action buttons (match Settings) */
     .action-btn {

@@ -652,4 +652,34 @@ export const styles = css`
       color: var(--vscode-foreground, #c9d1d9);
       border-top: 1px solid var(--vscode-panel-border, #30363d);
     }
+
+    /* Permission toggle label */
+    .permission-toggle {
+      margin-left: auto;
+      cursor: pointer;
+      user-select: none;
+    }
+    .perm-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    .perm-label.sandbox {
+      background: rgba(63, 185, 80, 0.15);
+      color: var(--vscode-testing-iconPassed, #3fb950);
+      border: 1px solid rgba(63, 185, 80, 0.3);
+    }
+    .perm-label.full-access {
+      background: rgba(248, 81, 73, 0.15);
+      color: var(--vscode-testing-iconFailed, #f85149);
+      border: 1px solid rgba(248, 81, 73, 0.3);
+    }
+    .perm-label:hover {
+      opacity: 0.8;
+    }
 `;

@@ -64,7 +64,7 @@ export class LLMVirtualBackend extends AbstractVirtualBackend {
     try {
       const agent = await this.factory.createAgent(role, binding, [], apiKey, provider, instructions);
 
-      const runner = new Runner();
+      const runner = new Runner({ tracingDisabled: true });
       const result = await runner.run(agent, input);
 
       const finalOutputText = result.finalOutput
@@ -101,7 +101,7 @@ export class LLMVirtualBackend extends AbstractVirtualBackend {
       const agent = await this.factory.createAgent(role, binding, [], apiKey, provider, instructions);
       console.log(`[llm::backend] Agent created, starting stream...`);
 
-      const runner = new Runner();
+      const runner = new Runner({ tracingDisabled: true });
       const result = await runner.run(agent, input, { stream: true });
 
       await this.pumpStreamEvents(result as any, reply);

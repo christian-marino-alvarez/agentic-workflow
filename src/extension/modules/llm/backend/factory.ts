@@ -43,8 +43,10 @@ export class LLMFactory {
       modelProvider = new OpenAIProvider({ apiKey: apiKey || process.env.OPENAI_API_KEY || '' });
     }
 
-    // Compose system prompt: base + personality + description
-    const agentInstructions = instructions || await this.buildChatPrompt(role);
+    // Compose system prompt: base instructions + role persona
+    const agentInstructions = instructions
+      ? `${BASE_SYSTEM_PROMPT}\n\n## Your Role Definition\n${instructions}`
+      : await this.buildChatPrompt(role);
 
     return new Agent({
       name: role,

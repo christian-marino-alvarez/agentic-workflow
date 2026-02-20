@@ -422,6 +422,12 @@ export class ChatView extends View {
    * Start a new chat session.
    */
   public async newSession() {
+    // Save current session to history before resetting
+    if (this.history.length > 1) {
+      await this.saveCurrentSession();
+    }
+
+    // Start fresh
     this.history = [
       { sender: 'Architect', text: 'I am the Architect Agent. I am ready to help you manage your workflow.', role: 'architect', isStreaming: false }
     ];

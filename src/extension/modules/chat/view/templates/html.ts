@@ -77,6 +77,7 @@ function renderHeader(view: IChatView) {
   const total = view.taskSteps.length;
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
   const activeStep = view.taskSteps.find(s => s.status === 'active');
+  const activeStepIdx = activeStep ? view.taskSteps.indexOf(activeStep) + 1 : 0;
 
   return html`
     <div class="header layout-col">
@@ -99,7 +100,7 @@ function renderHeader(view: IChatView) {
           </svg>
         </div>
       </div>
-      ${activeStep ? html`<div class="active-step-hint">${activeStep.label}</div>` : ''}
+      ${activeStep ? html`<div class="active-step-hint">▸ Phase ${activeStepIdx} · ${activeStep.label}</div>` : ''}
       ${view.showTimeline ? renderMetroTimeline(view) : ''}
     </div>
   `;

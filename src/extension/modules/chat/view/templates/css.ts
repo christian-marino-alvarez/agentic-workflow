@@ -257,12 +257,18 @@ export const styles = css`
     /* Agent Bar (bottom, above input) */
     .agent-bar {
       display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px;
+      flex-direction: column;
+      gap: 6px;
       padding: 6px 0 4px 0;
       border-bottom: 1px solid var(--vscode-widget-border);
       margin-bottom: 4px;
+    }
+
+    .agent-bar-details {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
     }
 
     .agent-select-btn {

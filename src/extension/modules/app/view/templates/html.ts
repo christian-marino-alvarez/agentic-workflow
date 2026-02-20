@@ -28,8 +28,8 @@ export function render(view: AppView) {
     </nav>
 
     <div class="content-area">
-      ${view.activeTab === 'settings' ? html`<settings-view></settings-view>` : ''}
-      ${view.activeTab === 'chat' ? html`<chat-view></chat-view>` : ''}
+      <div style="display: ${view.activeTab === 'settings' ? 'contents' : 'none'}"><settings-view></settings-view></div>
+      <div style="display: ${view.activeTab === 'chat' ? 'contents' : 'none'}"><chat-view></chat-view></div>
       ${view.activeTab === 'history' ? renderHistoryTab(view) : ''}
     </div>
     <div class="global-footer" style="padding: 4px 10px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; font-size: 10px; color: var(--vscode-descriptionForeground); background-color: var(--vscode-sideBar-background); border-top: 1px solid var(--vscode-sideBarSectionHeader-border); opacity: 0.7; flex-shrink: 0;">

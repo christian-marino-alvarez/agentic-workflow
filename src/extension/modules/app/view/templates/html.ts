@@ -111,9 +111,10 @@ function renderHistoryTab(view: AppView) {
                     ${s.taskTitle || s.title || 'Untitled Task'}${isCurrent ? html` <span class="history-current-badge">● Active</span>` : ''}
                   </div>
                   <div class="history-card-meta">
-                    ${formatDate(s.timestamp)} · ${s.messageCount} msgs${s.elapsedSeconds ? ` · ⏱ ${Math.floor(s.elapsedSeconds / 60)}:${(s.elapsedSeconds % 60).toString().padStart(2, '0')}` : ''}
+                    ${formatDate(s.timestamp)} · ${s.messageCount} msgs
                   </div>
                 </div>
+                ${s.elapsedSeconds ? html`<span class="history-time-pill">⏱ ${Math.floor(s.elapsedSeconds / 60)}:${(s.elapsedSeconds % 60).toString().padStart(2, '0')}</span>` : ''}
                 <span class="history-security ${(s.securityScore ?? 100) >= 80 ? 'safe' : (s.securityScore ?? 100) >= 50 ? 'medium' : 'warn'}" title="Security level based on agent permissions">
                   ${(s.securityScore ?? 100) >= 80 ? 'Safe' : (s.securityScore ?? 100) >= 50 ? 'Caution' : 'Risk'} ${s.securityScore ?? 100}%
                 </span>

@@ -15,18 +15,21 @@ export class App extends CoreApp {
     super(context);
   }
 
-  /**
-   * Activate the main application shell using instance registration.
-   */
   public async activate(): Promise<void> {
+    this.log('Activation start');
     // 1. Register UI Module (Background manages Sidecar spawn)
     const version = vscode.extensions.getExtension('christian-marino-alvarez.agentic-workflow')?.packageJSON.version || '0.0.0';
+    this.log(`Version resolved: ${version}`);
     const background = new AppBackground(this.context, version);
+    this.log('AppBackground created');
     this.register('mainView', background);
+    this.log('AppBackground registered');
 
     // 2. Register Auth Module
     const auth = AuthBackground.getInstance(this.context);
+    this.log('AuthBackground created');
     this.register('auth-view', auth);
+    this.log('AuthBackground registered');
 
     // NOTE: Settings module is managed internally by AppBackground,
     // which creates its own SettingsBackground and delegates messages to it.

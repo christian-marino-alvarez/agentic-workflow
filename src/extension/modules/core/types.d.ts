@@ -51,3 +51,12 @@ export interface IAuthenticationSession {
   scopes: readonly string[];
 }
 
+/**
+ * Represents the native capabilities of an LLM.
+ */
+export interface ModelCapabilities {
+  vision: boolean;
+  tools: boolean; // Function calling support
+  code: boolean;
+  streaming: boolean;
+}

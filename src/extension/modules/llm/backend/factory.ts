@@ -1,10 +1,17 @@
 import { Agent, ModelProvider } from '@openai/agents';
 import { OpenAIProvider } from '@openai/agents';
-import { GeminiProvider } from './adapters/gemini-adapter.js';
-import { ClaudeProvider } from './adapters/claude-adapter.js';
+import { GeminiProvider } from './adapters/gemini-provider.js';
+import { ClaudeProvider } from './adapters/claude-provider.js';
 import { RoleModelBinding, ToolDefinition } from './types.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+
+/**
+ * Pass-through: model IDs now come from Settings dropdown (dynamic discovery).
+ */
+function resolveModelId(displayName: string, _provider: string): string {
+  return displayName;
+}
 
 export class LLMFactory {
   private extensionUri: string;
@@ -13,50 +20,46 @@ export class LLMFactory {
     this.extensionUri = extensionUri;
   }
 
-  async createAgent(role: string, binding: RoleModelBinding, tools: ToolDefinition[] = []): Promise<Agent> {
-    const modelId = binding[role];
-    if (!modelId) {
+  async createAgent(role: string, binding: RoleModelBinding, tools: ToolDefinition[] = [], apiKey?: string, provider?: string, instructions?: string): Promise<Agent> {
+    const rawModelId = binding[role];
+    if (!rawModelId) {
       throw new Error(`No model bound for role: ${role}`);
     }
 
-    // TODO: In a real app, model configuration (API key) would come from secure storage 
-    // passed via context or retrieved here if we have access to secrets (Background only).
-    // For VirtualBackend (Sidecar), we expect keys to be passed in the request or env.
-    // For this implementation, we'll assume keys are available in process.env for simplicity 
-    // or passed in. *Critically*, the sidecar needs the keys. 
-    // We will update the request flow to pass keys from Extension Host.
+    // Resolve display name to valid API model ID
+    const modelId = resolveModelId(rawModelId, provider || rawModelId);
+    console.log(`[llm::backend] Model resolution: "${rawModelId}" → "${modelId}" (provider: ${provider})`);
 
-    let provider: ModelProvider;
-    // Mock logic for provider selection based on ID convention or data
-    if (modelId.includes('gemini')) {
-      provider = new GeminiProvider(process.env.GEMINI_API_KEY || '');
-    } else if (modelId.includes('claude')) {
-      provider = new ClaudeProvider(process.env.ANTHROPIC_API_KEY || '');
+    let modelProvider: ModelProvider;
+    const providerLower = (provider || modelId).toLowerCase();
+    // Select provider based on explicit provider field, fallback to model name
+    if (providerLower.includes('gemini') || providerLower.includes('google')) {
+      modelProvider = new GeminiProvider(apiKey || process.env.GEMINI_API_KEY || '');
+    } else if (providerLower.includes('claude') || providerLower.includes('anthropic')) {
+      modelProvider = new ClaudeProvider(apiKey || process.env.ANTHROPIC_API_KEY || '');
     } else {
-      provider = new OpenAIProvider({ apiKey: process.env.OPENAI_API_KEY || '' });
+      modelProvider = new OpenAIProvider({ apiKey: apiKey || process.env.OPENAI_API_KEY || '' });
     }
 
-    const instructions = await this.loadRoleInstructions(role);
+    // Use pre-resolved instructions from Extension Host, fallback to file load
+    const agentInstructions = instructions || await this.loadRoleInstructions(role);
 
     return new Agent({
       name: role,
-      instructions: instructions,
-      model: await provider.getModel(modelId),
-      tools: tools.map(t => t as any), // Cast to fit Agent SDK tool type
+      instructions: agentInstructions,
+      model: await modelProvider.getModel(modelId),
+      tools: tools.map(t => t as any),
     });
   }
 
   private async loadRoleInstructions(role: string): Promise<string> {
-    // Roles are in .agent/rules/roles/
-    // We need to resolve the path relative to workspace root. 
-    // Assuming extensionUri points to extension root, we need to go up to workspace.
-    // This path resolution might need adjustment based on sidecar cwd.
     try {
-      // Mock path for now - needs robust resolution in VirtualBackend
-      const rolePath = path.join(this.extensionUri, '..', '..', '..', '.agent', 'rules', 'roles', `${role}.md`);
+      // Use WORKSPACE_ROOT env var set by the Extension Host when spawning the sidecar
+      const workspaceRoot = process.env.WORKSPACE_ROOT || process.cwd();
+      const rolePath = path.join(workspaceRoot, '.agent', 'rules', 'roles', `${role}.md`);
       return await fs.readFile(rolePath, 'utf-8');
     } catch (error) {
-      console.error(`Failed to load role instructions for ${role}`, error);
+      console.error(`[llm::backend] Failed to load role instructions for ${role}`, error);
       return `You are the ${role} agent.`; // Fallback
     }
   }

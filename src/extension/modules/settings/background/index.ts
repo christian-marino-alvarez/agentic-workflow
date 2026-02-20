@@ -1,11 +1,13 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { Background, ViewHtml, Message } from '../../core/index.js';
+import { Background, ViewHtml, Message, MessageOrigin } from '../../core/index.js';
 import { ConfigurationService } from '../../core/backend/config-service.js';
 import { SecretStorageService } from '../../core/backend/secret-service.js';
 import { LLMModelConfig } from '../types.js';
 import { randomUUID } from 'crypto';
+import { MODEL_CAPABILITY_MAP } from '../../core/constants.js';
+import { ModelCapabilities } from '../../core/types.js';
 import {
   NAME, MESSAGES, PROVIDERS, AUTH_TYPES,
   PROVIDER_URLS, PROVIDER_HEADERS
@@ -25,12 +27,15 @@ export class SettingsBackground extends Background {
   private readonly configService: ConfigurationService;
   private readonly secretService: SecretStorageService;
   private models: LLMModelConfig[] = [];
+  private discoveredModels: Record<string, Array<{ id: string; displayName: string }>> = {};
 
   constructor(context: vscode.ExtensionContext) {
     super('settings', context.extensionUri, 'settings-view');
     this.configService = new ConfigurationService('agenticWorkflow');
     this.secretService = new SecretStorageService(context.secrets);
     this.loadModels();
+    // Restore discovered models cache from settings
+    this.discoveredModels = this.configService.get<Record<string, Array<{ id: string; displayName: string }>>>('discoveredModelsCache') || {};
     this.log('SettingsBackground initialized');
   }
 
@@ -102,13 +107,25 @@ export class SettingsBackground extends Background {
 
   // ─── Connection Verification ─────────────────────────────
 
-  async verifyConnection(model: LLMModelConfig): Promise<{ success: boolean; message?: string }> {
+  async verifyConnection(model: LLMModelConfig): Promise<{ success: boolean; message?: string; capabilities?: ModelCapabilities }> {
     try {
       if (model.authType === AUTH_TYPES.OAUTH && model.provider === PROVIDERS.GEMINI) {
-        return await this.verifyOAuthConnection();
+        const result = await this.verifyOAuthConnection();
+        if (result.success) {
+          const caps = this.detectCapabilities(model.modelName);
+          await this.persistCapabilities(model.id, caps);
+          return { ...result, capabilities: caps };
+        }
+        return result;
       }
       if (model.authType === AUTH_TYPES.OAUTH && model.provider === PROVIDERS.CODEX) {
-        return await this.verifyOpenAIOAuthConnection();
+        const result = await this.verifyOpenAIOAuthConnection();
+        if (result.success) {
+          const caps = this.detectCapabilities(model.modelName);
+          await this.persistCapabilities(model.id, caps);
+          return { ...result, capabilities: caps };
+        }
+        return result;
       }
 
       const key = model.apiKey;
@@ -118,10 +135,43 @@ export class SettingsBackground extends Background {
 
       const { url, options } = this.getVerificationRequest(model.provider, key);
       const res = await fetch(url, options);
-      return { success: res.ok, message: res.ok ? 'Connection Successful' : `Error: ${res.statusText}` };
+
+      if (res.ok) {
+        const caps = this.detectCapabilities(model.modelName);
+        await this.persistCapabilities(model.id, caps);
+        return { success: true, message: 'Connection Successful', capabilities: caps };
+      }
+
+      return { success: false, message: `Error: ${res.statusText}` };
     } catch (error: any) {
       console.error('Connection verification failed:', error);
       return { success: false, message: error.message };
+    }
+  }
+
+  /**
+   * Detect model capabilities using heuristic name matching.
+   */
+  private detectCapabilities(modelName: string): ModelCapabilities {
+    const lowerName = modelName.toLowerCase();
+    for (const [pattern, caps] of Object.entries(MODEL_CAPABILITY_MAP)) {
+      if (lowerName.includes(pattern.toLowerCase())) {
+        return { ...caps, streaming: true };
+      }
+    }
+    return { vision: false, tools: false, code: false, streaming: true };
+  }
+
+  /**
+   * Persist detected capabilities to the model's config entry.
+   */
+  private async persistCapabilities(modelId: string, capabilities: ModelCapabilities): Promise<void> {
+    await this.loadModels();
+    const idx = this.models.findIndex(m => m.id === modelId);
+    if (idx >= 0) {
+      this.models[idx].capabilities = capabilities;
+      await this.configService.update('models', this.models, vscode.ConfigurationTarget.Global);
+      this.log(`Capabilities detected for model ${modelId}:`, JSON.stringify(capabilities));
     }
   }
 
@@ -195,6 +245,10 @@ export class SettingsBackground extends Background {
         return this.handleSaveDisabledRoles(data);
       case MESSAGES.GET_DISABLED_ROLES:
         return this.handleGetDisabledRoles();
+      case MESSAGES.SAVE_ROLE_CONFIG:
+        return this.handleSaveRoleConfig(data);
+      case MESSAGES.LIST_AVAILABLE_MODELS:
+        return this.handleListAvailableModels(data);
     }
   }
 
@@ -203,7 +257,36 @@ export class SettingsBackground extends Background {
   private async handleGetRequest() {
     const models = await this.getModels();
     const activeModelId = await this.getActiveModelId();
-    return { success: true, models, activeModelId };
+
+    // Resolve credentials for all models
+    for (const model of models) {
+      // Resolve API keys from SecretStorage (they are cleared from config on save)
+      if (!model.apiKey) {
+        try {
+          const storedKey = await this.secretService.get(`model.${model.id}.apiKey`);
+          if (storedKey) {
+            model.apiKey = storedKey;
+          }
+        } catch (e: any) {
+          this.log(`Failed to resolve API key for model ${model.name}: ${e.message}`);
+        }
+      }
+
+      // Resolve OAuth access tokens for OAuth-based models (if still no key)
+      if (model.authType === AUTH_TYPES.OAUTH && !model.apiKey) {
+        try {
+          const auth = Auth.getInstance();
+          const sessions = await auth.getSessions(['openid', 'email', 'profile']);
+          if (sessions && sessions.length > 0) {
+            model.apiKey = sessions[0].accessToken;
+          }
+        } catch (e: any) {
+          this.log(`Failed to resolve OAuth token for model ${model.name}: ${e.message}`);
+        }
+      }
+    }
+
+    return { success: true, models, activeModelId, discoveredModels: this.discoveredModels };
   }
 
   private async handleSaveRequest(data: any) {
@@ -217,7 +300,91 @@ export class SettingsBackground extends Background {
   }
 
   private async handleTestConnectionRequest(data: any) {
-    return await this.verifyConnection(data);
+    // View sends partial data (provider, authType, apiKey).
+    // Enrich with full model for capability detection.
+    await this.loadModels();
+    const storedModel = this.models.find(m => m.provider === data.provider);
+    const fullModel = storedModel ? { ...storedModel, ...data } : data;
+    const result = await this.verifyConnection(fullModel);
+
+    // Persist API key on successful test so Factory can find it
+    if (result.success && fullModel.id && data.apiKey) {
+      await this.secretService.store(`model.${fullModel.id}.apiKey`, data.apiKey);
+      this.log('API key persisted on successful test connection');
+    }
+
+    // Discover available models from provider after successful connection
+    if (result.success && data.apiKey && data.provider) {
+      this.discoverAvailableModels(data.provider, data.apiKey);
+    }
+
+    return result;
+  }
+
+  /**
+   * Discover available models from a provider's API via the sidecar.
+   */
+  private async discoverAvailableModels(provider: string, apiKey: string): Promise<void> {
+    try {
+      const url = `http://127.0.0.1:3000/llm/models?provider=${encodeURIComponent(provider)}&apiKey=${encodeURIComponent(apiKey)}`;
+      const res = await fetch(url);
+      const data = await res.json() as any;
+      if (data.success && data.models) {
+        this.discoveredModels[provider] = data.models;
+        this.log(`Discovered ${data.models.length} models for provider ${provider}`);
+        // Persist to settings so cache survives restarts
+        await this.configService.update('discoveredModelsCache', this.discoveredModels, vscode.ConfigurationTarget.Global);
+      }
+    } catch (e: any) {
+      this.log(`Failed to discover models for ${provider}: ${e.message}`);
+    }
+  }
+
+  /**
+   * Handler for LIST_AVAILABLE_MODELS message.
+   * Returns discovered models for a specific provider.
+   * Auto-triggers discovery if cache is empty.
+   */
+  private async handleListAvailableModels(data: any) {
+    const provider = data?.provider;
+    if (!provider) {
+      return { success: true, models: [] };
+    }
+
+    // If cache is empty, trigger discovery
+    if (!this.discoveredModels[provider]) {
+      const models = this.configService.get<LLMModelConfig[]>('models') || [];
+      const providerModel = models.find(m => m.provider === provider);
+
+      if (providerModel) {
+        // Resolve API key from SecretStorage (keys are NOT stored in config)
+        let apiKey = providerModel.apiKey;
+        if (!apiKey) {
+          try {
+            apiKey = await this.secretService.get(`model.${providerModel.id}.apiKey`) || undefined;
+          } catch (_) { /* ignore */ }
+        }
+        // Try OAuth if still no key
+        if (!apiKey && providerModel.authType === AUTH_TYPES.OAUTH) {
+          try {
+            const auth = Auth.getInstance();
+            const sessions = await auth.getSessions(['openid', 'email', 'profile']);
+            if (sessions && sessions.length > 0) {
+              apiKey = sessions[0].accessToken;
+            }
+          } catch (_) { /* ignore */ }
+        }
+
+        if (apiKey) {
+          await this.discoverAvailableModels(provider, apiKey);
+        }
+      }
+    }
+
+    if (this.discoveredModels[provider]) {
+      return { success: true, models: this.discoveredModels[provider] };
+    }
+    return { success: true, models: [] };
   }
 
   private async handleSaveGoogleClientId(data: any) {
@@ -276,6 +443,8 @@ export class SettingsBackground extends Background {
         const roleName = file.replace('.md', '');
         let icon: string | undefined;
         let description: string | undefined;
+        let model: { provider?: string; id?: string } | undefined;
+        let capabilities: Record<string, boolean> | undefined;
 
         try {
           const filePath = path.join(rolesPath, file);
@@ -288,12 +457,18 @@ export class SettingsBackground extends Background {
             if (parsed.data.description) {
               description = parsed.data.description;
             }
+            if (parsed.data.model) {
+              model = parsed.data.model;
+            }
+            if (parsed.data.capabilities) {
+              capabilities = parsed.data.capabilities;
+            }
           }
         } catch (err) {
           console.warn(`Failed to parse frontmatter for role ${roleName}`, err);
         }
 
-        roles.push({ name: roleName, icon, description });
+        roles.push({ name: roleName, icon, description, model, capabilities });
       }
 
       return { success: true, roles };
@@ -323,6 +498,69 @@ export class SettingsBackground extends Background {
   private async handleGetDisabledRoles() {
     const disabledRoles = this.configService.get<string[]>('disabledRoles', []);
     return { success: true, disabledRoles };
+  }
+
+  /**
+   * Save model and capabilities config to a role's markdown YAML frontmatter.
+   * Also updates the VS Code settings bindings for consistency.
+   */
+  private async handleSaveRoleConfig(data: any) {
+    if (!data?.role) {
+      return { success: false, error: 'Missing role name' };
+    }
+
+    const { role, model, capabilities } = data;
+
+    try {
+      const workspaceFolders = vscode.workspace.workspaceFolders;
+      if (!workspaceFolders) {
+        return { success: false, error: 'No workspace open' };
+      }
+
+      const rootPath = workspaceFolders[0].uri.fsPath;
+      const filePath = path.join(rootPath, '.agent', 'rules', 'roles', `${role}.md`);
+
+      const content = await fs.readFile(filePath, 'utf8');
+      const parsed = matter(content);
+
+      // Update frontmatter fields
+      if (model !== undefined) {
+        parsed.data.model = model;
+      }
+      if (capabilities !== undefined) {
+        parsed.data.capabilities = capabilities;
+      }
+
+      // Write back with updated frontmatter
+      const updated = matter.stringify(parsed.content, parsed.data);
+      await fs.writeFile(filePath, updated, 'utf8');
+
+      // Also persist binding in VS Code settings for quick access
+      if (model?.id) {
+        const bindings = this.configService.get<Record<string, string>>('roleBindings') ?? {};
+        bindings[role] = model.id;
+        await this.configService.update('roleBindings', bindings, vscode.ConfigurationTarget.Global);
+      }
+
+      this.log(`Role config saved for ${role}`);
+
+      // Notify Chat module to refresh its agent list
+      try {
+        this.messenger.emit({
+          id: randomUUID(),
+          from: 'settings::background',
+          to: 'chat::background',
+          timestamp: Date.now(),
+          origin: MessageOrigin.Server,
+          payload: { command: 'ROLES_CHANGED', data: {} }
+        });
+      } catch (_) { /* Chat module may not be active */ }
+
+      return { success: true };
+    } catch (error: any) {
+      this.log(`Error saving role config for ${role}:`, error.message);
+      return { success: false, error: error.message };
+    }
   }
 
   // ─── OAuth Verification ────────────────────────────────

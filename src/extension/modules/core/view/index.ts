@@ -72,7 +72,14 @@ export abstract class View extends LitElement {
         return; // Don't forward to handler — it's a correlated response
       }
 
-      handler(message);
+      // Filter by intended destination: only route if it's meant for this view, or a global broadcast
+      const intendedTarget = message.to;
+      const myScope = `${this.moduleName}::view`;
+      const isBroadcast = intendedTarget === 'view' || intendedTarget === '*';
+
+      if (intendedTarget === myScope || isBroadcast) {
+        handler(message);
+      }
     });
   }
 
@@ -93,12 +100,12 @@ export abstract class View extends LitElement {
       id,
       timestamp: Date.now(),
       to,
-      from: 'view',
+      from: `${this.moduleName}::view`,
       origin: MessageOrigin.View,
       payload: { command, data }
     };
 
-    this.log(`→ ${command}`, data);
+    this.log(`→ ${command}`, this.sanitizeForLog(data));
     this.vscode?.postMessage(payload);
 
     // Return a promise that resolves when the response is correlated
@@ -128,7 +135,8 @@ export abstract class View extends LitElement {
   protected log(message: string, ...args: any[]): void {
     const capitalizedName = this.moduleName.charAt(0).toUpperCase() + this.moduleName.slice(1);
     const formattedMsg = `[${capitalizedName}::view] ${message}`;
-    console.log(`%c${formattedMsg}`, LOG_STYLE.View, ...args);
+    const safeArgs = args.map(a => this.sanitizeForLog(a));
+    console.log(`%c${formattedMsg}`, LOG_STYLE.View, ...safeArgs);
 
     // Forward to background for output channel logging
     this.vscode?.postMessage({
@@ -140,8 +148,22 @@ export abstract class View extends LitElement {
       origin: MessageOrigin.View,
       payload: {
         command: 'log',
-        data: { message: formattedMsg, args }
+        data: { message: formattedMsg, args: safeArgs }
       }
     });
+  }
+
+  /**
+   * Mask sensitive fields (apiKey, accessToken) before logging.
+   */
+  private sanitizeForLog(data: any): any {
+    if (!data || typeof data !== 'object') { return data; }
+    const sanitized = { ...data };
+    for (const key of ['apiKey', 'accessToken', 'clientSecret']) {
+      if (typeof sanitized[key] === 'string' && sanitized[key].length > 0) {
+        sanitized[key] = sanitized[key].substring(0, 4) + '•••••';
+      }
+    }
+    return sanitized;
   }
 }

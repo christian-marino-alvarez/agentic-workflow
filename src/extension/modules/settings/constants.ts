@@ -55,6 +55,10 @@ export const MESSAGES = {
   // Agent Activation
   SAVE_DISABLED_ROLES: 'SAVE_DISABLED_ROLES',
   GET_DISABLED_ROLES: 'GET_DISABLED_ROLES',
+  // Agent-Model Config (persisted to role markdown)
+  SAVE_ROLE_CONFIG: 'SAVE_ROLE_CONFIG',
+  // Model Discovery
+  LIST_AVAILABLE_MODELS: 'LIST_AVAILABLE_MODELS',
   // Misc
   OPEN_EXTERNAL: 'OPEN_EXTERNAL',
 };
@@ -99,4 +103,8 @@ export const PROVIDER_HEADERS = {
   },
 } as const;
 
-
+export const OAUTH_SETTINGS_KEYS = {
+  GOOGLE_CLIENT_ID: 'agenticWorkflow.googleClientId',
+  GOOGLE_CLIENT_SECRET: 'agenticWorkflow.googleClientSecret',
+  OPENAI_CLIENT_ID: 'agenticWorkflow.openaiClientId',
+} as const;

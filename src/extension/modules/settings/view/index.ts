@@ -2,14 +2,10 @@ import { View } from '../../core/view/index.js';
 import { customElement, state } from 'lit/decorators.js';
 import { LLMModelConfig } from '../types.js';
 import { templates } from './templates/index.js';
-import { MESSAGES, SCOPES, NAME, DELETE_TIMEOUT, AUTH_TYPES, PROVIDERS, ViewState } from '../constants.js';
+import { MESSAGES, SCOPES, NAME, DELETE_TIMEOUT, AUTH_TYPES, PROVIDERS, ViewState, OAUTH_SETTINGS_KEYS } from '../constants.js';
 import { styles } from './templates/css.js';
 
 import { styles as roleBindingStyles } from './templates/role-binding/index.js';
-
-const GOOGLE_CLIENT_ID_KEY = 'agenticWorkflow.googleClientId';
-const GOOGLE_CLIENT_SECRET_KEY = 'agenticWorkflow.googleClientSecret';
-const OPENAI_CLIENT_ID_KEY = 'agenticWorkflow.openaiClientId';
 
 @customElement(`${NAME}-view`)
 export class Settings extends View {
@@ -27,9 +23,11 @@ export class Settings extends View {
   @state() accessor connectionTestResult: { success: boolean, message?: string } | undefined;
 
   // Role Binding State
-  @state() accessor roles: { name: string, icon?: string, description?: string }[] = [];
+  @state() accessor roles: { name: string, icon?: string, description?: string, model?: { provider?: string, id?: string }, capabilities?: Record<string, boolean> }[] = [];
   @state() accessor roleBindings: Record<string, string> = {};
   @state() accessor disabledRoles: Set<string> = new Set();
+  // Per-provider discovered models cache (from API discovery)
+  @state() accessor providerDiscoveredModels: Record<string, Array<{ id: string; displayName: string }>> = {};
 
   // OAuth Setup Wizard state
   @state() accessor googleClientIdInput: string = '';
@@ -43,6 +41,10 @@ export class Settings extends View {
 
   // Track verified models for visual badge in list
   @state() accessor verifiedModelIds: Set<string> = new Set();
+
+  // Discovered models from provider API (available after test connection)
+  @state() accessor discoveredModels: Array<{ id: string; displayName: string }> = [];
+  @state() accessor selectedModelId: string = '';
 
   private deleteTimeout: any; // Timer for auto-cancel delete
   @state() accessor pendingToggleRole: string | undefined;
@@ -88,22 +90,14 @@ export class Settings extends View {
     try {
       this.log('Sending GET_REQUEST to background...');
       const data = await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.GET_REQUEST);
-      this.log('Response received:', data);
+      this.log('Response received:', { success: data.success, modelCount: data.models?.length, activeModelId: data.activeModelId });
       this.log('Models loaded:', data.models?.length, 'active:', data.activeModelId);
       this.models = data.models || [];
       this.activeModelId = data.activeModelId;
 
-      // Navigate to List if not already there (unless we are in form handling?)
-      // Actually, loadModels usually implies a refresh or init.
-      // If we were in FORM, we probably stay there? No, usually refresh goes to list.
+      // Navigate to List if not already there
       if (this.viewState === ViewState.LOADING) {
         this.viewState = ViewState.LIST;
-      }
-
-      // Auto-verify OAuth session for the active model on startup
-      const activeModel = this.models.find(m => m.id === this.activeModelId);
-      if (activeModel?.authType === 'oauth') {
-        this.autoVerifyOAuth(activeModel);
       }
     } catch (error: any) {
       this.log('Error loading models:', error.message, error);
@@ -120,6 +114,18 @@ export class Settings extends View {
       const result = await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.REFRESH_ROLES);
       if (result && result.roles) {
         this.roles = result.roles;
+
+        // Auto-discover models for all providers already assigned to roles
+        const providers = new Set<string>();
+        for (const role of this.roles) {
+          if (role.model?.provider && !this.providerDiscoveredModels[role.model.provider]) {
+            providers.add(role.model.provider);
+          }
+        }
+        // Await all discoveries so dropdowns are populated before render
+        await Promise.all(
+          Array.from(providers).map(p => this.discoverModelsForProvider(p))
+        );
       }
     } catch (error: any) {
       this.log('Error refreshing roles:', error);
@@ -181,16 +187,112 @@ export class Settings extends View {
     const newBindings = { ...this.roleBindings, [role]: modelId };
     this.roleBindings = newBindings;
     await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.SAVE_BINDING, newBindings);
+
+    // Re-evaluate secure state: if the active model changed to unverified, clear secure
+    if (modelId === this.activeModelId || this.roleBindings[role] === this.activeModelId) {
+      if (!this.verifiedModelIds.has(modelId)) {
+        this.setSecureState(false);
+      }
+    }
+  }
+
+  /**
+   * Save model and capabilities config for a role.
+   * Persists to both the role markdown YAML and VS Code settings.
+   */
+  async saveRoleConfig(role: string, model: { provider?: string, id?: string }, capabilities?: Record<string, boolean>) {
+    // Update local state
+    this.roles = this.roles.map(r =>
+      r.name === role ? { ...r, model, capabilities: capabilities ?? r.capabilities } : r
+    );
+
+    // Also update the binding in local state
+    if (model.id) {
+      this.roleBindings = { ...this.roleBindings, [role]: model.id };
+    }
+
+    // Persist to backend (writes markdown YAML + VS Code settings)
+    await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.SAVE_ROLE_CONFIG, {
+      role,
+      model,
+      capabilities: capabilities ?? this.roles.find(r => r.name === role)?.capabilities
+    });
+  }
+
+  /**
+   * Toggle a single capability for a role and persist.
+   */
+  async toggleCapability(role: string, capability: string) {
+    const roleData = this.roles.find(r => r.name === role);
+    if (!roleData) { return; }
+
+    const caps = { ...(roleData.capabilities || {}) };
+    caps[capability] = !caps[capability];
+
+    this.roles = this.roles.map(r =>
+      r.name === role ? { ...r, capabilities: caps } : r
+    );
+
+    await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.SAVE_ROLE_CONFIG, {
+      role,
+      capabilities: caps
+    });
+  }
+
+  /**
+   * Handle provider selection change for a role (from template).
+   * Triggers model discovery for the selected provider.
+   */
+  async userActionProviderChangedForRole(role: string, e: Event) {
+    const provider = (e.target as HTMLSelectElement).value;
+    this.saveRoleConfig(role, { provider, id: undefined });
+
+    // Trigger model discovery if we don't have cached results for this provider
+    if (provider && !this.providerDiscoveredModels[provider]) {
+      await this.discoverModelsForProvider(provider);
+    }
+  }
+
+  /**
+   * Handle model selection change for a role (from template).
+   */
+  userActionModelChangedForRole(role: string, provider: string, e: Event) {
+    const modelId = (e.target as HTMLSelectElement).value;
+    this.saveRoleConfig(role, { provider, id: modelId || undefined });
+  }
+
+  /**
+   * Discover available models from a provider API and cache results.
+   * Uses the API key from the first registered model for that provider.
+   */
+  async discoverModelsForProvider(provider: string) {
+    try {
+      const result = await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.LIST_AVAILABLE_MODELS, { provider });
+      if (result?.success && result.models?.length > 0) {
+        this.providerDiscoveredModels = {
+          ...this.providerDiscoveredModels,
+          [provider]: result.models
+        };
+        this.log(`Discovered ${result.models.length} models for provider ${provider}`);
+      }
+    } catch (e: any) {
+      this.log('Error discovering models for provider:', e.message);
+    }
   }
 
   /**
    * Helper to update the secure state (badge + title) based on verification.
    */
   private setSecureState(isSecure: boolean) {
-    // Notify App View (badge in tab bar)
+    // Notify App View (badge in tab bar) — DOM event
     this.dispatchEvent(new CustomEvent('secure-state-changed', {
       bubbles: true,
       composed: true,
+      detail: { secure: isSecure }
+    }));
+
+    // Notify all views in the webview — window-level event
+    window.dispatchEvent(new CustomEvent('secure-state-changed', {
       detail: { secure: isSecure }
     }));
 
@@ -251,7 +353,9 @@ export class Settings extends View {
     if (this.editingModel) {
       this.formAuthType = this.editingModel.authType || AUTH_TYPES.API_KEY;
       this.formProvider = this.editingModel.provider || PROVIDERS.GEMINI;
+      this.selectedModelId = this.editingModel.modelName || '';
     }
+    this.discoveredModels = [];
     this.viewState = ViewState.FORM;
     this.loadGoogleCredentials();
     this.loadOpenAICredentials();
@@ -387,6 +491,11 @@ export class Settings extends View {
           this.setSecureState(false);
         }
       }
+
+      // Fetch available models after successful test connection
+      if (result?.success) {
+        this.fetchDiscoveredModels();
+      }
     } catch (error: any) {
       this.log('Error testing connection:', error.message);
       this.errorMessage = error.message;
@@ -404,6 +513,26 @@ export class Settings extends View {
       this.connectionTestResult = { success: false, message: error.message };
     } finally {
       this.isTestingConnection = false;
+    }
+  }
+
+  /**
+   * Fetch discovered models from the provider API via background.
+   */
+  async fetchDiscoveredModels() {
+    try {
+      const provider = this.formProvider;
+      const result = await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.LIST_AVAILABLE_MODELS, { provider });
+      if (result?.success && result.models?.length > 0) {
+        this.discoveredModels = result.models;
+        // Auto-select first model if none selected
+        if (!this.selectedModelId) {
+          this.selectedModelId = result.models[0].id;
+        }
+        this.log(`Discovered ${result.models.length} models for ${provider}`);
+      }
+    } catch (e: any) {
+      this.log('Error fetching discovered models:', e.message);
     }
   }
 
@@ -429,7 +558,7 @@ export class Settings extends View {
     const model: LLMModelConfig = {
       id: this.editingModel?.id || '', // Let backend generate ID if empty
       name: name,
-      modelName: name, // Simplified mapping for now
+      modelName: this.selectedModelId || name, // Use discovered model ID or fallback to name
       provider: provider,
       authType: this.formAuthType as any,
       apiKey: formData.get('apiKey') as string,

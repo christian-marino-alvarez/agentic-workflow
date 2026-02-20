@@ -1,4 +1,5 @@
 import { PROVIDERS, AUTH_TYPES } from './constants.js';
+import { ModelCapabilities } from '../core/types.js';
 
 export interface LLMModelConfig {
   id: string;
@@ -10,4 +11,5 @@ export interface LLMModelConfig {
   maxTokens?: number;
   temperature?: number;
   modelName: string;
+  capabilities?: ModelCapabilities;
 }

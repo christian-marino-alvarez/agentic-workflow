@@ -57,7 +57,7 @@ export class ChatBackground extends Background {
     }
   }
 
-  private async handleSendMessage(data: { text: string, agentRole: string, modelId?: string, history?: Array<{ role: string, text: string }> }): Promise<any> {
+  private async handleSendMessage(data: { text: string, agentRole: string, modelId?: string, history?: Array<{ role: string, text: string }>, attachments?: Array<{ _title: string, _path: string }> }): Promise<any> {
     const role = data.agentRole || 'backend';
     this.log(`Message for role "${role}": ${data.text.substring(0, 50)}...`);
 
@@ -111,7 +111,7 @@ export class ChatBackground extends Background {
         binding: { [role]: modelName },
         apiKey,
         provider,
-        context: []
+        context: data.attachments ? data.attachments.map(att => ({ title: att._title, url: att._path })) : []
       };
 
       const url = `${SIDECAR_BASE_URL}${API_ENDPOINTS.STREAM}`;

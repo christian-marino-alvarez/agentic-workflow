@@ -82,8 +82,11 @@ function renderHistoryTab(view: AppView) {
       ? html`<div style="text-align: center; padding: 20px; color: var(--vscode-descriptionForeground); font-size: 12px;">No conversations yet</div>`
       : sessions.map((s: any) => {
         const isCurrent = s.id === currentId;
+        const isPendingDelete = chatView?.pendingDeleteSessionId === s.id;
         return html`
-            <div style="display: flex; align-items: center; gap: 8px; padding: 8px; margin-bottom: 4px; border-radius: 6px; background: var(--vscode-sideBar-background); cursor: pointer; border: 1px solid ${isCurrent ? 'var(--vscode-focusBorder)' : 'var(--vscode-panel-border)'}; ${isCurrent ? 'border-left: 3px solid var(--vscode-focusBorder);' : ''}"
+            <div style="display: flex; align-items: center; gap: 8px; padding: 8px; margin-bottom: 4px; border-radius: 6px; background: var(--vscode-sideBar-background); cursor: pointer; border: 1px solid ${isCurrent ? 'var(--vscode-focusBorder)' : 'var(--vscode-panel-border)'}; ${isCurrent ? 'border-left: 3px solid var(--vscode-focusBorder);' : ''} transition: background 0.15s ease;"
+              @mouseenter=${(e: Event) => { (e.currentTarget as HTMLElement).style.background = 'var(--vscode-list-hoverBackground)'; }}
+              @mouseleave=${(e: Event) => { (e.currentTarget as HTMLElement).style.background = 'var(--vscode-sideBar-background)'; }}
               @click=${() => {
             const cv = getChatView();
             if (cv?.loadSession) { cv.loadSession(s.id); }
@@ -99,16 +102,14 @@ function renderHistoryTab(view: AppView) {
                 </div>
               </div>
               <button
-                style="background: none; border: none; color: var(--vscode-errorForeground); cursor: pointer; padding: 2px 4px; font-size: 14px; opacity: 0.5;"
-                title="Delete"
+                style="background: ${isPendingDelete ? 'var(--vscode-inputValidation-errorBackground, #5a1d1d)' : 'none'}; border: ${isPendingDelete ? '1px solid var(--vscode-inputValidation-errorBorder, #be1100)' : 'none'}; color: var(--vscode-errorForeground); cursor: pointer; padding: 2px 8px; font-size: ${isPendingDelete ? '11px' : '13px'}; border-radius: 4px; white-space: nowrap;"
+                title="${isPendingDelete ? 'Click again to confirm' : 'Delete'}"
                 @click=${(e: Event) => {
             e.stopPropagation();
             const cv = getChatView();
-            if (cv?.deleteSession) { cv.deleteSession(s.id); }
-            // Re-request list after a beat
-            setTimeout(() => { if (cv?.requestSessions) { cv.requestSessions(); } }, 200);
+            if (cv?.handleDeleteSession) { cv.handleDeleteSession(s.id); }
           }}
-              >🗑</button>
+              >${isPendingDelete ? 'Confirm?' : '🗑'}</button>
             </div>
           `;
       })

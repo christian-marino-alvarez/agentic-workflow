@@ -76,6 +76,9 @@ export class ChatView extends View {
   @state()
   public sessionList: Array<{ id: string, title: string, timestamp: number, messageCount: number }> = [];
 
+  @state()
+  public pendingDeleteSessionId: string | undefined;
+
   /**
    * Whether the currently selected agent is disabled (no model assigned).
    */
@@ -458,10 +461,25 @@ export class ChatView extends View {
   /**
    * Delete a session.
    */
-  public deleteSession(sessionId: string) {
-    this.sendMessage(NAME, MESSAGES.DELETE_SESSION, { sessionId }).then(() => {
-      this.sessionList = this.sessionList.filter(s => s.id !== sessionId);
-    }).catch(() => { /* silent */ });
+  public handleDeleteSession(sessionId: string) {
+    if (this.pendingDeleteSessionId === sessionId) {
+      // Second click — confirm delete
+      this.sendMessage(NAME, MESSAGES.DELETE_SESSION, { sessionId }).then(() => {
+        this.sessionList = this.sessionList.filter(s => s.id !== sessionId);
+      }).catch(() => { /* silent */ });
+      this.pendingDeleteSessionId = undefined;
+      return;
+    }
+
+    // First click — mark as pending
+    this.pendingDeleteSessionId = sessionId;
+
+    // Auto-reset after 3 seconds
+    setTimeout(() => {
+      if (this.pendingDeleteSessionId === sessionId) {
+        this.pendingDeleteSessionId = undefined;
+      }
+    }, 3000);
   }
 
 

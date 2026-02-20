@@ -184,6 +184,22 @@ export const styles = [
       color: var(--vscode-descriptionForeground);
       margin-top: 2px;
     }
+    .history-progress-pill {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 8px;
+      color: var(--vscode-textLink-foreground, #3794ff);
+      background: color-mix(in srgb, var(--vscode-textLink-foreground) 12%, transparent);
+      border: 1px solid color-mix(in srgb, var(--vscode-textLink-foreground) 25%, transparent);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .history-progress-pill.done {
+      color: var(--vscode-testing-iconPassed, #73c991);
+      background: color-mix(in srgb, var(--vscode-testing-iconPassed) 12%, transparent);
+      border-color: color-mix(in srgb, var(--vscode-testing-iconPassed) 25%, transparent);
+    }
     /* Action buttons (match Settings) */
     .action-btn {
       background-color: var(--vscode-button-secondaryBackground);

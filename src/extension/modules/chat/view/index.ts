@@ -533,10 +533,16 @@ export class ChatView extends View {
       text: m.text,
       role: m.role,
     }));
+    const done = this.taskSteps.filter(s => s.status === 'done').length;
+    const total = this.taskSteps.length;
+    const progress = total > 0 ? Math.round((done / total) * 100) : 0;
     try {
       const result = await this.sendMessage(NAME, MESSAGES.SAVE_SESSION, {
         sessionId: this.currentSessionId || undefined,
         messages,
+        taskTitle: this.activeWorkflow || undefined,
+        elapsedSeconds: this.elapsedSeconds || 0,
+        progress,
       });
       if (result?.sessionId) {
         this.currentSessionId = result.sessionId;

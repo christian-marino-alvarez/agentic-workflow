@@ -1021,7 +1021,7 @@ export const styles = css`
       white-space: nowrap;
     }
 
-    /* Vertical Phase Timeline (right sidebar) */
+    /* Vertical Phase Timeline (LEFT sidebar) */
     .chat-with-timeline {
       display: flex;
       flex: 1;
@@ -1030,16 +1030,26 @@ export const styles = css`
 
     .chat-with-timeline .history {
       flex: 1;
+      min-width: 0;
     }
 
     .phase-timeline {
-      width: 28px;
+      width: 60px;
       display: flex;
       flex-direction: column;
       align-items: center;
       padding: 12px 4px;
       flex-shrink: 0;
-      border-left: 1px solid var(--vscode-widget-border);
+      border-right: 1px solid var(--vscode-widget-border);
+      overflow-y: auto;
+    }
+
+    .phase-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      flex-shrink: 0;
     }
 
     .phase-dot {
@@ -1048,7 +1058,6 @@ export const styles = css`
       border-radius: 50%;
       background: var(--vscode-widget-border);
       flex-shrink: 0;
-      position: relative;
     }
 
     .phase-dot.done {
@@ -1066,10 +1075,30 @@ export const styles = css`
       50% { box-shadow: 0 0 10px var(--vscode-textLink-foreground, #3794ff); }
     }
 
+    .phase-step-label {
+      font-size: 7px;
+      color: var(--vscode-descriptionForeground);
+      text-align: center;
+      line-height: 1.2;
+      max-width: 52px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .phase-step.active .phase-step-label {
+      color: var(--vscode-textLink-foreground, #3794ff);
+      font-weight: 600;
+    }
+
+    .phase-step.done .phase-step-label {
+      color: var(--vscode-testing-iconPassed, #73c991);
+    }
+
     .phase-line {
       width: 2px;
       flex: 1;
-      min-height: 12px;
+      min-height: 8px;
       background: var(--vscode-widget-border);
     }
 
@@ -1077,13 +1106,10 @@ export const styles = css`
       background: var(--vscode-testing-iconPassed, #73c991);
     }
 
-    .phase-dot-label {
-      font-size: 7px;
-      writing-mode: vertical-rl;
-      text-orientation: mixed;
+    .phase-marker-time {
+      font-size: 9px;
       color: var(--vscode-descriptionForeground);
-      letter-spacing: 0.3px;
-      padding: 2px 0;
       opacity: 0.7;
+      white-space: nowrap;
     }
 `;

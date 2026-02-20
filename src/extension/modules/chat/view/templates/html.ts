@@ -89,6 +89,7 @@ function renderHeader(view: IChatView) {
           <span class="workflow-label">${view.activeWorkflow}</span>
         </div>
         <div class="actions-group" style="gap: 6px;">
+          <span class="agent-timer ${view.activeActivity ? 'running' : ''}" title="Execution time">⏱ ${formatTimer(view.elapsedSeconds)}</span>
           <span class="progress-pill">
             <span class="progress-bar-track">
               <span class="progress-bar-fill" style="width: ${pct}%"></span>
@@ -219,7 +220,6 @@ function renderDelegationCard(msg: any) {
 
 // ─── Message Bubbles ──────────────────────────────────────
 function renderMessageBubble(msg: any) {
-  // Delegation messages get a special card
   if (msg.isDelegation) {
     return renderDelegationCard(msg);
   }
@@ -274,18 +274,23 @@ function renderLoadingSkeleton() {
   `;
 }
 
+// ─── Phase Marker (horizontal divider with date/time) ────────
 function renderPhaseMarker(phase: string) {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+  const dateStr = now.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
   return html`
     <div class="phase-marker">
       <span class="phase-marker-line"></span>
       <span class="phase-marker-label">${phase}</span>
+      <span class="phase-marker-time">${dateStr} ${timeStr}</span>
       <span class="phase-marker-line"></span>
     </div>
   `;
 }
 
+// ─── History (message list with phase markers) ──────────────
 function renderHistory(view: IChatView) {
-  // During initial 2s preload, show only skeleton (no empty history)
   if (view.initialLoading) {
     return html`
       <div class="history layout-scroll chat-container layout-col">
@@ -294,7 +299,6 @@ function renderHistory(view: IChatView) {
     `;
   }
 
-  // Build messages with phase markers inserted between phase transitions
   const items: any[] = [];
   let lastPhase = '';
   for (const msg of view.history) {
@@ -313,11 +317,11 @@ function renderHistory(view: IChatView) {
   `;
 }
 
-// ─── Agent Status Bar (static, no dropdown) ──────────────────
+// ─── Agent Status Bar (static, read-only) ────────────────────
 function formatTimer(seconds: number): string {
   const m = Math.floor(seconds / 60).toString().padStart(2, '0');
   const s = (seconds % 60).toString().padStart(2, '0');
-  return `${m}:${s} `;
+  return `${m}:${s}`;
 }
 
 function renderAgentStatusBar(view: IChatView) {
@@ -329,59 +333,50 @@ function renderAgentStatusBar(view: IChatView) {
   const hasActivity = !!view.activeActivity;
 
   return html`
-    < div class="agent-status-bar" >
-      <div class="agent-status-row" >
-        <div class="agent-status-info" >
+    <div class="agent-status-bar">
+      <div class="agent-status-row">
+        <div class="agent-status-info">
           ${getIcon(view.selectedAgent)}
-  <span class="agent-status-name" > ${agentLabel} </span>
+          <span class="agent-status-name">${agentLabel}</span>
           ${view.agentModelName ? html`<span class="agent-status-sep">·</span><span class="agent-status-model">${view.agentModelName}</span>` : ''}
           ${view.activeTask ? html`<span class="agent-status-sep">·</span><span class="agent-status-task">task: ${view.activeTask}</span>` : ''}
           ${view.activeActivity ? html`<span class="agent-status-sep">·</span><span class="agent-status-activity ${hasActivity ? 'active' : ''}">${view.activeActivity}</span>` : ''}
-  </div>
-    < div class="agent-status-right" >
-      <span class="agent-timer ${hasActivity ? 'running' : ''}" title = "Execution time" >⏱ ${formatTimer(view.elapsedSeconds)} </span>
-        < button class="btn-icon perm-btn ${isSandbox ? 'sandbox' : 'full'}"
-  title = "${isSandbox ? 'Sandbox Mode' : 'Full Access'}"
-  @click="${() => view.togglePermission(view.selectedAgent)}"
-    >
-    ${isSandbox ? '🔒' : '🔓'}
-  </button>
-    </div>
-    </div>
+        </div>
+        <div class="agent-status-right">
+          <button class="btn-icon perm-btn ${isSandbox ? 'sandbox' : 'full'}" title="${isSandbox ? 'Sandbox Mode' : 'Full Access'}" @click="${() => view.togglePermission(view.selectedAgent)}">
+            ${isSandbox ? '🔒' : '🔓'}
+          </button>
+        </div>
+      </div>
       ${capKeys.length > 0 ? html`
         <div class="agent-status-caps">
           ${capKeys.map(cap => html`
             <span class="cap-label ${capabilities[cap] ? 'active' : ''}">${cap}</span>
           `)}
         </div>
-      ` : ''
-    }
-  </div>
-    `;
+      ` : ''}
+    </div>
+  `;
 }
 
 // ─── Attachments ──────────────────────────────────────────
 function renderAttachmentChip(view: IChatView, path: string) {
   return html`
-    < div class="chip" style = "display: flex; align-items: center; gap: 4px; background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); padding: 2px 6px; border-radius: 4px; font-size: 10px;" >
-      <span class="codicon codicon-file" > </span>
-        < span style = "max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" >
-          ${path.split('/').pop()}
-  </span>
-    < span class="codicon codicon-close" style = "cursor: pointer;" @click="${() => view.removeAttachment(path)}" > </span>
-      </div>
-        `;
+    <div class="chip" style="display:flex;align-items:center;gap:4px;background:var(--vscode-badge-background);color:var(--vscode-badge-foreground);padding:2px 6px;border-radius:4px;font-size:10px;">
+      <span class="codicon codicon-file"></span>
+      <span style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${path.split('/').pop()}</span>
+      <span class="codicon codicon-close" style="cursor:pointer;" @click="${() => view.removeAttachment(path)}"></span>
+    </div>
+  `;
 }
 
 function renderAttachmentsList(view: IChatView) {
-  if (view.attachments.length === 0) {
-    return '';
-  }
+  if (view.attachments.length === 0) { return ''; }
   return html`
-      < div class="attachments-list" style = "display: flex; gap: 4px; padding: 4px; flex-wrap: wrap;" >
-        ${view.attachments.map(path => renderAttachmentChip(view, path))}
-  </div>
-    `;
+    <div class="attachments-list" style="display:flex;gap:4px;padding:4px;flex-wrap:wrap;">
+      ${view.attachments.map(path => renderAttachmentChip(view, path))}
+    </div>
+  `;
 }
 
 // ─── Input Controls ──────────────────────────────────────
@@ -391,28 +386,19 @@ function renderInputControls(view: IChatView) {
     : `Ask the ${view.selectedAgent.charAt(0).toUpperCase() + view.selectedAgent.slice(1)} Agent...`;
 
   return html`
-    < div style = "display: flex; gap: 4px; align-items: center;" >
-      <button class="btn-icon" title = "Attach Context" style = "background: none; border: none; color: var(--vscode-foreground); cursor: pointer; padding: 4px; border: 1px solid var(--vscode-input-border); border-radius: 4px; margin-right: 4px;" @click="${() => view.handleAttachFile()}" >
-        <svg width="16" height = "16" viewBox = "0 0 16 16" xmlns = "http://www.w3.org/2000/svg" fill = "currentColor" >
-          <path d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 1 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0V3z" />
-            </svg>
-            </button>
-            < input
-  class="input-control"
-  type = "text"
-  style = "flex: 1;"
-    .value = "${view.inputText}"
-  @input="${(e: InputEvent) => view.handleInput(e)}"
-  @keydown="${(e: KeyboardEvent) => view.handleKeyDown(e)}"
-  placeholder = "${placeholder}"
-    ? disabled = "${view.agentDisabled}"
-    />
-    <button class="btn btn-primary" @click="${() => view.sendChatMessage()}" ? disabled = "${view.agentDisabled}" > Send </button>
-      </div>
-        `;
+    <div style="display:flex;gap:4px;align-items:center;">
+      <button class="btn-icon" title="Attach Context" style="background:none;border:1px solid var(--vscode-input-border);color:var(--vscode-foreground);cursor:pointer;padding:4px;border-radius:4px;" @click="${() => view.handleAttachFile()}">
+        <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+          <path d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 1 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0V3z"/>
+        </svg>
+      </button>
+      <input class="input-control" type="text" style="flex:1;" .value="${view.inputText}" @input="${(e: InputEvent) => view.handleInput(e)}" @keydown="${(e: KeyboardEvent) => view.handleKeyDown(e)}" placeholder="${placeholder}" ?disabled="${view.agentDisabled}"/>
+      <button class="btn btn-primary" @click="${() => view.sendChatMessage()}" ?disabled="${view.agentDisabled}">Send</button>
+    </div>
+  `;
 }
 
-// ─── Input Group: Agent Status Bar + Attachments + Input ───
+// ─── Input Group ──────────────────────────────────────────
 function renderInputGroup(view: IChatView) {
   return html`
     <div class="input-group layout-col">
@@ -425,13 +411,16 @@ function renderInputGroup(view: IChatView) {
   `;
 }
 
-// ─── Vertical Phase Timeline ──────────────────────────────────
+// ─── Vertical Phase Timeline (LEFT sidebar) ───────────────
 function renderPhaseTimeline(view: IChatView) {
   if (view.taskSteps.length === 0) { return ''; }
   return html`
     <div class="phase-timeline">
       ${view.taskSteps.map((step, i) => html`
-        <div class="phase-dot ${step.status}" title="${step.label}"></div>
+        <div class="phase-step ${step.status}">
+          <div class="phase-dot ${step.status}"></div>
+          <span class="phase-step-label">${step.label}</span>
+        </div>
         ${i < view.taskSteps.length - 1 ? html`<div class="phase-line ${step.status === 'done' ? 'done' : ''}"></div>` : ''}
       `)}
     </div>
@@ -443,8 +432,8 @@ export function render(view: IChatView): TemplateResult {
   return html`
     ${renderHeader(view)}
     <div class="chat-with-timeline">
-      ${renderHistory(view)}
       ${renderPhaseTimeline(view)}
+      ${renderHistory(view)}
     </div>
     ${renderInputGroup(view)}
   `;

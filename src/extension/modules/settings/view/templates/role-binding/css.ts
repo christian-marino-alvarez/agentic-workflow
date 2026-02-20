@@ -92,6 +92,20 @@ export const styles = css`
     width: 100%;
   }
 
+  .model-selection-desc {
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground);
+    font-style: italic;
+    padding: 4px 2px 0;
+    line-height: 1.4;
+    opacity: 0.8;
+    animation: descFadeIn 0.3s ease;
+  }
+  @keyframes descFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 0.8; transform: translateY(0); }
+  }
+
   /* ─── Normalized Dropdown ────────────────────────── */
 
   .dropdown-group {

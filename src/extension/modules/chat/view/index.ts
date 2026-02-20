@@ -335,7 +335,8 @@ export class ChatView extends View {
         text,
         agentRole: this.selectedAgent,
         workflow: this.activeWorkflow,
-        attachments: this.attachments
+        attachments: this.attachments,
+        history: this.history.slice(-20).map(m => ({ role: m.role || 'user', text: m.text }))
       });
 
       this.attachments = [];

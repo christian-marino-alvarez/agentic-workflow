@@ -43,12 +43,15 @@ export class ChatBackground extends Background {
     }
   }
 
-  private async handleSendMessage(data: { text: string, agentRole: string, modelId?: string }): Promise<any> {
+  private async handleSendMessage(data: { text: string, agentRole: string, modelId?: string, history?: Array<{ role: string, text: string }> }): Promise<any> {
     const role = data.agentRole || 'backend';
     this.log(`Message for role "${role}": ${data.text.substring(0, 50)}...`);
 
     // Emit "thinking" status
     this.emitStatus('Contacting LLM Sidecar...');
+
+    // Format conversation history for LLM context
+    const inputWithHistory = this.formatInputWithHistory(data.text, data.history);
 
     try {
       // 1. Fetch available models and API keys from SettingsBackground
@@ -93,7 +96,7 @@ export class ChatBackground extends Background {
       // Create request payload matching AgentRequest interface
       const payload = {
         role,
-        input: data.text,
+        input: inputWithHistory,
         binding: { [role]: modelName },
         apiKey,
         provider,
@@ -262,6 +265,31 @@ export class ChatBackground extends Background {
       this.log('Error handling roles changed', error);
     }
     return { success: true };
+  }
+
+  /**
+   * Format conversation history + current message into a single input string.
+   * Gives the LLM memory of the conversation so it can recall names, topics, etc.
+   */
+  private formatInputWithHistory(currentText: string, history?: Array<{ role: string, text: string }>): string {
+    if (!history || history.length <= 1) {
+      return currentText;
+    }
+
+    // Format previous messages (exclude the last one which is the current message)
+    const previousMessages = history.slice(0, -1)
+      .filter(m => m.text && m.text.trim())
+      .map(m => {
+        const label = m.role === 'user' ? 'User' : m.role.charAt(0).toUpperCase() + m.role.slice(1);
+        return `${label}: ${m.text}`;
+      })
+      .join('\n');
+
+    if (!previousMessages) {
+      return currentText;
+    }
+
+    return `[Conversation history]\n${previousMessages}\n\n[Current message]\nUser: ${currentText}`;
   }
 
   protected getHtmlForWebview(webview: vscode.Webview): string {

@@ -402,20 +402,21 @@ export class ChatView extends View {
   /**
    * Save current session to persistent storage.
    */
-  public saveCurrentSession() {
+  public async saveCurrentSession(): Promise<void> {
     const messages = this.history.map(m => ({
       sender: m.sender,
       text: m.text,
       role: m.role,
     }));
-    this.sendMessage(NAME, MESSAGES.SAVE_SESSION, {
-      sessionId: this.currentSessionId || undefined,
-      messages,
-    }).then((result: any) => {
+    try {
+      const result = await this.sendMessage(NAME, MESSAGES.SAVE_SESSION, {
+        sessionId: this.currentSessionId || undefined,
+        messages,
+      });
       if (result?.sessionId) {
         this.currentSessionId = result.sessionId;
       }
-    }).catch(() => { /* silent */ });
+    } catch { /* silent */ }
   }
 
   /**

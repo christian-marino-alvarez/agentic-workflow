@@ -11,9 +11,13 @@ export class ChatBackground extends Background {
 
   /** Matches agent identity prefixes like "🏛️ **architect-agent**:" at the start of responses. */
   private static readonly AGENT_PREFIX_REGEX = /^\s*(?:[\p{Emoji}\u200d]+\s*)?\*{0,2}\w[\w-]*(?:-agent)?\*{0,2}\s*:\s*/u;
+  private static readonly SESSIONS_KEY = 'chat.sessions';
+  private static readonly LAST_SESSION_KEY = 'chat.lastSessionId';
+  private vscodeContext: vscode.ExtensionContext;
 
   constructor(context: vscode.ExtensionContext) {
     super(NAME, context.extensionUri, `${NAME}-view`);
+    this.vscodeContext = context;
     try {
       const ext = vscode.extensions.getExtension('christian-marino-alvarez.agentic-workflow');
       this.appVersion = ext?.packageJSON?.version || '0.0.0-error';
@@ -36,6 +40,16 @@ export class ChatBackground extends Background {
         return this.handleLoadInit();
       case MESSAGES.SELECT_FILES:
         return this.handleSelectFiles();
+      case MESSAGES.SAVE_SESSION:
+        return this.handleSaveSession(message.payload.data);
+      case MESSAGES.LOAD_SESSION:
+        return this.handleLoadSession(message.payload.data);
+      case MESSAGES.LIST_SESSIONS:
+        return this.handleListSessions();
+      case MESSAGES.DELETE_SESSION:
+        return this.handleDeleteSession(message.payload.data);
+      case MESSAGES.NEW_SESSION:
+        return this.handleNewSession();
       case 'ROLES_CHANGED':
         return this.handleRolesChanged();
       default:
@@ -337,5 +351,144 @@ export class ChatBackground extends Background {
         data: { text, agentRole: role }
       }
     });
+  }
+
+  // ─── Session Persistence (globalState) ──────────────────────
+
+  private getSessions(): any[] {
+    return this.vscodeContext.globalState.get<any[]>(ChatBackground.SESSIONS_KEY) || [];
+  }
+
+  private async saveSessions(sessions: any[]): Promise<void> {
+    await this.vscodeContext.globalState.update(ChatBackground.SESSIONS_KEY, sessions);
+  }
+
+  private async setLastSessionId(id: string | null): Promise<void> {
+    await this.vscodeContext.globalState.update(ChatBackground.LAST_SESSION_KEY, id);
+  }
+
+  private getLastSessionId(): string | null {
+    return this.vscodeContext.globalState.get<string>(ChatBackground.LAST_SESSION_KEY) || null;
+  }
+
+  private async handleSaveSession(data: { sessionId?: string, messages: any[] }): Promise<any> {
+    const sessions = this.getSessions();
+    const id = data.sessionId || randomUUID();
+
+    // Derive title from first user message
+    const firstUserMsg = data.messages.find((m: any) => m.role === 'user');
+    const title = firstUserMsg?.text?.substring(0, 60) || 'New conversation';
+
+    const existing = sessions.findIndex(s => s.id === id);
+    const session = {
+      id,
+      title,
+      timestamp: Date.now(),
+      messages: data.messages,
+    };
+
+    if (existing >= 0) {
+      sessions[existing] = session;
+    } else {
+      sessions.unshift(session); // newest first
+    }
+
+    // Cap at 50 sessions
+    if (sessions.length > 50) { sessions.length = 50; }
+
+    await this.saveSessions(sessions);
+    await this.setLastSessionId(id);
+    this.log(`Session saved: ${id} ("${title}")`);
+    return { success: true, sessionId: id };
+  }
+
+  private async handleLoadSession(data: { sessionId: string }): Promise<any> {
+    const sessions = this.getSessions();
+
+    // Resolve __last__ to the last used session
+    let targetId = data.sessionId;
+    if (targetId === '__last__') {
+      const lastId = this.getLastSessionId();
+      if (!lastId) { return { success: false, error: 'No last session' }; }
+      targetId = lastId;
+    }
+
+    const session = sessions.find(s => s.id === targetId);
+
+    if (!session) {
+      this.log(`Session not found: ${targetId}`);
+      return { success: false, error: 'Session not found' };
+    }
+
+    await this.setLastSessionId(session.id);
+
+    this.messenger.emit({
+      id: randomUUID(),
+      from: `${NAME}::background`,
+      to: `${NAME}::view`,
+      timestamp: Date.now(),
+      origin: MessageOrigin.Server,
+      payload: {
+        command: MESSAGES.LOAD_SESSION_RESPONSE,
+        data: { session }
+      }
+    });
+
+    this.log(`Session loaded: ${session.id} ("${session.title}")`);
+    return { success: true };
+  }
+
+  private async handleListSessions(): Promise<any> {
+    const sessions = this.getSessions().map(s => ({
+      id: s.id,
+      title: s.title,
+      timestamp: s.timestamp,
+      messageCount: s.messages?.length || 0,
+    }));
+
+    this.messenger.emit({
+      id: randomUUID(),
+      from: `${NAME}::background`,
+      to: `${NAME}::view`,
+      timestamp: Date.now(),
+      origin: MessageOrigin.Server,
+      payload: {
+        command: MESSAGES.LIST_SESSIONS_RESPONSE,
+        data: { sessions }
+      }
+    });
+
+    return { success: true, count: sessions.length };
+  }
+
+  private async handleDeleteSession(data: { sessionId: string }): Promise<any> {
+    let sessions = this.getSessions();
+    sessions = sessions.filter(s => s.id !== data.sessionId);
+    await this.saveSessions(sessions);
+
+    const lastId = this.getLastSessionId();
+    if (lastId === data.sessionId) {
+      await this.setLastSessionId(sessions.length > 0 ? sessions[0].id : null);
+    }
+
+    this.log(`Session deleted: ${data.sessionId}`);
+    return { success: true };
+  }
+
+  private async handleNewSession(): Promise<any> {
+    const id = randomUUID();
+    await this.setLastSessionId(id);
+    this.log(`New session started: ${id}`);
+    return { success: true, sessionId: id };
+  }
+
+  /**
+   * Get the last session's data for auto-load on startup.
+   */
+  public getLastSession(): any | null {
+    const lastId = this.getLastSessionId();
+    if (!lastId) { return null; }
+    const sessions = this.getSessions();
+    return sessions.find(s => s.id === lastId) || null;
   }
 }

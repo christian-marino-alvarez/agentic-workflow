@@ -70,6 +70,12 @@ export class ChatView extends View {
     'architect': 'sandbox'
   };
 
+  @state()
+  public currentSessionId: string = '';
+
+  @state()
+  public sessionList: Array<{ id: string, title: string, timestamp: number, messageCount: number }> = [];
+
   /**
    * Whether the currently selected agent is disabled (no model assigned).
    */
@@ -105,6 +111,7 @@ export class ChatView extends View {
     this.initWorkflow();
     this.loadModels();
     this.loadAgents();
+    this.loadLastSession();
 
     // Listen for secure state changes from Settings
     window.addEventListener('secure-state-changed', ((e: CustomEvent) => {
@@ -115,6 +122,17 @@ export class ChatView extends View {
       }
       this.log(`Secure state updated: ${this.isSecure}`);
     }) as EventListener);
+  }
+
+  /**
+   * Load the last session from persistent storage.
+   */
+  private async loadLastSession() {
+    try {
+      await this.sendMessage(NAME, MESSAGES.LOAD_SESSION, { sessionId: '__last__' });
+    } catch {
+      // No last session, use default history
+    }
   }
 
   /**
@@ -244,6 +262,8 @@ export class ChatView extends View {
           lastMsg.isStreaming = isStreaming;
           lastMsg.status = undefined;
           this.history = historyCopy;
+          // Auto-save when streaming completes
+          if (!isStreaming) { this.saveCurrentSession(); }
         } else {
           if (lastMsg && lastMsg.role === data.agentRole && lastMsg.status && lastMsg.text === '') {
             lastMsg.text = data.text;
@@ -300,6 +320,27 @@ export class ChatView extends View {
         this.log('Agents refreshed:', this.availableAgents.length);
       }
     }
+
+    // Handle session loaded from persistence
+    if (command === MESSAGES.LOAD_SESSION_RESPONSE) {
+      if (data?.session?.messages) {
+        this.currentSessionId = data.session.id;
+        this.history = data.session.messages.map((m: any) => ({
+          sender: m.sender || (m.role === 'user' ? 'Me' : m.role?.charAt(0).toUpperCase() + m.role?.slice(1)),
+          text: m.text,
+          role: m.role,
+        }));
+        this.log(`Session restored: ${data.session.id} (${data.session.messages.length} messages)`);
+      }
+    }
+
+    // Handle session list for History tab
+    if (command === MESSAGES.LIST_SESSIONS_RESPONSE) {
+      if (data?.sessions) {
+        this.sessionList = data.sessions;
+        this.log(`Session list loaded: ${data.sessions.length} sessions`);
+      }
+    }
   }
 
   public handleInput(e: InputEvent) {
@@ -339,7 +380,6 @@ export class ChatView extends View {
 
     try {
       this.isLoading = true;
-      // Send and await ACK (success: true)
       await this.sendMessage(NAME, MESSAGES.SEND_MESSAGE, {
         text,
         agentRole: this.selectedAgent,
@@ -349,11 +389,72 @@ export class ChatView extends View {
       });
 
       this.attachments = [];
+
+      // Auto-save session after sending
+      this.saveCurrentSession();
     } catch (error) {
       this.isLoading = false;
       this.log('Error sending message', error);
       this.history = [...this.history, { sender: 'System', text: 'Error sending message', role: 'system' }];
     }
+  }
+
+  /**
+   * Save current session to persistent storage.
+   */
+  public saveCurrentSession() {
+    const messages = this.history.map(m => ({
+      sender: m.sender,
+      text: m.text,
+      role: m.role,
+    }));
+    this.sendMessage(NAME, MESSAGES.SAVE_SESSION, {
+      sessionId: this.currentSessionId || undefined,
+      messages,
+    }).then((result: any) => {
+      if (result?.sessionId) {
+        this.currentSessionId = result.sessionId;
+      }
+    }).catch(() => { /* silent */ });
+  }
+
+  /**
+   * Start a new chat session.
+   */
+  public async newSession() {
+    this.history = [
+      { sender: 'Architect', text: 'I am the Architect Agent. I am ready to help you manage your workflow.', role: 'architect', isStreaming: false }
+    ];
+    this.currentSessionId = '';
+    try {
+      const result = await this.sendMessage(NAME, MESSAGES.NEW_SESSION);
+      if (result?.sessionId) {
+        this.currentSessionId = result.sessionId;
+      }
+    } catch { /* silent */ }
+  }
+
+  /**
+   * Request session list from background.
+   */
+  public requestSessions() {
+    this.sendMessage(NAME, MESSAGES.LIST_SESSIONS).catch(() => { /* silent */ });
+  }
+
+  /**
+   * Load a specific session by id.
+   */
+  public loadSession(sessionId: string) {
+    this.sendMessage(NAME, MESSAGES.LOAD_SESSION, { sessionId }).catch(() => { /* silent */ });
+  }
+
+  /**
+   * Delete a session.
+   */
+  public deleteSession(sessionId: string) {
+    this.sendMessage(NAME, MESSAGES.DELETE_SESSION, { sessionId }).then(() => {
+      this.sessionList = this.sessionList.filter(s => s.id !== sessionId);
+    }).catch(() => { /* silent */ });
   }
 
 

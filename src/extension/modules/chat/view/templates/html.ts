@@ -112,9 +112,9 @@ function renderMetroTimeline(view: IChatView) {
     <div class="metro-timeline">
       ${view.taskSteps.map((step, i) => {
     const isLast = i === view.taskSteps.length - 1;
-    const colorMap = { done: '#4ec9b0', active: '#569cd6', pending: '#555' };
+    const colorMap = { done: '#4dacff', active: '#569cd6', pending: '#555' };
     const dotColor = colorMap[step.status];
-    const lineColor = step.status === 'done' ? '#4ec9b0' : '#333';
+    const lineColor = step.status === 'done' ? '#4dacff' : '#333';
     return html`
           <div class="metro-step">
             <div class="metro-track">

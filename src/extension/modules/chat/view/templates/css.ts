@@ -178,7 +178,7 @@ export const styles = css`
       gap: 6px;
     }
 
-    .metro-label.done { color: #4ec9b0; }
+    .metro-label.done { color: #4dacff; }
     .metro-label.active { color: #569cd6; font-weight: 600; }
     .metro-label.pending { color: #555; }
 

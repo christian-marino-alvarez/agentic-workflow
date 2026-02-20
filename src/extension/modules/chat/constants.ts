@@ -17,6 +17,8 @@ export const MESSAGES = {
   LIST_SESSIONS_RESPONSE: 'LIST_SESSIONS_RESPONSE', // Background -> Chat (session list)
   DELETE_SESSION: 'DELETE_SESSION', // Chat -> Background (delete a session)
   NEW_SESSION: 'NEW_SESSION', // Chat -> Background (start fresh)
+  // Delegation
+  DELEGATION_EVENT: 'DELEGATION_EVENT', // Background -> Chat (delegation status updates)
 } as const;
 
 export type ChatCommand = typeof MESSAGES[keyof typeof MESSAGES];

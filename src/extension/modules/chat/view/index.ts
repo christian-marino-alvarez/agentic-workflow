@@ -16,7 +16,7 @@ export class ChatView extends View {
   }
 
   @state()
-  public history: Array<{ sender: string, text: string, role?: string, status?: string, isStreaming?: boolean, toolEvents?: Array<any> }> = [];
+  public history: Array<{ sender: string, text: string, role?: string, status?: string, isStreaming?: boolean, toolEvents?: Array<any>, isDelegation?: boolean, delegationAgent?: string, delegationStatus?: string, delegationResult?: string }> = [];
 
   @state()
   public inputText: string = '';
@@ -321,6 +321,32 @@ export class ChatView extends View {
               isStreaming
             }];
           }
+        }
+      }
+    }
+
+    // Handle delegation events (delegation card with agent info + result)
+    if (command === MESSAGES.DELEGATION_EVENT) {
+      if (data?.type === 'tool_call' && data?.status === 'pending') {
+        // Show delegation card
+        this.history = [...this.history, {
+          sender: `🔀 Delegación → ${data.targetAgent || 'agente'}`,
+          text: `**Tarea delegada**: ${data.taskDescription || '(sin descripción)'}`,
+          role: 'delegation',
+          isDelegation: true,
+          delegationAgent: data.targetAgent,
+          delegationStatus: 'pending',
+          isStreaming: true,
+        }];
+      } else if (data?.type === 'tool_result' && data?.result) {
+        // Update the last delegation card with the result
+        const historyCopy = [...this.history];
+        const delegationMsg = historyCopy.reverse().find((m: any) => m.isDelegation && m.delegationStatus === 'pending');
+        if (delegationMsg) {
+          delegationMsg.delegationStatus = 'completed';
+          delegationMsg.delegationResult = data.result;
+          delegationMsg.isStreaming = false;
+          this.history = [...historyCopy.reverse()];
         }
       }
     }

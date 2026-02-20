@@ -1,24 +1,15 @@
 ---
-title: Agent Tools & Action Sandbox
+id: candidate
+title: Agent Delegation (Inter-Agent Task Routing)
+description: >
+  Implementar delegación inter-agente donde el architect-agent (u otros coordinadores) 
+  pueden asignar sub-tareas a agentes especializados (qa, backend, view, etc.) 
+  sin intervención del desarrollador. El agente coordinador recibe el resultado 
+  y lo sintetiza para el usuario.
 goal: >
-  Dotar a los agentes del Chat de tools reales (readFile, writeFile, runCommand, listDir)
-  para que puedan ejecutar acciones sobre el sistema de archivos y terminal.
-  Integrar con el sistema de permisos sandbox/full del Chat UI.
-owner: architect-agent
-strategy: long
+  Que el architect-agent pueda delegar tareas a otros agentes dentro de una misma 
+  sesión de chat, usando un tool `delegateTask` que invoque internamente otro agente 
+  con su personalidad y herramientas, devolviendo el resultado al coordinador.
+backlog_ref: T039
+domain: D3 - Backend & Agent Orchestration
 ---
-
-# Task Candidate: T032 — Agent Tools & Action Sandbox
-
-## Description
-Los agentes actualmente solo hacen text-in → text-out. No pueden leer/escribir archivos
-ni ejecutar comandos. Esta tarea implementa las tools del OpenAI Agents SDK en el sidecar
-y las conecta con el sistema de permisos (sandbox/full access) del Chat UI.
-
-## Objective
-Permitir que los agentes del Chat puedan:
-1. Leer archivos del proyecto
-2. Crear/escribir archivos
-3. Ejecutar comandos en terminal
-4. Listar directorios
-5. Todo controlado por el toggle sandbox/full del Chat UI

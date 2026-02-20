@@ -9,6 +9,9 @@ import { randomUUID } from 'crypto';
 
 export class ChatBackground extends Background {
 
+  /** Matches agent identity prefixes like "🏛️ **architect-agent**:" at the start of responses. */
+  private static readonly AGENT_PREFIX_REGEX = /^\s*(?:[\p{Emoji}\u200d]+\s*)?\*{0,2}\w[\w-]*(?:-agent)?\*{0,2}\s*:\s*/u;
+
   constructor(context: vscode.ExtensionContext) {
     super(NAME, context.extensionUri, `${NAME}-view`);
     try {
@@ -18,6 +21,11 @@ export class ChatBackground extends Background {
       this.appVersion = '0.0.0-ex';
     }
     this.log('Initialized v' + this.appVersion);
+  }
+
+  /** Remove agent identity prefix from LLM response (the Chat UI bubble already shows the sender). */
+  private stripAgentPrefix(text: string): string {
+    return text.replace(ChatBackground.AGENT_PREFIX_REGEX, '');
   }
 
   public override async listen(message: Message): Promise<any> {
@@ -149,7 +157,7 @@ export class ChatBackground extends Background {
                   origin: MessageOrigin.Server,
                   payload: {
                     command: MESSAGES.RECEIVE_MESSAGE,
-                    data: { text: streamText, agentRole: role, isStreaming: true }
+                    data: { text: this.stripAgentPrefix(streamText), agentRole: role, isStreaming: true }
                   }
                 });
               }
@@ -169,7 +177,7 @@ export class ChatBackground extends Background {
         origin: MessageOrigin.Server,
         payload: {
           command: MESSAGES.RECEIVE_MESSAGE,
-          data: { text: streamText, agentRole: role, isStreaming: false }
+          data: { text: this.stripAgentPrefix(streamText), agentRole: role, isStreaming: false }
         }
       });
 

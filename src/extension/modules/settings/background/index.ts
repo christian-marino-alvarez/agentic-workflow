@@ -438,7 +438,7 @@ export class SettingsBackground extends Background {
       const roles = [];
 
       for (const file of files) {
-        if (!file.endsWith('.md')) { continue; }
+        if (!file.endsWith('.md') || file === 'index.md') { continue; }
 
         const roleName = file.replace('.md', '');
         let icon: string | undefined;

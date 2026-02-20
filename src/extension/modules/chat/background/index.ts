@@ -417,20 +417,34 @@ export class ChatBackground extends Background {
     return this.vscodeContext.globalState.get<string>(ChatBackground.LAST_SESSION_KEY) || null;
   }
 
-  private async handleSaveSession(data: { sessionId?: string, messages: any[] }): Promise<any> {
+  private async handleSaveSession(data: { sessionId?: string, messages: any[], taskTitle?: string, elapsedSeconds?: number, progress?: number, accessLevel?: string, securityScore?: number }): Promise<any> {
     const sessions = this.getSessions();
     const id = data.sessionId || randomUUID();
 
-    // Derive title from first user message
+    // Derive title from taskTitle or first user message
     const firstUserMsg = data.messages.find((m: any) => m.role === 'user');
-    const title = firstUserMsg?.text?.substring(0, 60) || 'New conversation';
+    const title = firstUserMsg?.text?.substring(0, 60) || 'New task';
+
+    // Extract participating agents from messages
+    const agentRoles = new Set<string>();
+    for (const m of data.messages) {
+      if (m.role && m.role !== 'user' && m.role !== 'system') {
+        agentRoles.add(m.role);
+      }
+    }
 
     const existing = sessions.findIndex(s => s.id === id);
     const session = {
       id,
       title,
+      taskTitle: data.taskTitle || undefined,
       timestamp: Date.now(),
       messages: data.messages,
+      elapsedSeconds: data.elapsedSeconds || 0,
+      progress: data.progress ?? 0,
+      accessLevel: data.accessLevel || 'sandbox',
+      securityScore: data.securityScore ?? 100,
+      agents: Array.from(agentRoles),
     };
 
     if (existing >= 0) {
@@ -444,7 +458,7 @@ export class ChatBackground extends Background {
 
     await this.saveSessions(sessions);
     await this.setLastSessionId(id);
-    this.log(`Session saved: ${id} ("${title}")`);
+    this.log(`Session saved: ${id} ("${data.taskTitle || title}")`);
     return { success: true, sessionId: id };
   }
 
@@ -488,8 +502,14 @@ export class ChatBackground extends Background {
     const sessions = this.getSessions().map(s => ({
       id: s.id,
       title: s.title,
+      taskTitle: s.taskTitle || undefined,
       timestamp: s.timestamp,
       messageCount: s.messages?.length || 0,
+      elapsedSeconds: s.elapsedSeconds || 0,
+      progress: s.progress ?? 0,
+      accessLevel: s.accessLevel || 'sandbox',
+      securityScore: s.securityScore ?? 100,
+      agents: s.agents || [],
     }));
 
     this.messenger.emit({

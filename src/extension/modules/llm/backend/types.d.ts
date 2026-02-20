@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { FastifyRequest } from 'fastify';
 
 export interface RoleModelBinding {
   [role: string]: string; // role -> modelId
@@ -9,6 +10,9 @@ export interface AgentRequest {
   input: string;
   context?: Record<string, any>;
   binding: RoleModelBinding;
+  apiKey?: string;
+  provider?: string;
+  instructions?: string;
 }
 
 export interface AgentResponse {
@@ -25,3 +29,5 @@ export interface ToolDefinition {
   parameters: z.ZodSchema;
   execute: (args: any) => Promise<any>;
 }
+
+export interface RunRequest extends FastifyRequest<{ Body: AgentRequest }> { }

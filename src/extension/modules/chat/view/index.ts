@@ -1,11 +1,9 @@
 import { View } from '../../core/view/index.js';
 import { state } from 'lit/decorators.js';
-import { html } from 'lit';
 import { styles } from './templates/css.js';
 import { render } from './templates/html.js';
 import { MESSAGES, NAME } from '../constants.js';
 import { MESSAGES as SETTINGS_MESSAGES } from '../../settings/constants.js';
-import { getRoleIcon } from '../../settings/view/templates/icons.js';
 
 console.log('[chat::view] Module loading...');
 
@@ -15,12 +13,11 @@ export class ChatView extends View {
 
   constructor() {
     super();
-    console.log('[chat::view] Constructor called');
   }
 
   @state()
-  public history: Array<{ sender: string, text: string, role?: string, status?: string }> = [
-    { sender: 'Architect', text: 'I am the Architect Agent. I am ready to help you manage your workflow.', role: 'architect' }
+  public history: Array<{ sender: string, text: string, role?: string, status?: string, isStreaming?: boolean }> = [
+    { sender: 'Architect', text: 'I am the Architect Agent. I am ready to help you manage your workflow.', role: 'architect', isStreaming: false }
   ];
 
   @state()
@@ -32,14 +29,27 @@ export class ChatView extends View {
   @state()
   public attachments: string[] = [];
 
-  @state()
-  public selectedModelId: string = '';
-
-  @state()
-  public agentFilter: string = 'all';
+  private activeModelId: string = '';
 
   @state()
   public activeWorkflow: string = 'T032: Runtime Server & Action Sandbox';
+
+  @state()
+  public selectedAgent: string = 'architect';
+
+  @state()
+  public showAgentDropdown: boolean = false;
+
+  @state()
+  public availableAgents: Array<{ name: string; icon?: string; model?: { provider?: string; id?: string }; capabilities?: Record<string, boolean> }> = [
+    { name: 'architect' },
+    { name: 'researcher' },
+    { name: 'qa' },
+    { name: 'engine' },
+    { name: 'view' },
+    { name: 'background' },
+    { name: 'backend' },
+  ];
 
   @state()
   public isLoading: boolean = false;
@@ -48,9 +58,35 @@ export class ChatView extends View {
   public appVersion: string = '';
 
   @state()
+  public isSecure: boolean = false;
+
+  @state()
+  public isTesting: boolean = false;
+
+  private verifiedModelIds: Set<string> = new Set();
+
+  @state()
   public agentPermissions: Record<string, 'sandbox' | 'full'> = {
     'architect': 'sandbox'
   };
+
+  /**
+   * Whether the currently selected agent is disabled (no model assigned).
+   */
+  get agentDisabled(): boolean {
+    const agent = this.availableAgents.find(a => a.name === this.selectedAgent);
+    return !agent?.model?.id;
+  }
+
+  /**
+   * Display name of the model assigned to the currently selected agent.
+   */
+  get agentModelName(): string {
+    const agent = this.availableAgents.find(a => a.name === this.selectedAgent);
+    if (!agent?.model?.id) { return ''; }
+    const model = this.models.find(m => m.id === agent.model!.id);
+    return model?.name || agent.model.id;
+  }
 
   public togglePermission(role: string) {
     const current = this.agentPermissions[role] || 'sandbox';
@@ -68,6 +104,17 @@ export class ChatView extends View {
     this.log('Chat view mounted');
     this.initWorkflow();
     this.loadModels();
+    this.loadAgents();
+
+    // Listen for secure state changes from Settings
+    window.addEventListener('secure-state-changed', ((e: CustomEvent) => {
+      const isSecure = e.detail?.secure || false;
+      this.isSecure = isSecure;
+      if (isSecure && this.activeModelId) {
+        this.verifiedModelIds.add(this.activeModelId);
+      }
+      this.log(`Secure state updated: ${this.isSecure}`);
+    }) as EventListener);
   }
 
   /**
@@ -79,7 +126,7 @@ export class ChatView extends View {
       const data = await this.sendMessage('settings', SETTINGS_MESSAGES.GET_REQUEST);
       if (data && data.models) {
         this.models = data.models;
-        this.selectedModelId = data.activeModelId || (data.models[0]?.id ?? '');
+        this.activeModelId = data.activeModelId || (data.models[0]?.id ?? '');
         this.log('Models loaded:', this.models.length);
       }
     } catch (error) {
@@ -89,15 +136,62 @@ export class ChatView extends View {
     }
   }
 
-  public handleModelChange(e: Event) {
-    this.selectedModelId = (e.target as HTMLSelectElement).value;
-    const model = this.models.find(m => m.id === this.selectedModelId);
-    this.log('Model changed to:', model?.name || this.selectedModelId);
+  /**
+   * Load agents (roles) with their model/capabilities from Settings.
+   */
+  private async loadAgents() {
+    try {
+      const result = await this.sendMessage('settings', SETTINGS_MESSAGES.GET_ROLES);
+      if (result?.success && result.roles) {
+        this.availableAgents = result.roles.map((r: any) => ({
+          name: r.name,
+          icon: r.icon,
+          model: r.model,
+          capabilities: r.capabilities
+        }));
+        this.log('Agents loaded:', this.availableAgents.length);
+      }
+    } catch (error) {
+      this.log('Error loading agents', error);
+    }
   }
 
-  public handleFilterChange(e: Event) {
-    this.agentFilter = (e.target as HTMLSelectElement).value;
-    this.requestUpdate();
+
+  /**
+   * Test connection for the currently selected model (triggered from badge button)
+   */
+  public async testConnection() {
+    const model = this.models.find(m => m.id === this.activeModelId) as any;
+    if (!model) { return; }
+
+    this.isTesting = true;
+    this.log('Testing connection from Chat for:', model.name);
+
+    try {
+      const result = await this.sendMessage('settings', SETTINGS_MESSAGES.TEST_CONNECTION_REQUEST, {
+        provider: model.provider,
+        authType: model.authType || 'apiKey',
+        apiKey: model.apiKey || null,
+      });
+
+      if (result?.success) {
+        this.verifiedModelIds.add(this.activeModelId);
+        this.isSecure = true;
+        this.log('Connection verified ✓');
+        // Emit secure state for the tab bar badge
+        window.dispatchEvent(new CustomEvent('secure-state-changed', {
+          detail: { secure: true }
+        }));
+      } else {
+        this.isSecure = false;
+        this.log('Connection failed:', result?.error);
+      }
+    } catch (error: any) {
+      this.isSecure = false;
+      this.log('Test connection error:', error.message);
+    } finally {
+      this.isTesting = false;
+    }
   }
 
   /**
@@ -127,16 +221,34 @@ export class ChatView extends View {
     if (command === MESSAGES.RECEIVE_MESSAGE) {
       this.isLoading = false;
       if (data && data.text) {
-        const lastMsg = this.history[this.history.length - 1];
-        if (lastMsg && lastMsg.role === 'architect' && lastMsg.status) {
-          // Merge into existing status message
-          this.history = [
-            ...this.history.slice(0, -1),
-            { ...lastMsg, text: data.text, status: undefined }
-          ];
+        const isStreaming = data.isStreaming === true;
+
+        // Find if the last message in history is from the same role and currently streaming
+        const historyCopy = [...this.history];
+        const lastMsg = historyCopy.length > 0 ? historyCopy[historyCopy.length - 1] : null;
+
+        if (lastMsg && lastMsg.role === data.agentRole && lastMsg.isStreaming) {
+          // Accumulate the chunk
+          lastMsg.text = data.text;
+          lastMsg.isStreaming = isStreaming;
+          lastMsg.status = undefined; // Clear "thinking" status once text arrives
+          this.history = historyCopy;
         } else {
-          // Append new message
-          this.history = [...this.history, { sender: 'Architect', text: data.text, role: 'architect' }];
+          // If the previous message was NOT a streaming message from the same agent, create a new message block
+          // However, verify if background is just clearing out a 'status' message
+          if (lastMsg && lastMsg.role === data.agentRole && lastMsg.status && lastMsg.text === '') {
+            lastMsg.text = data.text;
+            lastMsg.isStreaming = isStreaming;
+            lastMsg.status = undefined;
+            this.history = historyCopy;
+          } else {
+            this.history = [...this.history, {
+              sender: data.agentRole ? data.agentRole.charAt(0).toUpperCase() + data.agentRole.slice(1) : 'Agent',
+              text: data.text,
+              role: data.agentRole,
+              isStreaming
+            }];
+          }
         }
       }
     }
@@ -154,16 +266,29 @@ export class ChatView extends View {
       const { status } = data;
       this.isLoading = false; // Stop skeleton, show status on message
 
-      const lastMsg = this.history[this.history.length - 1];
-      if (lastMsg && lastMsg.role === 'architect') {
-        // Update existing agent message status
-        this.history = [
-          ...this.history.slice(0, -1),
-          { ...lastMsg, status }
-        ];
+      const historyCopy = [...this.history];
+      const lastMsg = historyCopy.length > 0 ? historyCopy[historyCopy.length - 1] : null;
+
+      // If the last message is from the SAME agent and it's either an empty status message or currently streaming, update it
+      // For now, simplify logic to just append a new status container if the last message is User or a different role
+      if (lastMsg && lastMsg.role !== 'user' && lastMsg.role !== 'system') {
+        lastMsg.status = status;
+        this.history = historyCopy;
       } else {
-        // Create new agent message with status
-        this.history = [...this.history, { sender: 'Architect', text: '', role: 'architect', status }];
+        this.history = [...this.history, { sender: 'System', text: '', role: 'system', status }];
+      }
+    }
+
+    // Handle agent list refresh from Chat background (triggered by Settings role changes)
+    if (command === 'REFRESH_AGENTS') {
+      if (data?.agents) {
+        this.availableAgents = data.agents.map((r: any) => ({
+          name: r.name,
+          icon: r.icon,
+          model: r.model,
+          capabilities: r.capabilities
+        }));
+        this.log('Agents refreshed:', this.availableAgents.length);
       }
     }
   }
@@ -186,6 +311,16 @@ export class ChatView extends View {
     }
   }
 
+  public toggleAgentDropdown() {
+    this.showAgentDropdown = !this.showAgentDropdown;
+  }
+
+  public handleAgentChange(role: string) {
+    this.selectedAgent = role;
+    this.showAgentDropdown = false;
+    this.log(`Agent switched to: ${role}`);
+  }
+
   public async sendChatMessage() {
     if (!this.inputText.trim() && this.attachments.length === 0) { return; }
 
@@ -198,9 +333,7 @@ export class ChatView extends View {
       // Send and await ACK (success: true)
       await this.sendMessage(NAME, MESSAGES.SEND_MESSAGE, {
         text,
-        agentRole: 'architect',
-        modelId: this.selectedModelId,
-        agentFilter: this.agentFilter,
+        agentRole: this.selectedAgent,
         workflow: this.activeWorkflow,
         attachments: this.attachments
       });
@@ -215,8 +348,19 @@ export class ChatView extends View {
 
 
 
+  override updated(changedProperties: Map<string, unknown>) {
+    super.updated(changedProperties);
+    if (changedProperties.has('history') || changedProperties.has('isLoading')) {
+      requestAnimationFrame(() => {
+        const container = this.renderRoot?.querySelector('.chat-container');
+        if (container) {
+          container.scrollTop = container.scrollHeight;
+        }
+      });
+    }
+  }
+
   override render() {
-    console.log('[chat::view] render() called');
     return render(this);
   }
 }

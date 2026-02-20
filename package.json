@@ -103,6 +103,11 @@
           "additionalProperties": {
             "type": "string"
           }
+        },
+        "agenticWorkflow.discoveredModelsCache": {
+          "type": "object",
+          "default": {},
+          "description": "Cached discovered models per provider (persists across restarts)"
         }
       }
     }

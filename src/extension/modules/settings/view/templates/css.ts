@@ -344,15 +344,35 @@ export const styles = css`
     background-color: var(--vscode-input-background);
     color: var(--vscode-input-foreground);
     border: 1px solid var(--vscode-input-border);
-    border-radius: 3px;
+    border-radius: 4px;
     font-size: 13px;
     font-family: inherit;
+    transition: border-color 0.15s ease;
+  }
+
+  .form-group select {
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 16 16' fill='%23999'%3E%3Cpath d='M7.976 10.072l4.357-4.357.62.618L8.284 11h-.618L3 6.333l.619-.618 4.357 4.357z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+  }
+
+  .form-group select:hover {
+    border-color: var(--vscode-focusBorder);
   }
 
   .form-group input:focus,
   .form-group select:focus {
     outline: none;
     border-color: var(--vscode-focusBorder);
+  }
+
+  .form-group select:disabled {
+    opacity: 0.5;
+    cursor: default;
   }
 
   .form-actions {

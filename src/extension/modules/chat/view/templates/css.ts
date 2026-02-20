@@ -57,45 +57,7 @@ export const styles = css`
       gap: 8px;
     }
 
-    /* Model Selector */
-    .model-selector {
-      gap: 12px;
-      align-items: center;
-      padding-top: 4px;
-    }
 
-    .selector-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex: 1;
-    }
-
-    .model-label {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--vscode-descriptionForeground);
-      white-space: nowrap;
-    }
-
-    .model-dropdown {
-      flex: 1;
-      padding: 4px 8px;
-      font-size: 12px;
-      font-family: inherit;
-      background-color: var(--vscode-dropdown-background);
-      color: var(--vscode-dropdown-foreground);
-      border: 1px solid var(--vscode-dropdown-border);
-      border-radius: 4px;
-      outline: none;
-      cursor: pointer;
-      appearance: auto;
-    }
-
-    .model-dropdown:focus {
-      border-color: var(--vscode-focusBorder);
-    }
-    
     .header-title {
       margin: 0;
       font-size: 13px;
@@ -110,10 +72,154 @@ export const styles = css`
       color: var(--vscode-textLink-foreground);
     }
 
+    .header-title:hover {
+      opacity: 0.85;
+    }
+
+    .agent-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      z-index: 100;
+      min-width: 200px;
+      background: var(--vscode-dropdown-background, #252526);
+      border: 1px solid var(--vscode-dropdown-border, #3c3c3c);
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      padding: 4px 0;
+      margin-top: 4px;
+    }
+
+    .agent-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      color: var(--vscode-dropdown-foreground, #ccc);
+      cursor: pointer;
+      border-radius: 3px;
+      margin: 0 4px;
+    }
+
+    .agent-option:hover {
+      background: var(--vscode-list-hoverBackground, #2a2d2e);
+    }
+
+    .agent-option.active {
+      background: var(--vscode-list-activeSelectionBackground, #094771);
+      color: var(--vscode-list-activeSelectionForeground, #fff);
+    }
+
+    .agent-option svg {
+      width: 16px;
+      height: 16px;
+    }
+
     .header-status {
         font-size: 11px;
         color: var(--vscode-descriptionForeground);
         font-weight: normal;
+    }
+
+    /* Workflow info in header */
+    .workflow-info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .workflow-label {
+      color: #ffffff;
+      font-weight: 500;
+      font-size: 12px;
+    }
+
+    /* Agent Bar (bottom, above input) */
+    .agent-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0 4px 0;
+      border-bottom: 1px solid var(--vscode-widget-border);
+      margin-bottom: 4px;
+    }
+
+    .agent-select-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      border: 1px solid var(--vscode-widget-border);
+      border-radius: 4px;
+      color: var(--vscode-foreground);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 4px 8px;
+      transition: all 0.15s ease;
+    }
+
+    .agent-select-btn:hover {
+      background: var(--vscode-list-hoverBackground);
+    }
+
+    .agent-select-btn.disabled {
+      opacity: 0.5;
+      border-color: var(--vscode-testing-iconFailed, #f14c4c);
+    }
+
+    .agent-select-btn svg {
+      width: 16px;
+      height: 16px;
+      color: var(--vscode-textLink-foreground);
+    }
+
+    .agent-model-label {
+      font-size: 10px;
+      font-weight: 400;
+      color: var(--vscode-descriptionForeground);
+      padding: 1px 6px;
+      background: var(--vscode-badge-background);
+      border-radius: 8px;
+    }
+
+    .agent-no-model-label {
+      font-size: 10px;
+      color: var(--vscode-testing-iconFailed, #f14c4c);
+      margin-left: auto;
+    }
+
+    .agent-option.no-model {
+      opacity: 0.5;
+    }
+
+    /* Capability Labels */
+    .agent-capabilities {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .cap-label {
+      font-size: 9px;
+      padding: 1px 6px;
+      border-radius: 8px;
+      border: 1px solid var(--vscode-widget-border);
+      color: var(--vscode-descriptionForeground);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      font-weight: 500;
+      opacity: 0.5;
+    }
+
+    .cap-label.active {
+      opacity: 1;
+      background: color-mix(in srgb, var(--vscode-testing-iconPassed) 15%, transparent);
+      border-color: var(--vscode-testing-iconPassed);
+      color: var(--vscode-testing-iconPassed);
     }
 
     .secure-badge {
@@ -330,4 +436,53 @@ export const styles = css`
 
     .skeleton-line.full { width: 90%; }
     .skeleton-line.half { width: 50%; }
+
+    /* Verify Button in header */
+    .verify-btn {
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+      letter-spacing: 0.3px;
+      transition: all 0.2s;
+    }
+    .verify-btn:hover:not(:disabled) {
+      background: rgba(255,255,255,0.15) !important;
+      border-color: var(--vscode-focusBorder) !important;
+      color: var(--vscode-foreground) !important;
+    }
+    .verify-btn:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .spinner {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: var(--vscode-foreground);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    /* Streaming Cursor */
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    
+    .streaming-cursor {
+      display: inline-block;
+      width: 6px;
+      height: 12px;
+      background-color: var(--vscode-foreground);
+      margin-left: 2px;
+      vertical-align: middle;
+      animation: blink 1s step-end infinite;
+    }
 `;

@@ -7,11 +7,11 @@ const __dirname = path.dirname(__filename);
 
 const VSCODE_PATH = path.resolve(
   __dirname,
-  '../../.vscode-test/vscode-darwin-arm64-1.109.3/Visual Studio Code.app/Contents/MacOS/Electron'
+  '../../../../../../.vscode-test/vscode-darwin-arm64-1.109.3/Visual Studio Code.app/Contents/MacOS/Electron'
 );
-const EXTENSION_PATH = path.resolve(__dirname, '../..');
+const EXTENSION_PATH = path.resolve(__dirname, '../../../../../..');
 // Reuse user-data dir but handle sidebar toggle properly
-const USER_DATA_DIR = path.resolve(__dirname, '../../.vscode-test/pw-user-data');
+const USER_DATA_DIR = path.resolve(__dirname, '../../../../../../.vscode-test/pw-user-data');
 
 let electronApp: ElectronApplication;
 let window: Page;

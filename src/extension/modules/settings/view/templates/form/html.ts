@@ -117,6 +117,19 @@ export function renderForm(view: Settings) {
             ` : ''}
         </div>
 
+        ${view.discoveredModels.length > 0 ? html`
+          <div class="form-group">
+            <label for="modelId">API Model</label>
+            <select id="modelId" name="modelId" 
+              .value=${view.selectedModelId}
+              @change=${(e: Event) => { view.selectedModelId = (e.target as HTMLSelectElement).value; }}>
+              ${view.discoveredModels.map((m: { id: string; displayName: string }) => html`
+                <option value="${m.id}" ?selected=${m.id === view.selectedModelId}>${m.displayName} (${m.id})</option>
+              `)}
+            </select>
+          </div>
+        ` : ''}
+
         <div class="form-actions">
           <button type="button" class="btn-cancel" @click=${() => view.userActionCancelled()}>
             Cancel

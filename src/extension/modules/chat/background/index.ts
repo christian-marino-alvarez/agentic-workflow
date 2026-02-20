@@ -2,13 +2,15 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { Background, Message, ViewHtml, MessageOrigin } from '../../core/index.js';
-import { MESSAGES as RUNTIME_MESSAGES } from '../../runtime/constants.js';
 import { NAME, MESSAGES } from '../constants.js';
+import { API_ENDPOINTS, SIDECAR_BASE_URL, DEFAULT_MODELS } from '../../llm/constants.js';
+import { MESSAGES as SETTINGS_MESSAGES } from '../../settings/constants.js';
 import { randomUUID } from 'crypto';
 
 export class ChatBackground extends Background {
+
   constructor(context: vscode.ExtensionContext) {
-    super(NAME, context.extensionUri, 'chat-view');
+    super(NAME, context.extensionUri, `${NAME}-view`);
     try {
       const ext = vscode.extensions.getExtension('christian-marino-alvarez.agentic-workflow');
       this.appVersion = ext?.packageJSON?.version || '0.0.0-error';
@@ -26,55 +28,146 @@ export class ChatBackground extends Background {
         return this.handleLoadInit();
       case MESSAGES.SELECT_FILES:
         return this.handleSelectFiles();
+      case 'ROLES_CHANGED':
+        return this.handleRolesChanged();
       default:
         return super.listen(message);
     }
   }
 
-  private async handleSendMessage(data: { text: string, agentRole: string }): Promise<any> {
-    this.log('Sending message to Runtime:', data);
+  private async handleSendMessage(data: { text: string, agentRole: string, modelId?: string }): Promise<any> {
+    const role = data.agentRole || 'backend';
+    this.log(`Message for role "${role}": ${data.text.substring(0, 50)}...`);
 
-    // Construct Action Request (Mock for now)
-    const actionRequest = {
-      command: RUNTIME_MESSAGES.EXECUTE_ACTION,
-      data: {
-        action: 'fs.read', // Hardcoded for test
-        params: { path: 'test.txt' },
-        agentRole: data.agentRole || 'backend'
+    // Emit "thinking" status
+    this.emitStatus('Contacting LLM Sidecar...');
+
+    try {
+      // 1. Fetch available models and API keys from SettingsBackground
+      const settingsResponse = await this.sendMessage('settings', SETTINGS_MESSAGES.GET_REQUEST);
+      let modelName = DEFAULT_MODELS.GEMINI;
+      let apiKey = null;
+      let provider = 'gemini';
+
+      if (settingsResponse && settingsResponse.success && settingsResponse.models) {
+        const models = settingsResponse.models;
+
+        // 2. Resolve model for this agent role via bindings
+        const bindingsResponse = await this.sendMessage('settings', SETTINGS_MESSAGES.GET_BINDING);
+        const bindings = bindingsResponse?.bindings || {};
+        const boundModelId = bindings[role] || data.modelId;
+
+        const config = boundModelId
+          ? models.find((m: any) => m.id === boundModelId)
+          : models.find((m: any) => Boolean(m.active));
+
+        if (config) {
+          apiKey = config.apiKey || null;
+          provider = config.provider || 'gemini';
+          modelName = config.modelName || config.name || DEFAULT_MODELS.GEMINI;
+        }
       }
-    };
 
-    // Simulate async response from Agent
-    // Simulate async response from Agent with Status updates
-    setTimeout(() => {
-      this.emitStatus('Thinking...');
-    }, 500);
+      this.log(`Resolved model for ${role}: ${modelName} (provider: ${provider})`);
 
-    setTimeout(() => {
-      this.emitStatus('Reading context (init.md)...');
-    }, 1500);
+      // Create request payload matching AgentRequest interface
+      const payload = {
+        role,
+        input: data.text,
+        binding: { [role]: modelName },
+        apiKey,
+        provider,
+        context: []
+      };
 
-    setTimeout(() => {
-      this.emitStatus('Refactoring code...');
-    }, 2500);
+      const url = `${SIDECAR_BASE_URL}${API_ENDPOINTS.STREAM}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
 
-    setTimeout(() => {
+      if (!response.ok) {
+        throw new Error(`Sidecar HTTP error: ${response.statusText}`);
+      }
+
+      if (!response.body) {
+        throw new Error('No stream available from sidecar');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let streamText = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const dataStr = line.slice(6);
+            if (dataStr.trim() === '[DONE]') {
+              continue;
+            }
+
+            try {
+              const parsed = JSON.parse(dataStr);
+              if (parsed.error) {
+                this.emitAgentResponse(role, `**Error:** ${parsed.error}`);
+                return { success: false, error: parsed.error };
+              }
+
+              if (parsed.type === 'content') {
+                streamText += parsed.content;
+                // Emit each chunk incrementally (or emit full so far if ChatView expects it)
+                // For now, re-emitting full text based on expected format.
+                // Assuming ChatView handles incremental updates correctly.
+                this.messenger.emit({
+                  id: randomUUID(),
+                  from: `${NAME}::background`,
+                  to: `${NAME}::view`,
+                  timestamp: Date.now(),
+                  origin: MessageOrigin.Server,
+                  payload: {
+                    command: MESSAGES.RECEIVE_MESSAGE,
+                    data: { text: streamText, agentRole: role, isStreaming: true }
+                  }
+                });
+              }
+            } catch (e) {
+              // Ignore partial chunk JSON parse errors
+            }
+          }
+        }
+      }
+
+      // Send final completion message
       this.messenger.emit({
         id: randomUUID(),
-        from: 'chat::background',
-        to: 'chat::view',
+        from: `${NAME}::background`,
+        to: `${NAME}::view`,
         timestamp: Date.now(),
         origin: MessageOrigin.Server,
         payload: {
           command: MESSAGES.RECEIVE_MESSAGE,
-          data: {
-            text: `(Mock) Received: "${data.text}". \n\nI am the **Architect** agent. \nI have processed your request.`
-          }
+          data: { text: streamText, agentRole: role, isStreaming: false }
         }
       });
-    }, 3500);
 
-    return { success: true };
+      return { success: true };
+
+    } catch (error: any) {
+      this.log('Failed to stream from sidecar', error);
+      this.emitAgentResponse(role, `**System Error:** ${error.message}`);
+      return { success: false, error: error.message };
+    }
   }
 
   private async handleLoadInit(): Promise<any> {
@@ -88,7 +181,6 @@ export class ChatBackground extends Background {
       const initPath = vscode.Uri.file(path.join(rootPath, '.agent', 'workflows', 'init.md'));
 
       const content = await vscode.workspace.fs.readFile(initPath);
-
 
       // Read package.json for version
       const packageJsonPath = vscode.Uri.joinPath(this._extensionUri, 'package.json');
@@ -111,11 +203,10 @@ export class ChatBackground extends Background {
     });
 
     if (files && files.length > 0) {
-      // Return file paths
       this.messenger.emit({
         id: randomUUID(),
-        from: 'chat::background',
-        to: 'chat::view',
+        from: `${NAME}::background`,
+        to: `${NAME}::view`,
         timestamp: Date.now(),
         origin: MessageOrigin.Server,
         payload: {
@@ -127,20 +218,61 @@ export class ChatBackground extends Background {
     return { success: true };
   }
 
+  /**
+   * Handle roles changed notification from Settings background.
+   * Fetches fresh roles and pushes them to Chat view.
+   */
+  private async handleRolesChanged(): Promise<any> {
+    try {
+      const result = await this.sendMessage('settings', SETTINGS_MESSAGES.GET_ROLES);
+      if (result?.success && result.roles) {
+        this.messenger.emit({
+          id: randomUUID(),
+          from: `${NAME}::background`,
+          to: `${NAME}::view`,
+          timestamp: Date.now(),
+          origin: MessageOrigin.Server,
+          payload: {
+            command: 'REFRESH_AGENTS',
+            data: { agents: result.roles }
+          }
+        });
+      }
+    } catch (error) {
+      this.log('Error handling roles changed', error);
+    }
+    return { success: true };
+  }
+
   protected getHtmlForWebview(webview: vscode.Webview): string {
     const scriptPath = 'dist/extension/modules/chat/view/index.js';
     return ViewHtml.getWebviewHtml(webview, this._extensionUri, this.viewTagName, scriptPath, this.appVersion);
   }
+
   private emitStatus(status: string) {
     this.messenger.emit({
       id: randomUUID(),
-      from: 'chat::background',
-      to: 'chat::view',
+      from: `${NAME}::background`,
+      to: `${NAME}::view`,
       timestamp: Date.now(),
       origin: MessageOrigin.Server,
       payload: {
         command: 'AGENT_STATUS',
         data: { status }
+      }
+    });
+  }
+
+  private emitAgentResponse(role: string, text: string) {
+    this.messenger.emit({
+      id: randomUUID(),
+      from: `${NAME}::background`,
+      to: `${NAME}::view`,
+      timestamp: Date.now(),
+      origin: MessageOrigin.Server,
+      payload: {
+        command: MESSAGES.RECEIVE_MESSAGE,
+        data: { text, agentRole: role }
       }
     });
   }

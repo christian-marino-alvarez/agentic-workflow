@@ -26,6 +26,7 @@ description: "Governs UI. STRICT: Lit framework Only, structured triad (index/ht
   - **App Pattern**: `view/templates/html.ts` + `view/templates/css.ts` (for simple single-view modules).
   - **Exports**: `html.ts` must export `render`, `css.ts` must export `styles`.
   - **Functional Templates**: `html.ts` files **MUST** export functions that return `TemplateResult` (e.g., `export function render(view: View): TemplateResult`).
+  - **Explanatory Helpers**: Every `html` template block **MUST** be returned by an exclusively named helper function (e.g., `renderHeader()`, `renderMessage()`) rather than writing large inline HTML blocks inside the main `render()` function.
 
 ## 4. Prohibition
 - **No Inline Styles/HTML**: All markup and styles must be in `templates/`.

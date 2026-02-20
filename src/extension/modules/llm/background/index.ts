@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { Background, ViewHtml, Message } from '../../core/index.js';
-import { MESSAGES, API_ENDPOINTS, NAME } from '../constants.js';
+import { MESSAGES, API_ENDPOINTS, NAME, SIDECAR_BASE_URL } from '../constants.js';
 import { AgentRequest, AgentResponse } from '../backend/types.js';
 
 export class LLMBackground extends Background {
@@ -39,7 +39,7 @@ export class LLMBackground extends Background {
 
   private async sendRequestToSidecar(payload: AgentRequest): Promise<AgentResponse> {
     // Assume sidecar is running on localhost:3000 (standard port per core)
-    const url = `http://localhost:3000${API_ENDPOINTS.RUN}`;
+    const url = `${SIDECAR_BASE_URL}${API_ENDPOINTS.RUN}`;
 
     // Use fetch or axios. Assuming fetch is available in Node 18+ context of Extension Host
     const response = await fetch(url, {

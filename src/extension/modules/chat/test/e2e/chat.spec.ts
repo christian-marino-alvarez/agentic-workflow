@@ -23,12 +23,23 @@ test.setTimeout(60_000);
 async function getWebviewFrame(page: Page) {
   for (let attempt = 0; attempt < 10; attempt++) {
     const frames = page.frames();
+    console.log(`[getWebviewFrame] Attempt ${attempt + 1}/10 — ${frames.length} frames total`);
     for (const frame of frames) {
-      if (frame.url().startsWith('vscode-webview://')) {
-        const hasAppView = await frame.evaluate(() => {
-          return !!document.querySelector('app-view');
-        }).catch(() => false);
-        if (hasAppView) {
+      const url = frame.url();
+      console.log(`  Frame URL: ${url.substring(0, 120)}`);
+      if (url.startsWith('vscode-webview://')) {
+        // Try to get the body HTML to see what's inside
+        const bodyInfo = await frame.evaluate(() => {
+          const body = document.body;
+          return {
+            childCount: body?.children.length ?? -1,
+            innerHTML: body?.innerHTML?.substring(0, 300) ?? 'null',
+            hasAppView: !!document.querySelector('app-view'),
+          };
+        }).catch((e) => ({ childCount: -1, innerHTML: `EVAL_ERROR: ${e.message}`, hasAppView: false }));
+        console.log(`  -> Body: children=${bodyInfo.childCount}, hasAppView=${bodyInfo.hasAppView}`);
+        console.log(`  -> HTML: ${bodyInfo.innerHTML}`);
+        if (bodyInfo.hasAppView) {
           return frame;
         }
       }
@@ -91,6 +102,16 @@ test.beforeAll(async () => {
   });
 
   window = await electronApp.firstWindow();
+
+  window.on('console', msg => {
+    if (msg.type() === 'error' || msg.type() === 'warning') {
+      console.log(`WEBVIEW CONSOLE [${msg.type()}]: ${msg.text()}`);
+    }
+  });
+  window.on('pageerror', err => {
+    console.log(`WEBVIEW EXCEPTION: ${err.message}`);
+  });
+
   await window.waitForTimeout(8000);
 
   // Open the main webview via Command Palette

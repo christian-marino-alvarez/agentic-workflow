@@ -10,6 +10,7 @@ describe('LLMVirtualBackend API', () => {
   beforeEach(() => {
     fastifyStub = {
       post: sinon.stub(),
+      get: sinon.stub(),
     } as any;
 
     backend = new LLMVirtualBackend({ extensionUri: '/mock/uri' });

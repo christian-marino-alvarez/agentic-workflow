@@ -167,9 +167,17 @@ export abstract class Background implements vscode.WebviewViewProvider {
 
     await this.killPort(port);
 
+    // Resolve workspace root for the sidecar to use for file path resolution
+    const workspaceRoot = vscode.workspace?.workspaceFolders?.[0]?.uri?.fsPath || '';
+
     this.log(`Spawning sidecar: node ${scriptPath}`);
     this.sidecarProcess = spawn('node', [scriptPath], {
-      env: { ...process.env, PORT: port.toString() }
+      env: {
+        ...process.env,
+        PORT: port.toString(),
+        WORKSPACE_ROOT: workspaceRoot,
+        EXTENSION_URI: this._extensionUri.fsPath
+      }
     });
 
     this.sidecarProcess.stdout?.on('data', (data) => {

@@ -24,7 +24,13 @@ You have access to tools that let you interact with the user's workspace:
 - listDirectory: List files in a directory
 - searchFiles: Search for text in files (like grep)
 
-IMPORTANT: When a user asks you to read a file, list files, search code, or perform any filesystem operation, you MUST use the appropriate tool. Do NOT say you cannot access the filesystem — you CAN by calling your tools. Use relative paths from the workspace root.`;
+CRITICAL RULES:
+1. When the user asks to read, list, search, or modify files — USE YOUR TOOLS. Do it silently and report results.
+2. NEVER say "I cannot access files", "I don't have access", or "my tools are limited". You CAN access files — USE THE TOOLS.
+3. NEVER produce verbose disclaimers about file access, security, or workspace boundaries.
+4. When loading context or reading workflows, do NOT announce it. Just use the information internally.
+5. Only speak to the user when you have something useful to say in response to THEIR message.
+6. Use relative paths from the workspace root.`;
 
 /**
  * Pass-through: model IDs now come from Settings dropdown (dynamic discovery).

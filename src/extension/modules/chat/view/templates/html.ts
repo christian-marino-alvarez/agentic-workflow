@@ -175,33 +175,43 @@ function renderToolEvents(events?: Array<any>) {
 // ─── Delegation Card ──────────────────────────────────────
 function renderDelegationCard(msg: any) {
   const isPending = msg.delegationStatus === 'pending';
-  const statusIcon = isPending ? '⏳' : '✅';
-  const statusText = isPending ? 'En ejecución...' : 'Completado';
   const agentIcon = getIcon(msg.delegationAgent);
+  const agentName = msg.delegationAgent
+    ? msg.delegationAgent.charAt(0).toUpperCase() + msg.delegationAgent.slice(1)
+    : 'Agente';
+  const roleClass = msg.delegationAgent ? `role-${msg.delegationAgent}` : '';
 
   return html`
-    <div class="delegation-card ${isPending ? 'pending' : 'completed'}">
+    <div class="delegation-card ${isPending ? 'pending' : 'completed'} ${roleClass}">
       <div class="delegation-header">
-        <span class="delegation-icon">🔀</span>
-        <span class="delegation-title">Delegación → ${msg.delegationAgent || 'agente'}</span>
-        <span class="delegation-status">${statusIcon} ${statusText}</span>
+        <span class="delegation-agent-icon">${agentIcon}</span>
+        <span class="delegation-title">${agentName}</span>
+        <span class="delegation-status">${isPending ? '⏳ Trabajando...' : '✅ Listo'}</span>
       </div>
-      <div class="delegation-task">
-        ${renderMarkdown(msg.text)}
-      </div>
-      ${msg.delegationResult ? html`
-        <details class="delegation-report" open>
-          <summary class="delegation-report-header">
-            <span>${agentIcon}</span> Informe del agente
-          </summary>
-          <div class="delegation-report-content markdown-body">
-            ${renderMarkdown(msg.delegationResult)}
-          </div>
-        </details>
-      ` : html`
-        <div class="delegation-loading">
-          <span class="streaming-cursor"></span> Esperando respuesta del agente...
+      ${isPending ? html`
+        <div class="delegation-greeting">
+          ¡Perfecto, me pongo a ello! 💪
         </div>
+        <div class="delegation-task">
+          ${renderMarkdown(msg.text)}
+        </div>
+        <div class="delegation-loading">
+          <span class="streaming-cursor"></span> Analizando...
+        </div>
+      ` : html`
+        <div class="delegation-task">
+          ${renderMarkdown(msg.text)}
+        </div>
+        ${msg.delegationResult ? html`
+          <details class="delegation-report" open>
+            <summary class="delegation-report-header">
+              <span>${agentIcon}</span> Informe de ${agentName}
+            </summary>
+            <div class="delegation-report-content markdown-body">
+              ${renderMarkdown(msg.delegationResult)}
+            </div>
+          </details>
+        ` : ''}
       `}
     </div>
   `;

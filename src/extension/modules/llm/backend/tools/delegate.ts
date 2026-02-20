@@ -124,22 +124,55 @@ export function createDelegateTaskTool(factory: LLMFactory, apiKey?: string, pro
           taskDescription,
         ].join('\n');
 
-        // 6. Execute the sub-agent (non-streaming, returns final output)
+        // 6. Execute the sub-agent with streaming to capture tool activity
         const runner = new Runner({ tracingDisabled: true });
-        const result = await runner.run(agent, delegationPrompt);
+        const streamResult = await runner.run(agent, delegationPrompt, { stream: true });
 
-        const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-        const output = result.finalOutput
-          ? (typeof result.finalOutput === 'string' ? result.finalOutput : JSON.stringify(result.finalOutput))
+        // 7. Collect tool activity and final output
+        const toolActivity: Array<{ name: string, type: string, detail?: string }> = [];
+        let finalOutput = '';
+
+        for await (const chunk of streamResult as AsyncIterable<any>) {
+          if (chunk.type === 'run_item_stream_event') {
+            const item = chunk.item as any;
+            if (item.type === 'tool_call_item') {
+              const toolName = item.name || item.rawItem?.name || 'unknown';
+              const args = item.rawItem?.arguments || '';
+              toolActivity.push({ name: toolName, type: 'call', detail: args });
+              console.log(`[delegateTask] ${targetAgent} → tool: ${toolName}`);
+            } else if (item.type === 'tool_call_output_item') {
+              const toolName = item.rawItem?.name || 'unknown';
+              toolActivity.push({ name: toolName, type: 'result' });
+            }
+          }
+        }
+
+        // Get final output from the completed result
+        const completedResult = streamResult as any;
+        finalOutput = completedResult.finalOutput
+          ? (typeof completedResult.finalOutput === 'string' ? completedResult.finalOutput : JSON.stringify(completedResult.finalOutput))
           : '(sin output)';
 
-        // 6. Truncate if too long
-        const truncatedOutput = output.length > MAX_OUTPUT_CHARS
-          ? output.substring(0, MAX_OUTPUT_CHARS) + `\n\n... (truncado, ${output.length} chars total)`
-          : output;
+        const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
 
-        // 7. Build delegation report
-        const lastResponse = result.rawResponses[result.rawResponses.length - 1];
+        // 8. Truncate if too long
+        const truncatedOutput = finalOutput.length > MAX_OUTPUT_CHARS
+          ? finalOutput.substring(0, MAX_OUTPUT_CHARS) + `\n\n... (truncado, ${finalOutput.length} chars total)`
+          : finalOutput;
+
+        // 9. Build activity log
+        const activityLog = toolActivity.length > 0
+          ? toolActivity
+            .filter(a => a.type === 'call')
+            .map(a => {
+              const shortArgs = a.detail ? (() => { try { const p = JSON.parse(a.detail); return p.path || p.command || p.query || ''; } catch { return ''; } })() : '';
+              return `- ⚡ \`${a.name}\`${shortArgs ? ` → ${shortArgs}` : ''}`;
+            })
+            .join('\n')
+          : '- (sin actividad de tools)';
+
+        // 10. Build delegation report
+        const lastResponse = completedResult.rawResponses?.[completedResult.rawResponses.length - 1];
         const tokens = {
           input: lastResponse?.usage?.inputTokens || 0,
           output: lastResponse?.usage?.outputTokens || 0
@@ -150,11 +183,14 @@ export function createDelegateTaskTool(factory: LLMFactory, apiKey?: string, pro
           `**Tarea**: ${taskDescription}`,
           `**Duración**: ${elapsed}s | **Tokens**: ${tokens.input} in / ${tokens.output} out`,
           ``,
+          `### 🔧 Actividad`,
+          activityLog,
+          ``,
           `### Resultado`,
           truncatedOutput
         ].join('\n');
 
-        console.log(`[delegateTask] Sub-agent "${targetAgent}" completed in ${elapsed}s (${tokens.input}+${tokens.output} tokens)`);
+        console.log(`[delegateTask] Sub-agent "${targetAgent}" completed in ${elapsed}s (${toolActivity.length} tool events, ${tokens.input}+${tokens.output} tokens)`);
 
         return report;
       } catch (error: any) {

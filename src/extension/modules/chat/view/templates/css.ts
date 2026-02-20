@@ -859,6 +859,14 @@ export const styles = css`
     .delegation-icon {
       font-size: 1.1em;
     }
+    .delegation-agent-icon {
+      display: flex;
+      align-items: center;
+    }
+    .delegation-agent-icon svg {
+      width: 18px;
+      height: 18px;
+    }
     .delegation-title {
       flex: 1;
       color: var(--vscode-editor-foreground);
@@ -898,6 +906,12 @@ export const styles = css`
       font-size: 0.88em;
       max-height: 400px;
       overflow-y: auto;
+    }
+    .delegation-greeting {
+      font-size: 0.92em;
+      font-weight: 500;
+      padding: 6px 0 4px 0;
+      color: var(--vscode-editor-foreground);
     }
     .delegation-loading {
       display: flex;

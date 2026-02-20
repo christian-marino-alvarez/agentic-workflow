@@ -57,14 +57,26 @@ export class ChatBackground extends Background {
         const bindings = bindingsResponse?.bindings || {};
         const boundModelId = bindings[role] || data.modelId;
 
+        // Lookup by config UUID first, then by API model name (modelName), then by display name
         const config = boundModelId
           ? models.find((m: any) => m.id === boundModelId)
+          || models.find((m: any) => m.modelName === boundModelId)
+          || models.find((m: any) => m.name === boundModelId)
           : models.find((m: any) => Boolean(m.active));
 
         if (config) {
           apiKey = config.apiKey || null;
           provider = config.provider || 'gemini';
           modelName = config.modelName || config.name || DEFAULT_MODELS.GEMINI;
+        }
+
+        // Fallback: if no API key found, try any model with same provider that has a key
+        if (!apiKey && provider) {
+          const fallback = models.find((m: any) => m.provider === provider && m.apiKey);
+          if (fallback) {
+            apiKey = fallback.apiKey;
+            this.log(`API key resolved via provider fallback (${provider})`);
+          }
         }
       }
 

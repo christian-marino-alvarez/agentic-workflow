@@ -108,14 +108,15 @@ function renderHistoryTab(view: AppView) {
               >
                 <div class="history-card-info">
                   <div class="history-card-title">
-                    ${s.title}${isCurrent ? html` <span class="history-current-badge">● Current</span>` : ''}
+                    ${s.taskTitle || s.title || 'Untitled Task'}${isCurrent ? html` <span class="history-current-badge">● Active</span>` : ''}
                   </div>
                   <div class="history-card-meta">
-                    ${formatDate(s.timestamp)} · ${s.messageCount} messages
+                    ${formatDate(s.timestamp)} · ${s.messageCount} msgs${s.elapsedSeconds ? ` · ⏱ ${Math.floor(s.elapsedSeconds / 60)}:${(s.elapsedSeconds % 60).toString().padStart(2, '0')}` : ''}
                   </div>
                 </div>
+                ${s.progress !== undefined ? html`<span class="history-progress-pill ${s.progress >= 100 ? 'done' : ''}">${s.progress}%</span>` : ''}
                 <button class="action-btn delete ${isPendingDelete ? 'confirm-delete' : ''}"
-                  title="${isPendingDelete ? 'Click again to confirm' : 'Delete session'}"
+                  title="${isPendingDelete ? 'Click again to confirm' : 'Delete task'}"
                   @click=${(e: Event) => {
             e.stopPropagation();
             view.handleDeleteSession(s.id);
@@ -126,6 +127,7 @@ function renderHistoryTab(view: AppView) {
       })
     }
       </div>
+      <!-- TODO: Security section — per-task file access audit log (files read/written by agents) -->
     </div>
   `;
 }

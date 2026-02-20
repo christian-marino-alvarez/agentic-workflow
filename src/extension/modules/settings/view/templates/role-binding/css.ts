@@ -111,40 +111,88 @@ export const styles = css`
     padding-left: 2px;
   }
 
-  .dropdown {
+  .dropdown-wrapper {
+    position: relative;
+  }
+
+  .dropdown-trigger {
     width: 100%;
-    padding: 5px 28px 5px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 5px 8px;
     border-radius: 4px;
-    background: var(--vscode-dropdown-background);
+    background: var(--vscode-dropdown-background, #252526);
     color: var(--vscode-dropdown-foreground);
-    border: 1px solid var(--vscode-dropdown-border);
+    border: 1px solid var(--vscode-dropdown-border, #3c3c3c);
     font-size: 12px;
     font-family: inherit;
     cursor: pointer;
     transition: border-color 0.15s ease;
-    appearance: none;
-    -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 16 16' fill='%23999'%3E%3Cpath d='M7.976 10.072l4.357-4.357.62.618L8.284 11h-.618L3 6.333l.619-.618 4.357 4.357z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 8px center;
     box-sizing: border-box;
-    text-overflow: ellipsis;
+    text-align: left;
+  }
+
+  .dropdown-trigger:hover:not(:disabled) {
+    border-color: var(--vscode-focusBorder);
+  }
+
+  .dropdown-trigger.open {
+    border-color: var(--vscode-focusBorder);
+  }
+
+  .dropdown-trigger:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  .dropdown-trigger-label {
+    flex: 1;
     overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .dropdown:hover:not(:disabled) {
-    border-color: var(--vscode-focusBorder);
+  .dropdown-trigger-label.placeholder {
+    color: var(--vscode-descriptionForeground);
   }
 
-  .dropdown:focus {
-    outline: none;
-    border-color: var(--vscode-focusBorder);
+  .dropdown-popup {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    min-width: 100%;
+    background: var(--vscode-dropdown-background, #252526);
+    border: 1px solid var(--vscode-dropdown-border, #3c3c3c);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    padding: 4px 0;
+    margin-top: 4px;
   }
 
-  .dropdown:disabled {
-    opacity: 0.5;
-    cursor: default;
+  .dropdown-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    color: var(--vscode-dropdown-foreground, #ccc);
+    cursor: pointer;
+    border-radius: 3px;
+    margin: 0 4px;
+    transition: background 0.1s ease;
+  }
+
+  .dropdown-option:hover {
+    background: var(--vscode-list-hoverBackground, #2a2d2e);
+  }
+
+  .dropdown-option.active {
+    background: var(--vscode-list-activeSelectionBackground, #094771);
+    color: var(--vscode-list-activeSelectionForeground, #fff);
   }
 
   /* ─── Capability Toggles ──────────────────────────── */

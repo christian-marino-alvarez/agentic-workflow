@@ -80,36 +80,64 @@ function renderCapabilityToggles(view: Settings, role: string, capabilities: Rec
   `;
 }
 
+const chevronIcon = html`
+  <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" style="opacity: 0.6;">
+    <path d="M7.976 10.072l4.357-4.357.62.618L8.284 11h-.618L3 6.333l.619-.618 4.357 4.357z"/>
+  </svg>
+`;
+
 function renderProviderDropdown(view: Settings, role: string, currentProvider: string | undefined, isDisabled: boolean) {
   const providers = getDistinctProviders(view);
+  const dropdownId = `provider-${role}`;
+  const isOpen = view.openDropdownId === dropdownId;
+  const displayLabel = currentProvider
+    ? currentProvider.charAt(0).toUpperCase() + currentProvider.slice(1)
+    : 'Select provider…';
 
   return html`
     <div class="dropdown-group">
       <label class="dropdown-label">Provider</label>
-      <select
-        class="dropdown"
-        @change="${(e: Event) => view.userActionProviderChangedForRole(role, e)}"
-        ?disabled="${isDisabled}"
-      >
-        <option value="" ?selected="${!currentProvider}">Select provider…</option>
-        ${providers.map(p => html`
-          <option value="${p}" ?selected="${p === currentProvider}">
-            ${p.charAt(0).toUpperCase() + p.slice(1)}
-          </option>
-        `)}
-      </select>
+      <div class="dropdown-wrapper" @click="${(e: Event) => e.stopPropagation()}">
+        <button
+          class="dropdown-trigger ${isOpen ? 'open' : ''}"
+          @click="${(e: Event) => !isDisabled && view.toggleDropdown(dropdownId, e)}"
+          ?disabled="${isDisabled}"
+          type="button"
+        >
+          <span class="dropdown-trigger-label">${displayLabel}</span>
+          ${chevronIcon}
+        </button>
+        ${isOpen ? html`
+          <div class="dropdown-popup">
+            ${providers.map(p => html`
+              <div
+                class="dropdown-option ${p === currentProvider ? 'active' : ''}"
+                @click="${() => view.selectProviderForRole(role, p)}"
+              >
+                ${p.charAt(0).toUpperCase() + p.slice(1)}
+              </div>
+            `)}
+          </div>
+        ` : nothing}
+      </div>
     </div>
   `;
 }
 
 function renderModelDropdown(view: Settings, role: string, currentProvider: string | undefined, currentModelId: string | undefined, isDisabled: boolean) {
+  const dropdownId = `model-${role}`;
+  const isOpen = view.openDropdownId === dropdownId;
+
   if (!currentProvider) {
     return html`
       <div class="dropdown-group">
         <label class="dropdown-label">Model</label>
-        <select class="dropdown" disabled>
-          <option>Select provider first…</option>
-        </select>
+        <div class="dropdown-wrapper">
+          <button class="dropdown-trigger" disabled type="button">
+            <span class="dropdown-trigger-label placeholder">Select provider first…</span>
+            ${chevronIcon}
+          </button>
+        </div>
       </div>
     `;
   }
@@ -124,22 +152,40 @@ function renderModelDropdown(view: Settings, role: string, currentProvider: stri
     .map(m => ({ id: m.id, displayName: m.name }));
 
   const modelList = hasDiscovered ? discovered : registeredForProvider;
+  const selectedModel = modelList.find(m => m.id === currentModelId);
+  const displayLabel = selectedModel
+    ? (selectedModel.displayName || selectedModel.id)
+    : 'Select model…';
 
   return html`
     <div class="dropdown-group">
       <label class="dropdown-label">Model ${hasDiscovered ? `(${modelList.length})` : ''}</label>
-      <select
-        class="dropdown"
-        @change="${(e: Event) => view.userActionModelChangedForRole(role, currentProvider, e)}"
-        ?disabled="${isDisabled}"
-      >
-        <option value="" ?selected="${!currentModelId}">Select model…</option>
-        ${modelList.map(model => html`
-          <option value="${model.id}" ?selected="${model.id === currentModelId}">
-            ${model.displayName || model.id}
-          </option>
-        `)}
-      </select>
+      <div class="dropdown-wrapper" @click="${(e: Event) => e.stopPropagation()}">
+        <button
+          class="dropdown-trigger ${isOpen ? 'open' : ''}"
+          @click="${(e: Event) => !isDisabled && view.toggleDropdown(dropdownId, e)}"
+          ?disabled="${isDisabled}"
+          type="button"
+        >
+          <span class="dropdown-trigger-label ${!selectedModel ? 'placeholder' : ''}">${displayLabel}</span>
+          ${chevronIcon}
+        </button>
+        ${isOpen ? html`
+          <div class="dropdown-popup">
+            ${modelList.map(model => html`
+              <div
+                class="dropdown-option ${model.id === currentModelId ? 'active' : ''}"
+                @click="${() => view.selectModelForRole(role, currentProvider, model.id)}"
+              >
+                ${model.displayName || model.id}
+              </div>
+            `)}
+            ${modelList.length === 0 ? html`
+              <div class="dropdown-option" style="opacity: 0.5; cursor: default;">No models available</div>
+            ` : nothing}
+          </div>
+        ` : nothing}
+      </div>
     </div>
   `;
 }

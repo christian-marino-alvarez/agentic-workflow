@@ -309,7 +309,7 @@ export const styles = css`
     }
 
     .agent-option.no-model {
-      opacity: 0.5;
+      /* Removed opacity 0.5 so agents without models are fully visible and clickable */
     }
 
     /* Capability Labels */

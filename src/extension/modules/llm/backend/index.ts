@@ -62,11 +62,20 @@ export class LLMVirtualBackend extends AbstractVirtualBackend {
   async run(req: RunRequest, reply: FastifyReply): Promise<AgentResponse> {
     const { role, input, binding, context, apiKey, provider, instructions } = req.body;
 
+    let finalInput = input;
+    if (context && context.length > 0) {
+      finalInput += '\n\n[CONTEXT ATTACHMENTS]\nThe user has provided the following files for context:\n';
+      context.forEach((c: any) => {
+        finalInput += `- ${c.title || c.url}: ${c.url}\n`;
+      });
+      finalInput += 'Use your readFile tool to examine their contents if necessary.\n';
+    }
+
     try {
       const agent = await this.factory.createAgent(role, binding, agentTools, apiKey, provider, instructions);
 
       const runner = new Runner({ tracingDisabled: true });
-      const result = await runner.run(agent, input);
+      const result = await runner.run(agent, finalInput);
 
       const finalOutputText = result.finalOutput
         ? (typeof result.finalOutput === 'string' ? result.finalOutput : JSON.stringify(result.finalOutput))
@@ -98,12 +107,21 @@ export class LLMVirtualBackend extends AbstractVirtualBackend {
     reply.raw.setHeader('Cache-Control', 'no-cache');
     reply.raw.setHeader('Connection', 'keep-alive');
 
+    let finalInput = input;
+    if (context && context.length > 0) {
+      finalInput += '\n\n[CONTEXT ATTACHMENTS]\nThe user has provided the following files for context:\n';
+      context.forEach((c: any) => {
+        finalInput += `- ${c.title || c.url}: ${c.url}\n`;
+      });
+      finalInput += 'Use your readFile tool to examine their contents if necessary.\n';
+    }
+
     try {
       const agent = await this.factory.createAgent(role, binding, agentTools, apiKey, provider, instructions);
       console.log(`[llm::backend] Agent created, starting stream...`);
 
       const runner = new Runner({ tracingDisabled: true });
-      const result = await runner.run(agent, input, { stream: true });
+      const result = await runner.run(agent, finalInput, { stream: true });
 
       await this.pumpStreamEvents(result as any, reply);
       console.log(`[llm::backend] Stream completed`);

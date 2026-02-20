@@ -45,14 +45,19 @@ function renderHistoryTab(view: AppView) {
     return document.querySelector('chat-view') || view.renderRoot?.querySelector('chat-view');
   };
 
-  // Request sessions on render
+  // Save current session then request list, so current appears in History
   setTimeout(() => {
     const chatView = getChatView();
-    if (chatView?.requestSessions) { chatView.requestSessions(); }
-  }, 100);
+    if (chatView?.saveCurrentSession) { chatView.saveCurrentSession(); }
+    setTimeout(() => {
+      const cv = getChatView();
+      if (cv?.requestSessions) { cv.requestSessions(); }
+    }, 150);
+  }, 50);
 
   const chatView = getChatView();
   const sessions = chatView?.sessionList || [];
+  const currentId = chatView?.currentSessionId || '';
 
   const formatDate = (ts: number) => {
     const d = new Date(ts);
@@ -75,17 +80,19 @@ function renderHistoryTab(view: AppView) {
       <div style="flex: 1; overflow-y: auto;">
         ${sessions.length === 0
       ? html`<div style="text-align: center; padding: 20px; color: var(--vscode-descriptionForeground); font-size: 12px;">No conversations yet</div>`
-      : sessions.map((s: any) => html`
-            <div style="display: flex; align-items: center; gap: 8px; padding: 8px; margin-bottom: 4px; border-radius: 6px; background: var(--vscode-sideBar-background); cursor: pointer; border: 1px solid var(--vscode-panel-border);"
+      : sessions.map((s: any) => {
+        const isCurrent = s.id === currentId;
+        return html`
+            <div style="display: flex; align-items: center; gap: 8px; padding: 8px; margin-bottom: 4px; border-radius: 6px; background: var(--vscode-sideBar-background); cursor: pointer; border: 1px solid ${isCurrent ? 'var(--vscode-focusBorder)' : 'var(--vscode-panel-border)'}; ${isCurrent ? 'border-left: 3px solid var(--vscode-focusBorder);' : ''}"
               @click=${() => {
-          const cv = getChatView();
-          if (cv?.loadSession) { cv.loadSession(s.id); }
-          view.activeTab = 'chat';
-        }}
+            const cv = getChatView();
+            if (cv?.loadSession) { cv.loadSession(s.id); }
+            view.activeTab = 'chat';
+          }}
             >
               <div style="flex: 1; min-width: 0;">
                 <div style="font-size: 12px; font-weight: 500; color: var(--vscode-foreground); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                  ${s.title}
+                  ${s.title}${isCurrent ? html` <span style="font-size: 10px; color: var(--vscode-focusBorder); font-weight: 400;">● Current</span>` : ''}
                 </div>
                 <div style="font-size: 10px; color: var(--vscode-descriptionForeground); margin-top: 2px;">
                   ${formatDate(s.timestamp)} · ${s.messageCount} messages
@@ -95,15 +102,16 @@ function renderHistoryTab(view: AppView) {
                 style="background: none; border: none; color: var(--vscode-errorForeground); cursor: pointer; padding: 2px 4px; font-size: 14px; opacity: 0.5;"
                 title="Delete"
                 @click=${(e: Event) => {
-          e.stopPropagation();
-          const cv = getChatView();
-          if (cv?.deleteSession) { cv.deleteSession(s.id); }
-          // Re-request list after a beat
-          setTimeout(() => { if (cv?.requestSessions) { cv.requestSessions(); } }, 200);
-        }}
+            e.stopPropagation();
+            const cv = getChatView();
+            if (cv?.deleteSession) { cv.deleteSession(s.id); }
+            // Re-request list after a beat
+            setTimeout(() => { if (cv?.requestSessions) { cv.requestSessions(); } }, 200);
+          }}
               >🗑</button>
             </div>
-          `)
+          `;
+      })
     }
       </div>
     </div>

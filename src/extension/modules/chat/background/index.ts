@@ -9,8 +9,8 @@ import { randomUUID } from 'crypto';
 
 export class ChatBackground extends Background {
 
-  /** Matches agent identity prefixes like "🏛️ **architect-agent**:" at the start of responses. */
-  private static readonly AGENT_PREFIX_REGEX = /^\s*(?:[\p{Emoji}\u200d]+\s*)?\*{0,2}\w[\w-]*(?:-agent)?\*{0,2}\s*:\s*/u;
+  /** Matches agent identity prefixes like "🏛️ **architect-agent**:", "🔬 researcher-agent:" etc. */
+  private static readonly AGENT_PREFIX_REGEX = /^\s*(?:[\p{Emoji_Presentation}\p{Extended_Pictographic}\u200d\uFE0F]+\s*)?(?:\*{1,2})?\s*\w[\w-]*(?:-agent)?\s*(?:\*{1,2})?\s*:\s*/gmu;
   private static readonly SESSIONS_KEY = 'chat.sessions';
   private static readonly LAST_SESSION_KEY = 'chat.lastSessionId';
   private vscodeContext: vscode.ExtensionContext;

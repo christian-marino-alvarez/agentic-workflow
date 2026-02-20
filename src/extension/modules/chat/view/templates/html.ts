@@ -213,10 +213,13 @@ function renderMessageBubble(msg: any) {
   if (msg.isDelegation) {
     return renderDelegationCard(msg);
   }
-  const typeClass = msg.role === 'user' ? 'msg-user' : (msg.role === 'architect' ? 'msg-agent' : 'msg-system');
-  const isAgent = msg.role !== 'user' && msg.role !== 'system';
+  const isUser = msg.role === 'user';
+  const isSystem = msg.role === 'system';
+  const isAgent = !isUser && !isSystem;
+  const typeClass = isUser ? 'msg-user' : (isAgent ? 'msg-agent' : 'msg-system');
+  const roleClass = isAgent ? `role-${msg.role}` : '';
   return html`
-    <div class="msg-bubble ${typeClass}">
+    <div class="msg-bubble ${typeClass} ${roleClass}">
         <div class="msg-header">
             <span class="msg-icon">${getIcon(msg.role)}</span>
             <span class="msg-sender">

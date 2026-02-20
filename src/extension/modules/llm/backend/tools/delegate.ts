@@ -113,9 +113,20 @@ export function createDelegateTaskTool(factory: LLMFactory, apiKey?: string, pro
 
         console.log(`[delegateTask] Sub-agent "${targetAgent}" created, executing task...`);
 
-        // 5. Execute the sub-agent (non-streaming, returns final output)
+        // 5. Build the delegation prompt with context
+        const delegationPrompt = [
+          `[DELEGATED TASK from architect-agent]`,
+          `You have been delegated the following task. Analyze it carefully.`,
+          `If you have doubts or need clarification, clearly state your questions — the developer will see your response.`,
+          `Provide a structured analysis with your findings, recommendations, and any open questions.`,
+          ``,
+          `TASK:`,
+          taskDescription,
+        ].join('\n');
+
+        // 6. Execute the sub-agent (non-streaming, returns final output)
         const runner = new Runner({ tracingDisabled: true });
-        const result = await runner.run(agent, taskDescription);
+        const result = await runner.run(agent, delegationPrompt);
 
         const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
         const output = result.finalOutput

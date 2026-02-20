@@ -540,6 +540,34 @@ export const styles = css`
         color: var(--vscode-textLink-foreground);
     }
 
+    /* ─── Per-Agent Pastel Colors ──────────────────────── */
+    .role-architect { border-left: 3px solid #58a6ff; }
+    .role-architect .msg-header { color: #58a6ff; }
+
+    .role-researcher { border-left: 3px solid #b8a9e8; background-color: rgba(184, 169, 232, 0.06) !important; }
+    .role-researcher .msg-header { color: #b8a9e8; }
+
+    .role-qa { border-left: 3px solid #7ecfb3; background-color: rgba(126, 207, 179, 0.06) !important; }
+    .role-qa .msg-header { color: #7ecfb3; }
+
+    .role-view { border-left: 3px solid #f0a895; background-color: rgba(240, 168, 149, 0.06) !important; }
+    .role-view .msg-header { color: #f0a895; }
+
+    .role-backend { border-left: 3px solid #c4a8e0; background-color: rgba(196, 168, 224, 0.06) !important; }
+    .role-backend .msg-header { color: #c4a8e0; }
+
+    .role-background { border-left: 3px solid #a4c9a8; background-color: rgba(164, 201, 168, 0.06) !important; }
+    .role-background .msg-header { color: #a4c9a8; }
+
+    .role-engine { border-left: 3px solid #e8d8a0; background-color: rgba(232, 216, 160, 0.06) !important; }
+    .role-engine .msg-header { color: #e8d8a0; }
+
+    .role-neo { border-left: 3px solid #8dc8e8; background-color: rgba(141, 200, 232, 0.06) !important; }
+    .role-neo .msg-header { color: #8dc8e8; }
+
+    .role-devops { border-left: 3px solid #e8a0a0; background-color: rgba(232, 160, 160, 0.06) !important; }
+    .role-devops .msg-header { color: #e8a0a0; }
+
     .msg-user {
       align-self: flex-end;
       background-color: rgba(230, 126, 34, 0.1); /* Slight orange tint */

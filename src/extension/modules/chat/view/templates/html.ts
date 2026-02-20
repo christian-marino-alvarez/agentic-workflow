@@ -71,7 +71,14 @@ function renderPermissionToggle(view: IChatView) {
   `;
 }
 
-// ─── Header: Workflow + Task Progress ──────────────────────────
+// ─── Timer helper ──────────────────────────────────────────
+function formatTimer(seconds: number): string {
+  const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+  const s = (seconds % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
+}
+
+// ─── Header: Workflow + Timer + Task Progress ──────────────────
 function renderHeader(view: IChatView) {
   const done = view.taskSteps.filter(s => s.status === 'done').length;
   const total = view.taskSteps.length;
@@ -140,7 +147,6 @@ function renderToolEvents(events?: Array<any>) {
     <div class="tool-events">
       ${events.map(ev => {
     if (ev.type === 'tool_call') {
-      // Skip delegateTask tool calls (rendered as delegation cards instead)
       if (ev.name === 'delegateTask') { return ''; }
       return html`
             <details class="tool-call-block" open>
@@ -154,7 +160,6 @@ function renderToolEvents(events?: Array<any>) {
           `;
     }
     if (ev.type === 'tool_result') {
-      // Skip delegateTask results (shown in delegation card)
       if (ev.name === 'delegateTask') { return ''; }
       return html`
             <details class="tool-result-block">
@@ -190,27 +195,15 @@ function renderDelegationCard(msg: any) {
         <span class="delegation-status">${isPending ? '⏳ Trabajando...' : '✅ Listo'}</span>
       </div>
       ${isPending ? html`
-        <div class="delegation-greeting">
-          ¡Perfecto, me pongo a ello! 💪
-        </div>
-        <div class="delegation-task">
-          ${renderMarkdown(msg.text)}
-        </div>
-        <div class="delegation-loading">
-          <span class="streaming-cursor"></span> Analizando...
-        </div>
+        <div class="delegation-greeting">¡Perfecto, me pongo a ello! 💪</div>
+        <div class="delegation-task">${renderMarkdown(msg.text)}</div>
+        <div class="delegation-loading"><span class="streaming-cursor"></span> Analizando...</div>
       ` : html`
-        <div class="delegation-task">
-          ${renderMarkdown(msg.text)}
-        </div>
+        <div class="delegation-task">${renderMarkdown(msg.text)}</div>
         ${msg.delegationResult ? html`
           <details class="delegation-report" open>
-            <summary class="delegation-report-header">
-              <span>${agentIcon}</span> Informe de ${agentName}
-            </summary>
-            <div class="delegation-report-content markdown-body">
-              ${renderMarkdown(msg.delegationResult)}
-            </div>
+            <summary class="delegation-report-header"><span>${agentIcon}</span> Informe de ${agentName}</summary>
+            <div class="delegation-report-content markdown-body">${renderMarkdown(msg.delegationResult)}</div>
           </details>
         ` : ''}
       `}
@@ -220,9 +213,7 @@ function renderDelegationCard(msg: any) {
 
 // ─── Message Bubbles ──────────────────────────────────────
 function renderMessageBubble(msg: any) {
-  if (msg.isDelegation) {
-    return renderDelegationCard(msg);
-  }
+  if (msg.isDelegation) { return renderDelegationCard(msg); }
   const isUser = msg.role === 'user';
   const isSystem = msg.role === 'system';
   const isAgent = !isUser && !isSystem;
@@ -230,18 +221,18 @@ function renderMessageBubble(msg: any) {
   const roleClass = isAgent ? `role-${msg.role}` : '';
   return html`
     <div class="msg-bubble ${typeClass} ${roleClass}">
-        <div class="msg-header">
-            <span class="msg-icon">${getIcon(msg.role)}</span>
-            <span class="msg-sender">
-              ${msg.sender} 
-              ${msg.status ? html`<span class="msg-status">(${msg.status})</span>` : ''}
-            </span>
-        </div>
-        <div class="msg-content ${isAgent ? 'markdown-body' : ''}">
-          ${renderToolEvents(msg.toolEvents)}
-          ${isAgent && msg.text ? renderMarkdown(msg.text) : msg.text}
-          ${msg.isStreaming ? html`<span class="streaming-cursor"></span>` : ''}
-        </div>
+      <div class="msg-header">
+        <span class="msg-icon">${getIcon(msg.role)}</span>
+        <span class="msg-sender">
+          ${msg.sender} 
+          ${msg.status ? html`<span class="msg-status">(${msg.status})</span>` : ''}
+        </span>
+      </div>
+      <div class="msg-content ${isAgent ? 'markdown-body' : ''}">
+        ${renderToolEvents(msg.toolEvents)}
+        ${isAgent && msg.text ? renderMarkdown(msg.text) : msg.text}
+        ${msg.isStreaming ? html`<span class="streaming-cursor"></span>` : ''}
+      </div>
     </div>
   `;
 }
@@ -274,56 +265,76 @@ function renderLoadingSkeleton() {
   `;
 }
 
-// ─── Phase Marker (horizontal divider with date/time) ────────
-function renderPhaseMarker(phase: string) {
+// ─── Phase Separator (horizontal with date/time) ──────────────
+function renderPhaseSeparator(phase: string) {
   const now = new Date();
   const timeStr = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
   const dateStr = now.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
   return html`
-    <div class="phase-marker">
-      <span class="phase-marker-line"></span>
-      <span class="phase-marker-label">${phase}</span>
-      <span class="phase-marker-time">${dateStr} ${timeStr}</span>
-      <span class="phase-marker-line"></span>
+    <div class="phase-separator">
+      <span class="phase-separator-line"></span>
+      <span class="phase-separator-label">${phase}</span>
+      <span class="phase-separator-time">${dateStr} ${timeStr}</span>
+      <span class="phase-separator-line"></span>
     </div>
   `;
 }
 
-// ─── History (message list with phase markers) ──────────────
+// ─── History (grouped by phase, scrolls together) ──────────────
 function renderHistory(view: IChatView) {
   if (view.initialLoading) {
+    return html`<div class="history layout-scroll chat-container layout-col">${renderLoadingSkeleton()}</div>`;
+  }
+
+  // Group consecutive messages by phase
+  const groups: Array<{ phase: string; messages: any[] }> = [];
+  let current: { phase: string; messages: any[] } | null = null;
+
+  for (const msg of view.history) {
+    const phase = msg.phase || '';
+    if (!current || (phase && phase !== current.phase)) {
+      current = { phase, messages: [] };
+      groups.push(current);
+    }
+    current.messages.push(msg);
+  }
+
+  const hasPhases = groups.some(g => g.phase);
+
+  if (!hasPhases) {
+    // No phase info — flat render
     return html`
       <div class="history layout-scroll chat-container layout-col">
-        ${renderLoadingSkeleton()}
+        ${view.history.map(msg => renderMessageBubble(msg))}
+        ${view.isLoading ? renderLoadingSkeleton() : ''}
       </div>
     `;
   }
 
-  const items: any[] = [];
-  let lastPhase = '';
-  for (const msg of view.history) {
-    if (msg.phase && msg.phase !== lastPhase) {
-      items.push(renderPhaseMarker(msg.phase));
-      lastPhase = msg.phase;
-    }
-    items.push(renderMessageBubble(msg));
-  }
-
+  // Render grouped by phase with left labels
   return html`
     <div class="history layout-scroll chat-container layout-col">
-      ${items}
+      ${groups.map((group, i) => html`
+        ${i > 0 && group.phase ? renderPhaseSeparator(group.phase) : ''}
+        <div class="phase-group ${group.phase ? 'has-phase' : ''}">
+          ${group.phase ? html`
+            <div class="phase-group-sidebar">
+              <div class="phase-group-dot"></div>
+              <div class="phase-group-line"></div>
+              <span class="phase-group-name">${group.phase}</span>
+            </div>
+          ` : ''}
+          <div class="phase-group-messages">
+            ${group.messages.map(msg => renderMessageBubble(msg))}
+          </div>
+        </div>
+      `)}
       ${view.isLoading ? renderLoadingSkeleton() : ''}
     </div>
   `;
 }
 
-// ─── Agent Status Bar (static, read-only) ────────────────────
-function formatTimer(seconds: number): string {
-  const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-  const s = (seconds % 60).toString().padStart(2, '0');
-  return `${m}:${s}`;
-}
-
+// ─── Agent Status Bar (with sandbox/full toggle) ──────────────
 function renderAgentStatusBar(view: IChatView) {
   const agentLabel = view.selectedAgent.charAt(0).toUpperCase() + view.selectedAgent.slice(1);
   const currentAgent = view.availableAgents.find(a => a.name === view.selectedAgent);
@@ -334,6 +345,7 @@ function renderAgentStatusBar(view: IChatView) {
 
   return html`
     <div class="agent-status-bar">
+      <div class="agent-status-title">Managed Agents</div>
       <div class="agent-status-row">
         <div class="agent-status-info">
           ${getIcon(view.selectedAgent)}
@@ -343,9 +355,12 @@ function renderAgentStatusBar(view: IChatView) {
           ${view.activeActivity ? html`<span class="agent-status-sep">·</span><span class="agent-status-activity ${hasActivity ? 'active' : ''}">${view.activeActivity}</span>` : ''}
         </div>
         <div class="agent-status-right">
-          <button class="btn-icon perm-btn ${isSandbox ? 'sandbox' : 'full'}" title="${isSandbox ? 'Sandbox Mode' : 'Full Access'}" @click="${() => view.togglePermission(view.selectedAgent)}">
-            ${isSandbox ? '🔒' : '🔓'}
-          </button>
+          <div class="permission-toggle" @click="${() => view.togglePermission(view.selectedAgent)}">
+            ${isSandbox
+      ? html`<span class="perm-label sandbox">🔒 Sandbox</span>`
+      : html`<span class="perm-label full-access">🔓 Full Access</span>`
+    }
+          </div>
         </div>
       </div>
       ${capKeys.length > 0 ? html`
@@ -411,30 +426,11 @@ function renderInputGroup(view: IChatView) {
   `;
 }
 
-// ─── Vertical Phase Timeline (LEFT sidebar) ───────────────
-function renderPhaseTimeline(view: IChatView) {
-  if (view.taskSteps.length === 0) { return ''; }
-  return html`
-    <div class="phase-timeline">
-      ${view.taskSteps.map((step, i) => html`
-        <div class="phase-step ${step.status}">
-          <div class="phase-dot ${step.status}"></div>
-          <span class="phase-step-label">${step.label}</span>
-        </div>
-        ${i < view.taskSteps.length - 1 ? html`<div class="phase-line ${step.status === 'done' ? 'done' : ''}"></div>` : ''}
-      `)}
-    </div>
-  `;
-}
-
 // ─── Main Render ──────────────────────────────────────────
 export function render(view: IChatView): TemplateResult {
   return html`
     ${renderHeader(view)}
-    <div class="chat-with-timeline">
-      ${renderPhaseTimeline(view)}
-      ${renderHistory(view)}
-    </div>
+    ${renderHistory(view)}
     ${renderInputGroup(view)}
   `;
 }

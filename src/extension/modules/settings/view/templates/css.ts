@@ -170,7 +170,7 @@ export const styles = css`
 
   .model-card {
     background-color: var(--vscode-editor-background);
-    border: 1px solid var(--vscode-widget-border);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 6px;
     padding: 12px 16px;
     display: flex;

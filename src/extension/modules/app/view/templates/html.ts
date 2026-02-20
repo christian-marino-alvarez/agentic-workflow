@@ -50,22 +50,8 @@ export function render(view: AppView) {
 }
 
 function renderHistoryTab(view: AppView) {
-  const getChatView = (): any => {
-    return document.querySelector('chat-view') || view.renderRoot?.querySelector('chat-view');
-  };
-
-  // Trigger session save + list on tab switch
-  setTimeout(() => {
-    const chatView = getChatView();
-    if (chatView?.saveCurrentSession) { chatView.saveCurrentSession(); }
-    setTimeout(() => {
-      const cv = getChatView();
-      if (cv?.requestSessions) { cv.requestSessions(); }
-    }, 150);
-  }, 50);
-
-  const chatView = getChatView();
-  const sessions = chatView?.sessionList || [];
+  const chatView = view.getChatView();
+  const sessions = view.historySessions;
   const currentId = chatView?.currentSessionId || '';
 
   const formatDate = (ts: number) => {
@@ -80,8 +66,9 @@ function renderHistoryTab(view: AppView) {
         <div class="actions-group">
           <button class="icon-btn" title="Refresh"
             @click=${() => {
-      const cv = getChatView();
+      const cv = view.getChatView();
       if (cv?.requestSessions) { cv.requestSessions(); }
+      setTimeout(() => view.refreshHistorySessions(), 300);
     }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -93,9 +80,9 @@ function renderHistoryTab(view: AppView) {
           </button>
           <button class="icon-btn" title="New conversation"
             @click=${() => {
-      const cv = getChatView();
+      const cv = view.getChatView();
       if (cv?.newSession) { cv.newSession(); }
-      view.activeTab = 'chat';
+      view.switchTab('chat');
     }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -114,9 +101,9 @@ function renderHistoryTab(view: AppView) {
         return html`
               <div class="history-card ${isCurrent ? 'current' : ''}"
                 @click=${() => {
-            const cv = getChatView();
+            const cv = view.getChatView();
             if (cv?.loadSession) { cv.loadSession(s.id); }
-            view.activeTab = 'chat';
+            view.switchTab('chat');
           }}
               >
                 <div class="history-card-info">
@@ -131,8 +118,9 @@ function renderHistoryTab(view: AppView) {
                   title="${isPendingDelete ? 'Click again to confirm' : 'Delete'}"
                   @click=${(e: Event) => {
             e.stopPropagation();
-            const cv = getChatView();
+            const cv = view.getChatView();
             if (cv?.handleDeleteSession) { cv.handleDeleteSession(s.id); }
+            setTimeout(() => view.refreshHistorySessions(), 300);
           }}
                 >${isPendingDelete ? 'Confirm?' : '🗑'}</button>
               </div>

@@ -231,6 +231,14 @@ export const styles = css`
     text-overflow: ellipsis;
   }
   
+  .model-description {
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground);
+    margin: 2px 0 4px;
+    line-height: 1.3;
+    opacity: 0.85;
+  }
+
   .model-details {
     font-size: 12px;
     color: var(--vscode-descriptionForeground);

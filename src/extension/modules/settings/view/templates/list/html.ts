@@ -31,7 +31,40 @@ export function renderList(view: Settings) {
   `;
 }
 
+function getModelDescription(modelName: string): string {
+  const descriptions: Record<string, string> = {
+    // Google
+    'gemini-2.5-pro': 'Advanced reasoning & coding — best for complex tasks',
+    'gemini-2.5-flash': 'Fast & efficient — great for quick tasks & drafts',
+    'gemini-2.0-flash': 'Previous gen fast model — good balance of speed & quality',
+    'gemini-1.5-pro': 'Strong general purpose — documents & long context',
+    'gemini-1.5-flash': 'Lightweight & fast — ideal for simple queries',
+    // OpenAI
+    'gpt-4o': 'Multimodal powerhouse — text, vision, audio',
+    'gpt-4o-mini': 'Cost-efficient — fast responses, good quality',
+    'gpt-4-turbo': 'High capability — complex reasoning & code',
+    'o1': 'Deep reasoning — excels at math & science',
+    'o1-mini': 'Fast reasoning — good for STEM tasks',
+    'o3-mini': 'Next-gen reasoning — balanced speed & depth',
+    // Anthropic
+    'claude-sonnet-4-20250514': 'Latest Sonnet — excellent coding & analysis',
+    'claude-3-7-sonnet-20250219': 'Extended thinking — deep analysis & planning',
+    'claude-3-5-sonnet-20241022': 'Strong all-rounder — coding, writing, reasoning',
+    'claude-3-5-haiku-20241022': 'Ultra-fast — quick responses, good quality',
+    'claude-3-opus-20240229': 'Most capable — complex tasks & nuanced writing',
+    // Codex
+    'codex-mini-latest': 'Code specialist — optimized for programming tasks',
+  };
+  // Try exact match, then partial match
+  if (descriptions[modelName]) { return descriptions[modelName]; }
+  for (const [key, desc] of Object.entries(descriptions)) {
+    if (modelName.includes(key) || key.includes(modelName)) { return desc; }
+  }
+  return 'Custom model configuration';
+}
+
 function renderModelCard(view: Settings, model: LLMModelConfig) {
+  const description = getModelDescription(model.modelName || model.name);
   return html`
     <div class="model-card">
       <div class="model-icon-left">
@@ -41,6 +74,7 @@ function renderModelCard(view: Settings, model: LLMModelConfig) {
         <div class="model-header">
            <h3 class="model-name">${model.name || 'Unnamed Model'}</h3>
         </div>
+        <div class="model-description">${description}</div>
         <div class="model-details">
            <span class="model-provider-name">${model.provider}</span>
            <span class="badge-auth-type ${model.authType === 'oauth' ? 'oauth' : 'apikey'}">

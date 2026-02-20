@@ -195,16 +195,18 @@ export const styles = css`
 
     .agent-dropdown {
       position: absolute;
-      top: 100%;
+      bottom: 100%;
       left: 0;
       z-index: 100;
       min-width: 200px;
+      max-height: 280px;
+      overflow-y: auto;
       background: var(--vscode-dropdown-background, #252526);
       border: 1px solid var(--vscode-dropdown-border, #3c3c3c);
       border-radius: 6px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3);
       padding: 4px 0;
-      margin-top: 4px;
+      margin-bottom: 4px;
     }
 
     .agent-option {

@@ -156,7 +156,8 @@ export const styles = [
       transition: background 0.15s ease, border-color 0.15s ease;
     }
     .history-card:hover {
-      background: var(--vscode-list-hoverBackground);
+      background-color: rgba(255, 166, 0, 0.08);
+      border-color: rgba(255, 166, 0, 0.5);
     }
     .history-card.current {
       border-color: var(--vscode-focusBorder);

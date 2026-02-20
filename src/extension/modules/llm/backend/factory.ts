@@ -7,6 +7,16 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 
 /**
+ * Shared base prompt for all agents — sets conversational, human tone.
+ */
+const BASE_SYSTEM_PROMPT = `You are a helpful AI assistant embedded in a VS Code extension called Extensio.
+Respond in a natural, conversational, human tone — like a senior colleague, not a manual.
+Be concise but warm. Match the user's language (if they write in Spanish, respond in Spanish).
+Use code blocks only when showing actual code. Avoid markdown headers in short answers.
+Never start your response with your name, role title, emoji, or icon prefix — the chat UI already shows who you are.
+When you don't know something, say so honestly.`;
+
+/**
  * Pass-through: model IDs now come from Settings dropdown (dynamic discovery).
  */
 function resolveModelId(displayName: string, _provider: string): string {
@@ -41,8 +51,8 @@ export class LLMFactory {
       modelProvider = new OpenAIProvider({ apiKey: apiKey || process.env.OPENAI_API_KEY || '' });
     }
 
-    // Use pre-resolved instructions from Extension Host, fallback to file load
-    const agentInstructions = instructions || await this.loadRoleInstructions(role);
+    // Compose system prompt: base + personality + description
+    const agentInstructions = instructions || await this.buildChatPrompt(role);
 
     return new Agent({
       name: role,
@@ -52,15 +62,79 @@ export class LLMFactory {
     });
   }
 
-  private async loadRoleInstructions(role: string): Promise<string> {
+  /**
+   * Build a lightweight, conversational system prompt for the chat.
+   * Composes: BASE_SYSTEM_PROMPT + role personality + role description.
+   */
+  private async buildChatPrompt(role: string): Promise<string> {
+    const { personality, description } = await this.parseRoleFrontmatter(role);
+
+    const parts = [BASE_SYSTEM_PROMPT];
+
+    if (personality) {
+      parts.push(`\n## Your personality\n${personality}`);
+    }
+
+    if (description) {
+      parts.push(`\n## Your role\n${description}`);
+    }
+
+    // Fallback if no frontmatter found at all
+    if (!personality && !description) {
+      parts.push(`\nYou are the ${role} agent — a specialist in your domain.`);
+    }
+
+    return parts.join('\n');
+  }
+
+  /**
+   * Parse YAML frontmatter from a role markdown file.
+   * Extracts `personality` and `description` fields only (lightweight, no dep on gray-matter).
+   */
+  private async parseRoleFrontmatter(role: string): Promise<{ personality?: string; description?: string }> {
     try {
-      // Use WORKSPACE_ROOT env var set by the Extension Host when spawning the sidecar
       const workspaceRoot = process.env.WORKSPACE_ROOT || process.cwd();
       const rolePath = path.join(workspaceRoot, '.agent', 'rules', 'roles', `${role}.md`);
-      return await fs.readFile(rolePath, 'utf-8');
+      const content = await fs.readFile(rolePath, 'utf-8');
+
+      // Extract all YAML frontmatter blocks (there may be multiple --- delimited blocks)
+      const frontmatterBlocks = content.match(/^---\n([\s\S]*?)\n---/gm);
+      if (!frontmatterBlocks) {
+        return {};
+      }
+
+      let personality: string | undefined;
+      let description: string | undefined;
+
+      for (const block of frontmatterBlocks) {
+        const yaml = block.replace(/^---\n/, '').replace(/\n---$/, '');
+
+        // Extract personality (supports multi-line > or | blocks)
+        if (!personality) {
+          const pMatch = yaml.match(/^personality:\s*[>|]\s*\n((?:\s+.+\n?)*)/m);
+          if (pMatch) {
+            personality = pMatch[1].replace(/^\s+/gm, '').trim();
+          }
+          // Single-line value
+          const pSingle = yaml.match(/^personality:\s*["']?(.+?)["']?\s*$/m);
+          if (!personality && pSingle) {
+            personality = pSingle[1].trim();
+          }
+        }
+
+        // Extract description
+        if (!description) {
+          const dMatch = yaml.match(/^description:\s*["']?(.+?)["']?\s*$/m);
+          if (dMatch) {
+            description = dMatch[1].trim();
+          }
+        }
+      }
+
+      return { personality, description };
     } catch (error) {
-      console.error(`[llm::backend] Failed to load role instructions for ${role}`, error);
-      return `You are the ${role} agent.`; // Fallback
+      console.error(`[llm::backend] Failed to parse role frontmatter for ${role}`, error);
+      return {};
     }
   }
 }

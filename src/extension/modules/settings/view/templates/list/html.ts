@@ -55,10 +55,13 @@ function getModelDescription(modelName: string): string {
     // Codex
     'codex-mini-latest': 'Code specialist — optimized for programming tasks',
   };
-  // Try exact match, then partial match
-  if (descriptions[modelName]) { return descriptions[modelName]; }
+  const lower = modelName.toLowerCase();
+
+  // Try exact match first
+  if (descriptions[lower]) { return descriptions[lower]; }
+  // Partial match (case-insensitive)
   for (const [key, desc] of Object.entries(descriptions)) {
-    if (modelName.includes(key) || key.includes(modelName)) { return desc; }
+    if (lower.includes(key) || key.includes(lower)) { return desc; }
   }
   return 'Custom model configuration';
 }

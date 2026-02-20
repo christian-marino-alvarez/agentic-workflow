@@ -264,6 +264,15 @@ export const styles = css`
       margin-bottom: 4px;
     }
 
+    .agent-status-title {
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--vscode-descriptionForeground);
+      opacity: 0.7;
+    }
+
     .agent-status-row {
       display: flex;
       align-items: center;
@@ -994,21 +1003,22 @@ export const styles = css`
     }
 
     /* Phase Markers */
-    .phase-marker {
+    /* Phase Separator (horizontal divider between phases) */
+    .phase-separator {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 4px 0;
+      padding: 6px 0;
       margin: 4px 0;
     }
 
-    .phase-marker-line {
+    .phase-separator-line {
       flex: 1;
       height: 1px;
       background: var(--vscode-widget-border);
     }
 
-    .phase-marker-label {
+    .phase-separator-label {
       font-size: 10px;
       font-weight: 600;
       text-transform: uppercase;
@@ -1021,95 +1031,92 @@ export const styles = css`
       white-space: nowrap;
     }
 
-    /* Vertical Phase Timeline (LEFT sidebar) */
-    .chat-with-timeline {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
-
-    .chat-with-timeline .history {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .phase-timeline {
-      width: 60px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 12px 4px;
-      flex-shrink: 0;
-      border-right: 1px solid var(--vscode-widget-border);
-      overflow-y: auto;
-    }
-
-    .phase-step {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-      flex-shrink: 0;
-    }
-
-    .phase-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--vscode-widget-border);
-      flex-shrink: 0;
-    }
-
-    .phase-dot.done {
-      background: var(--vscode-testing-iconPassed, #73c991);
-    }
-
-    .phase-dot.active {
-      background: var(--vscode-textLink-foreground, #3794ff);
-      box-shadow: 0 0 6px var(--vscode-textLink-foreground, #3794ff);
-      animation: phasePulse 1.5s ease-in-out infinite;
-    }
-
-    @keyframes phasePulse {
-      0%, 100% { box-shadow: 0 0 4px var(--vscode-textLink-foreground, #3794ff); }
-      50% { box-shadow: 0 0 10px var(--vscode-textLink-foreground, #3794ff); }
-    }
-
-    .phase-step-label {
-      font-size: 7px;
-      color: var(--vscode-descriptionForeground);
-      text-align: center;
-      line-height: 1.2;
-      max-width: 52px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .phase-step.active .phase-step-label {
-      color: var(--vscode-textLink-foreground, #3794ff);
-      font-weight: 600;
-    }
-
-    .phase-step.done .phase-step-label {
-      color: var(--vscode-testing-iconPassed, #73c991);
-    }
-
-    .phase-line {
-      width: 2px;
-      flex: 1;
-      min-height: 8px;
-      background: var(--vscode-widget-border);
-    }
-
-    .phase-line.done {
-      background: var(--vscode-testing-iconPassed, #73c991);
-    }
-
-    .phase-marker-time {
+    .phase-separator-time {
       font-size: 9px;
       color: var(--vscode-descriptionForeground);
       opacity: 0.7;
       white-space: nowrap;
+    }
+
+    /* Phase Group (left sidebar + messages) */
+    .phase-group {
+      display: flex;
+      gap: 0;
+    }
+
+    .phase-group.has-phase {
+      gap: 8px;
+    }
+
+    .phase-group-sidebar {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 48px;
+      flex-shrink: 0;
+      padding-top: 4px;
+    }
+
+    .phase-group-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--vscode-textLink-foreground, #3794ff);
+      flex-shrink: 0;
+    }
+
+    .phase-group-line {
+      width: 2px;
+      flex: 1;
+      min-height: 8px;
+      background: color-mix(in srgb, var(--vscode-textLink-foreground) 30%, transparent);
+    }
+
+    .phase-group-name {
+      font-size: 8px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: var(--vscode-textLink-foreground, #3794ff);
+      text-align: center;
+      max-width: 48px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding: 2px 0;
+    }
+
+    .phase-group-messages {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    /* Permission toggle labels */
+    .permission-toggle {
+      cursor: pointer;
+    }
+
+    .perm-label {
+      font-size: 10px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .perm-label.sandbox {
+      color: var(--vscode-testing-iconPassed, #73c991);
+      background: color-mix(in srgb, var(--vscode-testing-iconPassed) 10%, transparent);
+      border: 1px solid color-mix(in srgb, var(--vscode-testing-iconPassed) 25%, transparent);
+    }
+
+    .perm-label.full-access {
+      color: var(--vscode-testing-iconFailed, #f48771);
+      background: color-mix(in srgb, var(--vscode-testing-iconFailed) 10%, transparent);
+      border: 1px solid color-mix(in srgb, var(--vscode-testing-iconFailed) 25%, transparent);
     }
 `;

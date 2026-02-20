@@ -96,35 +96,40 @@ export const styles = [
       display: flex;
       flex-direction: column;
       height: 100%;
-      padding: 16px 20px;
       box-sizing: border-box;
     }
-    .history-header {
+    /* Shared header pattern (matches Settings) */
+    .header-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      border-bottom: 1px solid var(--vscode-widget-border);
+    }
+    .header-actions h2 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .actions-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .icon-btn {
+      background: transparent;
+      border: none;
+      color: var(--vscode-icon-foreground);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 3px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid var(--vscode-panel-border);
+      justify-content: center;
     }
-    .history-header h2 {
-      margin: 0;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--vscode-foreground);
+    .icon-btn:hover {
+      background-color: var(--vscode-toolbar-hoverBackground);
     }
-    .history-new-btn {
-      background: var(--vscode-button-background);
-      color: var(--vscode-button-foreground);
-      border: none;
-      padding: 4px 12px;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: opacity 0.15s;
-    }
-    .history-new-btn:hover { opacity: 0.85; }
     .history-list {
       flex: 1;
       overflow-y: auto;

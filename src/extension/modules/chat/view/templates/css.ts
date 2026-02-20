@@ -88,10 +88,10 @@ export const styles = css`
     }
 
     .progress-bar-track {
-      width: 40px;
-      height: 4px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 2px;
+      width: 50px;
+      height: 5px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 3px;
       overflow: hidden;
     }
 
@@ -105,7 +105,7 @@ export const styles = css`
     .progress-text {
       font-size: 10px;
       font-weight: 600;
-      color: #4ec9b0;
+      color: var(--vscode-foreground);
       min-width: 28px;
       text-align: right;
     }

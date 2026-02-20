@@ -1,5 +1,11 @@
 import { TemplateResult } from 'lit';
 
+export interface TaskStep {
+  id: string;
+  label: string;
+  status: 'pending' | 'active' | 'done';
+}
+
 export interface IChatView {
   history: Array<{ sender: string, text: string, role?: string, status?: string, isStreaming?: boolean }>;
   inputText: string;
@@ -21,8 +27,13 @@ export interface IChatView {
   agentDisabled: boolean;
   agentModelName: string;
 
+  // Task progress
+  taskSteps: TaskStep[];
+  showTimeline: boolean;
+
   togglePermission(role: string): void;
   testConnection(): void;
+  toggleTimeline(): void;
 
   handleInput(e: InputEvent): void;
   handleKeyDown(e: KeyboardEvent): void;

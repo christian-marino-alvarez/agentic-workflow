@@ -76,6 +76,122 @@ export const styles = css`
       opacity: 0.85;
     }
 
+    /* ─── Progress Pill ──────────────────── */
+    .progress-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 8px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .progress-bar-track {
+      width: 40px;
+      height: 4px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4ec9b0, #569cd6);
+      border-radius: 2px;
+      transition: width 0.4s ease;
+    }
+
+    .progress-text {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--vscode-foreground);
+      min-width: 28px;
+      text-align: right;
+    }
+
+    .timeline-chevron {
+      color: var(--vscode-descriptionForeground);
+      transition: transform 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .timeline-chevron.open {
+      transform: rotate(180deg);
+    }
+
+    .active-step-hint {
+      font-size: 10px;
+      color: #569cd6;
+      padding: 2px 0 0 22px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+
+    /* ─── Metro Timeline ─────────────────── */
+    .metro-timeline {
+      padding: 10px 8px 6px 16px;
+      animation: slideDown 0.2s ease;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .metro-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .metro-track {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 14px;
+      flex-shrink: 0;
+    }
+
+    .metro-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      transition: background 0.3s ease;
+    }
+
+    .metro-line {
+      width: 2px;
+      height: 18px;
+      flex-shrink: 0;
+      transition: background 0.3s ease;
+    }
+
+    .metro-label {
+      font-size: 11px;
+      line-height: 14px;
+      padding-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .metro-label.done { color: #4ec9b0; }
+    .metro-label.active { color: #569cd6; font-weight: 600; }
+    .metro-label.pending { color: #555; }
+
+    .metro-active-badge {
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      padding: 1px 5px;
+      background: rgba(86, 156, 214, 0.2);
+      color: #569cd6;
+      border-radius: 3px;
+      border: 1px solid rgba(86, 156, 214, 0.3);
+    }
+
     .agent-dropdown {
       position: absolute;
       top: 100%;

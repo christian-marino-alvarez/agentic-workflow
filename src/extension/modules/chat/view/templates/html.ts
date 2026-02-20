@@ -71,23 +71,63 @@ function renderPermissionToggle(view: IChatView) {
   `;
 }
 
-// ─── Header: Workflow info + Status ──────────────────────────
+// ─── Header: Workflow + Task Progress ──────────────────────────
 function renderHeader(view: IChatView) {
+  const done = view.taskSteps.filter(s => s.status === 'done').length;
+  const total = view.taskSteps.length;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  const activeStep = view.taskSteps.find(s => s.status === 'active');
+
   return html`
     <div class="header layout-col">
-      <div class="header-top layout-row">
+      <div class="header-top layout-row" @click=${() => view.toggleTimeline()} style="cursor: pointer;">
         <div class="workflow-info">
           <svg width="14" height="14" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#3794ff">
             <path d="M13.5 1H11V2H13.5C14.3284 2 15 2.67157 15 3.5V13.5C15 14.3284 14.3284 15 13.5 15H2.5C1.67157 15 1 14.3284 1 13.5V3.5C1 2.67157 1.67157 2 2.5 2H5V1H2.5C1.11929 1 0 2.11929 0 3.5V13.5C0 14.8807 1.11929 16 2.5 16H13.5C14.8807 16 16 14.8807 16 13.5V3.5C16 2.11929 14.8807 1 13.5 1ZM6 1H10V3H6V1ZM3 6H13V7H3V6ZM3 9H13V10H3V9ZM3 12H10V13H3V12Z"/>
           </svg>
           <span class="workflow-label">${view.activeWorkflow}</span>
         </div>
-        <div class="actions-group">
+        <div class="actions-group" style="gap: 6px;">
           ${renderPermissionToggle(view)}
-          ${view.isSecure ? renderSecureBadge() : renderVerifyButton(view)}
-          <span class="header-status">● Ready</span>
+          <span class="progress-pill">
+            <span class="progress-bar-track">
+              <span class="progress-bar-fill" style="width: ${pct}%"></span>
+            </span>
+            <span class="progress-text">${pct}%</span>
+          </span>
+          <svg class="timeline-chevron ${view.showTimeline ? 'open' : ''}" width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 11L3 6h10z"/>
+          </svg>
         </div>
       </div>
+      ${activeStep ? html`<div class="active-step-hint">${activeStep.label}</div>` : ''}
+      ${view.showTimeline ? renderMetroTimeline(view) : ''}
+    </div>
+  `;
+}
+
+// ─── Metro Timeline ──────────────────────────────────────────
+function renderMetroTimeline(view: IChatView) {
+  return html`
+    <div class="metro-timeline">
+      ${view.taskSteps.map((step, i) => {
+    const isLast = i === view.taskSteps.length - 1;
+    const colorMap = { done: '#4ec9b0', active: '#569cd6', pending: '#555' };
+    const dotColor = colorMap[step.status];
+    const lineColor = step.status === 'done' ? '#4ec9b0' : '#333';
+    return html`
+          <div class="metro-step">
+            <div class="metro-track">
+              <div class="metro-dot" style="background: ${dotColor}; ${step.status === 'active' ? 'box-shadow: 0 0 8px ' + dotColor + ';' : ''}"></div>
+              ${!isLast ? html`<div class="metro-line" style="background: ${lineColor};"></div>` : ''}
+            </div>
+            <div class="metro-label ${step.status}">
+              ${step.label}
+              ${step.status === 'active' ? html`<span class="metro-active-badge">IN PROGRESS</span>` : ''}
+            </div>
+          </div>
+        `;
+  })}
     </div>
   `;
 }

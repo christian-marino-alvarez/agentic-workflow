@@ -139,6 +139,8 @@ function renderToolEvents(events?: Array<any>) {
     <div class="tool-events">
       ${events.map(ev => {
     if (ev.type === 'tool_call') {
+      // Skip delegateTask tool calls (rendered as delegation cards instead)
+      if (ev.name === 'delegateTask') { return ''; }
       return html`
             <details class="tool-call-block" open>
               <summary class="tool-call-header">
@@ -151,6 +153,8 @@ function renderToolEvents(events?: Array<any>) {
           `;
     }
     if (ev.type === 'tool_result') {
+      // Skip delegateTask results (shown in delegation card)
+      if (ev.name === 'delegateTask') { return ''; }
       return html`
             <details class="tool-result-block">
               <summary class="tool-result-header">
@@ -168,8 +172,47 @@ function renderToolEvents(events?: Array<any>) {
   `;
 }
 
+// ─── Delegation Card ──────────────────────────────────────
+function renderDelegationCard(msg: any) {
+  const isPending = msg.delegationStatus === 'pending';
+  const statusIcon = isPending ? '⏳' : '✅';
+  const statusText = isPending ? 'En ejecución...' : 'Completado';
+  const agentIcon = getIcon(msg.delegationAgent);
+
+  return html`
+    <div class="delegation-card ${isPending ? 'pending' : 'completed'}">
+      <div class="delegation-header">
+        <span class="delegation-icon">🔀</span>
+        <span class="delegation-title">Delegación → ${msg.delegationAgent || 'agente'}</span>
+        <span class="delegation-status">${statusIcon} ${statusText}</span>
+      </div>
+      <div class="delegation-task">
+        ${renderMarkdown(msg.text)}
+      </div>
+      ${msg.delegationResult ? html`
+        <details class="delegation-report" open>
+          <summary class="delegation-report-header">
+            <span>${agentIcon}</span> Informe del agente
+          </summary>
+          <div class="delegation-report-content markdown-body">
+            ${renderMarkdown(msg.delegationResult)}
+          </div>
+        </details>
+      ` : html`
+        <div class="delegation-loading">
+          <span class="streaming-cursor"></span> Esperando respuesta del agente...
+        </div>
+      `}
+    </div>
+  `;
+}
+
 // ─── Message Bubbles ──────────────────────────────────────
 function renderMessageBubble(msg: any) {
+  // Delegation messages get a special card
+  if (msg.isDelegation) {
+    return renderDelegationCard(msg);
+  }
   const typeClass = msg.role === 'user' ? 'msg-user' : (msg.role === 'architect' ? 'msg-agent' : 'msg-system');
   const isAgent = msg.role !== 'user' && msg.role !== 'system';
   return html`

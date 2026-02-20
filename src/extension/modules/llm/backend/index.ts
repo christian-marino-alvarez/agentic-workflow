@@ -4,7 +4,7 @@ import { AgentRequest, AgentResponse, RunRequest } from './types.js';
 import { Runner } from '@openai/agents';
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { API_ENDPOINTS, NAME, CLAUDE_MODELS } from '../constants.js';
-import { agentTools } from './tools/index.js';
+import { agentTools, createDelegateTaskTool } from './tools/index.js';
 
 export class LLMVirtualBackend extends AbstractVirtualBackend {
   private factory: LLMFactory;
@@ -72,7 +72,9 @@ export class LLMVirtualBackend extends AbstractVirtualBackend {
     }
 
     try {
-      const agent = await this.factory.createAgent(role, binding, agentTools, apiKey, provider, instructions);
+      // Build role-specific tools: architect gets delegateTask
+      const tools = this.getToolsForRole(role, apiKey, provider, binding);
+      const agent = await this.factory.createAgent(role, binding, tools, apiKey, provider, instructions);
 
       const runner = new Runner({ tracingDisabled: true });
       const result = await runner.run(agent, finalInput);
@@ -117,7 +119,9 @@ export class LLMVirtualBackend extends AbstractVirtualBackend {
     }
 
     try {
-      const agent = await this.factory.createAgent(role, binding, agentTools, apiKey, provider, instructions);
+      // Build role-specific tools: architect gets delegateTask
+      const tools = this.getToolsForRole(role, apiKey, provider, binding);
+      const agent = await this.factory.createAgent(role, binding, tools, apiKey, provider, instructions);
       console.log(`[llm::backend] Agent created, starting stream...`);
 
       const runner = new Runner({ tracingDisabled: true });
@@ -163,5 +167,16 @@ export class LLMVirtualBackend extends AbstractVirtualBackend {
     reply.raw.write(`data: [DONE]\n\n`);
   }
 
+  /**
+   * Returns the appropriate tool set for a given role.
+   * Only the architect-agent gets the delegateTask tool.
+   */
+  private getToolsForRole(role: string, apiKey?: string, provider?: string, binding?: Record<string, string>): any[] {
+    if (role === 'architect') {
+      const delegateTool = createDelegateTaskTool(this.factory, apiKey, provider, binding);
+      return [...agentTools, delegateTool];
+    }
+    return agentTools;
+  }
 
 }

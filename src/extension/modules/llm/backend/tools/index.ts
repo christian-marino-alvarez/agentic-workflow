@@ -122,3 +122,5 @@ export const agentTools = [
   listDirTool,
   searchFilesTool,
 ];
+
+export { createDelegateTaskTool } from './delegate.js';

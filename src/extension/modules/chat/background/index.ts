@@ -32,6 +32,16 @@ export class ChatBackground extends Background {
     return text.replace(ChatBackground.AGENT_PREFIX_REGEX, '');
   }
 
+  /** Parse delegateTask tool call arguments safely. */
+  private parseDelegationArgs(argsStr?: string): { agent?: string, task?: string } | undefined {
+    if (!argsStr) { return undefined; }
+    try {
+      return JSON.parse(argsStr);
+    } catch {
+      return undefined;
+    }
+  }
+
   public override async listen(message: Message): Promise<any> {
     switch (message.payload.command) {
       case MESSAGES.SEND_MESSAGE:
@@ -188,6 +198,29 @@ export class ChatBackground extends Background {
                   }
                 });
               } else if (parsed.type === 'tool_call' || parsed.type === 'tool_result') {
+                // Detect delegation events and emit them separately
+                const isDelegation = parsed.name === 'delegateTask';
+                if (isDelegation) {
+                  this.messenger.emit({
+                    id: randomUUID(),
+                    from: `${NAME}::background`,
+                    to: `${NAME}::view`,
+                    timestamp: Date.now(),
+                    origin: MessageOrigin.Server,
+                    payload: {
+                      command: MESSAGES.DELEGATION_EVENT,
+                      data: {
+                        type: parsed.type, // 'tool_call' or 'tool_result'
+                        agentRole: role,
+                        targetAgent: parsed.type === 'tool_call' ? this.parseDelegationArgs(parsed.arguments)?.agent : undefined,
+                        taskDescription: parsed.type === 'tool_call' ? this.parseDelegationArgs(parsed.arguments)?.task : undefined,
+                        result: parsed.type === 'tool_result' ? parsed.output : undefined,
+                        status: parsed.type === 'tool_call' ? 'pending' : 'completed',
+                      }
+                    }
+                  });
+                }
+                // Also emit as regular tool event for the streaming view
                 this.messenger.emit({
                   id: randomUUID(),
                   from: `${NAME}::background`,

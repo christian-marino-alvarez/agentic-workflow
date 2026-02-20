@@ -801,4 +801,82 @@ export const styles = css`
     .perm-label:hover {
       opacity: 0.8;
     }
+
+    /* ─── Delegation Card ──────────────────────────────────── */
+    .delegation-card {
+      margin: 8px 0;
+      padding: 12px 16px;
+      border-radius: 8px;
+      border-left: 4px solid var(--vscode-charts-blue, #58a6ff);
+      background: var(--vscode-editor-inactiveSelectionBackground, rgba(88, 166, 255, 0.08));
+    }
+    .delegation-card.pending {
+      border-left-color: var(--vscode-charts-yellow, #d29922);
+      animation: delegation-pulse 2s ease-in-out infinite;
+    }
+    .delegation-card.completed {
+      border-left-color: var(--vscode-charts-green, #3fb950);
+    }
+    @keyframes delegation-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.85; }
+    }
+    .delegation-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .delegation-icon {
+      font-size: 1.1em;
+    }
+    .delegation-title {
+      flex: 1;
+      color: var(--vscode-editor-foreground);
+    }
+    .delegation-status {
+      font-size: 0.85em;
+      font-weight: 400;
+      color: var(--vscode-descriptionForeground);
+    }
+    .delegation-task {
+      font-size: 0.9em;
+      color: var(--vscode-descriptionForeground);
+      margin-bottom: 8px;
+      padding: 4px 0;
+    }
+    .delegation-task p {
+      margin: 0;
+    }
+    .delegation-report {
+      margin-top: 8px;
+      border: 1px solid var(--vscode-panel-border, rgba(255,255,255,0.1));
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .delegation-report-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      font-size: 0.9em;
+      font-weight: 500;
+      background: var(--vscode-sideBar-background, rgba(0,0,0,0.1));
+      cursor: pointer;
+    }
+    .delegation-report-content {
+      padding: 12px;
+      font-size: 0.88em;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .delegation-loading {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.88em;
+      color: var(--vscode-descriptionForeground);
+      padding: 4px 0;
+    }
 `;

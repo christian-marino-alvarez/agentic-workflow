@@ -114,13 +114,13 @@ function renderHistoryTab(view: AppView) {
                     ${formatDate(s.timestamp)} · ${s.messageCount} messages
                   </div>
                 </div>
-                <button class="history-delete-btn ${isPendingDelete ? 'confirm' : ''}"
-                  title="${isPendingDelete ? 'Click again to confirm' : 'Delete'}"
+                <button class="action-btn delete ${isPendingDelete ? 'confirm-delete' : ''}"
+                  title="${isPendingDelete ? 'Click again to confirm' : 'Delete session'}"
                   @click=${(e: Event) => {
             e.stopPropagation();
             view.handleDeleteSession(s.id);
           }}
-                >${isPendingDelete ? 'Confirm?' : '🗑'}</button>
+                >${isPendingDelete ? 'Confirm' : 'Delete'}</button>
               </div>
             `;
       })

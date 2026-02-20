@@ -183,25 +183,42 @@ export const styles = [
       color: var(--vscode-descriptionForeground);
       margin-top: 2px;
     }
-    .history-delete-btn {
-      background: none;
-      border: none;
-      color: var(--vscode-descriptionForeground);
-      cursor: pointer;
-      padding: 2px 8px;
-      font-size: 13px;
-      border-radius: 4px;
-      white-space: nowrap;
-      transition: color 0.15s;
-    }
-    .history-delete-btn:hover {
-      color: var(--vscode-errorForeground);
-    }
-    .history-delete-btn.confirm {
-      background: var(--vscode-inputValidation-errorBackground, #5a1d1d);
-      border: 1px solid var(--vscode-inputValidation-errorBorder, #be1100);
-      color: var(--vscode-errorForeground);
+    /* Action buttons (match Settings) */
+    .action-btn {
+      background-color: var(--vscode-button-secondaryBackground);
+      border: 1px solid var(--vscode-button-border, var(--vscode-widget-border));
+      color: var(--vscode-button-secondaryForeground);
+      padding: 4px 12px;
+      border-radius: 3px;
       font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .action-btn:hover {
+      background-color: var(--vscode-button-secondaryHoverBackground);
+      border-color: var(--vscode-focusBorder);
+    }
+    .action-btn.delete {
+      background-color: transparent;
+      color: var(--vscode-descriptionForeground);
+      border-color: var(--vscode-widget-border);
+      opacity: 0.5;
+    }
+    .action-btn.delete:hover {
+      background-color: rgba(244, 135, 113, 0.15);
+      color: var(--vscode-testing-iconFailed, #f48771);
+      border-color: var(--vscode-testing-iconFailed, #f48771);
+      opacity: 1;
+    }
+    .action-btn.delete.confirm-delete {
+      background-color: rgba(244, 135, 113, 0.25);
+      color: var(--vscode-testing-iconFailed, #f48771);
+      border-color: var(--vscode-testing-iconFailed, #f48771);
+      opacity: 1;
+      font-weight: 600;
+      animation: skeletonPulse 0.8s ease-in-out infinite;
     }
 
     /* History Skeleton */

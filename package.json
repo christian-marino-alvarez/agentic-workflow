@@ -108,6 +108,14 @@
           "type": "object",
           "default": {},
           "description": "Cached discovered models per provider (persists across restarts)"
+        },
+        "agenticWorkflow.disabledRoles": {
+          "type": "array",
+          "default": [],
+          "description": "List of disabled agent role names (hidden from Chat dropdown)",
+          "items": {
+            "type": "string"
+          }
         }
       }
     }

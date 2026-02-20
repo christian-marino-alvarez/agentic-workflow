@@ -194,18 +194,28 @@ export class ChatView extends View {
    */
   private async loadAgents() {
     try {
-      const result = await this.sendMessage('settings', SETTINGS_MESSAGES.GET_ROLES);
+      this.log('loadAgents: requesting roles from settings...');
+      const [result, disabledResult] = await Promise.all([
+        this.sendMessage('settings', SETTINGS_MESSAGES.GET_ROLES),
+        this.sendMessage('settings', SETTINGS_MESSAGES.GET_DISABLED_ROLES).catch(() => ({ success: false, disabledRoles: [] }))
+      ]);
+      this.log('loadAgents: raw result:', JSON.stringify(result));
       if (result?.success && result.roles) {
-        this.availableAgents = result.roles.map((r: any) => ({
+        const disabledSet = new Set<string>(disabledResult?.disabledRoles || []);
+        const activeRoles = result.roles.filter((r: any) => !disabledSet.has(r.name));
+        this.log('loadAgents: received', result.roles.length, 'roles, disabled:', Array.from(disabledSet).join(','), ', showing:', activeRoles.length);
+        this.availableAgents = activeRoles.map((r: any) => ({
           name: r.name,
           icon: r.icon,
           model: r.model,
           capabilities: r.capabilities
         }));
         this.log('Agents loaded:', this.availableAgents.length);
+      } else {
+        this.log('loadAgents: result was empty or not successful, keeping defaults. result:', result);
       }
     } catch (error) {
-      this.log('Error loading agents', error);
+      this.log('Error loading agents (keeping defaults):', error);
     }
   }
 

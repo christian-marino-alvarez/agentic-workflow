@@ -97,9 +97,10 @@ export const styles = css`
 
     .progress-bar-fill {
       height: 100%;
-      background: linear-gradient(90deg, #4ec9b0, #569cd6);
-      border-radius: 2px;
+      background: linear-gradient(90deg, #00d4aa, #4dacff);
+      border-radius: 3px;
       transition: width 0.4s ease;
+      box-shadow: 0 0 4px rgba(77, 172, 255, 0.5);
     }
 
     .progress-text {

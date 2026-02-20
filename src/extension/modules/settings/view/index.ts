@@ -50,6 +50,10 @@ export class Settings extends View {
   @state() accessor pendingToggleRole: string | undefined;
   private toggleTimeout: any; // Timer for auto-cancel toggle
 
+  // Custom dropdown state (role-binding section)
+  @state() accessor openDropdownId: string | null = null;
+  private boundCloseDropdowns = this.closeAllDropdowns.bind(this);
+
   static override styles = [styles, roleBindingStyles];
   protected override readonly moduleName = NAME;
 
@@ -68,12 +72,18 @@ export class Settings extends View {
    */
   override async firstUpdated() {
     this.log('First render complete, requesting providers...');
+    document.addEventListener('click', this.boundCloseDropdowns);
     await Promise.all([
       this.loadModels(),
       this.refreshRoles(),
       this.loadBindings(),
       this.loadDisabledRoles()
     ]);
+  }
+
+  override disconnectedCallback() {
+    super.disconnectedCallback();
+    document.removeEventListener('click', this.boundCloseDropdowns);
   }
 
   // --- Data Operations (Request-Response) ---
@@ -258,6 +268,33 @@ export class Settings extends View {
    */
   userActionModelChangedForRole(role: string, provider: string, e: Event) {
     const modelId = (e.target as HTMLSelectElement).value;
+    this.saveRoleConfig(role, { provider, id: modelId || undefined });
+  }
+
+  // --- Custom Dropdown Actions (Role-Binding) ---
+
+  toggleDropdown(dropdownId: string, event: Event) {
+    event.stopPropagation();
+    this.openDropdownId = this.openDropdownId === dropdownId ? null : dropdownId;
+  }
+
+  closeAllDropdowns() {
+    if (this.openDropdownId) {
+      this.openDropdownId = null;
+    }
+  }
+
+  async selectProviderForRole(role: string, provider: string) {
+    this.openDropdownId = null;
+    this.saveRoleConfig(role, { provider, id: undefined });
+
+    if (provider && !this.providerDiscoveredModels[provider]) {
+      await this.discoverModelsForProvider(provider);
+    }
+  }
+
+  selectModelForRole(role: string, provider: string, modelId: string) {
+    this.openDropdownId = null;
     this.saveRoleConfig(role, { provider, id: modelId || undefined });
   }
 

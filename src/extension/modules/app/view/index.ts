@@ -61,8 +61,10 @@ export class AppView extends View {
     if (this.pendingDeleteSessionId === sessionId) {
       // Second click — confirm delete
       const chatView = this.getChatView();
-      if (chatView?.handleDeleteSession) {
-        chatView.handleDeleteSession(sessionId); // triggers second-click in ChatView too
+      if (chatView) {
+        // Pre-set so ChatView treats this as the confirm click
+        chatView.pendingDeleteSessionId = sessionId;
+        chatView.handleDeleteSession(sessionId);
       }
       this.pendingDeleteSessionId = undefined;
       clearTimeout(this.deleteTimeout);

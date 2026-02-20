@@ -18,7 +18,8 @@
 - [x] **T010**: D3 - Chat Session Endpoint
 - [x] **T019**: D3 - Agent Factory & Role-Model Binding ✅
 - [x] **T039**: D3 - Agent Delegation (Inter-Agent Task Routing) ✅
-- [ ] **T043**: D3 - Async Delegation & Multi-Stream 🔥 **NEXT**
+- [ ] **T024**: D2 - Workflow Viewer (Load & Display) 🔥 **NEXT**
+- [ ] **T043**: D3 - Async Delegation & Multi-Stream
 - [ ] **T032**: D4 - Runtime Server (File I/O & Sandbox)
 - [ ] **T020**: D2 - Chat Filters (Agent/Thread)
 
@@ -154,9 +155,9 @@
 ---
 
 ## 🚀 Next Suggested Steps
-1.  **T043 (Async Delegation)**: Multi-stream + continue chatting during delegation. 🔥
-2.  **T030 (Lifecycle Events)**: Real-time visibility into agent actions.
+1.  **T024 (Workflow Viewer)**: Load and display `.agent/workflows/*.md` in UI. 🔥
+2.  **T043 (Async Delegation)**: Multi-stream + continue chatting during delegation.
 3.  **T020 (Chat Filters)**: Quick win for UI usability.
 
-**Last Updated**: 2026-02-20 by architect-agent (T034, T036, T044-T047 completed)
+**Last Updated**: 2026-02-20 by architect-agent (priorities reordered: T024 before T043)
 

@@ -5,19 +5,20 @@
 |---|---|---|---|
 | **D1: Settings & OAuth** | 🏗️ Architecture | 4 | 8 |
 | **D2: UI (Chat/Workflows)** | 🏗️ In Progress | 3 | 8 |
-| **D3: Backend (Agents)** | 🏗️ In Progress | 3 | 7 |
+| **D3: Backend (Agents)** | 🏗️ In Progress | 4 | 8 |
 | **D4: Runtime & Execution** | 🏗️ Concept | 0 | 2 |
 | **D7: Release/CI-CD** | ✅ Stable | 3 | 3 |
 | **D8: E2E Testing** | ✅ Stable | 4 | 4 |
 
-**Total**: 17/32 tasks completed
+**Total**: 18/33 tasks completed
 
 ## 🎯 Priority High - Critical Path
 - [x] **T017**: D1 - OAuth Authentication Provider (vscode.authentication)
 - [x] **T018**: D1 - Model Registry UI (API Key + OAuth Tokens)
 - [x] **T010**: D3 - Chat Session Endpoint
 - [x] **T019**: D3 - Agent Factory & Role-Model Binding ✅
-- [ ] **T039**: D3 - Agent Delegation (Inter-Agent Task Routing) 🔥 **NEXT**
+- [x] **T039**: D3 - Agent Delegation (Inter-Agent Task Routing) ✅
+- [ ] **T043**: D3 - Async Delegation & Multi-Stream 🔥 **NEXT**
 - [ ] **T032**: D4 - Runtime Server (File I/O & Sandbox)
 - [ ] **T020**: D2 - Chat Filters (Agent/Thread)
 
@@ -95,12 +96,20 @@
   - Selected agent's role sent to sidecar. ✅
   - Attached files included in LLM context. ✅
   - System loading messages hidden (errors only). ✅
-- [ ] **T039**: Agent Delegation (Inter-Agent Task Routing) 🔥
-  - `delegateTask` tool for coordinator agents (architect).
-  - Sub-agent invocation within a single chat session.
-  - Delegation result returned as tool_result to coordinator.
-  - Visual indicator in chat ("🔀 Delegated to QA → ...").
-  - Recursion guard (max depth, no self-delegation).
+- [x] **T039**: Agent Delegation (Inter-Agent Task Routing) ✅
+  - `delegateTask` tool for coordinator agents (architect). ✅
+  - Sub-agent invocation within a single chat session. ✅
+  - Delegation result returned as tool_result to coordinator. ✅
+  - Visual indicator in chat ("🔀 Delegated to QA → ..."). ✅
+  - Recursion guard (max depth, no self-delegation). ✅
+  - Per-agent pastel colors in chat. ✅
+  - Sub-agents instructed to ask developer questions. ✅
+- [ ] **T043**: Async Delegation & Multi-Stream 🔥
+  - Async delegation: sub-agent runs in background, returns task ID.
+  - Chat multi-stream: support concurrent SSE streams.
+  - Continue chatting with architect while delegation runs.
+  - Polling/notification when sub-agent completes.
+  - Real-time intermediate streaming of sub-agent output.
 - [ ] **T029**: Role Definition Schema
   - Enhance `roles.yaml` to support forced model capabilities (e.g., "Requires Vision").
 - [ ] **T030**: Agent Lifecycle Events
@@ -126,9 +135,9 @@
 ---
 
 ## 🚀 Next Suggested Steps
-1.  **T039 (Agent Delegation)**: Architect delegates to specialist agents autonomously. 🔥
-2.  **T030 (Lifecycle Events)**: Real-time visibility into agent actions during delegation.
+1.  **T043 (Async Delegation)**: Multi-stream + continue chatting during delegation. 🔥
+2.  **T030 (Lifecycle Events)**: Real-time visibility into agent actions.
 3.  **T020 (Chat Filters)**: Quick win for UI usability.
 
-**Last Updated**: 2026-02-20 by architect-agent (T019, T040, T041, T042 completed)
+**Last Updated**: 2026-02-20 by architect-agent (T039 completed)
 

@@ -149,9 +149,6 @@ export class ChatBackground extends Background {
 
               if (parsed.type === 'content') {
                 streamText += parsed.content;
-                // Emit each chunk incrementally (or emit full so far if ChatView expects it)
-                // For now, re-emitting full text based on expected format.
-                // Assuming ChatView handles incremental updates correctly.
                 this.messenger.emit({
                   id: randomUUID(),
                   from: `${NAME}::background`,
@@ -161,6 +158,23 @@ export class ChatBackground extends Background {
                   payload: {
                     command: MESSAGES.RECEIVE_MESSAGE,
                     data: { text: this.stripAgentPrefix(streamText), agentRole: role, isStreaming: true }
+                  }
+                });
+              } else if (parsed.type === 'tool_call' || parsed.type === 'tool_result') {
+                this.messenger.emit({
+                  id: randomUUID(),
+                  from: `${NAME}::background`,
+                  to: `${NAME}::view`,
+                  timestamp: Date.now(),
+                  origin: MessageOrigin.Server,
+                  payload: {
+                    command: MESSAGES.RECEIVE_MESSAGE,
+                    data: {
+                      text: '',
+                      agentRole: role,
+                      isStreaming: true,
+                      toolEvent: parsed,
+                    }
                   }
                 });
               }

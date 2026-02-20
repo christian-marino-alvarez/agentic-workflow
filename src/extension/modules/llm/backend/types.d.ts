@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { FastifyRequest } from 'fastify';
+import type { Tool } from '@openai/agents';
 
 export interface RoleModelBinding {
   [role: string]: string; // role -> modelId
@@ -23,11 +24,6 @@ export interface AgentResponse {
   };
 }
 
-export interface ToolDefinition {
-  name: string;
-  description: string;
-  parameters: z.ZodSchema;
-  execute: (args: any) => Promise<any>;
-}
+export type ToolDefinition = Tool<any>;
 
 export interface RunRequest extends FastifyRequest<{ Body: AgentRequest }> { }

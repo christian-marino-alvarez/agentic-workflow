@@ -16,7 +16,7 @@ export class ChatView extends View {
   }
 
   @state()
-  public history: Array<{ sender: string, text: string, role?: string, status?: string, isStreaming?: boolean }> = [
+  public history: Array<{ sender: string, text: string, role?: string, status?: string, isStreaming?: boolean, toolEvents?: Array<any> }> = [
     { sender: 'Architect', text: 'I am the Architect Agent. I am ready to help you manage your workflow.', role: 'architect', isStreaming: false }
   ];
 
@@ -220,22 +220,31 @@ export class ChatView extends View {
 
     if (command === MESSAGES.RECEIVE_MESSAGE) {
       this.isLoading = false;
+
+      // Handle tool events (tool_call / tool_result)
+      if (data?.toolEvent) {
+        const historyCopy = [...this.history];
+        const lastMsg = historyCopy.length > 0 ? historyCopy[historyCopy.length - 1] : null;
+        if (lastMsg && lastMsg.role === data.agentRole) {
+          if (!lastMsg.toolEvents) { lastMsg.toolEvents = []; }
+          lastMsg.toolEvents.push(data.toolEvent);
+          this.history = historyCopy;
+        }
+        return;
+      }
+
       if (data && data.text) {
         const isStreaming = data.isStreaming === true;
 
-        // Find if the last message in history is from the same role and currently streaming
         const historyCopy = [...this.history];
         const lastMsg = historyCopy.length > 0 ? historyCopy[historyCopy.length - 1] : null;
 
         if (lastMsg && lastMsg.role === data.agentRole && lastMsg.isStreaming) {
-          // Accumulate the chunk
           lastMsg.text = data.text;
           lastMsg.isStreaming = isStreaming;
-          lastMsg.status = undefined; // Clear "thinking" status once text arrives
+          lastMsg.status = undefined;
           this.history = historyCopy;
         } else {
-          // If the previous message was NOT a streaming message from the same agent, create a new message block
-          // However, verify if background is just clearing out a 'status' message
           if (lastMsg && lastMsg.role === data.agentRole && lastMsg.status && lastMsg.text === '') {
             lastMsg.text = data.text;
             lastMsg.isStreaming = isStreaming;

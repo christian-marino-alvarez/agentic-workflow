@@ -114,8 +114,8 @@ function renderHistoryTab(view: AppView) {
                     ${formatDate(s.timestamp)} · ${s.messageCount} msgs${s.elapsedSeconds ? ` · ⏱ ${Math.floor(s.elapsedSeconds / 60)}:${(s.elapsedSeconds % 60).toString().padStart(2, '0')}` : ''}
                   </div>
                 </div>
-                <span class="history-security-icon ${s.accessLevel === 'full' ? 'warn' : 'safe'}" title="${s.accessLevel === 'full' ? 'Full Access — elevated permissions used' : 'Sandbox — restricted access'}">
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l5 2v4c0 3.5-2.5 6-5 7.5C5.5 13 3 10.5 3 7V3l5-2zm0 1.2L4 4v3c0 2.8 2 5 4 6.2 2-1.2 4-3.4 4-6.2V4L8 2.2z"/><path d="${s.accessLevel === 'full' ? 'M7 9l-1-1-.7.7L7 10.4l3.7-3.7L10 6 7 9z' : 'M7 9l-1-1-.7.7L7 10.4l3.7-3.7L10 6 7 9z'}"/></svg>
+                <span class="history-security ${(s.securityScore ?? 100) >= 80 ? 'safe' : (s.securityScore ?? 100) >= 50 ? 'medium' : 'warn'}" title="Security level based on agent permissions">
+                  ${(s.securityScore ?? 100) >= 80 ? 'Safe' : (s.securityScore ?? 100) >= 50 ? 'Caution' : 'Risk'} ${s.securityScore ?? 100}%
                 </span>
                 ${s.progress !== undefined ? html`<span class="history-progress-pill ${s.progress >= 100 ? 'done' : ''}">${s.progress}%</span>` : ''}
                 <button class="action-btn delete ${isPendingDelete ? 'confirm-delete' : ''}"

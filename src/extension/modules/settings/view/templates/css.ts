@@ -181,8 +181,8 @@ export const styles = css`
   }
 
   .model-card:hover {
-    background-color: var(--vscode-list-hoverBackground);
-    border-color: var(--vscode-focusBorder);
+    background-color: rgba(255, 166, 0, 0.08);
+    border-color: rgba(255, 166, 0, 0.5);
   }
   /* Active Model State with Pastel Touch */
   .model-card.active-model {

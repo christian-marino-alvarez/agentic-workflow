@@ -200,16 +200,28 @@ export const styles = [
       background: color-mix(in srgb, var(--vscode-testing-iconPassed) 12%, transparent);
       border-color: color-mix(in srgb, var(--vscode-testing-iconPassed) 25%, transparent);
     }
-    .history-security-icon {
-      display: flex;
-      align-items: center;
+    .history-security {
+      font-size: 9px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 8px;
+      white-space: nowrap;
       flex-shrink: 0;
     }
-    .history-security-icon.safe {
+    .history-security.safe {
       color: var(--vscode-testing-iconPassed, #73c991);
+      background: color-mix(in srgb, var(--vscode-testing-iconPassed) 10%, transparent);
+      border: 1px solid color-mix(in srgb, var(--vscode-testing-iconPassed) 25%, transparent);
     }
-    .history-security-icon.warn {
+    .history-security.medium {
+      color: var(--vscode-editorWarning-foreground, #cca700);
+      background: color-mix(in srgb, var(--vscode-editorWarning-foreground) 10%, transparent);
+      border: 1px solid color-mix(in srgb, var(--vscode-editorWarning-foreground) 25%, transparent);
+    }
+    .history-security.warn {
       color: var(--vscode-testing-iconFailed, #f48771);
+      background: color-mix(in srgb, var(--vscode-testing-iconFailed) 10%, transparent);
+      border: 1px solid color-mix(in srgb, var(--vscode-testing-iconFailed) 25%, transparent);
     }
     /* Action buttons (match Settings) */
     .action-btn {

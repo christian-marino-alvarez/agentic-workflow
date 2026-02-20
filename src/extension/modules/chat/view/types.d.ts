@@ -12,6 +12,7 @@ export interface IChatView {
   models: Array<{ id: string, name: string, provider: string }>;
   activeWorkflow: string;
   isLoading: boolean;
+  initialLoading: boolean;
   isSecure: boolean;
   isTesting: boolean;
   appVersion: string;

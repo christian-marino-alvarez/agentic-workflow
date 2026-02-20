@@ -179,9 +179,9 @@ export const styles = css`
     .agent-model-label {
       font-size: 10px;
       font-weight: 400;
-      color: var(--vscode-descriptionForeground);
+      color: #1a1a1a;
       padding: 1px 6px;
-      background: var(--vscode-badge-background);
+      background: #ffffff;
       border-radius: 8px;
     }
 

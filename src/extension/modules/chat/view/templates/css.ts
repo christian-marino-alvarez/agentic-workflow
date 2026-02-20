@@ -660,6 +660,17 @@ export const styles = css`
     }
 
     /* Skeleton Loading */
+    .skeleton-chat {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 8px 0;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
     @keyframes pulse {
       0%, 100% { opacity: 0.8; }
       50% { opacity: 0.4; }

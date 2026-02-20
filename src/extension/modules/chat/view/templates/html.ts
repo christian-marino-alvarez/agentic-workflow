@@ -248,11 +248,27 @@ function renderMessageBubble(msg: any) {
 
 function renderLoadingSkeleton() {
   return html`
-    <div class="msg-bubble msg-agent skeleton">
-      <div class="skeleton-header"></div>
-      <div class="skeleton-content">
-        <div class="skeleton-line full"></div>
-        <div class="skeleton-line half"></div>
+    <div class="skeleton-chat">
+      <div class="msg-bubble msg-agent skeleton">
+        <div class="skeleton-header"></div>
+        <div class="skeleton-content">
+          <div class="skeleton-line full"></div>
+          <div class="skeleton-line" style="width: 75%"></div>
+          <div class="skeleton-line half"></div>
+        </div>
+      </div>
+      <div class="msg-bubble msg-user skeleton">
+        <div class="skeleton-header" style="width: 60px"></div>
+        <div class="skeleton-content">
+          <div class="skeleton-line" style="width: 65%"></div>
+        </div>
+      </div>
+      <div class="msg-bubble msg-agent skeleton">
+        <div class="skeleton-header"></div>
+        <div class="skeleton-content">
+          <div class="skeleton-line full"></div>
+          <div class="skeleton-line" style="width: 80%"></div>
+        </div>
       </div>
     </div>
   `;

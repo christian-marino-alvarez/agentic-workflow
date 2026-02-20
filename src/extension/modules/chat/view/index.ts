@@ -125,6 +125,21 @@ export class ChatView extends View {
       }
       this.log(`Secure state updated: ${this.isSecure}`);
     }) as EventListener);
+
+    // Auto-save session when user leaves the tab or window loses focus
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden' && this.history.length > 1) {
+        this.saveCurrentSession();
+      }
+    });
+  }
+
+  override disconnectedCallback() {
+    super.disconnectedCallback();
+    // Last-chance save before view is destroyed
+    if (this.history.length > 1) {
+      this.saveCurrentSession();
+    }
   }
 
   /**

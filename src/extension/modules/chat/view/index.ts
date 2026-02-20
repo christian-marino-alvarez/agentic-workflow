@@ -544,6 +544,12 @@ export class ChatView extends View {
         elapsedSeconds: this.elapsedSeconds || 0,
         progress,
         accessLevel: Object.values(this.agentPermissions).includes('full') ? 'full' : 'sandbox',
+        securityScore: (() => {
+          const perms = Object.values(this.agentPermissions);
+          if (perms.length === 0) { return 100; }
+          const sandboxCount = perms.filter(p => p !== 'full').length;
+          return Math.round((sandboxCount / perms.length) * 100);
+        })(),
       });
       if (result?.sessionId) {
         this.currentSessionId = result.sessionId;

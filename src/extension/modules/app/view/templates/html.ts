@@ -111,7 +111,7 @@ function renderHistoryTab(view: AppView) {
                     ${s.taskTitle || s.title || 'Untitled Task'}${isCurrent ? html` <span class="history-current-badge">● Active</span>` : ''}
                   </div>
                   <div class="history-card-meta">
-                    ${formatDate(s.timestamp)} · ${s.messageCount} msgs
+                    ${formatDate(s.timestamp)} · ${s.messageCount} msgs${s.agents?.length ? ` · ${s.agents.join(' · ')}` : ''}
                   </div>
                 </div>
                 ${s.elapsedSeconds ? html`<span class="history-time-pill">⏱ ${Math.floor(s.elapsedSeconds / 60)}:${(s.elapsedSeconds % 60).toString().padStart(2, '0')}</span>` : ''}

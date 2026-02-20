@@ -106,26 +106,33 @@ function renderHistoryTab(view: AppView) {
             view.switchTab('chat');
           }}
               >
-                <div class="history-card-info">
-                  <div class="history-card-title">
-                    ${s.taskTitle || s.title || 'Untitled Task'}${isCurrent ? html` <span class="history-current-badge">● Active</span>` : ''}
+                <div class="history-card-top">
+                  <div class="history-card-info">
+                    <div class="history-card-title">
+                      ${s.taskTitle || s.title || 'Untitled Task'}${isCurrent ? html` <span class="history-current-badge">● Active</span>` : ''}
+                    </div>
+                    <div class="history-card-meta">
+                      ${formatDate(s.timestamp)} · ${s.messageCount} msgs
+                    </div>
                   </div>
-                  <div class="history-card-meta">
-                    ${formatDate(s.timestamp)} · ${s.messageCount} msgs${s.agents?.length ? ` · ${s.agents.join(' · ')}` : ''}
-                  </div>
-                </div>
-                ${s.elapsedSeconds ? html`<span class="history-time-pill">⏱ ${Math.floor(s.elapsedSeconds / 60)}:${(s.elapsedSeconds % 60).toString().padStart(2, '0')}</span>` : ''}
-                <span class="history-security ${(s.securityScore ?? 100) >= 80 ? 'safe' : (s.securityScore ?? 100) >= 50 ? 'medium' : 'warn'}" title="Security level based on agent permissions">
-                  ${(s.securityScore ?? 100) >= 80 ? 'Safe' : (s.securityScore ?? 100) >= 50 ? 'Caution' : 'Risk'} ${s.securityScore ?? 100}%
-                </span>
-                ${s.progress !== undefined ? html`<span class="history-progress-pill ${s.progress >= 100 ? 'done' : ''}">${s.progress}%</span>` : ''}
-                <button class="action-btn delete ${isPendingDelete ? 'confirm-delete' : ''}"
-                  title="${isPendingDelete ? 'Click again to confirm' : 'Delete task'}"
-                  @click=${(e: Event) => {
+                  ${s.elapsedSeconds ? html`<span class="history-time-pill">Duration ${Math.floor(s.elapsedSeconds / 60)}:${(s.elapsedSeconds % 60).toString().padStart(2, '0')}</span>` : ''}
+                  <span class="history-security ${(s.securityScore ?? 100) >= 80 ? 'safe' : (s.securityScore ?? 100) >= 50 ? 'medium' : 'warn'}" title="Security level">
+                    ${(s.securityScore ?? 100) >= 80 ? 'Safe' : (s.securityScore ?? 100) >= 50 ? 'Caution' : 'Risk'} ${s.securityScore ?? 100}%
+                  </span>
+                  ${s.progress !== undefined ? html`<span class="history-progress-pill ${s.progress >= 100 ? 'done' : ''}">${s.progress}%</span>` : ''}
+                  <button class="action-btn delete ${isPendingDelete ? 'confirm-delete' : ''}"
+                    title="${isPendingDelete ? 'Click again to confirm' : 'Delete task'}"
+                    @click=${(e: Event) => {
             e.stopPropagation();
             view.handleDeleteSession(s.id);
           }}
-                >${isPendingDelete ? 'Confirm' : 'Delete'}</button>
+                  >${isPendingDelete ? 'Confirm' : 'Delete'}</button>
+                </div>
+                ${s.agents?.length ? html`
+                  <div class="history-card-agents">
+                    ${s.agents.map((a: string) => html`<span class="agent-chip role-${a}">${a}</span>`)}
+                  </div>
+                ` : ''}
               </div>
             `;
       })

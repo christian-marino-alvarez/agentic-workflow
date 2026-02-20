@@ -2,6 +2,32 @@ import { html, nothing } from 'lit';
 import { Settings } from '../../index.js';
 import { getRoleIcon } from '../icons.js';
 
+function getModelDescription(modelId: string): string {
+  const descriptions: Record<string, string> = {
+    'gemini-2.5-pro': 'Advanced reasoning & coding — best for complex tasks',
+    'gemini-2.5-flash': 'Fast & efficient — great for quick tasks & drafts',
+    'gemini-2.0-flash': 'Previous gen fast model — good balance of speed & quality',
+    'gemini-1.5-pro': 'Strong general purpose — documents & long context',
+    'gemini-1.5-flash': 'Lightweight & fast — ideal for simple queries',
+    'gemini-pro': 'Versatile general-purpose model',
+    'gpt-4o': 'Multimodal powerhouse — text, vision, audio',
+    'gpt-4o-mini': 'Cost-efficient — fast responses, good quality',
+    'gpt-4-turbo': 'High capability — complex reasoning & code',
+    'o1': 'Deep reasoning — excels at math & science',
+    'o3-mini': 'Next-gen reasoning — balanced speed & depth',
+    'claude-sonnet-4': 'Latest Sonnet — excellent coding & analysis',
+    'claude-3-7-sonnet': 'Extended thinking — deep analysis & planning',
+    'claude-3-5-sonnet': 'Strong all-rounder — coding, writing, reasoning',
+    'claude-3-5-haiku': 'Ultra-fast — quick responses, good quality',
+    'claude-3-opus': 'Most capable — complex tasks & nuanced writing',
+    'codex-mini': 'Code specialist — optimized for programming tasks',
+  };
+  const lower = modelId.toLowerCase();
+  for (const [key, desc] of Object.entries(descriptions)) {
+    if (lower.includes(key)) { return desc; }
+  }
+  return 'Custom model configuration';
+}
 
 function renderEmptyState() {
   return html`
@@ -215,6 +241,9 @@ function renderRoleRow(view: Settings, roleData: { name: string, icon?: string, 
           ${renderProviderDropdown(view, role, currentProvider, isDisabled)}
           ${renderModelDropdown(view, role, currentProvider, currentModelId, isDisabled)}
         </div>
+        ${currentModelId ? html`
+          <div class="model-selection-desc">${getModelDescription(currentModelId)}</div>
+        ` : ''}
         ${renderCapabilityToggles(view, role, roleData.capabilities, isDisabled || !currentModelId)}
       </div>
     </div>

@@ -79,6 +79,25 @@ export class ChatView extends View {
   @state()
   public pendingDeleteSessionId: string | undefined;
 
+  @state()
+  public taskSteps: Array<{ id: string, label: string, status: 'pending' | 'active' | 'done' }> = [
+    { id: 'acceptance', label: 'Acceptance', status: 'done' },
+    { id: 'research', label: 'Research', status: 'done' },
+    { id: 'analysis', label: 'Analysis', status: 'done' },
+    { id: 'planning', label: 'Planning', status: 'done' },
+    { id: 'implementation', label: 'Implementation', status: 'active' },
+    { id: 'verification', label: 'Verification', status: 'pending' },
+    { id: 'results', label: 'Results', status: 'pending' },
+    { id: 'commit', label: 'Commit & Push', status: 'pending' },
+  ];
+
+  @state()
+  public showTimeline: boolean = false;
+
+  public toggleTimeline() {
+    this.showTimeline = !this.showTimeline;
+  }
+
   /**
    * Whether the currently selected agent is disabled (no model assigned).
    */

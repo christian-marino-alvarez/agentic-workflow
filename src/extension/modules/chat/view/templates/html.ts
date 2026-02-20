@@ -326,18 +326,20 @@ function renderAgentSelector(view: IChatView) {
           </div>
         ` : ''}
       </div>
-      ${capKeys.length > 0 ? html`
-        <div class="agent-capabilities">
-          ${capKeys.map(cap => html`
-            <span class="cap-label ${capabilities[cap] ? 'active' : ''}">${cap}</span>
-          `)}
-        </div>
-      ` : ''}
-      <div class="permission-toggle" @click="${() => view.togglePermission(view.selectedAgent)}">
-        ${isSandbox
+      <div class="agent-bar-details">
+        ${capKeys.length > 0 ? html`
+          <div class="agent-capabilities">
+            ${capKeys.map(cap => html`
+              <span class="cap-label ${capabilities[cap] ? 'active' : ''}">${cap}</span>
+            `)}
+          </div>
+        ` : ''}
+        <div class="permission-toggle" @click="${() => view.togglePermission(view.selectedAgent)}">
+          ${isSandbox
       ? html`<span class="perm-label sandbox">🔒 Sandbox</span>`
       : html`<span class="perm-label full-access">🔓 Full Access</span>`
     }
+        </div>
       </div>
     </div>
   `;

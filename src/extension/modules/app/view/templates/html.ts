@@ -115,7 +115,7 @@ function renderHistoryTab(view: AppView) {
                       ${formatDate(s.timestamp)} · ${s.messageCount} msgs
                     </div>
                   </div>
-                  ${s.elapsedSeconds ? html`<span class="history-time-pill">Duration ${Math.floor(s.elapsedSeconds / 60)}:${(s.elapsedSeconds % 60).toString().padStart(2, '0')}</span>` : ''}
+                  ${s.elapsedSeconds ? html`<span class="history-time-pill" title="Task execution time">Duration ${Math.floor(s.elapsedSeconds / 60)}:${(s.elapsedSeconds % 60).toString().padStart(2, '0')}</span>` : ''}
                   <span class="history-security ${(s.securityScore ?? 100) >= 80 ? 'safe' : (s.securityScore ?? 100) >= 50 ? 'medium' : 'warn'}" title="Security level">
                     ${(s.securityScore ?? 100) >= 80 ? 'Safe' : (s.securityScore ?? 100) >= 50 ? 'Caution' : 'Risk'} ${s.securityScore ?? 100}%
                   </span>

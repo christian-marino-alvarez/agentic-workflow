@@ -88,7 +88,6 @@ function renderHeader(view: IChatView) {
           <span class="workflow-label">${view.activeWorkflow}</span>
         </div>
         <div class="actions-group" style="gap: 6px;">
-          ${renderPermissionToggle(view)}
           <span class="progress-pill">
             <span class="progress-bar-track">
               <span class="progress-bar-fill" style="width: ${pct}%"></span>

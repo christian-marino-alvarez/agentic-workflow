@@ -12,7 +12,41 @@ function resolveModelName(input: string): string {
 }
 
 /**
- * Custom Model that wraps @google/generative-ai to be compatible with @openai/agents
+ * Convert SDK SerializedFunctionTool[] to Gemini's functionDeclarations format.
+ */
+function convertToolsToGemini(tools: any[]): any[] | undefined {
+  const functionTools = tools?.filter((t: any) => t.type === 'function');
+  if (!functionTools || functionTools.length === 0) { return undefined; }
+  return functionTools.map((t: any) => ({
+    name: t.name,
+    description: t.description,
+    parameters: cleanJsonSchema(t.parameters),
+  }));
+}
+
+/**
+ * Clean JSON schema for Gemini compatibility:
+ * - Remove unsupported keys like 'additionalProperties', '$schema'
+ * - Ensure properties exist
+ */
+function cleanJsonSchema(schema: any): any {
+  if (!schema) { return { type: 'object', properties: {} }; }
+  const cleaned: any = { type: schema.type || 'object' };
+  if (schema.properties) {
+    cleaned.properties = {};
+    for (const [key, val] of Object.entries(schema.properties)) {
+      const prop = val as any;
+      cleaned.properties[key] = { type: prop.type || 'string' };
+      if (prop.description) { cleaned.properties[key].description = prop.description; }
+    }
+  }
+  if (schema.required) { cleaned.required = schema.required; }
+  return cleaned;
+}
+
+/**
+ * Custom Model that wraps @google/generative-ai to be compatible with @openai/agents.
+ * Supports function calling / tool use via Gemini's functionDeclarations.
  */
 class GeminiModel implements Model {
   private requestOptions?: { customHeaders?: Record<string, string> };
@@ -28,16 +62,44 @@ class GeminiModel implements Model {
   async getResponse(request: ModelRequest): Promise<ModelResponse> {
     const promptText = extractPromptText(request.input);
     const sysInstruction = request.systemInstructions;
+    const geminiTools = convertToolsToGemini(request.tools);
 
-    const modelObj = sysInstruction
-      ? this.client.getGenerativeModel({ model: this.modelName, systemInstruction: sysInstruction })
-      : this.client.getGenerativeModel({ model: this.modelName });
+    const modelConfig: any = { model: this.modelName };
+    if (sysInstruction) { modelConfig.systemInstruction = sysInstruction; }
 
-    const result = await modelObj.generateContent({
+    const modelObj = this.client.getGenerativeModel(modelConfig);
+
+    const requestConfig: any = {
       contents: [{ role: 'user', parts: [{ text: promptText }] }],
-    }, this.requestOptions);
-    const text = result.response.text();
+    };
+    if (geminiTools) {
+      requestConfig.tools = [{ functionDeclarations: geminiTools }];
+    }
 
+    const result = await modelObj.generateContent(requestConfig, this.requestOptions);
+    const response = result.response;
+    const candidate = response.candidates?.[0];
+    const parts = candidate?.content?.parts || [];
+
+    // Check for function calls
+    const functionCallParts = parts.filter((p: any) => p.functionCall);
+    if (functionCallParts.length > 0) {
+      const output = functionCallParts.map((p: any) => ({
+        type: 'function_call',
+        id: randomUUID(),
+        callId: randomUUID(),
+        name: p.functionCall.name,
+        arguments: JSON.stringify(p.functionCall.args || {}),
+        status: 'completed',
+      }));
+      return {
+        usage: { promptTokens: 0, completionTokens: 0 },
+        output,
+      } as any;
+    }
+
+    // Regular text response
+    const text = response.text();
     return {
       usage: { promptTokens: 0, completionTokens: 0 },
       output: [{ type: 'output_text', text }]
@@ -49,23 +111,58 @@ class GeminiModel implements Model {
 
     const promptText = extractPromptText(request.input);
     const sysInstruction = request.systemInstructions;
+    const geminiTools = convertToolsToGemini(request.tools);
 
-    const modelObj = sysInstruction
-      ? this.client.getGenerativeModel({ model: this.modelName, systemInstruction: sysInstruction })
-      : this.client.getGenerativeModel({ model: this.modelName });
+    const modelConfig: any = { model: this.modelName };
+    if (sysInstruction) { modelConfig.systemInstruction = sysInstruction; }
 
-    const result = await modelObj.generateContentStream(
-      { contents: [{ role: 'user', parts: [{ text: promptText }] }] },
-      this.requestOptions
-    );
+    const modelObj = this.client.getGenerativeModel(modelConfig);
+
+    const requestConfig: any = {
+      contents: [{ role: 'user', parts: [{ text: promptText }] }],
+    };
+    if (geminiTools) {
+      requestConfig.tools = [{ functionDeclarations: geminiTools }];
+    }
+
+    const result = await modelObj.generateContentStream(requestConfig, this.requestOptions);
 
     let fullText = '';
+    const functionCalls: any[] = [];
+
     for await (const chunk of result.stream) {
-      const text = chunk.text();
-      if (text) {
-        fullText += text;
-        yield { type: 'output_text_delta', delta: text };
+      const parts = chunk.candidates?.[0]?.content?.parts || [];
+
+      for (const part of parts) {
+        if (part.functionCall) {
+          functionCalls.push(part.functionCall);
+        } else if (part.text) {
+          fullText += part.text;
+          yield { type: 'output_text_delta', delta: part.text };
+        }
       }
+    }
+
+    // If function calls were received, emit them as function_call items
+    if (functionCalls.length > 0) {
+      const outputItems = functionCalls.map(fc => ({
+        type: 'function_call',
+        id: randomUUID(),
+        callId: randomUUID(),
+        name: fc.name,
+        arguments: JSON.stringify(fc.args || {}),
+        status: 'completed',
+      }));
+
+      yield {
+        type: 'response_done',
+        response: {
+          id: randomUUID(),
+          output: outputItems,
+          usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 }
+        }
+      };
+      return;
     }
 
     yield {
@@ -142,19 +239,16 @@ export class GeminiProvider implements ModelProvider {
    * Find the best matching model from available models.
    */
   private findBestModel(available: string[], requested: string): string {
-    // If the exact requested name is available, use it
     if (available.includes(requested)) {
       return requested;
     }
 
-    // Try to find a match containing the requested name
     const lower = requested.toLowerCase();
     const match = available.find(m => m.toLowerCase().includes(lower));
     if (match) {
       return match;
     }
 
-    // Preference order for auto-selection
     const preferences = ['flash', 'pro'];
     for (const pref of preferences) {
       const prefMatch = available.find(m => m.includes(pref) && !m.includes('embedding') && !m.includes('aqa'));
@@ -163,7 +257,6 @@ export class GeminiProvider implements ModelProvider {
       }
     }
 
-    // Fallback to first available
     return available[0] || requested;
   }
 
@@ -179,4 +272,3 @@ export class GeminiProvider implements ModelProvider {
     return new GeminiModel(this.client, resolved, this.requestOptions);
   }
 }
-

@@ -16,7 +16,7 @@ export class ChatView extends View {
   }
 
   @state()
-  public history: Array<{ sender: string, text: string, role?: string, status?: string, isStreaming?: boolean, toolEvents?: Array<any>, isDelegation?: boolean, delegationAgent?: string, delegationStatus?: string, delegationResult?: string }> = [];
+  public history: Array<{ sender: string, text: string, role?: string, status?: string, isStreaming?: boolean, phase?: string, toolEvents?: Array<any>, isDelegation?: boolean, delegationAgent?: string, delegationStatus?: string, delegationResult?: string }> = [];
 
   @state()
   public inputText: string = '';
@@ -153,6 +153,12 @@ export class ChatView extends View {
   private get participatingRoles(): string[] {
     const roles = new Set(this.history.map(m => m.role).filter(r => r && r !== 'user' && r !== 'system') as string[]);
     return Array.from(roles);
+  }
+
+  /** Current active phase label from taskSteps */
+  get currentPhase(): string {
+    const active = this.taskSteps.find(s => s.status === 'active');
+    return active?.label || '';
   }
 
   override firstUpdated() {
@@ -358,7 +364,8 @@ export class ChatView extends View {
               sender: data.agentRole ? data.agentRole.charAt(0).toUpperCase() + data.agentRole.slice(1) : 'Agent',
               text: data.text,
               role: data.agentRole,
-              isStreaming
+              isStreaming,
+              phase: this.currentPhase
             }];
           }
         }
@@ -491,7 +498,7 @@ export class ChatView extends View {
     if (!this.inputText.trim() && this.attachments.length === 0) { return; }
 
     const text = this.inputText;
-    this.history = [...this.history, { sender: 'Me', text, role: 'user' }];
+    this.history = [...this.history, { sender: 'Me', text, role: 'user', phase: this.currentPhase }];
     this.inputText = '';
     this.activeActivity = 'Procesando...';
     this.startTimer();

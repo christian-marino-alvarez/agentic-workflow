@@ -264,7 +264,7 @@ export function renderRoleBinding(view: Settings) {
   return html`
     <div class="section role-binding-section">
       <div class="section-header">
-        <h2>Agents</h2>
+        <h2>Managed Agents</h2>
       </div>
       
       <div class="settings-list-container">

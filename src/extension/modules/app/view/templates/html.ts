@@ -62,7 +62,7 @@ function renderHistoryTab(view: AppView) {
   return html`
     <div class="history-container">
       <div class="header-actions">
-        <h2>Conversations</h2>
+        <h2>Tasks</h2>
         <div class="actions-group">
           <button class="icon-btn" title="Refresh"
             @click=${() => {
@@ -78,7 +78,7 @@ function renderHistoryTab(view: AppView) {
               <path d="M16 21h5v-5"/>
             </svg>
           </button>
-          <button class="icon-btn" title="New conversation"
+          <button class="icon-btn" title="New task"
             @click=${() => {
       const cv = view.getChatView();
       if (cv?.newSession) { cv.newSession(); }
@@ -94,7 +94,7 @@ function renderHistoryTab(view: AppView) {
       </div>
       <div class="history-list">
         ${sessions.length === 0
-      ? html`<div class="history-empty">No conversations yet</div>`
+      ? html`<div class="history-empty">No tasks yet</div>`
       : sessions.map((s: any) => {
         const isCurrent = s.id === currentId;
         const isPendingDelete = view.pendingDeleteSessionId === s.id;

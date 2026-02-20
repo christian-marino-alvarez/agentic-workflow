@@ -358,12 +358,19 @@ export class ChatView extends View {
     if (command === MESSAGES.LOAD_SESSION_RESPONSE) {
       if (data?.session?.messages) {
         this.currentSessionId = data.session.id;
-        this.history = data.session.messages.map((m: any) => ({
+
+        // Filter out legacy auto-generated context messages
+        const contextPhrases = ['I have loaded your workflow context', 'I am the Architect Agent', 'Error loading workflow context'];
+        const filtered = data.session.messages.filter((m: any) =>
+          !contextPhrases.some(phrase => m.text?.startsWith(phrase))
+        );
+
+        this.history = filtered.map((m: any) => ({
           sender: m.sender || (m.role === 'user' ? 'Me' : m.role?.charAt(0).toUpperCase() + m.role?.slice(1)),
           text: m.text,
           role: m.role,
         }));
-        this.log(`Session restored: ${data.session.id} (${data.session.messages.length} messages)`);
+        this.log(`Session restored: ${data.session.id} (${this.history.length} messages)`);
       }
     }
 

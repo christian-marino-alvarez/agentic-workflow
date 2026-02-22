@@ -117,7 +117,7 @@ test.beforeAll(async () => {
   // Open the main webview via Command Palette
   await window.keyboard.press('Meta+Shift+P');
   await window.waitForTimeout(500);
-  await window.keyboard.type('View: Focus on Agent Chat', { delay: 30 });
+  await window.keyboard.type('View: Focus on Agentic Workflow', { delay: 30 });
   await window.waitForTimeout(500);
   await window.keyboard.press('Enter');
   await window.waitForTimeout(5000);

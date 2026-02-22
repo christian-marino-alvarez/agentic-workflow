@@ -182,9 +182,11 @@
     "fastify": "^5.7.4",
     "gray-matter": "^4.0.3",
     "lit": "^3.3.2",
+    "lowdb": "^7.0.1",
     "marked": "^17.0.3",
     "openai": "^6.17.0",
     "vscode-jsonrpc": "^8.2.1",
+    "xstate": "^5.28.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

@@ -11,6 +11,7 @@ export interface IChatView {
   inputText: string;
   models: Array<{ id: string, name: string, provider: string }>;
   activeWorkflow: string;
+  activeWorkflowDef?: any;
   isLoading: boolean;
   initialLoading: boolean;
   isSecure: boolean;
@@ -48,4 +49,6 @@ export interface IChatView {
   removeAttachment(path: string): void;
   toggleAgentDropdown(): void;
   handleAgentChange(role: string): void;
+  handleGateResponse(gateId: string, decision: 'approve' | 'reject'): void;
+  newSession(): void;
 }

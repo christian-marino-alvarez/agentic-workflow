@@ -22,9 +22,10 @@ export class AppBackground extends Background {
     this.appVersion = appVersion;
     this.log('Initialized');
 
-    // Initialize domain-specific backgrounds
+    // Initialize domain-specific backgrounds (instantiation registers them on the global bus)
     this.settingsBg = new SettingsBackground(context);
-    const chatBg = new ChatBackground(context);
+    void new ChatBackground(context);
+    void new RuntimeBackground(context);
 
     // --- Sidecar ---
     if (process.env.VSCODE_TEST_MODE === 'true') {

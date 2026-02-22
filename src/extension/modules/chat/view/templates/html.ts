@@ -88,12 +88,13 @@ function renderHeader(view: IChatView) {
 
   return html`
     <div class="header layout-col">
-      <div class="header-top layout-row" @click=${() => view.toggleTimeline()} style="cursor: pointer;">
+      <div class="header-top layout-row">
         <div class="workflow-info">
           <svg width="14" height="14" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#3794ff">
             <path d="M13.5 1H11V2H13.5C14.3284 2 15 2.67157 15 3.5V13.5C15 14.3284 14.3284 15 13.5 15H2.5C1.67157 15 1 14.3284 1 13.5V3.5C1 2.67157 1.67157 2 2.5 2H5V1H2.5C1.11929 1 0 2.11929 0 3.5V13.5C0 14.8807 1.11929 16 2.5 16H13.5C14.8807 16 16 14.8807 16 13.5V3.5C16 2.11929 14.8807 1 13.5 1ZM6 1H10V3H6V1ZM3 6H13V7H3V6ZM3 9H13V10H3V9ZM3 12H10V13H3V12Z"/>
           </svg>
           <span class="workflow-label">${view.activeWorkflow}</span>
+          <button class="btn-icon" title="New Task" style="margin-left:4px; padding:2px 6px; border:1px solid var(--vscode-input-border); border-radius:4px; background:none; color:var(--vscode-foreground); cursor:pointer; font-size:14px; line-height:1;" @click=${(e: Event) => { e.stopPropagation(); view.newSession(); }}>+</button>
         </div>
         <div class="actions-group" style="gap: 6px;">
           <span class="agent-timer ${view.activeActivity ? 'running' : ''}" title="Execution time">⏱ ${formatTimer(view.elapsedSeconds)}</span>
@@ -103,36 +104,49 @@ function renderHeader(view: IChatView) {
             </span>
             <span class="progress-text">${pct}%</span>
           </span>
-          <svg class="timeline-chevron ${view.showTimeline ? 'open' : ''}" width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M8 11L3 6h10z"/>
-          </svg>
+          ${view.taskSteps.length > 0 ? html`
+            <button class="btn-icon timeline-toggle-btn ${view.showTimeline ? 'active' : ''}" 
+              title="${view.showTimeline ? 'Hide workflow steps' : 'Show workflow steps'}"
+              @click=${() => view.toggleTimeline()}
+              style="padding: 3px 6px; border: 1px solid ${view.showTimeline ? 'var(--vscode-textLink-foreground)' : 'var(--vscode-widget-border)'}; border-radius: 4px; background: ${view.showTimeline ? 'rgba(55,148,255,0.12)' : 'none'}; color: ${view.showTimeline ? 'var(--vscode-textLink-foreground)' : 'var(--vscode-descriptionForeground)'}; cursor: pointer; font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 3px;">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+                <circle cx="2" cy="2" r="1.5"/>
+                <rect x="4" y="1" width="6" height="2" rx="1"/>
+                <circle cx="2" cy="5" r="1.5" opacity="0.5"/>
+                <rect x="4" y="4" width="4" height="2" rx="1" opacity="0.5"/>
+                <circle cx="2" cy="8" r="1.5" opacity="0.3"/>
+                <rect x="4" y="7" width="5" height="2" rx="1" opacity="0.3"/>
+              </svg>
+              Steps
+            </button>
+          ` : ''}
         </div>
       </div>
-      ${activeStep ? html`<div class="active-step-hint">▸ Phase ${activeStepIdx} · ${activeStep.label}</div>` : ''}
-      ${view.showTimeline ? renderMetroTimeline(view) : ''}
+      ${activeStep ? html`<div class="active-step-hint">▸ Step ${activeStepIdx}/${total} · ${activeStep.label}</div>` : ''}
     </div>
   `;
 }
 
-// ─── Metro Timeline ──────────────────────────────────────────
-function renderMetroTimeline(view: IChatView) {
+// ─── Sticky Side Timeline ──────────────────────────────────────
+function renderSideTimeline(view: IChatView) {
+  if (!view.showTimeline || view.taskSteps.length === 0) { return ''; }
   return html`
-    <div class="metro-timeline">
+    <div class="side-timeline">
+      <div class="side-timeline-header">Workflow</div>
       ${view.taskSteps.map((step, i) => {
     const isLast = i === view.taskSteps.length - 1;
-    const colorMap = { done: '#4dacff', active: '#569cd6', pending: '#555' };
-    const dotColor = colorMap[step.status];
-    const lineColor = step.status === 'done' ? '#4dacff' : '#333';
+    const isDone = step.status === 'done';
+    const isActive = step.status === 'active';
     return html`
-          <div class="metro-step">
-            <div class="metro-track">
-              <div class="metro-dot" style="background: ${dotColor}; ${step.status === 'active' ? 'box-shadow: 0 0 8px ' + dotColor + ';' : ''}"></div>
-              ${!isLast ? html`<div class="metro-line" style="background: ${lineColor};"></div>` : ''}
+          <div class="side-step ${step.status}" title="${step.label}">
+            <div class="side-step-track">
+              <div class="side-step-dot ${step.status}">
+                ${isDone ? html`<svg width="6" height="6" viewBox="0 0 6 6"><path d="M1 3l1.5 1.5L5 1.5" stroke="white" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>` : ''}
+                ${isActive ? html`<div class="side-step-pulse"></div>` : ''}
+              </div>
+              ${!isLast ? html`<div class="side-step-line ${isDone ? 'done' : ''}"></div>` : ''}
             </div>
-            <div class="metro-label ${step.status}">
-              ${step.label}
-              ${step.status === 'active' ? html`<span class="metro-active-badge">IN PROGRESS</span>` : ''}
-            </div>
+            <div class="side-step-label ${step.status}">${step.label}</div>
           </div>
         `;
   })}
@@ -140,42 +154,47 @@ function renderMetroTimeline(view: IChatView) {
   `;
 }
 
-// ─── Tool Call Blocks ──────────────────────────────────────
-function renderToolEvents(events?: Array<any>) {
-  if (!events || events.length === 0) { return ''; }
+// ─── Active Workflow Metadata ──────────────────────────────
+function renderActiveWorkflowDef(view: IChatView) {
+  if (!view.activeWorkflowDef) { return ''; }
+  const { description, owner, constitutions, severity, blocking } = view.activeWorkflowDef;
+
   return html`
-    <div class="tool-events">
-      ${events.map(ev => {
-    if (ev.type === 'tool_call') {
-      if (ev.name === 'delegateTask') { return ''; }
-      return html`
-            <details class="tool-call-block" open>
-              <summary class="tool-call-header">
-                <span class="tool-icon">⚡</span>
-                <span class="tool-name">${ev.name}</span>
-                <span class="tool-status ${ev.status}">${ev.status === 'running' ? '⏳' : '✅'}</span>
-              </summary>
-              ${ev.arguments ? html`<pre class="tool-args">${ev.arguments}</pre>` : ''}
-            </details>
-          `;
-    }
-    if (ev.type === 'tool_result') {
-      if (ev.name === 'delegateTask') { return ''; }
-      return html`
-            <details class="tool-result-block">
-              <summary class="tool-result-header">
-                <span class="tool-icon">✅</span>
-                <span class="tool-name">${ev.name}</span>
-                <span class="tool-label">result</span>
-              </summary>
-              <pre class="tool-output">${ev.output}</pre>
-            </details>
-          `;
-    }
-    return '';
-  })}
+    <div class="active-workflow-meta" style="margin: 12px 16px; padding: 12px; background: rgba(0,0,0,0.1); border-radius: 6px; border: 1px solid var(--vscode-pickerGroup-border); font-family: var(--vscode-font-family); box-sizing: border-box;">
+      <div style="font-size: 11px; text-transform: uppercase; color: var(--vscode-descriptionForeground); margin-bottom: 8px; font-weight: 600;">Active Context</div>
+      
+      ${description ? html`<div style="font-size: 12px; margin-bottom: 8px; color: var(--vscode-foreground);">${description}</div>` : ''}
+      
+      <div style="display: flex; gap: 8px; margin-bottom: ${constitutions?.length ? '10px' : '0'}; flex-wrap: wrap;">
+        ${owner ? html`<span style="background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); padding: 2px 6px; border-radius: 4px; font-size: 10px;">👤 ${owner}</span>` : ''}
+        ${severity ? html`<span style="background: var(--vscode-testing-iconFailed); color: var(--vscode-badge-foreground); padding: 2px 6px; border-radius: 4px; font-size: 10px;">${severity}</span>` : ''}
+        ${blocking !== undefined ? html`<span style="background: ${blocking ? 'var(--vscode-testing-iconFailed)' : 'var(--vscode-testing-iconPassed)'}; color: var(--vscode-badge-foreground); padding: 2px 6px; border-radius: 4px; font-size: 10px;">${blocking ? 'Blocking' : 'Non-blocking'}</span>` : ''}
+      </div>
+
+      ${constitutions && constitutions.length > 0 ? html`
+        <div style="font-size: 11px; color: var(--vscode-descriptionForeground); margin-bottom: 4px;">Required Constitutions:</div>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          ${Array.isArray(constitutions) ? constitutions.map((c: string) => html`
+            <div style="font-size: 11px; display: flex; align-items: center; gap: 4px;">
+              <span class="codicon codicon-book"></span>
+              <span style="color: var(--vscode-textLink-foreground); cursor: pointer;" title="View file">${c.split('/').pop()}</span>
+            </div>
+          `) : ''}
+        </div>
+      ` : ''}
     </div>
   `;
+}
+
+// ─── Tool Call Blocks ──────────────────────────────────────
+function renderToolEvents(events?: Array<any>) {
+  // HIDDEN BY DESIGN:
+  // Tool executions (like readFile, listDirectory, runCommand) are now completely hidden
+  // from the developer UI to preserve the chat and conversational experience.
+  // 
+  // (NOTE: Delegation events to other agents are rendered natively via 
+  // renderDelegationCard in a separate module).
+  return '';
 }
 
 // ─── Delegation Card ──────────────────────────────────────
@@ -211,8 +230,37 @@ function renderDelegationCard(msg: any) {
   `;
 }
 
+// ─── Gate Card ──────────────────────────────────────────
+function renderGateCard(msg: any, view: IChatView) {
+  const isPending = !msg.gateDecision;
+  const decision = msg.gateDecision;
+
+  return html`
+    <div class="msg-bubble msg-system" style="border-left: 3px solid #4dc9c0; background: rgba(77, 201, 192, 0.08);">
+      <div class="msg-header">
+        <span class="msg-icon">🚦</span>
+        <span class="msg-sender">Gate Approval</span>
+      </div>
+      <div class="msg-content markdown-body">
+        ${renderMarkdown(msg.text)}
+      </div>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        ${isPending ? html`
+          <button style="padding:6px 18px; border-radius:4px; border:none; cursor:pointer; font-weight:600; background:#4caf50; color:white;" @click=${() => view.handleGateResponse(msg.gateId, 'approve')}>SI ✔</button>
+          <button style="padding:6px 18px; border-radius:4px; border:none; cursor:pointer; font-weight:600; background:#f44336; color:white;" @click=${() => view.handleGateResponse(msg.gateId, 'reject')}>NO ✘</button>
+        ` : html`
+          <span style="padding:6px 12px; border-radius:4px; font-weight:600; background:${decision === 'approve' ? 'rgba(76,175,80,0.2)' : 'rgba(244,67,54,0.2)'}; color:${decision === 'approve' ? '#4caf50' : '#f44336'};">
+            ${decision === 'approve' ? '✔ Approved' : '✘ Rejected'}
+          </span>
+        `}
+      </div>
+    </div>
+  `;
+}
+
 // ─── Message Bubbles ──────────────────────────────────────
-function renderMessageBubble(msg: any) {
+function renderMessageBubble(msg: any, view?: IChatView) {
+  if (msg.isGate && view) { return renderGateCard(msg, view); }
   if (msg.isDelegation) { return renderDelegationCard(msg); }
   const isUser = msg.role === 'user';
   const isSystem = msg.role === 'system';
@@ -305,7 +353,7 @@ function renderHistory(view: IChatView) {
     // No phase info — flat render
     return html`
       <div class="history layout-scroll chat-container layout-col">
-        ${view.history.map(msg => renderMessageBubble(msg))}
+        ${view.history.map(msg => renderMessageBubble(msg, view))}
         ${view.isLoading ? renderLoadingSkeleton() : ''}
       </div>
     `;
@@ -325,7 +373,7 @@ function renderHistory(view: IChatView) {
             </div>
           ` : ''}
           <div class="phase-group-messages">
-            ${group.messages.map(msg => renderMessageBubble(msg))}
+            ${group.messages.map(msg => renderMessageBubble(msg, view))}
           </div>
         </div>
       `)}
@@ -430,7 +478,10 @@ function renderInputGroup(view: IChatView) {
 export function render(view: IChatView): TemplateResult {
   return html`
     ${renderHeader(view)}
-    ${renderHistory(view)}
+    <div class="chat-layout">
+      ${renderSideTimeline(view)}
+      ${renderHistory(view)}
+    </div>
     ${renderInputGroup(view)}
   `;
 }

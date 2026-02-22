@@ -5,6 +5,7 @@ import { Background, Message, ViewHtml, MessageOrigin } from '../../core/index.j
 import { NAME, MESSAGES } from '../constants.js';
 import { API_ENDPOINTS, SIDECAR_BASE_URL, DEFAULT_MODELS } from '../../llm/constants.js';
 import { MESSAGES as SETTINGS_MESSAGES } from '../../settings/constants.js';
+import { MESSAGES as RUNTIME_MESSAGES } from '../../runtime/constants.js';
 import { randomUUID } from 'crypto';
 
 export class ChatBackground extends Background {
@@ -27,9 +28,31 @@ export class ChatBackground extends Background {
     this.log('Initialized v' + this.appVersion);
   }
 
-  /** Remove agent identity prefix from LLM response (the Chat UI bubble already shows the sender). */
-  private stripAgentPrefix(text: string): string {
-    return text.replace(ChatBackground.AGENT_PREFIX_REGEX, '');
+  /** Remove agent identity prefix and system JSON blocks from LLM response. */
+  private cleanMessageText(text: string): string {
+    let cleanText = text.replace(ChatBackground.AGENT_PREFIX_REGEX, '');
+
+    // 1. Strip fully closed markdown code blocks that contain "current_phase" 
+    //    (Using negative lookahead (?!```) to ensure we don't accidentally match across multiple different code blocks)
+    cleanText = cleanText.replace(/```[^\n]*\n(?:(?!```)[\s\S])*?"current_phase"(?:(?!```)[\s\S])*?```\n?/g, '');
+
+    // 2. Strip partial markdown code blocks that contain "current_phase" (happens during streaming)
+    const partialMatch = cleanText.match(/```[^\n]*\n(?:(?!```)[\s\S])*?"current_phase"[\s\S]*$/);
+    if (partialMatch && partialMatch.index !== undefined) {
+      cleanText = cleanText.substring(0, partialMatch.index);
+    }
+
+    // 3. Fallback: Catch raw JSON without markdown blocks at the very beginning of the message
+    if (/^\s*\{[\s\S]*?"current_phase"/.test(cleanText)) {
+      const lastBrace = cleanText.lastIndexOf('}');
+      if (lastBrace !== -1) {
+        cleanText = cleanText.substring(lastBrace + 1);
+      } else {
+        cleanText = ''; // streaming partial raw JSON
+      }
+    }
+
+    return cleanText.trimStart();
   }
 
   /** Parse delegateTask tool call arguments safely. */
@@ -62,13 +85,40 @@ export class ChatBackground extends Background {
         return this.handleNewSession();
       case 'ROLES_CHANGED':
         return this.handleRolesChanged();
+
+      case MESSAGES.GATE_REQUEST:
+        return this.handleGateRequest(message.payload.data);
+      case MESSAGES.GATE_RESPONSE:
+        return this.handleGateResponse(message.payload.data);
+      case MESSAGES.WORKFLOW_STATE_UPDATE:
+        return this.handleWorkflowStateUpdate(message.payload.data);
+
       default:
         return super.listen(message);
     }
   }
 
   private async handleSendMessage(data: { text: string, agentRole: string, modelId?: string, history?: Array<{ role: string, text: string }>, attachments?: Array<{ _title: string, _path: string }> }): Promise<any> {
-    const role = data.agentRole || 'backend';
+    let role = data.agentRole || 'backend';
+
+    // Detect slash commands — trigger workflow start and prompt the workflow's owner
+    const textTrimmed = data.text.trim();
+    if (textTrimmed.startsWith('/')) {
+      const commandId = textTrimmed.split(' ')[0].substring(1); // e.g. "/init" -> "init"
+      const initResult = await this.handleWorkflowCommand(commandId);
+
+      if (!initResult.success) {
+        return initResult; // Stop if init failed
+      }
+
+      // Override text and role to have the workflow owner explain the workflow
+      if (initResult.owner) {
+        role = initResult.owner;
+      }
+
+      data.text = `Acabo de lanzar el comando /${commandId}. Por favor, actúa como el agente asignado (owner). Hemos iniciado este flujo. Saluda brevemente y **formula de inmediato la primera pregunta o solicitud de información requerida en las instrucciones del workflow**. No relates de qué trata el workflow, simplemente toma el control y pide directamente al usuario lo necesario para completar el Step 1 (por ejemplo, idioma, estrategia o el objetivo principal). Sé muy conciso (1-2 frases máximo), cercano y conversacional. MUY IMPORTANTE: NO uses tools ahora, solo dialoga.`;
+    }
+
     this.log(`Message for role "${role}": ${data.text.substring(0, 50)}...`);
 
     // Format conversation history for LLM context
@@ -194,7 +244,7 @@ export class ChatBackground extends Background {
                   origin: MessageOrigin.Server,
                   payload: {
                     command: MESSAGES.RECEIVE_MESSAGE,
-                    data: { text: this.stripAgentPrefix(streamText), agentRole: role, isStreaming: true }
+                    data: { text: this.cleanMessageText(streamText), agentRole: role, isStreaming: true }
                   }
                 });
               } else if (parsed.type === 'tool_call' || parsed.type === 'tool_result') {
@@ -254,7 +304,7 @@ export class ChatBackground extends Background {
         origin: MessageOrigin.Server,
         payload: {
           command: MESSAGES.RECEIVE_MESSAGE,
-          data: { text: this.stripAgentPrefix(streamText), agentRole: role, isStreaming: false }
+          data: { text: this.cleanMessageText(streamText), agentRole: role, isStreaming: false }
         }
       });
 
@@ -400,6 +450,73 @@ export class ChatBackground extends Background {
   }
 
   // ─── Session Persistence (globalState) ──────────────────────
+
+  // ─── Workflow & Gate Handlers ──────────────────────────────
+
+  private async handleWorkflowCommand(commandId: string): Promise<any> {
+    try {
+      const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+      if (!workspaceRoot) {
+        this.emitAgentResponse('system', '**Error:** No workspace open');
+        return { success: false, error: 'No workspace open' };
+      }
+
+      // Auto-create new session if there's existing history
+      this.emitToView('NEW_SESSION_AUTO', {});
+
+      const rawResult = await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_START, {
+        workflowId: commandId,
+        dirPath: `${workspaceRoot}/.agent/workflows`,
+      }, 45_000);
+
+      // Unwrap the nested result from the sidecar JSON RPC format
+      const result = rawResult?.result || rawResult;
+
+      // Clean owner name ('architect-agent' -> 'architect') so it matches personas and routing
+      const owner = result?.owner ? result.owner.replace(/-agent$/, '') : undefined;
+
+      return { success: true, owner, workflowId: result?.workflowId || commandId };
+    } catch (error: any) {
+      this.log('Failed to start workflow', error);
+      this.emitAgentResponse('system', `**Error starting workflow:** ${error.message}`);
+      return { success: false, error: error.message };
+    }
+  }
+
+  private async handleGateRequest(data: any): Promise<any> {
+    this.log('Gate request received', data);
+    this.emitToView(MESSAGES.GATE_REQUEST, data);
+    return { success: true };
+  }
+
+  private async handleGateResponse(data: any): Promise<any> {
+    try {
+      this.log('Gate response from user', data);
+      const result = await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_GATE_RESPONSE, data);
+      return { success: true, ...result };
+    } catch (error: any) {
+      this.log('Failed to forward gate response', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  private async handleWorkflowStateUpdate(data: any): Promise<any> {
+    this.log('Workflow state update', data);
+    this.emitToView(MESSAGES.WORKFLOW_STATE_UPDATE, data);
+    return { success: true };
+  }
+
+  private emitToView(command: string, data: any): void {
+    this.messenger.emit({
+      id: randomUUID(),
+      from: `${NAME}::background`,
+      to: `${NAME}::view`,
+      timestamp: Date.now(),
+      origin: MessageOrigin.Server,
+      payload: { command, data }
+    });
+  }
+
 
   private getSessions(): any[] {
     return this.vscodeContext.globalState.get<any[]>(ChatBackground.SESSIONS_KEY) || [];

@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "activeTask": "test-123",
+  "states": {
+    "test-123": {
+      "taskId": "test-123",
+      "currentPhase": "workflow.init",
+      "currentWorkflowId": "workflow.init",
+      "status": "idle",
+      "gateResponses": {},
+      "startedAt": "2026-02-22T19:52:19.862Z",
+      "updatedAt": "2026-02-22T19:52:19.863Z",
+      "steps": [
+        {
+          "id": "1",
+          "label": "Activate `architect-agent` as the architect role.",
+          "status": "active"
+        },
+        {
+          "id": "2",
+          "label": "Load minimal indexes (MANDATORY):",
+          "status": "pending"
+        },
+        {
+          "id": "3",
+          "label": "Load constitutions into context (in order):",
+          "status": "pending"
+        },
+        {
+          "id": "4",
+          "label": "Detect preferred language and request explicit confirmation.",
+          "status": "pending"
+        },
+        {
+          "id": "5",
+          "label": "**Select lifecycle strategy (MANDATORY)**",
+          "status": "pending"
+        },
+        {
+          "id": "6",
+          "label": "**Create the `init.md` artifact (MANDATORY)**",
+          "status": "pending"
+        },
+        {
+          "id": "7",
+          "label": "Write the file to:",
+          "status": "pending"
+        },
+        {
+          "id": "8",
+          "label": "Evaluate Gate.",
+          "status": "pending"
+        },
+        {
+          "id": "9",
+          "label": "FAIL (mandatory)",
+          "status": "pending"
+        },
+        {
+          "id": "10",
+          "label": "PASS (only if Gate PASS)",
+          "status": "pending"
+        }
+      ],
+      "workflow": {
+        "owner": "architect-agent",
+        "severity": "PERMANENT",
+        "constitutions": [
+          "constitution.clean_code",
+          "constitution.agents_behavior"
+        ],
+        "blocking": true
+      }
+    }
+  },
+  "lastUpdated": "2026-02-22T19:52:19.864Z"
+}

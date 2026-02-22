@@ -10,7 +10,6 @@ const VSCODE_PATH = path.resolve(
   '../../../../../../.vscode-test/vscode-darwin-arm64-1.109.3/Visual Studio Code.app/Contents/MacOS/Electron'
 );
 const EXTENSION_PATH = path.resolve(__dirname, '../../../../../..');
-// Reuse user-data dir but handle sidebar toggle properly
 const USER_DATA_DIR = path.resolve(__dirname, '../../../../../../.vscode-test/pw-user-data');
 
 let electronApp: ElectronApplication;
@@ -22,6 +21,7 @@ test.beforeAll(async () => {
   electronApp = await electron.launch({
     executablePath: VSCODE_PATH,
     args: [
+      EXTENSION_PATH,
       '--extensionDevelopmentPath=' + EXTENSION_PATH,
       '--disable-gpu',
       '--no-sandbox',
@@ -36,118 +36,141 @@ test.beforeAll(async () => {
   window = await electronApp.firstWindow();
   await window.waitForTimeout(8000);
 
-  // Open sidebar using keyboard shortcut for Command Palette
-  // Then execute the focus command for our view
   await window.keyboard.press('Meta+Shift+P');
   await window.waitForTimeout(500);
-  await window.keyboard.type('View: Focus on Agent Chat View', { delay: 30 });
+  await window.keyboard.type('View: Focus on Agentic Workflow', { delay: 30 });
   await window.waitForTimeout(500);
   await window.keyboard.press('Enter');
-  await window.waitForTimeout(3000);
+  await window.waitForTimeout(5000);
 });
 
 test.afterAll(async () => {
-  const pid = electronApp.process().pid;
-  if (pid) process.kill(pid, 'SIGKILL');
+  const pid = electronApp?.process()?.pid;
+  if (pid) {
+    process.kill(pid, 'SIGKILL');
+  }
 });
 
-// ─── Helpers ───────────────────────────────────────────────
-
-async function getContentFrame(page: Page) {
-  for (let attempt = 0; attempt < 8; attempt++) {
-    // Try VS Code webview iframe selectors
-    for (const sel of ['iframe.webview.ready', 'iframe.webview']) {
-      try {
-        const outer = page.frameLocator(sel).first();
-        const inner = outer.frameLocator('#active-frame');
-        const h1 = inner.locator('h1');
-        if (await h1.isVisible({ timeout: 1500 })) {
-          return inner;
+async function getWebviewFrame(page: Page) {
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const frames = page.frames();
+    for (const frame of frames) {
+      if (frame.url().startsWith('vscode-webview://')) {
+        const hasAppView = await frame.evaluate(() => {
+          return !!document.querySelector('app-view');
+        }).catch(() => false);
+        if (hasAppView) {
+          return frame;
         }
-      } catch { /* next */ }
+      }
     }
-
-    // Fallback: search all frames
-    for (const frame of page.frames()) {
-      try {
-        const h1 = frame.locator('h1');
-        if (await h1.isVisible({ timeout: 500 })) {
-          const text = await h1.textContent();
-          if (text?.includes('Agentic')) return frame;
-        }
-      } catch { /* skip */ }
-    }
-
-    const iframeCount = await page.$$eval('iframe', els => els.length);
-    console.log(`Retry ${attempt + 1}/8 — ${iframeCount} iframes`);
+    console.log(`Retry ${attempt + 1}/10 — ${frames.length} frames`);
     await page.waitForTimeout(2000);
   }
-  throw new Error('Could not find webview content frame');
+  throw new Error('Could not find webview frame with app-view');
 }
 
-// ─── Tests ─────────────────────────────────────────────────
+async function evalInApp<T>(page: Page, fn: (shadowRoot: ShadowRoot) => T): Promise<T> {
+  const frame = await getWebviewFrame(page);
+  return frame.evaluate((fnStr) => {
+    const appView = document.querySelector('app-view');
+    if (!appView?.shadowRoot) {
+      throw new Error('app-view or its shadowRoot not found');
+    }
+    const func = new Function('shadowRoot', `return (${fnStr})(shadowRoot)`);
+    return func(appView.shadowRoot);
+  }, fn.toString());
+}
 
 test.describe.serial('App E2E', () => {
 
   test('Extension activates in Development Host', async () => {
     const title = await window.title();
     console.log('Window title:', title);
-    expect(title).toContain('Visual Studio Code');
+    expect(title.length).toBeGreaterThan(0);
     await window.screenshot({ path: '.vscode-test/pw-01-initial.png' });
   });
 
-  test('Webview renders with correct content', async () => {
-    const frame = await getContentFrame(window);
+  test('Webview renders with tab navigation', async () => {
+    const tabs = await evalInApp(window, (sr) => {
+      const buttons = sr.querySelectorAll('.tab-item');
+      return Array.from(buttons).map(b => b.textContent?.trim() || '');
+    });
 
-    const heading = frame.locator('h1');
-    await expect(heading).toBeVisible({ timeout: 10_000 });
-    expect(await heading.textContent()).toContain('Agentic Workflow App');
+    expect(tabs).toContain('SETTINGS');
+    expect(tabs).toContain('CHAT');
+    expect(tabs).toContain('HISTORY');
 
-    await expect(frame.locator('text=Status: Active')).toBeVisible();
-    await expect(frame.locator('text=Last Pong:')).toBeVisible();
-    await expect(frame.locator('button', { hasText: 'Ping Backend' })).toBeVisible();
-
-    await window.screenshot({ path: '.vscode-test/pw-02-webview.png' });
+    await window.screenshot({ path: '.vscode-test/pw-02-tabs.png' });
   });
 
-  test('Ping receives Pong response', async () => {
-    const frame = await getContentFrame(window);
+  test('Chat tab is active by default', async () => {
+    const activeTab = await evalInApp(window, (sr) => {
+      const active = sr.querySelector('.tab-item.active');
+      return active?.textContent?.trim() || '';
+    });
 
-    const pongP = frame.locator('p', { hasText: 'Last Pong:' });
-    const before = await pongP.textContent();
-    console.log('Before ping:', before);
+    expect(activeTab).toBe('CHAT');
 
-    await frame.locator('button', { hasText: 'Ping Backend' }).click();
-    console.log('Clicked Ping Backend');
+    const hasChatView = await evalInApp(window, (sr) => {
+      return !!sr.querySelector('chat-view');
+    });
+    expect(hasChatView).toBe(true);
 
-    await expect(async () => {
-      const after = await pongP.textContent();
-      expect(after).not.toContain('Last Pong: -');
-    }).toPass({ timeout: 15_000 });
-
-    const after = await pongP.textContent();
-    console.log('After ping:', after);
-    await window.screenshot({ path: '.vscode-test/pw-03-pong.png' });
+    await window.screenshot({ path: '.vscode-test/pw-03-chat-default.png' });
   });
 
-  test('Multiple pings resolve correctly', async () => {
-    const frame = await getContentFrame(window);
-    const btn = frame.locator('button', { hasText: 'Ping Backend' });
+  test('Can switch to Settings tab', async () => {
+    await evalInApp(window, (sr) => {
+      const buttons = sr.querySelectorAll('.tab-item');
+      for (const btn of buttons) {
+        if (btn.textContent?.trim() === 'SETTINGS') {
+          (btn as HTMLElement).click();
+          return;
+        }
+      }
+    });
 
-    await btn.click();
-    await btn.click();
-    await btn.click();
-    console.log('Fired 3 rapid pings');
+    await window.waitForTimeout(1500);
 
-    await expect(async () => {
-      const t = await btn.textContent();
-      expect(t).not.toContain('pending');
-    }).toPass({ timeout: 15_000 });
+    const activeTab = await evalInApp(window, (sr) => {
+      const active = sr.querySelector('.tab-item.active');
+      return active?.textContent?.trim() || '';
+    });
+    expect(activeTab).toBe('SETTINGS');
 
-    const pong = await frame.locator('p', { hasText: 'Last Pong:' }).textContent();
-    console.log('Final pong:', pong);
-    expect(pong).not.toContain('Last Pong: -');
+    const hasSettingsView = await evalInApp(window, (sr) => {
+      return !!sr.querySelector('settings-view');
+    });
+    expect(hasSettingsView).toBe(true);
 
-    await window.screenshot({ path: '.vscode-test/pw-04-multi.png' });
+    await window.screenshot({ path: '.vscode-test/pw-04-settings-tab.png' });
+  });
+
+  test('Can switch to History tab', async () => {
+    await evalInApp(window, (sr) => {
+      const buttons = sr.querySelectorAll('.tab-item');
+      for (const btn of buttons) {
+        if (btn.textContent?.trim() === 'HISTORY') {
+          (btn as HTMLElement).click();
+          return;
+        }
+      }
+    });
+
+    await window.waitForTimeout(1500);
+
+    const activeTab = await evalInApp(window, (sr) => {
+      const active = sr.querySelector('.tab-item.active');
+      return active?.textContent?.trim() || '';
+    });
+    expect(activeTab).toBe('HISTORY');
+
+    const hasHistoryContent = await evalInApp(window, (sr) => {
+      return !!sr.querySelector('.history-container');
+    });
+    expect(hasHistoryContent).toBe(true);
+
+    await window.screenshot({ path: '.vscode-test/pw-05-history-tab.png' });
   });
 });

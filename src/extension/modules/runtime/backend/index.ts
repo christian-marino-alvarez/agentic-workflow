@@ -1,62 +1,128 @@
 
 import { AbstractBackend } from '../../core/backend/index.js';
-import * as rpc from 'vscode-jsonrpc/node.js';
 import { IndexParser } from './index-parser.js';
+import { WorkflowEngine } from './workflow-engine.js';
+import { WorkflowPersistence } from './persistence.js';
+import { RPC_COMMANDS, RPC_NOTIFICATIONS, LISTENER_EVENTS, ENGINE_STATUS } from '../constants.js';
 
 export const NAME = 'RuntimeSidecar';
 
-/**
- * Runtime Server (Sidecar 2).
- * Extends Core AbstractBackend for lifecycle management and consistency.
- * Uses JSON-RPC over stdio for high-performance Action execution.
- */
 export class RuntimeServer extends AbstractBackend {
-  private connection: rpc.MessageConnection;
   private indexParser: IndexParser;
+  private workflowEngine: WorkflowEngine;
+  private workflowPersistence: WorkflowPersistence;
 
   constructor() {
     super('runtime', { name: NAME });
 
-    // Initialize JSON-RPC connection over Stdio
-    // This runs IN PARALLEL to the Fastify HTTP server provided by AbstractBackend
-    this.connection = rpc.createMessageConnection(
-      new rpc.StreamMessageReader(process.stdin),
-      new rpc.StreamMessageWriter(process.stdout)
-    );
+    const workspaceRoot = process.env.WORKSPACE_ROOT || process.cwd();
 
-    this.indexParser = new IndexParser(process.cwd()); // CWD is workspace root when spawned
+    this.indexParser = new IndexParser(workspaceRoot);
+    this.workflowPersistence = new WorkflowPersistence(workspaceRoot);
+    this.workflowEngine = new WorkflowEngine(workspaceRoot, this.workflowPersistence);
+
+    this.enableRpc([
+      RPC_COMMANDS.INITIALIZE,
+      RPC_COMMANDS.WORKFLOW_LOAD,
+      RPC_COMMANDS.WORKFLOW_LOAD_ALL,
+      RPC_COMMANDS.WORKFLOW_START,
+      RPC_COMMANDS.WORKFLOW_GATE_RESPOND,
+      RPC_COMMANDS.WORKFLOW_STATUS,
+      RPC_COMMANDS.WORKFLOW_RELOAD,
+      RPC_COMMANDS.WORKFLOW_AGENTS,
+      RPC_COMMANDS.WORKFLOW_AGENTS_REFRESH,
+    ]);
+
+    this.setupEngineNotifications();
   }
 
-  // Override start to initialize RPC
-  public override async start(): Promise<void> {
-    this.setupRpcHandlers();
-    this.connection.listen();
-    console.log(`[${NAME}] JSON-RPC listener started`);
 
-    // Start the HTTP server (Health checks, etc)
+
+  private setupEngineNotifications(): void {
+    for (const eventType of Object.values(LISTENER_EVENTS)) {
+      this.workflowEngine.on(eventType, (data) => {
+        this.notify(RPC_NOTIFICATIONS.WORKFLOW_EVENT, data);
+      });
+    }
+  }
+
+
+
+  private async handleSystemCommand(command: string, data: any): Promise<any> {
+    if (command === RPC_COMMANDS.STATUS) {
+      return { status: ENGINE_STATUS.RUNNING, rpc: this.rpcEnabled, workflow: this.workflowEngine.getState() };
+    }
+    if (command === RPC_COMMANDS.INITIALIZE) {
+      this.indexParser = new IndexParser(data.workspaceRoot);
+      await this.indexParser.parse();
+      return { initialized: true };
+    }
+    return null;
+  }
+
+  private async handleWorkflowCommand(command: string, data: any): Promise<any> {
+    switch (command) {
+      case RPC_COMMANDS.WORKFLOW_LOAD: {
+        const def = await this.workflowEngine.loadWorkflow(data.filePath);
+        return { id: def.id, owner: def.owner, steps: def.steps.length, blocking: def.blocking };
+      }
+      case RPC_COMMANDS.WORKFLOW_LOAD_ALL: {
+        const workflows = await this.workflowEngine.loadAllWorkflows(data.dirPath);
+        return Array.from(workflows.entries()).map(([id, def]) => ({
+          id, owner: def.owner, steps: def.steps.length,
+        }));
+      }
+      case RPC_COMMANDS.WORKFLOW_START: {
+        const def = await this.workflowEngine.start(data);
+        return { started: true, workflowId: def.id, owner: def.owner };
+      }
+
+      case RPC_COMMANDS.WORKFLOW_GATE_RESPOND:
+        this.workflowEngine.respondToGate(data);
+        return { responded: true };
+
+      case RPC_COMMANDS.WORKFLOW_STATUS:
+        return this.workflowEngine.getState();
+
+      case RPC_COMMANDS.WORKFLOW_RELOAD:
+        await this.workflowEngine.reload(data.filePath);
+        return { reloaded: true };
+
+      case RPC_COMMANDS.WORKFLOW_AGENTS:
+        return this.workflowEngine.getAgents();
+
+      case RPC_COMMANDS.WORKFLOW_AGENTS_REFRESH:
+        await this.workflowEngine.refreshAgentRegistry();
+        return { refreshed: true, count: this.workflowEngine.getAgents().length };
+
+      default:
+        return null;
+    }
+  }
+
+
+
+  public override async start(): Promise<void> {
+    await this.workflowEngine.initialize();
+    console.log(`[${NAME}] Engine initialized`);
     await super.start();
   }
 
-  private setupRpcHandlers(): void {
-    this.connection.onRequest('ping', () => 'pong');
-
-    this.connection.onNotification('initialize', async (params: { workspaceRoot: string }) => {
-      console.log(`[${NAME}] Initializing index with root:`, params.workspaceRoot);
-      this.indexParser = new IndexParser(params.workspaceRoot);
-      await this.indexParser.parse();
-    });
-  }
-
-  // Implement abstract method from AbstractBackend
-  // This handles HTTP /command requests (legacy/fallback)
   protected async listen(command: string, data: any): Promise<any> {
-    console.log(`[${NAME}] HTTP Command received: ${command}`);
-    if (command === 'status') {
-      return { status: 'running', rpc: 'active' };
+    console.log(`[${NAME}] Command: ${command}`);
+
+    const systemResult = await this.handleSystemCommand(command, data);
+    if (systemResult !== null) {
+      return systemResult;
     }
-    return { error: 'Use JSON-RPC for runtime actions' };
+
+    const workflowResult = await this.handleWorkflowCommand(command, data);
+    if (workflowResult !== null) {
+      return workflowResult;
+    }
+
+    return { error: `Unknown command: ${command}`, code: 404 };
   }
 }
 
-// Auto-start
 new RuntimeServer().start();

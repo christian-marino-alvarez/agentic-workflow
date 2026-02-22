@@ -15,6 +15,13 @@ export const LayerScope = {
   Background: 'background'
 } as const;
 
+/**
+ * Core command identifiers used across all backends.
+ */
+export const COMMANDS = {
+  PING: 'ping',
+} as const;
+
 import { ModelCapabilities } from './types.js';
 
 /**

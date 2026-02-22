@@ -1,15 +1,7 @@
----
-id: candidate
-title: Agent Delegation (Inter-Agent Task Routing)
-description: >
-  Implementar delegación inter-agente donde el architect-agent (u otros coordinadores) 
-  pueden asignar sub-tareas a agentes especializados (qa, backend, view, etc.) 
-  sin intervención del desarrollador. El agente coordinador recibe el resultado 
-  y lo sintetiza para el usuario.
-goal: >
-  Que el architect-agent pueda delegar tareas a otros agentes dentro de una misma 
-  sesión de chat, usando un tool `delegateTask` que invoque internamente otro agente 
-  con su personalidad y herramientas, devolviendo el resultado al coordinador.
-backlog_ref: T039
-domain: D3 - Backend & Agent Orchestration
----
+# Task Candidate
+
+## Description
+Implementar un **Workflow Execution Engine** en el Runtime Server que interprete los workflows definidos en `.agent/workflows/`, los ejecute según la estrategia elegida (long/short), gestione gates de aprobación del desarrollador con UI interactiva, y muestre el progreso en un panel dedicado separado del chat.
+
+## Objective
+Que el sistema agentico sea capaz de leer, interpretar y ejecutar los workflows automáticamente desde el servidor runtime, siguiendo la cadena de PASS entre fases, identificando el agente owner de cada workflow, y con el architect orquestando las delegaciones. El chat solo mostrará resúmenes de tarea e informes con links a artefactos.

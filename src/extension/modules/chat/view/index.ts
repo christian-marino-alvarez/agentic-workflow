@@ -2,7 +2,7 @@ import { View } from '../../core/view/index.js';
 import { state } from 'lit/decorators.js';
 import { styles } from './templates/css.js';
 import { render } from './templates/html.js';
-import { MESSAGES, NAME } from '../constants.js';
+import { MESSAGES, NAME, STEP_STATUS, LIFECYCLE_PHASES } from '../constants.js';
 import { MESSAGES as SETTINGS_MESSAGES } from '../../settings/constants.js';
 
 console.log('[chat::view] Module loading...');
@@ -16,7 +16,7 @@ export class ChatView extends View {
   }
 
   @state()
-  public history: Array<{ sender: string, text: string, role?: string, status?: string, isStreaming?: boolean, phase?: string, toolEvents?: Array<any>, isDelegation?: boolean, delegationAgent?: string, delegationStatus?: string, delegationResult?: string }> = [];
+  public history: Array<{ sender: string, text: string, role?: string, status?: string, isStreaming?: boolean, phase?: string, toolEvents?: Array<any>, isDelegation?: boolean, delegationAgent?: string, delegationStatus?: string, delegationResult?: string, isGate?: boolean, gateId?: string, gateDecision?: 'approve' | 'reject' }> = [];
 
   @state()
   public inputText: string = '';
@@ -30,7 +30,7 @@ export class ChatView extends View {
   private activeModelId: string = '';
 
   @state()
-  public activeWorkflow: string = 'T032: Runtime Server & Action Sandbox';
+  public activeWorkflow: string = '';
 
   @state()
   public selectedAgent: string = 'architect';
@@ -80,16 +80,11 @@ export class ChatView extends View {
   public pendingDeleteSessionId: string | undefined;
 
   @state()
-  public taskSteps: Array<{ id: string, label: string, status: 'pending' | 'active' | 'done' }> = [
-    { id: 'acceptance', label: 'Acceptance', status: 'done' },
-    { id: 'research', label: 'Research', status: 'done' },
-    { id: 'analysis', label: 'Analysis', status: 'done' },
-    { id: 'planning', label: 'Planning', status: 'done' },
-    { id: 'implementation', label: 'Implementation', status: 'active' },
-    { id: 'verification', label: 'Verification', status: 'pending' },
-    { id: 'results', label: 'Results', status: 'pending' },
-    { id: 'commit', label: 'Commit & Push', status: 'pending' },
-  ];
+  public taskSteps: Array<{ id: string, label: string, status: 'pending' | 'active' | 'done' }> =
+    LIFECYCLE_PHASES.map(p => ({ ...p, status: STEP_STATUS.PENDING as 'pending' }));
+
+  @state()
+  public activeWorkflowDef: any = null;
 
   @state()
   public showTimeline: boolean = false;
@@ -464,6 +459,76 @@ export class ChatView extends View {
         this.log(`Session list loaded: ${data.sessions.length} sessions`);
       }
     }
+
+    // Handle gate request from workflow engine
+    if (command === MESSAGES.GATE_REQUEST) {
+      this.isLoading = false;
+      this.history = [...this.history, {
+        sender: '🚦 Gate',
+        text: data?.question || data?.label || `Gate approval required: **${data?.stepId || 'unknown'}**`,
+        role: 'gate',
+        isGate: true,
+        gateId: data?.gateId || data?.stepId || 'unknown',
+      }];
+    }
+
+    // Handle workflow state updates — update taskSteps + show message
+    if (command === MESSAGES.WORKFLOW_STATE_UPDATE) {
+      const statusText = data?.status || 'unknown';
+      const phase = data?.currentStep?.label || data?.currentPhase || '';
+
+      // Update taskSteps from engine state if available
+      if (data?.steps && Array.isArray(data.steps)) {
+        this.taskSteps = data.steps.map((s: any) => ({
+          id: s.id || s.stepId,
+          label: s.label || s.id,
+          status: s.status === 'completed' ? STEP_STATUS.DONE
+            : s.status === 'active' || s.status === 'executing' ? STEP_STATUS.ACTIVE
+              : STEP_STATUS.PENDING,
+        }));
+      }
+
+      // Update workflow title from engine state
+      if (data?.taskTitle || data?.workflowId) {
+        this.activeWorkflow = data.taskTitle || data.workflowId;
+      }
+
+      // Store workflow details if provided
+      if (data?.workflow) {
+        this.activeWorkflowDef = data.workflow;
+      }
+
+      if (data?.steps && data.steps.length > 0 && !this.showTimeline) {
+        this.showTimeline = true;
+      }
+
+      this.history = [...this.history, {
+        sender: '⚙️ Engine',
+        text: `Workflow status: **${statusText}**${phase ? ` — Phase: ${phase}` : ''}`,
+        role: 'system',
+      }];
+    }
+
+    // Auto-new-session triggered by /init
+    if (command === 'NEW_SESSION_AUTO') {
+      if (this.history.length > 0) {
+        this.saveCurrentSession();
+      }
+      this.history = [];
+      this.currentSessionId = '';
+      this.elapsedSeconds = 0;
+      this.activeActivity = '';
+      this.activeWorkflow = '🔄 Initializing task...';
+      this.taskSteps = [];
+      this.activeWorkflowDef = null;
+      this.showTimeline = false;
+      this.isLoading = true;
+      this.history = [{
+        sender: '⚙️ System',
+        text: '🚀 Starting workflow engine...\n\nLoading workflows and preparing the environment. Please wait.',
+        role: 'system',
+      }];
+    }
   }
 
   public handleInput(e: InputEvent) {
@@ -494,14 +559,55 @@ export class ChatView extends View {
     this.log(`Agent switched to: ${role}`);
   }
 
+  public handleGateResponse(gateId: string, decision: 'approve' | 'reject') {
+    // Update the gate card in history to show the decision
+    const historyCopy = [...this.history];
+    const gateMsg = historyCopy.find(m => m.isGate && m.gateId === gateId && !m.gateDecision);
+    if (gateMsg) {
+      gateMsg.gateDecision = decision;
+      this.history = historyCopy;
+    }
+
+    // Send the gate response to background
+    this.sendMessage(NAME, MESSAGES.GATE_RESPONSE, {
+      gateId,
+      decision,
+    }).catch((err) => {
+      this.log('Error sending gate response', err);
+    });
+  }
+
   public async sendChatMessage() {
     if (!this.inputText.trim() && this.attachments.length === 0) { return; }
 
     const text = this.inputText;
-    this.history = [...this.history, { sender: 'Me', text, role: 'user', phase: this.currentPhase }];
+    const isCommand = text.trim().startsWith('/');
     this.inputText = '';
-    this.activeActivity = 'Procesando...';
-    this.startTimer();
+
+    // Handle /init directly in view — clear session immediately
+    if (text.trim() === '/init') {
+      if (this.history.length > 0) {
+        await this.saveCurrentSession();
+      }
+      this.history = [{
+        sender: '⚙️ System',
+        text: '🚀 Starting workflow engine...\n\nLoading workflows and preparing the environment. Please wait.',
+        role: 'system',
+      }];
+      this.currentSessionId = '';
+      this.elapsedSeconds = 0;
+      this.activeActivity = '';
+      this.activeWorkflow = '🔄 Initializing task...';
+      this.taskSteps = LIFECYCLE_PHASES.map(p => ({ ...p, status: STEP_STATUS.PENDING as 'pending' }));
+      this.isLoading = false;
+    }
+
+    // Don't show slash commands as user messages — they trigger system actions
+    if (!isCommand) {
+      this.history = [...this.history, { sender: 'Me', text, role: 'user', phase: this.currentPhase }];
+      this.activeActivity = 'Procesando...';
+      this.startTimer();
+    }
 
     try {
       this.isLoading = true;
@@ -519,8 +625,11 @@ export class ChatView extends View {
       this.saveCurrentSession();
     } catch (error) {
       this.isLoading = false;
-      this.log('Error sending message', error);
-      this.history = [...this.history, { sender: 'System', text: 'Error sending message', role: 'system' }];
+      // Don't show error for commands — they handle their own feedback
+      if (!isCommand) {
+        this.log('Error sending message', error);
+        this.history = [...this.history, { sender: 'System', text: 'Error sending message', role: 'system' }];
+      }
     }
   }
 
@@ -569,6 +678,13 @@ export class ChatView extends View {
     // Start fresh
     this.history = [];
     this.currentSessionId = '';
+    this.elapsedSeconds = 0;
+    this.activeActivity = '';
+    this.activeWorkflow = '';
+    this.taskSteps = [];
+    this.activeWorkflowDef = null;
+    this.showTimeline = false;
+
     try {
       const result = await this.sendMessage(NAME, MESSAGES.NEW_SESSION);
       if (result?.sessionId) {
@@ -622,7 +738,14 @@ export class ChatView extends View {
     if (changedProperties.has('history') || changedProperties.has('isLoading')) {
       requestAnimationFrame(() => {
         const container = this.renderRoot?.querySelector('.chat-container');
-        if (container) {
+        if (!container) { return; }
+
+        // Scroll last user message to top of viewport so agent response is visible below
+        const userBubbles = container.querySelectorAll('.msg-user');
+        const lastUserBubble = userBubbles.length > 0 ? userBubbles[userBubbles.length - 1] : null;
+        if (lastUserBubble) {
+          lastUserBubble.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
           container.scrollTop = container.scrollHeight;
         }
       });

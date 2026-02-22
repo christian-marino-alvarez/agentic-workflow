@@ -19,6 +19,31 @@ export const MESSAGES = {
   NEW_SESSION: 'NEW_SESSION', // Chat -> Background (start fresh)
   // Delegation
   DELEGATION_EVENT: 'DELEGATION_EVENT', // Background -> Chat (delegation status updates)
+  // Workflow gate integration
+  GATE_REQUEST: 'GATE_REQUEST', // Runtime -> Chat (gate needs approval)
+  GATE_RESPONSE: 'GATE_RESPONSE', // Chat -> Runtime (user gate decision)
+  // Workflow state feedback
+  WORKFLOW_STATE_UPDATE: 'WORKFLOW_STATE_UPDATE', // Runtime -> Chat (phase/status change)
+  WORKFLOW_START: 'WORKFLOW_START', // Chat -> Runtime (start workflow)
 } as const;
 
 export type ChatCommand = typeof MESSAGES[keyof typeof MESSAGES];
+
+export const STEP_STATUS = {
+  PENDING: 'pending',
+  ACTIVE: 'active',
+  DONE: 'done',
+} as const;
+
+export type StepStatus = typeof STEP_STATUS[keyof typeof STEP_STATUS];
+
+export const LIFECYCLE_PHASES = [
+  { id: 'acceptance', label: 'Acceptance' },
+  { id: 'research', label: 'Research' },
+  { id: 'analysis', label: 'Analysis' },
+  { id: 'planning', label: 'Planning' },
+  { id: 'implementation', label: 'Implementation' },
+  { id: 'verification', label: 'Verification' },
+  { id: 'results', label: 'Results' },
+  { id: 'commit', label: 'Commit & Push' },
+] as const;

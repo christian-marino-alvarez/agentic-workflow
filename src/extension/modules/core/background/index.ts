@@ -169,6 +169,9 @@ export abstract class Background implements vscode.WebviewViewProvider {
 
     // Resolve workspace root for the sidecar to use for file path resolution
     const workspaceRoot = vscode.workspace?.workspaceFolders?.[0]?.uri?.fsPath || '';
+    if (!workspaceRoot) {
+      this.log('WARNING: No workspace folder found — WORKSPACE_ROOT will be empty');
+    }
 
     this.log(`Spawning sidecar: node ${scriptPath}`);
     this.sidecarProcess = spawn('node', [scriptPath], {
@@ -202,7 +205,7 @@ export abstract class Background implements vscode.WebviewViewProvider {
    * Configure the sidecar endpoint for this backend messenger.
    */
   protected setEndpoint(url: string): void {
-    this.messenger.setEndpoint(url);
+    this.messenger.setEndpoint(url, this.moduleName);
   }
 
   /**

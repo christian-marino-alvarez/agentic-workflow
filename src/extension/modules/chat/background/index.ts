@@ -133,9 +133,11 @@ export class ChatBackground extends Background {
     // Intercept init workflow completion: detect A2UI answers for language + strategy
     if (!isSlashCommand) {
       const workflowState = await this.getWorkflowState();
+      this.log(`Init detection: workflowId=${workflowState?.currentWorkflowId}, status=${workflowState?.status}`);
       if (workflowState?.currentWorkflowId === 'workflow.init' && workflowState?.status === 'running') {
         const hasLanguage = /idioma.*:\s*(español|english)/i.test(data.text);
         const strategyMatch = data.text.match(/estrategia.*:\s*(long|short)/i);
+        this.log(`Init regex: hasLanguage=${hasLanguage}, strategyMatch=${strategyMatch?.[1] || 'null'}, text="${data.text.substring(0, 80)}"`);
         if (hasLanguage && strategyMatch) {
           const language = /español/i.test(data.text) ? 'es' : 'en';
           const strategy = strategyMatch[1].toLowerCase() as 'long' | 'short';

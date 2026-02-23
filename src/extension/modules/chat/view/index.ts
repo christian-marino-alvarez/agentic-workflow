@@ -373,17 +373,30 @@ export class ChatView extends View {
         this.appVersion = response.version || '';
         this.log('Workflow context loaded silently');
       }
-
-      // Fetch current workflow state to populate details panel on reload
-      const stateResponse = await this.sendMessage(NAME, MESSAGES.WORKFLOW_STATE_UPDATE);
-      if (stateResponse && stateResponse.workflow) {
-        // Simulate incoming state update to populate workflowDetails
-        this.listen({
-          payload: { command: MESSAGES.WORKFLOW_STATE_UPDATE, data: stateResponse },
-        });
-      }
     } catch (error) {
       this.log('Error loading init workflow', error);
+    }
+
+    // Fetch current workflow state with delay (sidecar needs ~2s to start)
+    this.fetchWorkflowStateWithRetry(3);
+  }
+
+  private async fetchWorkflowStateWithRetry(retries: number): Promise<void> {
+    for (let attempt = 0; attempt < retries; attempt++) {
+      // Wait before first attempt to give sidecar time to initialize
+      await new Promise(r => setTimeout(r, attempt === 0 ? 3000 : 2000));
+      try {
+        const stateResponse = await this.sendMessage(NAME, MESSAGES.WORKFLOW_STATE_UPDATE);
+        if (stateResponse && stateResponse.workflow) {
+          this.listen({
+            payload: { command: MESSAGES.WORKFLOW_STATE_UPDATE, data: stateResponse },
+          });
+          this.log('Workflow state loaded on mount');
+          return;
+        }
+      } catch {
+        this.log(`Workflow state fetch attempt ${attempt + 1}/${retries} failed`);
+      }
     }
   }
 

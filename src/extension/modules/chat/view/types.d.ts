@@ -18,6 +18,12 @@ export interface WorkflowDetails {
   nextStep?: string;
   nextStepIndex?: number;
   passTarget?: string;
+  // Parsed sections from workflow markdown
+  inputs?: string[];
+  outputs?: string[];
+  templates?: string[];
+  objective?: string;
+  currentPhaseLabel?: string;
 }
 
 export interface IChatView {

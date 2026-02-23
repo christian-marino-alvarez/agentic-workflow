@@ -838,7 +838,7 @@ export class ChatBackground extends Background {
       // 1. Read current workflow state to get passTarget BEFORE sending gate response
       const workflowState = await this.getWorkflowState();
       const passTarget = workflowState?.workflow?.passTarget;
-      const strategy = data.strategy || workflowState?.workflow?.id?.includes('short') ? 'short' : 'long';
+      const strategy = data.strategy || (workflowState?.workflow?.id?.includes('short') ? 'short' : 'long');
 
       // 2. Advance workflow: step complete → gate approve/reject
       if (data.decision === 'SI') {

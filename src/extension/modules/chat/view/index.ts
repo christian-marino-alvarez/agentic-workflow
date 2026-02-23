@@ -622,7 +622,19 @@ export class ChatView extends View {
       // Update taskSteps from engine state if available
       // Skip internal init workflow steps — only show lifecycle phases
       const isInitWorkflow = data?.currentWorkflowId === 'workflow.init';
-      if (data?.steps && Array.isArray(data.steps) && !isInitWorkflow) {
+
+      // Lifecycle workflows: update from phases (Brief, Implementation, Closure)
+      if (data?.phases && Array.isArray(data.phases) && data.phases.length > 0) {
+        this.taskSteps = data.phases.map((p: any) => ({
+          id: p.id || p.label,
+          label: p.label || p.id,
+          status: p.status === 'completed' ? STEP_STATUS.DONE
+            : p.status === 'active' || p.status === 'executing' ? STEP_STATUS.ACTIVE
+              : p.status === 'failed' ? STEP_STATUS.DONE  // show failed as done with different styling later
+                : STEP_STATUS.PENDING,
+        }));
+      } else if (data?.steps && Array.isArray(data.steps) && !isInitWorkflow) {
+        // Simple workflows: update from steps
         this.taskSteps = data.steps.map((s: any) => ({
           id: s.id || s.stepId,
           label: s.label || s.id,

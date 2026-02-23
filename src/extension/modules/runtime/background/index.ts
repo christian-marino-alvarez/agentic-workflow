@@ -14,6 +14,8 @@ export class RuntimeBackground extends Background {
   private rolesWatcher: vscode.FileSystemWatcher | null = null;
   private pollingTimer: ReturnType<typeof setInterval> | null = null;
   private lastStatus: string = ENGINE_STATUS.IDLE;
+  private lastWorkflowId: string = '';
+  private lastPhaseId: string = '';
   private taskStepsEmitted: boolean = false;
   private stablePollCount: number = 0;
 
@@ -180,12 +182,24 @@ export class RuntimeBackground extends Background {
 
       const currentStatus = state.status || ENGINE_STATUS.IDLE;
       const hasSteps = Array.isArray(state.steps) && state.steps.length > 0;
+      const currentWorkflowId = state.currentWorkflowId || '';
+      const currentPhaseId = state.currentPhaseId || '';
 
-      if (forceEmit || currentStatus !== this.lastStatus) {
+      // Detect meaningful changes: status, workflow ID (init → lifecycle), or active phase
+      const statusChanged = currentStatus !== this.lastStatus;
+      const workflowChanged = currentWorkflowId !== this.lastWorkflowId;
+      const phaseChanged = currentPhaseId !== this.lastPhaseId;
+      const shouldEmit = forceEmit || statusChanged || workflowChanged || phaseChanged;
+
+      if (shouldEmit) {
         if (!forceEmit) {
-          this.log(`Workflow state changed: ${this.lastStatus} → ${currentStatus}`);
+          this.log(`Workflow state changed: ${this.lastStatus} → ${currentStatus}` +
+            (workflowChanged ? ` (workflow: ${this.lastWorkflowId} → ${currentWorkflowId})` : '') +
+            (phaseChanged ? ` (phase: ${this.lastPhaseId} → ${currentPhaseId})` : ''));
         }
         this.lastStatus = currentStatus;
+        this.lastWorkflowId = currentWorkflowId;
+        this.lastPhaseId = currentPhaseId;
         this.stablePollCount = 0;
         this.notifyChat(CHAT_MESSAGES.WORKFLOW_STATE_UPDATE, state);
       } else if (hasSteps && !this.taskStepsEmitted) {

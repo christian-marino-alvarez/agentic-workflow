@@ -127,7 +127,40 @@ export class LLMVirtualBackend extends AbstractVirtualBackend {
       const runner = new Runner({ tracingDisabled: true });
       const result = await runner.run(agent, finalInput, { stream: true });
 
-      await this.pumpStreamEvents(result as any, reply);
+      const outputChars = await this.pumpStreamEvents(result as any, reply);
+
+      // Extract and emit token usage after stream completes
+      try {
+        const runResult = result as any;
+        const responses = runResult.rawResponses || [];
+        let totalInput = 0;
+        let totalOutput = 0;
+        for (const resp of responses) {
+          totalInput += resp?.usage?.inputTokens || resp?.usage?.promptTokens || 0;
+          totalOutput += resp?.usage?.outputTokens || resp?.usage?.completionTokens || 0;
+        }
+
+        // Fallback: estimate from character counts (~4 chars per token)
+        if (totalInput === 0 && totalOutput === 0) {
+          const inputChars = (finalInput || '').length + (instructions || '').length;
+          totalInput = Math.ceil(inputChars / 4);
+          totalOutput = Math.ceil(outputChars / 4);
+        }
+
+        const modelName = binding[role] || 'unknown';
+        reply.raw.write(`data: ${JSON.stringify({
+          type: 'usage',
+          model: modelName,
+          provider: provider || 'unknown',
+          role,
+          inputTokens: totalInput,
+          outputTokens: totalOutput,
+          totalTokens: totalInput + totalOutput,
+          estimated: totalInput > 0 && responses.length === 0,
+        })}\n\n`);
+        console.log(`[llm::backend] Usage: ${totalInput} in / ${totalOutput} out (${modelName})${responses.length === 0 ? ' [estimated]' : ''}`);
+      } catch { /* usage extraction is non-blocking */ }
+
       console.log(`[llm::backend] Stream completed`);
 
     } catch (error: unknown) {
@@ -139,7 +172,8 @@ export class LLMVirtualBackend extends AbstractVirtualBackend {
     }
   }
 
-  private async pumpStreamEvents(result: AsyncIterable<any>, reply: FastifyReply): Promise<void> {
+  private async pumpStreamEvents(result: AsyncIterable<any>, reply: FastifyReply): Promise<number> {
+    let outputChars = 0;
     for await (const chunk of result) {
       if (chunk.type === 'run_item_stream_event') {
         const item = chunk.item as any;
@@ -160,11 +194,14 @@ export class LLMVirtualBackend extends AbstractVirtualBackend {
       } else if (chunk.type === 'raw_model_stream_event') {
         const streamEvent = chunk.data as any;
         if (streamEvent.type === 'response.delta' || streamEvent.type === 'output_text_delta') {
-          reply.raw.write(`data: ${JSON.stringify({ type: 'content', content: streamEvent.delta })}\n\n`);
+          const delta = streamEvent.delta || '';
+          outputChars += delta.length;
+          reply.raw.write(`data: ${JSON.stringify({ type: 'content', content: delta })}\n\n`);
         }
       }
     }
     reply.raw.write(`data: [DONE]\n\n`);
+    return outputChars;
   }
 
   /**

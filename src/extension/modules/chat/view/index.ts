@@ -2,8 +2,9 @@ import { View } from '../../core/view/index.js';
 import { state } from 'lit/decorators.js';
 import { styles } from './templates/css.js';
 import { render } from './templates/html.js';
-import { MESSAGES, NAME, STEP_STATUS, LIFECYCLE_PHASES } from '../constants.js';
+import { MESSAGES, NAME, STEP_STATUS } from '../constants.js';
 import { MESSAGES as SETTINGS_MESSAGES } from '../../settings/constants.js';
+import { parseA2UI, A2UIBlock } from './templates/a2ui/html.js';
 
 console.log('[chat::view] Module loading...');
 
@@ -16,7 +17,7 @@ export class ChatView extends View {
   }
 
   @state()
-  public history: Array<{ sender: string, text: string, role?: string, status?: string, isStreaming?: boolean, phase?: string, toolEvents?: Array<any>, isDelegation?: boolean, delegationAgent?: string, delegationStatus?: string, delegationResult?: string, isGate?: boolean, gateId?: string, gateDecision?: 'approve' | 'reject' }> = [];
+  public history: Array<{ sender: string, text: string, role?: string, status?: string, isStreaming?: boolean, phase?: string, toolEvents?: Array<any>, isDelegation?: boolean, delegationAgent?: string, delegationStatus?: string, delegationResult?: string, isGate?: boolean, gateId?: string, gateDecision?: 'approve' | 'reject', a2uiAnswers?: Record<string, string>, a2uiDismissed?: boolean }> = [];
 
   @state()
   public inputText: string = '';
@@ -39,15 +40,8 @@ export class ChatView extends View {
   public showAgentDropdown: boolean = false;
 
   @state()
-  public availableAgents: Array<{ name: string; icon?: string; model?: { provider?: string; id?: string }; capabilities?: Record<string, boolean> }> = [
-    { name: 'architect' },
-    { name: 'researcher' },
-    { name: 'qa' },
-    { name: 'engine' },
-    { name: 'view' },
-    { name: 'background' },
-    { name: 'backend' },
-  ];
+  public availableAgents: Array<{ name: string; icon?: string; model?: { provider?: string; id?: string }; capabilities?: Record<string, boolean> }> = [];
+  // Note: populated dynamically from the runtime backend via LIST_AGENTS_RESPONSE / AGENTS_REFRESHED
 
   public isLoading: boolean = false;
 
@@ -80,14 +74,45 @@ export class ChatView extends View {
   public pendingDeleteSessionId: string | undefined;
 
   @state()
-  public taskSteps: Array<{ id: string, label: string, status: 'pending' | 'active' | 'done' }> =
-    LIFECYCLE_PHASES.map(p => ({ ...p, status: STEP_STATUS.PENDING as 'pending' }));
+  public taskSteps: Array<{ id: string, label: string, status: 'pending' | 'active' | 'done' }> = [];
 
   @state()
   public activeWorkflowDef: any = null;
 
   @state()
-  public showTimeline: boolean = false;
+  public showTimeline: boolean = true;
+
+  @state()
+  public showDetails: boolean = false;
+
+  /** Rich workflow details: gate requirements, context files, next step etc. */
+  @state()
+  public workflowDetails: {
+    workflowId?: string;
+    version?: string;
+    severity?: string;
+    blocking?: boolean;
+    owner?: string;
+    model?: string;
+    contextFiles?: string[];
+    gateRequirements?: string[];
+    nextStep?: string;
+    nextStepIndex?: number;
+    passTarget?: string;
+  } = {};
+
+  /** Tracks the pending A2UI confirmation from the last assistant message */
+  @state()
+  public pendingA2UI: { blockId: string; label: string; options: string[]; msgIndex: number; blockIndex: number } | null = null;
+
+  /** Skeleton loading state for input area transitions */
+  @state()
+  public inputSkeleton: boolean = false;
+  private skeletonTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /** Selected lifecycle strategy — persisted in session */
+  @state()
+  public lifecycleStrategy: 'long' | 'short' | null = null;
 
   // Execution timer
   @state()
@@ -98,6 +123,10 @@ export class ChatView extends View {
 
   @state()
   public activeActivity: string = '';
+
+  /** Cumulative token usage for the current session */
+  @state()
+  public tokenUsage: { inputTokens: number; outputTokens: number; totalTokens: number; estimatedCost: number } = { inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCost: 0 };
 
   private timerInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -118,6 +147,16 @@ export class ChatView extends View {
 
   public toggleTimeline() {
     this.showTimeline = !this.showTimeline;
+    if (this.showTimeline) {
+      this.showDetails = false;
+    }
+  }
+
+  public toggleDetails() {
+    this.showDetails = !this.showDetails;
+    if (this.showDetails) {
+      this.showTimeline = false;
+    }
   }
 
   /**
@@ -186,6 +225,15 @@ export class ChatView extends View {
         this.saveCurrentSession();
       }
     });
+
+    // Delegated click handler for file links in rendered markdown
+    this.renderRoot.addEventListener('click', (e: Event) => {
+      const target = (e.target as HTMLElement).closest('.file-link') as HTMLElement;
+      if (target?.dataset?.filePath) {
+        e.preventDefault();
+        this.sendMessage(NAME, 'OPEN_FILE', { path: target.dataset.filePath });
+      }
+    });
   }
 
   override disconnectedCallback() {
@@ -201,9 +249,20 @@ export class ChatView extends View {
    */
   private async loadLastSession() {
     try {
-      await this.sendMessage(NAME, MESSAGES.LOAD_SESSION, { sessionId: '__last__' });
+      const result = await this.sendMessage(NAME, MESSAGES.LOAD_SESSION, { sessionId: '__last__' });
+      if (!result?.success) {
+        // No saved session — auto-start /init
+        this.log('No last session found, auto-starting /init');
+        this.inputText = '/init';
+        await this.sendChatMessage();
+        this.inputText = '';
+      }
     } catch {
-      // No last session, use default history
+      // No last session — auto-start /init
+      this.log('No last session, auto-starting /init');
+      this.inputText = '/init';
+      await this.sendChatMessage();
+      this.inputText = '';
     }
   }
 
@@ -321,6 +380,14 @@ export class ChatView extends View {
 
       // Handle tool events (tool_call / tool_result)
       if (data?.toolEvent) {
+        const te = data.toolEvent;
+        // Show activity feedback for tool execution
+        if (te.type === 'tool_call') {
+          const toolLabel = te.name === 'writeFile' ? 'Writing...' : te.name === 'readFile' ? 'Reading...' : 'Thinking...';
+          this.activeActivity = toolLabel;
+        } else if (te.type === 'tool_result') {
+          this.activeActivity = 'Thinking...';
+        }
         const historyCopy = [...this.history];
         const lastMsg = historyCopy.length > 0 ? historyCopy[historyCopy.length - 1] : null;
         if (lastMsg && lastMsg.role === data.agentRole) {
@@ -393,6 +460,33 @@ export class ChatView extends View {
       }
     }
 
+    // Token usage tracking
+    if (command === MESSAGES.USAGE_UPDATE) {
+      const input = data?.inputTokens || 0;
+      const output = data?.outputTokens || 0;
+      const model = (data?.model || '').toLowerCase();
+
+      // Approximate cost per 1M tokens (EUR)
+      let inputRate = 0.07;   // default: gemini flash
+      let outputRate = 0.28;
+      if (model.includes('pro')) {
+        inputRate = 1.15; outputRate = 4.60;
+      } else if (model.includes('gpt') || model.includes('codex') || model.includes('o1') || model.includes('o3') || model.includes('o4')) {
+        inputRate = 1.85; outputRate = 7.40;
+      } else if (model.includes('claude')) {
+        inputRate = 2.75; outputRate = 13.80;
+      }
+
+      const cost = (input * inputRate + output * outputRate) / 1_000_000;
+
+      this.tokenUsage = {
+        inputTokens: this.tokenUsage.inputTokens + input,
+        outputTokens: this.tokenUsage.outputTokens + output,
+        totalTokens: this.tokenUsage.totalTokens + input + output,
+        estimatedCost: this.tokenUsage.estimatedCost + cost,
+      };
+    }
+
     if (command === 'SELECT_FILES_RESPONSE') {
       const { files } = data;
       if (files && Array.isArray(files)) {
@@ -447,8 +541,24 @@ export class ChatView extends View {
           sender: m.sender || (m.role === 'user' ? 'Me' : m.role?.charAt(0).toUpperCase() + m.role?.slice(1)),
           text: m.text,
           role: m.role,
+          ...(m.a2uiAnswers ? { a2uiAnswers: m.a2uiAnswers } : {}),
+          ...(m.a2uiDismissed ? { a2uiDismissed: true } : {}),
         }));
         this.log(`Session restored: ${data.session.id} (${this.history.length} messages)`);
+
+        // Restore task metadata
+        if (data.session.taskTitle) {
+          this.activeWorkflow = data.session.taskTitle;
+        }
+        if (data.session.elapsedSeconds) {
+          this.elapsedSeconds = data.session.elapsedSeconds;
+        }
+
+        // Restore lifecycle strategy and reload phases
+        if (data.session.lifecycleStrategy) {
+          this.lifecycleStrategy = data.session.lifecycleStrategy;
+          this.loadLifecyclePhases(data.session.lifecycleStrategy);
+        }
       }
     }
 
@@ -478,7 +588,9 @@ export class ChatView extends View {
       const phase = data?.currentStep?.label || data?.currentPhase || '';
 
       // Update taskSteps from engine state if available
-      if (data?.steps && Array.isArray(data.steps)) {
+      // Skip internal init workflow steps — only show lifecycle phases
+      const isInitWorkflow = data?.currentWorkflowId === 'workflow.init';
+      if (data?.steps && Array.isArray(data.steps) && !isInitWorkflow) {
         this.taskSteps = data.steps.map((s: any) => ({
           id: s.id || s.stepId,
           label: s.label || s.id,
@@ -502,11 +614,29 @@ export class ChatView extends View {
         this.showTimeline = true;
       }
 
-      this.history = [...this.history, {
-        sender: '⚙️ Engine',
-        text: `Workflow status: **${statusText}**${phase ? ` — Phase: ${phase}` : ''}`,
-        role: 'system',
-      }];
+      // Build rich workflowDetails for the Details panel
+      if (data?.workflow || data?.steps) {
+        const steps: Array<{ id: string, label: string, status: string }> = data?.steps || [];
+        const nextStepObj = steps.find((s: any) => s.status === 'pending');
+        const nextStepIdx = nextStepObj ? steps.indexOf(nextStepObj) : -1;
+        const activeAgent = this.availableAgents.find(a => a.name === data?.workflow?.owner?.replace(/-agent$/, ''));
+
+        this.workflowDetails = {
+          workflowId: data?.currentWorkflowId || data?.workflow?.description || '',
+          version: data?.workflow?.version,
+          severity: data?.workflow?.severity,
+          blocking: data?.workflow?.blocking,
+          owner: data?.workflow?.owner,
+          model: activeAgent?.model?.id ? (this.models.find(m => m.id === activeAgent.model!.id)?.name || activeAgent.model.id) : undefined,
+          contextFiles: data?.workflow?.constitutions || [],
+          gateRequirements: data?.workflow?.gate?.requirements || [],
+          nextStep: nextStepObj?.label,
+          nextStepIndex: nextStepIdx >= 0 ? nextStepIdx + 1 : undefined,
+          passTarget: data?.workflow?.passTarget || undefined,
+        };
+      }
+
+      // Engine status is reflected in the header/timeline/details — no chat message needed
     }
 
     // Auto-new-session triggered by /init
@@ -521,13 +651,9 @@ export class ChatView extends View {
       this.activeWorkflow = '🔄 Initializing task...';
       this.taskSteps = [];
       this.activeWorkflowDef = null;
-      this.showTimeline = false;
+      this.showTimeline = true;
+      this.showDetails = false;
       this.isLoading = true;
-      this.history = [{
-        sender: '⚙️ System',
-        text: '🚀 Starting workflow engine...\n\nLoading workflows and preparing the environment. Please wait.',
-        role: 'system',
-      }];
     }
   }
 
@@ -577,6 +703,76 @@ export class ChatView extends View {
     });
   }
 
+  /**
+   * Confirm an A2UI option from the input area buttons.
+   */
+  public confirmA2UIOption(option: string): void {
+    if (!this.pendingA2UI || !option) { return; }
+    const { msgIndex, blockId } = this.pendingA2UI;
+    const msg = this.history[msgIndex] as any;
+    if (!msg) { return; }
+
+    // Parse all blocks to check if this is the last one
+    const segments = parseA2UI(msg.text || '');
+    const blocks: A2UIBlock[] = segments.filter((s: any) => s.type === 'a2ui' && s.block).map((s: any) => s.block!);
+
+    // Store answer
+    if (!msg.a2uiAnswers) { msg.a2uiAnswers = {}; }
+    msg.a2uiAnswers[blockId] = option;
+
+    // Check if all blocks are resolved
+    const allResolved = blocks.every((b: A2UIBlock) => msg.a2uiAnswers[b.id] !== undefined);
+    if (allResolved) {
+      // Send all answers as silent message
+      const parts: string[] = [];
+      for (const b of blocks) {
+        const ans = msg.a2uiAnswers[b.id];
+        if (ans) { parts.push(`${b.label || b.id}: ${ans}`); }
+      }
+      this.sendSilentMessage(parts.join('\n'));
+    }
+
+    // Detect strategy selection — request phases dynamically from filesystem
+    const isStrategyOption = /long|short/i.test(option);
+    if (isStrategyOption) {
+      const strategy = /short/i.test(option) ? 'short' as const : 'long' as const;
+      this.lifecycleStrategy = strategy;
+      this.loadLifecyclePhases(strategy);
+    }
+
+    // Trigger re-render
+    const historyCopy = [...this.history];
+    historyCopy[msgIndex] = { ...historyCopy[msgIndex], a2uiAnswers: { ...msg.a2uiAnswers } };
+    this.history = historyCopy;
+  }
+
+  /**
+   * Request lifecycle phases from filesystem and populate timeline.
+   */
+  private async loadLifecyclePhases(strategy: string): Promise<void> {
+    try {
+      const result = await this.sendMessage(NAME, MESSAGES.LIFECYCLE_PHASES_REQUEST, { strategy });
+      const phases: Array<{ id: string; label: string }> = result?.phases || [];
+      if (phases.length > 0) {
+        this.taskSteps = phases.map(p => ({ id: p.id, label: p.label, status: STEP_STATUS.PENDING as 'pending' }));
+        this.log(`Timeline loaded: ${phases.length} phases for ${strategy}`);
+      }
+    } catch (err: any) {
+      this.log(`Failed to load lifecycle phases: ${err.message}`);
+    }
+  }
+
+  /**
+   * Cancel/dismiss a pending A2UI sequence.
+   */
+  public cancelA2UI(): void {
+    if (!this.pendingA2UI) { return; }
+    const { msgIndex } = this.pendingA2UI;
+    const historyCopy = [...this.history];
+    (historyCopy[msgIndex] as any).a2uiDismissed = true;
+    this.history = historyCopy;
+  }
+
   public async sendChatMessage() {
     if (!this.inputText.trim() && this.attachments.length === 0) { return; }
 
@@ -584,30 +780,14 @@ export class ChatView extends View {
     const isCommand = text.trim().startsWith('/');
     this.inputText = '';
 
-    // Handle /init directly in view — clear session immediately
-    if (text.trim() === '/init') {
-      if (this.history.length > 0) {
-        await this.saveCurrentSession();
-      }
-      this.history = [{
-        sender: '⚙️ System',
-        text: '🚀 Starting workflow engine...\n\nLoading workflows and preparing the environment. Please wait.',
-        role: 'system',
-      }];
-      this.currentSessionId = '';
-      this.elapsedSeconds = 0;
-      this.activeActivity = '';
-      this.activeWorkflow = '🔄 Initializing task...';
-      this.taskSteps = LIFECYCLE_PHASES.map(p => ({ ...p, status: STEP_STATUS.PENDING as 'pending' }));
-      this.isLoading = false;
-    }
-
-    // Don't show slash commands as user messages — they trigger system actions
+    // Record the user message (if it is not a slash command)
     if (!isCommand) {
       this.history = [...this.history, { sender: 'Me', text, role: 'user', phase: this.currentPhase }];
-      this.activeActivity = 'Procesando...';
-      this.startTimer();
     }
+
+    // Start processing state and timer
+    this.activeActivity = 'Thinking...';
+    this.startTimer();
 
     try {
       this.isLoading = true;
@@ -621,15 +801,35 @@ export class ChatView extends View {
 
       this.attachments = [];
 
-      // Auto-save session after sending
-      this.saveCurrentSession();
+      // Session is saved when stream response completes (RECEIVE_MESSAGE handler)
     } catch (error) {
       this.isLoading = false;
-      // Don't show error for commands — they handle their own feedback
-      if (!isCommand) {
-        this.log('Error sending message', error);
-        this.history = [...this.history, { sender: 'System', text: 'Error sending message', role: 'system' }];
-      }
+      // Log silently — non-blocking errors should not pollute the chat
+      this.log('Error sending message', error);
+    }
+  }
+
+  /**
+   * Send a message to the agent without showing it in the chat history.
+   * Used by A2UI confirmations so the answer appears as a confirmed element,
+   * not as a separate user message bubble.
+   */
+  public async sendSilentMessage(text: string) {
+    this.activeActivity = 'Thinking...';
+    this.startTimer();
+
+    try {
+      this.isLoading = true;
+      await this.sendMessage(NAME, MESSAGES.SEND_MESSAGE, {
+        text,
+        agentRole: this.selectedAgent,
+        workflow: this.activeWorkflow,
+        attachments: [],
+        history: this.history.slice(-20).map(m => ({ role: m.role || 'user', text: m.text }))
+      });
+    } catch (error) {
+      this.isLoading = false;
+      this.log('Error sending silent message', error);
     }
   }
 
@@ -641,6 +841,8 @@ export class ChatView extends View {
       sender: m.sender,
       text: m.text,
       role: m.role,
+      ...(m.a2uiAnswers ? { a2uiAnswers: m.a2uiAnswers } : {}),
+      ...(m.a2uiDismissed ? { a2uiDismissed: true } : {}),
     }));
     const done = this.taskSteps.filter(s => s.status === 'done').length;
     const total = this.taskSteps.length;
@@ -652,6 +854,7 @@ export class ChatView extends View {
         taskTitle: this.activeWorkflow || undefined,
         elapsedSeconds: this.elapsedSeconds || 0,
         progress,
+        lifecycleStrategy: this.lifecycleStrategy || undefined,
         accessLevel: Object.values(this.agentPermissions).includes('full') ? 'full' : 'sandbox',
         securityScore: (() => {
           const perms = Object.values(this.agentPermissions);
@@ -683,13 +886,19 @@ export class ChatView extends View {
     this.activeWorkflow = '';
     this.taskSteps = [];
     this.activeWorkflowDef = null;
-    this.showTimeline = false;
+    this.showTimeline = true;
+    this.showDetails = false;
 
     try {
       const result = await this.sendMessage(NAME, MESSAGES.NEW_SESSION);
       if (result?.sessionId) {
         this.currentSessionId = result.sessionId;
       }
+
+      // Auto-trigger INIT workflow!
+      this.inputText = '/init';
+      await this.sendChatMessage();
+      this.inputText = '';
     } catch { /* silent */ }
   }
 
@@ -715,6 +924,10 @@ export class ChatView extends View {
       // Second click — confirm delete
       this.sendMessage(NAME, MESSAGES.DELETE_SESSION, { sessionId }).then(() => {
         this.sessionList = this.sessionList.filter(s => s.id !== sessionId);
+        // If deleting the current session, clear the ID to prevent re-save
+        if (this.currentSessionId === sessionId) {
+          this.currentSessionId = '';
+        }
       }).catch(() => { /* silent */ });
       this.pendingDeleteSessionId = undefined;
       return;
@@ -736,19 +949,67 @@ export class ChatView extends View {
   override updated(changedProperties: Map<string, unknown>) {
     super.updated(changedProperties);
     if (changedProperties.has('history') || changedProperties.has('isLoading')) {
-      requestAnimationFrame(() => {
-        const container = this.renderRoot?.querySelector('.chat-container');
-        if (!container) { return; }
-
-        // Scroll last user message to top of viewport so agent response is visible below
-        const userBubbles = container.querySelectorAll('.msg-user');
-        const lastUserBubble = userBubbles.length > 0 ? userBubbles[userBubbles.length - 1] : null;
-        if (lastUserBubble) {
-          lastUserBubble.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        } else {
+      this.updateComplete.then(() => {
+        setTimeout(() => {
+          const container = this.renderRoot?.querySelector('.chat-container');
+          if (!container) { return; }
           container.scrollTop = container.scrollHeight;
-        }
+        }, 100);
       });
+
+      // Detect pending A2UI confirmation in the last assistant message
+      this.detectPendingA2UI();
+    }
+  }
+
+  /**
+   * Scan history for unresolved A2UI blocks and set pendingA2UI state.
+   */
+  private detectPendingA2UI(): void {
+    const previousA2UI = this.pendingA2UI;
+
+    // Find the last assistant/agent message with A2UI blocks
+    let newPending: typeof this.pendingA2UI = null;
+    for (let i = this.history.length - 1; i >= 0; i--) {
+      const msg = this.history[i] as any;
+      if (msg.sender === 'Me' || msg.sender === 'System' || msg.role === 'user') { continue; }
+      if (msg.isStreaming) { continue; }
+      if (msg.a2uiDismissed) { break; }
+
+      const segments = parseA2UI(msg.text || '');
+      const blocks: A2UIBlock[] = segments.filter((s: any) => s.type === 'a2ui' && s.block).map((s: any) => s.block!);
+      if (blocks.length === 0) { break; }
+
+      const answers: Record<string, string> = msg.a2uiAnswers || {};
+      const unresolved = blocks.find((b: A2UIBlock) => answers[b.id] === undefined);
+      if (!unresolved) { break; }
+
+      newPending = {
+        blockId: unresolved.id,
+        label: unresolved.label || unresolved.id,
+        options: unresolved.options,
+        msgIndex: i,
+        blockIndex: blocks.indexOf(unresolved),
+      };
+      break;
+    }
+
+    // Detect state change — show skeleton transition
+    const wasA2UI = previousA2UI !== null;
+    const isA2UI = newPending !== null;
+    const blockChanged = wasA2UI && isA2UI && previousA2UI.blockId !== newPending!.blockId;
+
+    if ((wasA2UI !== isA2UI) || blockChanged) {
+      // State changed — show skeleton for 1 second
+      if (this.skeletonTimer) { clearTimeout(this.skeletonTimer); }
+      this.inputSkeleton = true;
+      this.pendingA2UI = null; // hide during skeleton
+      this.skeletonTimer = setTimeout(() => {
+        this.inputSkeleton = false;
+        this.pendingA2UI = newPending;
+      }, 800);
+    } else {
+      this.pendingA2UI = newPending;
     }
   }
 

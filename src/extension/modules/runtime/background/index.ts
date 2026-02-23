@@ -15,6 +15,7 @@ export class RuntimeBackground extends Background {
   private pollingTimer: ReturnType<typeof setInterval> | null = null;
   private lastStatus: string = ENGINE_STATUS.IDLE;
   private taskStepsEmitted: boolean = false;
+  private stablePollCount: number = 0;
 
   constructor(context: vscode.ExtensionContext) {
     super(NAME, context.extensionUri, 'runtime-view');
@@ -129,6 +130,13 @@ export class RuntimeBackground extends Background {
     return result;
   }
 
+  private async handleWorkflowStepComplete(): Promise<any> {
+    const result = await this.forwardToSidecar('workflow.stepComplete', {});
+    this.startPolling();
+    this.pollWorkflowState(true);
+    return result;
+  }
+
   private async handleWorkflowStatus(): Promise<any> {
     return this.forwardToSidecar('workflow.status', {});
   }
@@ -150,6 +158,7 @@ export class RuntimeBackground extends Background {
   private startPolling(): void {
     this.stopPolling();
     this.taskStepsEmitted = false;
+    this.stablePollCount = 0;
     this.pollingTimer = setInterval(() => this.pollWorkflowState(), 1000);
   }
 
@@ -162,7 +171,9 @@ export class RuntimeBackground extends Background {
 
   private async pollWorkflowState(forceEmit = false): Promise<void> {
     try {
-      const state = await this.forwardToSidecar('workflow.status', {});
+      const rawState = await this.forwardToSidecar('workflow.status', {});
+      // Unwrap JSON-RPC result wrapper ({success, result}) from sidecar
+      const state = rawState?.result || rawState;
       if (!state) {
         return;
       }
@@ -175,11 +186,15 @@ export class RuntimeBackground extends Background {
           this.log(`Workflow state changed: ${this.lastStatus} → ${currentStatus}`);
         }
         this.lastStatus = currentStatus;
+        this.stablePollCount = 0;
         this.notifyChat(CHAT_MESSAGES.WORKFLOW_STATE_UPDATE, state);
       } else if (hasSteps && !this.taskStepsEmitted) {
         // Always emit at least once if we have steps (even if status hasn't changed)
         this.taskStepsEmitted = true;
         this.notifyChat(CHAT_MESSAGES.WORKFLOW_STATE_UPDATE, state);
+      } else {
+        // No change — count stable polls
+        this.stablePollCount++;
       }
 
       if (currentStatus === ENGINE_STATUS.WAITING_GATE && state.currentGate) {
@@ -187,11 +202,17 @@ export class RuntimeBackground extends Background {
         this.stopPolling();
       }
 
-      // Only stop polling on terminal states; keep polling on IDLE if workflow is loaded (steps exist)
+      // Stop on terminal states
       if (currentStatus === ENGINE_STATUS.COMPLETED || currentStatus === ENGINE_STATUS.FAILED) {
         this.stopPolling();
       }
       if (currentStatus === ENGINE_STATUS.IDLE && !hasSteps) {
+        this.stopPolling();
+      }
+
+      // Stop if state has been stable for 5 consecutive polls (no changes = LLM is handling it)
+      if (this.stablePollCount >= 5) {
+        this.log('Workflow state stable — stopping poll');
         this.stopPolling();
       }
     } catch (err) {
@@ -225,6 +246,9 @@ export class RuntimeBackground extends Background {
 
       case MESSAGES.WORKFLOW_GATE_RESPONSE:
         return this.handleWorkflowGateResponse(message.payload.data);
+
+      case MESSAGES.WORKFLOW_STEP_COMPLETE:
+        return this.handleWorkflowStepComplete();
 
       case MESSAGES.WORKFLOW_STATUS:
         return this.handleWorkflowStatus();

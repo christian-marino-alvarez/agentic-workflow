@@ -61,16 +61,21 @@ export class WorkflowPersistence {
 
     this.db.lastUpdated = new Date().toISOString();
 
-    // Ensure directory exists
-    await mkdir(dirname(this.dbPath), { recursive: true });
+    try {
+      // Ensure directory exists
+      const dir = dirname(this.dbPath);
+      await mkdir(dir, { recursive: true });
 
-    // Write atomically: write to temp file, then rename
-    const tmpPath = `${this.dbPath}.tmp`;
-    await writeFile(tmpPath, JSON.stringify(this.db, null, 2), 'utf-8');
+      // Write atomically: write to temp file, then rename
+      const tmpPath = `${this.dbPath}.tmp`;
+      await writeFile(tmpPath, JSON.stringify(this.db, null, 2), 'utf-8');
 
-    // Rename is atomic on most filesystems
-    const { rename } = await import('node:fs/promises');
-    await rename(tmpPath, this.dbPath);
+      // Rename is atomic on most filesystems
+      const { rename } = await import('node:fs/promises');
+      await rename(tmpPath, this.dbPath);
+    } catch {
+      // Non-blocking: persistence failure shouldn't crash the engine
+    }
   }
 
   // ─── State Operations ─────────────────────────────────────

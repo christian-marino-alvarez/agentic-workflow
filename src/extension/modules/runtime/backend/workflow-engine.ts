@@ -57,8 +57,6 @@ export class WorkflowEngine {
     }
   }
 
-
-
   private emit(input: EmitInput): void {
     const listeners = this.listeners.get(input.eventType);
     if (!listeners) {
@@ -83,8 +81,6 @@ export class WorkflowEngine {
       console.error('[WorkflowEngine] Failed to persist state:', err);
     });
   }
-
-
 
   private buildStates(): WorkflowStatesConfig {
     return {
@@ -198,8 +194,6 @@ export class WorkflowEngine {
     return statusMap[value] ?? ENGINE_STATUS.RUNNING;
   }
 
-
-
   async initialize(): Promise<void> {
     console.log('[WorkflowEngine] Initializing...');
     await this.discoverAndRegisterAgents();
@@ -253,6 +247,7 @@ export class WorkflowEngine {
 
     return undefined;
   }
+
   async start(input: StartWorkflowInput): Promise<WorkflowDef> {
     const def = this.resolveWorkflow(input.workflowId);
     if (!def) {
@@ -267,8 +262,18 @@ export class WorkflowEngine {
 
     this.actor.subscribe(() => this.emitStateChange());
     this.actor.start();
+    // Transition from IDLE → EXECUTING
+    this.actor.send({ type: ENGINE_EVENTS.START } as WorkflowEvent);
     console.log(`[WorkflowEngine] Started "${input.workflowId}" for task "${input.taskId}"`);
     return def;
+  }
+
+  stepComplete(): void {
+    if (!this.actor) {
+      throw new Error('[WorkflowEngine] No active workflow');
+    }
+    this.actor.send({ type: ENGINE_EVENTS.STEP_COMPLETE } as WorkflowEvent);
+    console.log('[WorkflowEngine] Step completed');
   }
 
   respondToGate(input: GateResponseInput): void {
@@ -315,13 +320,7 @@ export class WorkflowEngine {
       updatedAt: new Date().toISOString(),
       ...(steps ? { steps } : {}),
       ...(context.workflowDef ? {
-        workflow: {
-          description: context.workflowDef.description,
-          owner: context.workflowDef.owner,
-          severity: context.workflowDef.severity,
-          constitutions: context.workflowDef.constitutions,
-          blocking: context.workflowDef.blocking,
-        }
+        workflow: context.workflowDef
       } : {})
     };
   }

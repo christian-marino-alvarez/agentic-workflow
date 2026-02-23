@@ -20,5 +20,5 @@ constitution:
 language:
   value: español
   confirmed: true
-strategy: long
+strategy: short
 ```

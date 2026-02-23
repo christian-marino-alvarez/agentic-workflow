@@ -37,6 +37,12 @@ export class App extends CoreApp {
     // a duplicate instance that processes every message twice.
 
     this.log('Application Shell Activated');
+
+    // Ensure sidebar has enough width for the rich UI (timeline + chat + details)
+    try {
+      await vscode.commands.executeCommand('workbench.action.focusSideBar');
+      await vscode.commands.executeCommand('workbench.action.auxiliary.focus');
+    } catch { /* commands may not exist in all VSCode versions */ }
   }
 
   public async deactivate(): Promise<void> {

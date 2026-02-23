@@ -25,6 +25,11 @@ export const MESSAGES = {
   // Workflow state feedback
   WORKFLOW_STATE_UPDATE: 'WORKFLOW_STATE_UPDATE', // Runtime -> Chat (phase/status change)
   WORKFLOW_START: 'WORKFLOW_START', // Chat -> Runtime (start workflow)
+  // Token usage
+  USAGE_UPDATE: 'USAGE_UPDATE', // Background -> Chat (token counts + cost)
+  // Dynamic lifecycle phases
+  LIFECYCLE_PHASES_REQUEST: 'LIFECYCLE_PHASES_REQUEST', // View -> Background (request phases for strategy)
+  LIFECYCLE_PHASES_RESPONSE: 'LIFECYCLE_PHASES_RESPONSE', // Background -> View (phases from filesystem)
 } as const;
 
 export type ChatCommand = typeof MESSAGES[keyof typeof MESSAGES];
@@ -37,13 +42,3 @@ export const STEP_STATUS = {
 
 export type StepStatus = typeof STEP_STATUS[keyof typeof STEP_STATUS];
 
-export const LIFECYCLE_PHASES = [
-  { id: 'acceptance', label: 'Acceptance' },
-  { id: 'research', label: 'Research' },
-  { id: 'analysis', label: 'Analysis' },
-  { id: 'planning', label: 'Planning' },
-  { id: 'implementation', label: 'Implementation' },
-  { id: 'verification', label: 'Verification' },
-  { id: 'results', label: 'Results' },
-  { id: 'commit', label: 'Commit & Push' },
-] as const;

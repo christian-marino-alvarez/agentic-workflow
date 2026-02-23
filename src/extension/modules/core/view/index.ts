@@ -45,6 +45,16 @@ export abstract class View extends LitElement {
   override connectedCallback() {
     super.connectedCallback();
     this.onMessage((msg) => this.listen(msg));
+
+    if (!(window as any).__v_error_bridge) {
+      (window as any).__v_error_bridge = true;
+      window.addEventListener('error', (e) => {
+        this.log(`[GLOBAL ERROR] ${e.message} at ${e.filename}:${e.lineno}`);
+      });
+      window.addEventListener('unhandledrejection', (e) => {
+        this.log(`[UNHANDLED PROMISE] ${e.reason}`);
+      });
+    }
   }
 
   /**

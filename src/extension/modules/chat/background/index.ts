@@ -6,7 +6,9 @@ import { NAME, MESSAGES } from '../constants.js';
 import { API_ENDPOINTS, SIDECAR_BASE_URL, DEFAULT_MODELS } from '../../llm/constants.js';
 import { MESSAGES as SETTINGS_MESSAGES } from '../../settings/constants.js';
 import { MESSAGES as RUNTIME_MESSAGES } from '../../runtime/constants.js';
+import { behavioralPreamble, workflowStartPrompt, initCompletedPrompt, lifecycleStartPrompt, A2UI_INSTRUCTIONS } from '../prompts/index.js';
 import { randomUUID } from 'crypto';
+
 
 export class ChatBackground extends Background {
 
@@ -15,6 +17,7 @@ export class ChatBackground extends Background {
   private static readonly SESSIONS_KEY = 'chat.sessions';
   private static readonly LAST_SESSION_KEY = 'chat.lastSessionId';
   private vscodeContext: vscode.ExtensionContext;
+  private initStrategy: 'long' | 'short' | null = null;
 
   constructor(context: vscode.ExtensionContext) {
     super(NAME, context.extensionUri, `${NAME}-view`);
@@ -85,6 +88,8 @@ export class ChatBackground extends Background {
         return this.handleNewSession();
       case 'ROLES_CHANGED':
         return this.handleRolesChanged();
+      case 'OPEN_FILE':
+        return this.handleOpenFile(message.payload.data);
 
       case MESSAGES.GATE_REQUEST:
         return this.handleGateRequest(message.payload.data);
@@ -92,6 +97,9 @@ export class ChatBackground extends Background {
         return this.handleGateResponse(message.payload.data);
       case MESSAGES.WORKFLOW_STATE_UPDATE:
         return this.handleWorkflowStateUpdate(message.payload.data);
+
+      case MESSAGES.LIFECYCLE_PHASES_REQUEST:
+        return this.handleLifecyclePhasesRequest(message.payload.data);
 
       default:
         return super.listen(message);
@@ -116,7 +124,51 @@ export class ChatBackground extends Background {
         role = initResult.owner;
       }
 
-      data.text = `Acabo de lanzar el comando /${commandId}. Por favor, actúa como el agente asignado (owner). Hemos iniciado este flujo. Saluda brevemente y **formula de inmediato la primera pregunta o solicitud de información requerida en las instrucciones del workflow**. No relates de qué trata el workflow, simplemente toma el control y pide directamente al usuario lo necesario para completar el Step 1 (por ejemplo, idioma, estrategia o el objetivo principal). Sé muy conciso (1-2 frases máximo), cercano y conversacional. MUY IMPORTANTE: NO uses tools ahora, solo dialoga.`;
+      data.text = workflowStartPrompt(commandId);
+    }
+
+    // Intercept init workflow completion: detect A2UI answers for language + strategy
+    if (!textTrimmed.startsWith('/')) {
+      const workflowState = await this.getWorkflowState();
+      if (workflowState?.currentWorkflowId === 'workflow.init' && workflowState?.status === 'running') {
+        const hasLanguage = /idioma.*:\s*(español|english)/i.test(data.text);
+        const strategyMatch = data.text.match(/estrategia.*:\s*(long|short)/i);
+        if (hasLanguage && strategyMatch) {
+          const language = /español/i.test(data.text) ? 'es' : 'en';
+          const strategy = strategyMatch[1].toLowerCase() as 'long' | 'short';
+          // Create init.md artifact
+          await this.createInitArtifact(language, strategy);
+          // Advance workflow: step complete → gate approve
+          await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_STEP_COMPLETE);
+          await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_GATE_RESPONSE, { gateId: 'init', decision: 'SI' });
+          this.initStrategy = strategy;
+          this.log(`Init workflow completed: language=${language}, strategy=${strategy}`);
+          // Tell the LLM to just ask for the task
+          data.text = initCompletedPrompt(language, strategy);
+        }
+      }
+    }
+
+    // Intercept task lifecycle start: after init completes, user provides task title
+    if (!textTrimmed.startsWith('/') && this.initStrategy) {
+      const workflowState = await this.getWorkflowState();
+      if (!workflowState || workflowState.status === 'completed' || workflowState.status === 'idle') {
+        const strategy = this.initStrategy;
+        this.initStrategy = null;
+        const lifecycleId = strategy === 'long' ? 'tasklifecycle-long' : 'tasklifecycle-short';
+        try {
+          await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_START, {
+            workflowId: lifecycleId,
+            taskId: textTrimmed.substring(0, 50),
+            strategy,
+          });
+          this.log(`Started ${lifecycleId} for task: ${textTrimmed.substring(0, 50)}`);
+        } catch (err: any) {
+          this.log(`Failed to start lifecycle: ${err.message}`);
+        }
+        // Let LLM know the lifecycle has started
+        data.text = lifecycleStartPrompt(data.text, lifecycleId);
+      }
     }
 
     this.log(`Message for role "${role}": ${data.text.substring(0, 50)}...`);
@@ -166,17 +218,153 @@ export class ChatBackground extends Background {
 
       // 3. Load agent persona from the role definition file
       let instructions: string | undefined;
+      // Critical behavioral preamble — placed FIRST so models prioritize it
+      const workspaceFolderName = vscode.workspace.workspaceFolders?.[0]?.name || 'project';
+      const BEHAVIORAL_PREAMBLE = behavioralPreamble(workspaceFolderName);
+      instructions = BEHAVIORAL_PREAMBLE;
       try {
         const workspaceFolders = vscode.workspace.workspaceFolders;
         if (workspaceFolders) {
-          const rolePath = path.join(workspaceFolders[0].uri.fsPath, '.agent', 'rules', 'roles', `${role}.md`);
           const fs = await import('fs/promises');
-          const roleContent = await fs.readFile(rolePath, 'utf-8');
-          instructions = roleContent;
-          this.log(`Loaded role persona for "${role}" (${roleContent.length} chars)`);
+
+          // Load role persona
+          const rolePath = path.join(workspaceFolders[0].uri.fsPath, '.agent', 'rules', 'roles', `${role}.md`);
+          try {
+            const roleContent = await fs.readFile(rolePath, 'utf-8');
+            instructions = (instructions || '') + '\n\n' + roleContent;
+            this.log(`Loaded role persona for "${role}" (${roleContent.length} chars)`);
+          } catch {
+            this.log(`No role file found for "${role}", using default persona`);
+          }
+
+          // Inject A2UI interactive component instructions (inline — always available)
+          instructions = (instructions || '') + A2UI_INSTRUCTIONS;
         }
       } catch (err: any) {
-        this.log(`No role file found for "${role}", using default persona: ${err.message}`);
+        this.log(`Failed to load instructions: ${err.message}`);
+      }
+
+      // 4. Inject active workflow as context into the LLM instructions
+      try {
+        const rawWorkflowState = await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_STATUS);
+        const workflowState = rawWorkflowState?.result || rawWorkflowState;
+        if (workflowState?.workflow?.rawContent) {
+          const workflowContext = [
+            '\n\n---\n## ACTIVE WORKFLOW (MANDATORY — follow these instructions step by step)\n',
+            workflowState.workflow.rawContent,
+            '\n---\n',
+            `Current status: ${workflowState.status}`,
+            workflowState.steps ? `\nSteps: ${workflowState.steps.map((s: any) => `${s.id}. ${s.label} [${s.status}]`).join(' | ')}` : '',
+            '\n\n## BEHAVIORAL RULES (MANDATORY — VIOLATION = SYSTEM FAILURE)',
+            '',
+            '### Rule 0: PROJECT IDENTITY',
+            `This project is called "${vscode.workspace.workspaceFolders?.[0]?.name || 'agentic-workflow'}". Do NOT invent or hallucinate a product name (e.g. "Extensio"). Refer to it by its real name or generically.`,
+            '',
+            '### Rule 1: SILENT EXECUTION',
+            'ALL internal operations MUST be executed SILENTLY via tools. This includes:',
+            '- Creating/writing files (init.md, artifacts, etc.) → use writeFile tool IMMEDIATELY',
+            '- Loading/reading files (indexes, constitutions, templates) → use readFile tool',
+            '- Evaluating gates → do internally, only report PASS/FAIL result',
+            '- Any workflow step that does not require user input',
+            '',
+            '### Rule 2: NEVER NARRATE PROCESS',
+            'FORBIDDEN sentences (examples — do NOT output anything similar):',
+            '- ❌ "Voy a crear el archivo init.md..."',
+            '- ❌ "Ahora voy a generar..."',
+            '- ❌ "Let me create the artifact..."',
+            '- ❌ "I will now write/save/load/evaluate..."',
+            '- ❌ "Procedemos a evaluar el gate..."',
+            '',
+            'CORRECT behavior:',
+            '- ✅ Execute the tool call directly, then report the RESULT to the user',
+            '- ✅ "Configuración registrada. ¿Qué tarea quieres iniciar?" (after silently creating init.md)',
+            '- ✅ "Gate cumplido. Todo listo." (after silently evaluating)',
+            '',
+            '### Rule 3: ACT THEN ADVANCE',
+            'When you receive user confirmation (like language + strategy):',
+            '1. IMMEDIATELY call writeFile to create the required artifact (e.g. init.md)',
+            '2. Evaluate the gate internally',
+            '3. If PASS: ask the NEXT user-facing question in the SAME response',
+            '4. If FAIL: report what failed and ask for correction',
+            'ALL of this happens in ONE response turn. Do NOT just acknowledge.',
+            '',
+            '### Rule 4: NEVER STOP MID-WORKFLOW',
+            'After receiving user input, chain ALL remaining steps until the next step that requires user input.',
+            'A response that only says Registrado/Entendido/OK without advancing the workflow is a FAILURE.',
+            'You MUST continue executing steps (via tools) and arrive at the next user-facing question.',
+          ].join('\n');
+          instructions = (instructions || '') + workflowContext;
+          this.log(`Injected workflow context (${workflowState.workflow.id}) into LLM instructions`);
+
+          // 5. Load constitution files referenced in the workflow
+          const constitutions: string[] = workflowState.workflow.constitutions || [];
+          if (constitutions.length > 0) {
+            const workspaceFolders = vscode.workspace.workspaceFolders;
+            if (workspaceFolders) {
+              const fs = await import('fs/promises');
+              const baseDir = path.join(workspaceFolders[0].uri.fsPath, '.agent', 'rules', 'constitution');
+              const constitutionContents: string[] = [];
+
+              // Try to load the constitution index for alias resolution
+              let aliasMap: Record<string, string> = {};
+              try {
+                const indexContent = await fs.readFile(path.join(baseDir, 'index.md'), 'utf-8');
+                // Parse YAML-like entries: "alias_name: path/to/file.md"
+                const aliasRegex = /^\s+(\w+):\s+(.+\.md)\s*$/gm;
+                let aliasMatch;
+                while ((aliasMatch = aliasRegex.exec(indexContent)) !== null) {
+                  aliasMap[aliasMatch[1]] = aliasMatch[2];
+                }
+              } catch { /* no index file */ }
+
+              for (const ref of constitutions) {
+                const aliasName = ref.replace(/^constitution\./, '');
+                let loaded = false;
+
+                // Strategy 1: Resolve via index.md alias map
+                if (aliasMap[aliasName]) {
+                  const resolvedPath = path.join(workspaceFolders[0].uri.fsPath, aliasMap[aliasName]);
+                  try {
+                    const content = await fs.readFile(resolvedPath, 'utf-8');
+                    constitutionContents.push(`\n### ${ref}\n${content}`);
+                    this.log(`Loaded constitution: ${ref} via index (${content.length} chars)`);
+                    loaded = true;
+                  } catch { /* not found via index */ }
+                }
+
+                // Strategy 2: Direct name variations
+                if (!loaded) {
+                  const candidates = [
+                    aliasName.replace(/_/g, '-') + '.md',                      // clean_code → clean-code.md
+                    aliasName.replace(/_/g, '.') + '.md',                      // GEMINI_location → GEMINI.location.md
+                    aliasName.replace(/_/g, '-') + '/index.md',                // extensio_architecture → extensio-architecture/index.md
+                    aliasName + '.md',                                          // exact match
+                  ];
+
+                  for (const candidate of candidates) {
+                    try {
+                      const content = await fs.readFile(path.join(baseDir, candidate), 'utf-8');
+                      constitutionContents.push(`\n### ${ref}\n${content}`);
+                      this.log(`Loaded constitution: ${ref} → ${candidate} (${content.length} chars)`);
+                      loaded = true;
+                      break;
+                    } catch { /* try next */ }
+                  }
+                }
+
+                if (!loaded) {
+                  this.log(`Constitution not resolved: ${ref}`);
+                }
+              }
+
+              if (constitutionContents.length > 0) {
+                instructions += '\n\n---\n## LOADED CONSTITUTIONS (MANDATORY rules you must follow)\n' + constitutionContents.join('\n') + '\n---\n';
+              }
+            }
+          }
+        }
+      } catch (err: any) {
+        this.log(`Could not fetch workflow state for LLM context: ${err.message}`);
       }
 
       // Create request payload matching AgentRequest interface
@@ -287,6 +475,26 @@ export class ChatBackground extends Background {
                     }
                   }
                 });
+              } else if (parsed.type === 'usage') {
+                // Forward token usage to the View for display
+                this.messenger.emit({
+                  id: randomUUID(),
+                  from: `${NAME}::background`,
+                  to: `${NAME}::view`,
+                  timestamp: Date.now(),
+                  origin: MessageOrigin.Server,
+                  payload: {
+                    command: MESSAGES.USAGE_UPDATE,
+                    data: {
+                      model: parsed.model,
+                      provider: parsed.provider,
+                      role: parsed.role,
+                      inputTokens: parsed.inputTokens || 0,
+                      outputTokens: parsed.outputTokens || 0,
+                      totalTokens: parsed.totalTokens || 0,
+                    }
+                  }
+                });
               }
             } catch (e) {
               // Ignore partial chunk JSON parse errors
@@ -363,6 +571,123 @@ export class ChatBackground extends Background {
       });
     }
     return { success: true };
+  }
+
+  /**
+   * Open a file in VS Code editor from a chat file link.
+   */
+  private async handleOpenFile(data: { path: string }): Promise<any> {
+    try {
+      const filePath = data.path;
+      const workspaceFolders = vscode.workspace.workspaceFolders;
+      if (!workspaceFolders) { return { success: false, error: 'No workspace' }; }
+
+      // Resolve relative paths against workspace root
+      const fullPath = path.isAbsolute(filePath)
+        ? filePath
+        : path.join(workspaceFolders[0].uri.fsPath, filePath);
+
+      const uri = vscode.Uri.file(fullPath);
+      const doc = await vscode.workspace.openTextDocument(uri);
+      await vscode.window.showTextDocument(doc, { preview: true });
+      return { success: true };
+    } catch (err: any) {
+      this.log(`Failed to open file: ${err.message}`);
+      return { success: false, error: err.message };
+    }
+  }
+
+  /**
+   * Get current workflow state from Runtime.
+   */
+  private async getWorkflowState(): Promise<any> {
+    try {
+      return await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_STATUS);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Read lifecycle phases dynamically from the workflow directory.
+   * Source of truth: .agent/workflows/tasklifecycle-{long|short}/*.md
+   */
+  private async handleLifecyclePhasesRequest(data: { strategy: string }): Promise<any> {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders) { return { phases: [] }; }
+
+    const strategy = data.strategy || 'long';
+    const dirName = `tasklifecycle-${strategy}`;
+    const dirPath = vscode.Uri.joinPath(workspaceFolders[0].uri, '.agent', 'workflows', dirName);
+
+    try {
+      const fs = await import('fs/promises');
+      const entries = await fs.readdir(dirPath.fsPath);
+      const mdFiles = entries
+        .filter((f: string) => f.endsWith('.md') && /phase-\d+/.test(f))
+        .sort();
+
+      const phases = mdFiles.map((filename: string) => {
+        const id = filename.replace('.md', '');
+        const labelPart = id
+          .replace(/^(short-)?phase-\d+-/, '')
+          .replace(/-/g, ' ')
+          .replace(/\b\w/g, c => c.toUpperCase());
+        return { id, label: labelPart };
+      });
+
+      this.log(`Loaded ${phases.length} phases for ${strategy}: ${phases.map(p => p.id).join(', ')}`);
+      return { strategy, phases };
+    } catch (err: any) {
+      this.log(`Failed to read lifecycle phases for ${strategy}: ${err.message}`);
+      return { strategy, phases: [] };
+    }
+  }
+
+  /**
+   * Create init.md artifact for the init workflow gate.
+   */
+  private async createInitArtifact(language: string, strategy: 'long' | 'short'): Promise<void> {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders) { return; }
+    const root = workspaceFolders[0].uri.fsPath;
+    const artifactPath = path.join(root, '.agent/artifacts/candidate/init.md');
+
+    const langValue = language === 'es' ? 'español' : 'english';
+    const content = [
+      '# init bootstrap',
+      '',
+      '- command: /init',
+      '- role.architect: architect-agent',
+      '- constitution.loaded.in_context: true',
+      '',
+      '## Constitution (load order)',
+      '1. .agent/rules/constitution/GEMINI.location.md',
+      '2. .agent/rules/constitution/architecture/index.md',
+      '3. .agent/rules/constitution/clean-code.md',
+      '',
+      '```yaml',
+      'bootstrap:',
+      '  done: true',
+      'roles:',
+      '  architect: architect-agent',
+      'constitution:',
+      '  loaded:',
+      '    - .agent/rules/constitution/GEMINI.location.md',
+      '    - .agent/rules/constitution/architecture/index.md',
+      '    - .agent/rules/constitution/clean-code.md',
+      'language:',
+      `  value: ${langValue}`,
+      '  confirmed: true',
+      `strategy: ${strategy}`,
+      '```',
+      '',
+    ].join('\n');
+
+    const fs = await import('fs/promises');
+    await fs.mkdir(path.dirname(artifactPath), { recursive: true });
+    await fs.writeFile(artifactPath, content, 'utf-8');
+    this.log(`Init artifact created: ${artifactPath}`);
   }
 
   /**
@@ -534,7 +859,7 @@ export class ChatBackground extends Background {
     return this.vscodeContext.globalState.get<string>(ChatBackground.LAST_SESSION_KEY) || null;
   }
 
-  private async handleSaveSession(data: { sessionId?: string, messages: any[], taskTitle?: string, elapsedSeconds?: number, progress?: number, accessLevel?: string, securityScore?: number }): Promise<any> {
+  private async handleSaveSession(data: { sessionId?: string, messages: any[], taskTitle?: string, elapsedSeconds?: number, progress?: number, lifecycleStrategy?: string, accessLevel?: string, securityScore?: number }): Promise<any> {
     const sessions = this.getSessions();
     const id = data.sessionId || randomUUID();
 
@@ -562,6 +887,7 @@ export class ChatBackground extends Background {
       accessLevel: data.accessLevel || 'sandbox',
       securityScore: data.securityScore ?? 100,
       agents: Array.from(agentRoles),
+      lifecycleStrategy: data.lifecycleStrategy || undefined,
     };
 
     if (existing >= 0) {

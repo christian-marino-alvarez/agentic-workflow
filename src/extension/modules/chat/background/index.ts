@@ -659,8 +659,11 @@ export class ChatBackground extends Background {
    */
   private async getWorkflowState(): Promise<any> {
     try {
-      return await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_STATUS);
-    } catch {
+      const state = await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_STATUS);
+      this.log(`→ WORKFLOW_STATUS`, state ? `workflowId=${state.currentWorkflowId}, status=${state.status}` : 'null');
+      return state;
+    } catch (err: any) {
+      this.log(`→ WORKFLOW_STATUS failed: ${err?.message}`);
       return null;
     }
   }

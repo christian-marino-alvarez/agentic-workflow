@@ -1,17 +1,15 @@
 ---
 id: workflow.tasklifecycle-long.phase-4-implementation
-description: Phase 4 of the task lifecycle. Executes implementation through granular task delegation to agents with developer approval Gate per task. Only advances if all tasks have been approved.
 owner: architect-agent
+description: "Phase 4 of the task lifecycle. Executes implementation through granular task delegation to agents with developer approval Gate per task. Only advances if all tasks have been approved."
 version: 3.0.0
-severity: PERMANENT
-trigger:
-  commands: ["phase4", "phase-4", "implementation", "implement"]
-blocking: true
+trigger: ["phase4", "phase-4", "implementation", "implement"]
+type: static
 ---
 
 # WORKFLOW: tasklifecycle.phase-4-implementation
 
-## Input (REQUIRED)
+## Input
 - The approved implementation plan exists:
   - `.agent/artifacts/<taskId>-<taskTitle>/plan.md`
 - The current task exists:
@@ -20,12 +18,17 @@ blocking: true
   - `task.phase.current == aliases.tasklifecycle-long.phases.phase_4.id`
 
 > [!IMPORTANT]
-> **Active constitution (MANDATORY)**:
+> **Active constitution**:
 > - Load `constitution.clean_code` before starting
 > - Load `constitution.agents_behavior` (section 7: Gates, section 8: Constitution)
 > - Load domain-specific constitutions as required by the task
 
-## Output (REQUIRED)
+- Templates:
+  - Each agent task **MUST** use: `templates.agent_task`
+  - The review report **MUST** use: `templates.review`
+  - If any template does not exist or cannot be loaded → FAIL.
+
+## Output
 - For **each agent task**:
   - `.agent/artifacts/<taskId>-<taskTitle>/agent-tasks/<N>-<agent>-<taskName>.md`
 - Architect review report:
@@ -33,37 +36,25 @@ blocking: true
 - State update in:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 
----
-
-## Objective (ONLY)
+## Objective
 - Execute **all implementation tasks** defined in the approved plan through **granular delegation**.
 - Each task is an **independent file** with Input/Output/Gate structure.
 - Each task requires **explicit developer approval** (synchronous Gate) before assigning the next one.
 - Generate a **mandatory architectural review report** consolidating all tasks.
 
-> This phase **DOES implement code**.  
-> This phase **DOES NOT redefine scope or planning**.  
+> This phase **DOES implement code**.
+> This phase **DOES NOT redefine scope or planning**.
 > This phase **CANNOT advance without Gate PASS on all tasks + global confirmation**.
 
----
+## Instructions
 
-## Templates (MANDATORY)
-- Each agent task **MUST** use:
-  - `templates.agent_task`
-- The review report **MUST** use:
-  - `templates.review`
-- If any template does not exist or cannot be loaded → **FAIL**.
-
----
-
-## Mandatory Steps
 0. Activate `architect-agent` and use the mandatory prefix in every message.
 
 ### 1. Verify inputs
 - Approved `plan.md` exists.
 - `task.md` exists.
 - `task.phase.current == aliases.tasklifecycle-long.phases.phase_4.id`.
-- If it fails → go to **Step 10 (FAIL)**.
+- If it fails → FAIL.
 
 ### 2. Extract tasks from the plan
 - Read `plan.md`.
@@ -118,7 +109,7 @@ For each task `N` in the plan:
   - Alignment with the approved plan.
   - Compliance with architecture and clean code rules.
 
-### 5. Create architectural review report (MANDATORY)
+### 5. Create architectural review report
 - Create:
   - `.agent/artifacts/<taskId>-<taskTitle>/architect/review.md`
 - The report **MUST**:
@@ -127,7 +118,7 @@ For each task `N` in the plan:
   - Indicate compliance or deviation from the plan.
   - List detected issues (if any).
 
-### 6. Developer final Gate (MANDATORY, via console)
+### 6. Developer final Gate (via console)
 - Request global confirmation:
   - "All tasks have been executed and approved. Do you confirm that Phase 4 is complete? (SI/NO)"
 - Record in `architect/review.md`:
@@ -138,43 +129,9 @@ For each task `N` in the plan:
       date: <ISO-8601>
       comments: <optional>
   ```
-- If `decision != SI` → go to **Step 10 (FAIL)**.
+- If `decision != SI` → FAIL.
 
-### 7. PASS (only if final Gate approved)
-- The `architect-agent` **MUST**:
-  - Mark Phase 4 as completed in `task.md`.
-  - Set `task.lifecycle.phases.phase-4-implementation.validated_at = <ISO-8601>`.
-  - Update `task.phase.updated_at = <ISO-8601>`.
-  - Advance:
-    - `task.phase.current = aliases.tasklifecycle-long.phases.phase_5.id`
-- Indicate paths:
-  - `agent-tasks/` directory
-  - `architect/review.md`
-
----
-
-## FAIL (MANDATORY)
-
-### 10. Declare Phase 4 as **NOT completed**
-FAIL cases:
-- Non-existent or unapproved plan.
-- Incorrect phase.
-- Incomplete or rejected agent task.
-- Individual task Gate = NO without resolution.
-- Final Gate = NO.
-
-Mandatory actions:
-- Identify the failed task.
-- Define corrective actions.
-- Create a new correction task if applicable.
-- Iterate until Gate PASS.
-
-Terminate blocked: do not advance phase.
-
----
-
-## Gate (REQUIRED)
-
+## Gate
 Requirements (all mandatory):
 1. An agent task exists for each step in the plan.
 2. All tasks have Gate PASS (`approval.developer.decision == SI`).
@@ -190,5 +147,28 @@ Requirements (all mandatory):
    - `task.lifecycle.phases.phase-4-implementation.validated_at` not null
    - `task.phase.updated_at` not null
 
-If Gate FAIL:
-- Execute **Step 10 (FAIL)**.
+## Pass
+- The `architect-agent` **MUST**:
+  - Mark Phase 4 as completed in `task.md`.
+  - Set `task.lifecycle.phases.phase-4-implementation.validated_at = <ISO-8601>`.
+  - Update `task.phase.updated_at = <ISO-8601>`.
+  - Advance:
+    - `task.phase.current = aliases.tasklifecycle-long.phases.phase_5.id`
+- Indicate paths:
+  - `agent-tasks/` directory
+  - `architect/review.md`
+
+## Fail
+- Declare Phase 4 as **NOT completed**.
+- FAIL cases:
+  - Non-existent or unapproved plan.
+  - Incorrect phase.
+  - Incomplete or rejected agent task.
+  - Individual task Gate = NO without resolution.
+  - Final Gate = NO.
+- Mandatory actions:
+  - Identify the failed task.
+  - Define corrective actions.
+  - Create a new correction task if applicable.
+  - Iterate until Gate PASS.
+- Terminate blocked: do not advance phase.

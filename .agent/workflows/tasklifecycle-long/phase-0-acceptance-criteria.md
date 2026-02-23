@@ -1,17 +1,15 @@
 ---
 id: workflow.tasklifecycle-long.phase-0-acceptance-criteria
-description: Converts the task candidate into a definitive task. The architect defines acceptance criteria through 5 mandatory questions based on the task and its objective, and creates the current task required to start the lifecycle.
 owner: architect-agent
+description: "Converts the task candidate into a definitive task. The architect defines acceptance criteria through 5 mandatory questions based on the task and its objective, and creates the current task required to start the lifecycle."
 version: 1.2.1
-severity: PERMANENT
-trigger:
-  commands: ["phase0", "phase-0", "acceptance", "acceptance-criteria"]
-blocking: true
+trigger: ["phase0", "phase-0", "acceptance", "acceptance-criteria"]
+type: static
 ---
 
 # WORKFLOW: tasklifecycle.phase-0-acceptance-criteria
 
-## Input (REQUIRED)
+## Input
 - Task candidate created by `workflows.tasklifecycle-long`:
   - `artifacts.candidate.task`
 - The `task.md` candidate **MUST** include:
@@ -19,40 +17,41 @@ blocking: true
   - task objective
 
 > [!IMPORTANT]
-> **Active constitution (MANDATORY)**:
+> **Active constitution**:
 > - Load `constitution.clean_code` before starting
 > - Load `constitution.agents_behavior` (section 7: Gates, section 8: Constitution)
 
-## Output (REQUIRED)
+- Template: `templates.task` (if it does not exist or cannot be loaded → FAIL)
+
+## Output
 - Current task (definitive) with complete acceptance criteria:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
+- Acceptance artifact:
+  - `.agent/artifacts/<taskId>-<taskTitle>/acceptance.md`
 
-## Template (MANDATORY)
-- The current task **MUST** be created using the template:
-  - `templates.task`
-- If the template does not exist or cannot be loaded → **FAIL**.
-
-## Objective (ONLY)
+## Objective
 - Move from **task candidate** to **current task** (definitive).
 - **Calculate the definitive `taskId`**.
 - Define **mandatory** acceptance criteria from 5 questions to the developer.
 - Record acceptance criteria within the current task file.
 
-## Mandatory Steps
+## Instructions
+
 0. Activate `architect-agent` and use the mandatory prefix in every message.
+
 1. Load and read the task candidate:
    - `artifacts.candidate.task`
    - Extract:
      - task description
      - task objective
-   - If missing → go to **Step 10 (FAIL)**.
+   - If missing → FAIL.
 
 2. Load contractual task template
    - Load `templates.task`
-   - If it does not exist or cannot be loaded → go to **Step 10 (FAIL)**.
+   - If it does not exist or cannot be loaded → FAIL.
 
-3. **Calculate `taskId` (MANDATORY – architect)**
-   - The `architect-agent` **MUST** execute the following command:
+3. **Calculate `taskId` (architect)**
+   - Execute the following command:
      ```bash
      ls .agent/artifacts/ | grep -E "^[0-9]" | sort -n | tail -1 | cut -d'-' -f1
      ```
@@ -68,7 +67,7 @@ blocking: true
      - spaces → `-`
      - no special characters
 
-5. Formulate clarification questions (MANDATORY, adaptive to the task)
+5. Formulate clarification questions (adaptive to the task)
    - The `architect-agent` **MUST** analyze:
      - `task.description`
      - `task.goal`
@@ -81,19 +80,19 @@ blocking: true
      - **MUST** be directly related to the specific task
      - **MAY** vary depending on the task context
 
-6. Validate responses and close definition (MANDATORY)
+6. Validate responses and close definition
    - Confirm that all 5 formulated questions have explicit answers.
    - Based on the responses, the `architect-agent` **MUST**:
      - consolidate a complete task definition
      - derive verifiable acceptance criteria
-   - If any response is missing or ambiguity persists → go to **Step 10 (FAIL)**.
+   - If any response is missing or ambiguity persists → FAIL.
 
-7. Create current task (MANDATORY)
+7. Create current task
    - Create the task directory (if it does not exist):
      - `.agent/artifacts/<taskId>-<taskTitle>/`
    - Create the state file:
      - `.agent/artifacts/<taskId>-<taskTitle>/task.md` (using `templates.task`)
-   - Create the acceptance file (NEW):
+   - Create the acceptance file:
      - `.agent/artifacts/<taskId>-<taskTitle>/acceptance.md` (using `templates.acceptance`)
    - The `task.md` **will only contain**:
      - metadata (id, title, owner, strategy)
@@ -103,9 +102,9 @@ blocking: true
      - consolidated definition
      - the 5 detailed answers
      - verifiable acceptance criteria (AC) checklist
-   - If it cannot be created/written → go to **Step 10 (FAIL)**.
+   - If it cannot be created/written → FAIL.
 
-8. Request developer approval (MANDATORY, via console)
+8. Request developer approval (via console)
    - The developer **MUST** explicitly approve:
      - Acceptance criteria
      - Current task created
@@ -117,36 +116,9 @@ blocking: true
          date: <ISO-8601>
          comments: <optional>
      ```
-   - If `decision != SI` → go to **Step 10 (FAIL)**.
+   - If `decision != SI` → FAIL.
 
-9. PASS
-   - Report that Phase 0 is correctly completed.
-   - The `architect-agent` **MUST explicitly perform** the following actions:
-    - Mark Phase 0 as completed in `task.md`.
-    - Set `task.lifecycle.phases.phase-0-acceptance-criteria.validated_at = <ISO-8601>`.
-    - Update `task.phase.updated_at = <ISO-8601>`.
-    - Update the state:
-      - `task.phase.current = aliases.tasklifecycle-long.phases.phase_1.id`
-   - This update is **NOT automatic** and **CANNOT be inferred**.
-   - Until this change is reflected in `task.md`, **Phase 1 cannot be started**.
-
-10. FAIL (mandatory)
-   - Declare Phase 0 as **NOT completed**.
-   - Indicate exactly what failed:
-     - missing candidate
-     - inaccessible template (`templates.task`)
-     - missing description/objective
-     - could not calculate `taskId`
-     - incomplete responses (fewer than 5)
-     - could not create current task
-   - Request the minimum action:
-     - complete candidate data
-     - answer missing questions
-     - fix artifacts permissions/paths
-   - Terminate blocked: do not advance phase.
-
-## Gate (REQUIRED)
-
+## Gate
 Requirements (all mandatory):
 1. The directory and state file exist:
    - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
@@ -169,5 +141,28 @@ Requirements (all mandatory):
    - `task.phase.updated_at` not null
 10. The 5 mandatory questions were asked and answered by the developer.
 
-If Gate FAIL:
-- Execute **FAIL**.
+## Pass
+- Report that Phase 0 is correctly completed.
+- The `architect-agent` **MUST explicitly perform** the following actions:
+  - Mark Phase 0 as completed in `task.md`.
+  - Set `task.lifecycle.phases.phase-0-acceptance-criteria.validated_at = <ISO-8601>`.
+  - Update `task.phase.updated_at = <ISO-8601>`.
+  - Update the state:
+    - `task.phase.current = aliases.tasklifecycle-long.phases.phase_1.id`
+- This update is **NOT automatic** and **CANNOT be inferred**.
+- Until this change is reflected in `task.md`, **Phase 1 cannot be started**.
+
+## Fail
+- Declare Phase 0 as **NOT completed**.
+- Indicate exactly what failed:
+  - missing candidate
+  - inaccessible template (`templates.task`)
+  - missing description/objective
+  - could not calculate `taskId`
+  - incomplete responses (fewer than 5)
+  - could not create current task
+- Request the minimum action:
+  - complete candidate data
+  - answer missing questions
+  - fix artifacts permissions/paths
+- Terminate blocked: do not advance phase.

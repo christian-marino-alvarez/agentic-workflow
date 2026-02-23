@@ -1,23 +1,22 @@
 ---
-description: "Mandatory setup workflow: loads base constitutions and defines the conversation language and Long/Short strategy."
----
-
----
 id: workflow.init
 owner: architect-agent
+description: "Mandatory setup workflow: loads base constitutions and defines the conversation language and Long/Short strategy."
 version: 4.0.0
-severity: PERMANENT
-trigger:
-  commands: ["init", "/init", "/agentic-init"]
-blocking: true
+trigger: ["init", "/init", "/agentic-init"]
+type: static
 ---
 
 # WORKFLOW: init
 
-## Input (REQUIRED)
+## Input
 - Developer command: `init` or `/agentic-init`
 
-## Objective (ONLY)
+## Output
+- Artifact created:
+  - `artifacts.candidate.init`
+
+## Objective
 - Activate the **architect-agent** role.
 - Load the minimal index bootstrap.
 - Detect conversation language and explicitly confirm.
@@ -44,7 +43,8 @@ The agent **MUST** adhere to these behavioral meta-rules throughout the ENTIRE s
     - Process correctness (following the workflow) is MORE IMPORTANT than task speed.
     - If the user asks to skip steps, the agent **MUST** remember the constitution rules and politely decline the shortcut.
 
-## Mandatory Steps
+## Instructions
+
 1. Activate `architect-agent` as the architect role.
    - Show a single status message (e.g.: "Loading init...") and **do not** list individual file reads.
    - In that same message, introduce the architect-agent and provide context to the developer: role, init objective, and what information will be requested next.
@@ -66,12 +66,12 @@ The agent **MUST** adhere to these behavioral meta-rules throughout the ENTIRE s
    - If any fails → FAIL.
 
 4. Detect preferred language and request explicit confirmation.
-   - If no confirmation → go to **Step 9 (FAIL)**.
+   - If no confirmation → FAIL.
 
 5. **Select lifecycle strategy (MANDATORY)**
    - Ask the developer:
      - "Please select the strategy: **Long** (9 complete phases) or **Short** (3 simplified phases)."
-   - If no selection → go to **Step 9 (FAIL)**.
+   - If no selection → FAIL.
    - Record the selection in the `init.md` artifact.
 
 6. **Create the `init.md` artifact (MANDATORY)**
@@ -85,28 +85,10 @@ The agent **MUST** adhere to these behavioral meta-rules throughout the ENTIRE s
    - `artifacts.candidate.init`
 
 8. Evaluate Gate.
-   - If Gate FAIL → go to **Step 9 (FAIL)**.
-   - If Gate PASS → continue.
+   - If Gate FAIL → FAIL.
+   - If Gate PASS → PASS.
 
-9. FAIL (mandatory)
-   - Declare `init` as **NOT completed**.
-   - Explain exactly which requirement failed.
-   - Request the minimum necessary action.
-   - **Do not ask for the task**.
-   - Terminate the workflow in blocked state.
-
-10. PASS (only if Gate PASS)
-    - Ask for the task:
-      - "What task do you want to start now? Give me a short title and the objective."
-    - Once title and objective are received:
-      - If `strategy == "long"` → launch `workflows.tasklifecycle-long`
-      - If `strategy == "short"` → launch `workflows.tasklifecycle-short`
-
-## Output (REQUIRED)
-- Artifact created:
-  - `artifacts.candidate.init`
-
-## Gate (REQUIRED)
+## Gate
 Requirements (all mandatory):
 1) The artifact exists:
    - `artifacts.candidate.init`
@@ -119,3 +101,17 @@ Requirements (all mandatory):
 5) Strategy selected.
 6) No indexes were loaded outside the allowed set (only `.agent/index.md`, `agent.domains.rules.index`, `rules.constitution.index`).
 7) The Root Index `.agent/index.md` was loaded before any other index.
+
+## Pass
+- Ask for the task:
+  - "What task do you want to start now? Give me a short title and the objective."
+- Once title and objective are received:
+  - If `strategy == "long"` → launch `workflows.tasklifecycle-long`
+  - If `strategy == "short"` → launch `workflows.tasklifecycle-short`
+
+## Fail
+- Declare `init` as **NOT completed**.
+- Explain exactly which requirement failed.
+- Request the minimum necessary action.
+- **Do not ask for the task**.
+- Terminate the workflow in blocked state.

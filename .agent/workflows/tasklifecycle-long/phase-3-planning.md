@@ -1,17 +1,15 @@
 ---
 id: workflow.tasklifecycle-long.phase-3-planning
-description: Phase 3 of the task lifecycle. Defines the implementation plan based on prior analysis, assigns responsibilities per agent, details testing, demo, estimations, and critical points. Requires explicit developer approval.
 owner: architect-agent
+description: "Phase 3 of the task lifecycle. Defines the implementation plan based on prior analysis, assigns responsibilities per agent, details testing, demo, estimations, and critical points. Requires explicit developer approval."
 version: 1.0.0
-severity: PERMANENT
-trigger:
-  commands: ["phase3", "phase-3", "planning", "plan"]
-blocking: true
+trigger: ["phase3", "phase-3", "planning", "plan"]
+type: static
 ---
 
 # WORKFLOW: tasklifecycle.phase-3-planning
 
-## Input (REQUIRED)
+## Input
 - The analysis artifact created in Phase 2 exists:
   - `.agent/artifacts/<taskId>-<taskTitle>/analysis.md`
 - The current task exists:
@@ -20,17 +18,19 @@ blocking: true
   - `task.phase.current == aliases.tasklifecycle-long.phases.phase_3.id`
 
 > [!IMPORTANT]
-> **Active constitution (MANDATORY)**:
+> **Active constitution**:
 > - Load `constitution.clean_code` before starting
 > - Load `constitution.agents_behavior` (section 7: Gates, section 8: Constitution)
 
-## Output (REQUIRED)
+- Template: `templates.planning` (if it does not exist or cannot be loaded → FAIL)
+
+## Output
 - Create the implementation plan:
   - `.agent/artifacts/<taskId>-<taskTitle>/plan.md`
 - Update the state in the current task:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 
-## Objective (ONLY)
+## Objective
 Create a **detailed implementation plan** to execute the design defined in Phase 2, that:
 - translates the analysis into executable steps
 - assigns clear responsibilities per agent and sub-area
@@ -39,29 +39,22 @@ Create a **detailed implementation plan** to execute the design defined in Phase
 - estimates implementation effort/weight
 - explains how identified critical points will be resolved
 
-> This phase **DOES NOT implement code**.  
+> This phase **DOES NOT implement code**.
 > This phase **REQUIRES strict explicit developer approval (SI / NO)**.
 
-## Template (MANDATORY)
-- The plan **MUST** be created using the template:
-  - `templates.planning`
-- The template **MUST NOT** be modified.
-- If the template does not exist or cannot be loaded → **FAIL**.
+## Instructions
 
----
-
-## Mandatory Steps
 0. Activate `architect-agent` and use the mandatory prefix in every message.
 
 1. Verify inputs
    - `.agent/artifacts/<taskId>-<taskTitle>/analysis.md` exists
    - `.agent/artifacts/<taskId>-<taskTitle>/task.md` exists
    - `task.phase.current == aliases.tasklifecycle-long.phases.phase_3.id`
-   - If it fails → go to **Step 11 (FAIL)**.
+   - If it fails → FAIL.
 
 2. Load planning template
    - Load `templates.planning`
-   - If it does not exist or cannot be read → go to **Step 11 (FAIL)**.
+   - If it does not exist or cannot be read → FAIL.
 
 3. Create plan instance
    - Copy the template to:
@@ -75,7 +68,7 @@ Create a **detailed implementation plan** to execute the design defined in Phase
 5. Assign responsibilities
    - For each step or sub-area:
      - responsible agent
-     - **MANDATORY**: Verify that the agent exists in `.agent/rules/roles/`.
+     - **Verify that the agent exists in `.agent/rules/roles/`**.
      - **FAIL** if assigning tasks to a non-existent agent.
      - expected deliverables
    - If the analysis requires creating/modifying/deleting components:
@@ -105,7 +98,7 @@ Create a **detailed implementation plan** to execute the design defined in Phase
    - Identify critical points
    - Explain how they will be resolved
 
-9. Request developer approval (MANDATORY, via console)
+9. Request developer approval (via console)
    - The developer **MUST** issue a binary decision:
      - **SI** (approved)
      - **NO** (rejected)
@@ -117,45 +110,9 @@ Create a **detailed implementation plan** to execute the design defined in Phase
          date: <ISO-8601>
          comments: <optional>
      ```
-   - If `decision != SI` → go to **Step 11 (FAIL)**.
+   - If `decision != SI` → FAIL.
 
-10. PASS
-    - Report that Phase 3 is correctly completed.
-    - The `architect-agent` **MUST explicitly perform** the following actions:
-      - Mark Phase 3 as completed in `task.md`.
-      - Set `task.lifecycle.phases.phase-3-planning.completed = true`.
-      - Set `task.lifecycle.phases.phase-3-planning.validated_at = <ISO-8601>`.
-      - Update `task.phase.updated_at = <ISO-8601>`.
-      - Update the state:
-        - `task.phase.current = aliases.tasklifecycle-long.phases.phase_4.id`
-    - This update is **NOT automatic** and **CANNOT be inferred**.
-    - Until this change is reflected in `task.md`, **Phase 4 cannot be started**.
-    - Indicate paths:
-      - `plan.md`
-      - `task.md` updated
-
----
-
-## FAIL (MANDATORY)
-
-11. Declare Phase 3 as **NOT completed**
-    - Indicate exactly what failed:
-      - non-existent analysis.md
-      - incorrect phase
-      - non-existent planning template
-      - failure creating `plan.md`
-      - developer approval = NO or missing
-    - Request the minimum action:
-      - complete Phase 2
-      - fix current phase
-      - fix permissions/paths
-      - review the plan and resubmit for approval
-    - Terminate blocked: do not advance phase.
-
----
-
-## Gate (REQUIRED)
-
+## Gate
 Requirements (all mandatory):
 1. `.agent/artifacts/<taskId>-<taskTitle>/plan.md` exists.
 2. The plan follows the `templates.planning` template structure.
@@ -179,5 +136,32 @@ Requirements (all mandatory):
    - `task.lifecycle.phases.phase-3-planning.validated_at` not null
    - `task.phase.updated_at` not null
 
-If Gate FAIL:
-- Execute **Step 11 (FAIL)**.
+## Pass
+- Report that Phase 3 is correctly completed.
+- The `architect-agent` **MUST explicitly perform** the following actions:
+  - Mark Phase 3 as completed in `task.md`.
+  - Set `task.lifecycle.phases.phase-3-planning.completed = true`.
+  - Set `task.lifecycle.phases.phase-3-planning.validated_at = <ISO-8601>`.
+  - Update `task.phase.updated_at = <ISO-8601>`.
+  - Update the state:
+    - `task.phase.current = aliases.tasklifecycle-long.phases.phase_4.id`
+- This update is **NOT automatic** and **CANNOT be inferred**.
+- Until this change is reflected in `task.md`, **Phase 4 cannot be started**.
+- Indicate paths:
+  - `plan.md`
+  - `task.md` updated
+
+## Fail
+- Declare Phase 3 as **NOT completed**.
+- Indicate exactly what failed:
+  - non-existent analysis.md
+  - incorrect phase
+  - non-existent planning template
+  - failure creating `plan.md`
+  - developer approval = NO or missing
+- Request the minimum action:
+  - complete Phase 2
+  - fix current phase
+  - fix permissions/paths
+  - review the plan and resubmit for approval
+- Terminate blocked: do not advance phase.

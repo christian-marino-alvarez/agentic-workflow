@@ -1,17 +1,15 @@
 ---
 id: workflow.tasklifecycle-long.phase-6-results-acceptance
-description: Phase 6 of the task lifecycle. Presents the final results report and requires explicit developer acceptance (SI/NO).
 owner: architect-agent
+description: "Phase 6 of the task lifecycle. Presents the final results report and requires explicit developer acceptance (SI/NO)."
 version: 1.0.0
-severity: PERMANENT
-trigger:
-  commands: ["phase6", "phase-6", "results", "acceptance"]
-blocking: true
+trigger: ["phase6", "phase-6", "results", "acceptance"]
+type: static
 ---
 
 # WORKFLOW: tasklifecycle.phase-6-results-acceptance
 
-## Input (REQUIRED)
+## Input
 - The verification report exists:
   - `.agent/artifacts/<taskId>-<taskTitle>/verification.md`
 - The current task exists:
@@ -20,38 +18,29 @@ blocking: true
   - `task.phase.current == aliases.tasklifecycle-long.phases.phase_6.id`
 
 > [!IMPORTANT]
-> **Active constitution (MANDATORY)**:
+> **Active constitution**:
 > - Load `constitution.clean_code` before starting
 > - Load `constitution.agents_behavior` (section 7: Gates, section 8: Constitution)
 
-## Output (REQUIRED)
+- Template: `templates.results_acceptance` (if it does not exist or cannot be loaded → FAIL)
+
+## Output
 - Create the results acceptance report:
   - `.agent/artifacts/<taskId>-<taskTitle>/results-acceptance.md`
-- Final developer decision (MANDATORY):
+- Final developer decision:
   - **SI / NO**
 - State update in:
   - `.agent/artifacts/<taskId>-<taskTitle>/task.md`
 
----
-
-## Objective (ONLY)
+## Objective
 - Present a **final results report** based on the verification.
 - Provide the developer with a **complete and clear vision** of the work performed.
 - Obtain an **explicit final acceptance (SI/NO)** from the developer.
 
-> This phase **DOES NOT implement code**.  
+> This phase **DOES NOT implement code**.
 > This phase **CLOSES the results evaluation**.
 
----
-
-## Template (MANDATORY)
-- The results report **MUST** be created using the template:
-  - `templates.results_acceptance`
-- If the template does not exist or cannot be loaded → **FAIL**.
-
----
-
-## Mandatory Steps
+## Instructions
 
 0. Activate `architect-agent` and use the mandatory prefix in every message.
 
@@ -59,11 +48,11 @@ blocking: true
    - `verification.md` exists
    - `task.md` exists
    - `task.phase.current == aliases.tasklifecycle-long.phases.phase_6.id`
-   - If it fails → go to **Step 10 (FAIL)**.
+   - If it fails → FAIL.
 
 2. Load results template
    - Load `templates.results_acceptance`
-   - If it does not exist or cannot be read → go to **Step 10 (FAIL)**.
+   - If it does not exist or cannot be read → FAIL.
 
 3. Create results report
    - Create:
@@ -76,7 +65,7 @@ blocking: true
    - The `architect-agent` **MUST** present the `results-acceptance.md` report.
    - Resolve questions without modifying scope or documented results.
 
-5. Request final developer acceptance (MANDATORY, via console)
+5. Request final developer acceptance (via console)
    - The developer **MUST** issue a binary decision:
      - **SI** → accepts the results
      - **NO** → does not accept the results
@@ -88,43 +77,9 @@ blocking: true
          date: <ISO-8601>
          comments: <optional>
      ```
-   - If `decision != SI` → go to **Step 10 (FAIL)**.
+   - If `decision != SI` → FAIL.
 
-6. PASS (only if accepted)
-   - Report that Phase 6 is correctly completed.
-   - Mark the results report as **ACCEPTED**.
-   - The `architect-agent` **MUST explicitly perform** the following actions:
-     - Mark Phase 6 as completed in `task.md`.
-     - Set `task.lifecycle.phases.phase-6-results-acceptance.completed = true`.
-     - Set `task.lifecycle.phases.phase-6-results-acceptance.validated_at = <ISO-8601>`.
-     - Update `task.phase.updated_at = <ISO-8601>`.
-     - Update the state:
-       - `task.phase.current = aliases.tasklifecycle-long.phases.phase_7.id`
-   - This update is **NOT automatic** and **CANNOT be inferred**.
-   - Until this change is reflected in `task.md`, **Phase 7 cannot be started**.
-   - Indicate paths:
-     - `results-acceptance.md`
-     - `task.md` updated
-
----
-
-## FAIL (MANDATORY)
-
-10. Declare Phase 6 as **NOT completed**
-    - FAIL cases:
-      - missing required report
-      - incorrect phase
-      - failure creating `results-acceptance.md`
-      - developer acceptance = NO or missing
-    - Mandatory actions:
-      - analyze the indicated non-compliances
-      - **iterate to resolve detected issues**
-    - Terminate blocked: do not advance phase.
-
----
-
-## Gate (REQUIRED)
-
+## Gate
 Requirements (all mandatory):
 1. `.agent/artifacts/<taskId>-<taskTitle>/results-acceptance.md` exists.
 2. The report summarizes verification and final acceptance criteria status.
@@ -139,5 +94,30 @@ Requirements (all mandatory):
   - `task.lifecycle.phases.phase-6-results-acceptance.validated_at` not null
   - `task.phase.updated_at` not null
 
-If Gate FAIL:
-- Execute **Step 10 (FAIL)**.
+## Pass
+- Report that Phase 6 is correctly completed.
+- Mark the results report as **ACCEPTED**.
+- The `architect-agent` **MUST explicitly perform** the following actions:
+  - Mark Phase 6 as completed in `task.md`.
+  - Set `task.lifecycle.phases.phase-6-results-acceptance.completed = true`.
+  - Set `task.lifecycle.phases.phase-6-results-acceptance.validated_at = <ISO-8601>`.
+  - Update `task.phase.updated_at = <ISO-8601>`.
+  - Update the state:
+    - `task.phase.current = aliases.tasklifecycle-long.phases.phase_7.id`
+- This update is **NOT automatic** and **CANNOT be inferred**.
+- Until this change is reflected in `task.md`, **Phase 7 cannot be started**.
+- Indicate paths:
+  - `results-acceptance.md`
+  - `task.md` updated
+
+## Fail
+- Declare Phase 6 as **NOT completed**.
+- FAIL cases:
+  - missing required report
+  - incorrect phase
+  - failure creating `results-acceptance.md`
+  - developer acceptance = NO or missing
+- Mandatory actions:
+  - analyze the indicated non-compliances
+  - **iterate to resolve detected issues**
+- Terminate blocked: do not advance phase.

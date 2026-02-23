@@ -1,17 +1,15 @@
 ---
 id: workflow.coding.integration
-description: On-demand coding workflow for integrating the 3 layers of a module (Backend, Background, View). Invoked by architect-agent during Phase 4 after layer-specific workflows.
 owner: architect-agent
+description: "On-demand coding workflow for integrating the 3 layers of a module (Backend, Background, View). Invoked by architect-agent during Phase 4 after layer-specific workflows."
 version: 1.0.0
-severity: PERMANENT
-trigger:
-  commands: ["coding-integration"]
-blocking: true
+trigger: ["coding-integration"]
+type: dynamic
 ---
 
 # WORKFLOW: coding.integration
 
-## Input (REQUIRED)
+## Input
 - Agent task file assigned by architect:
   - `.agent/artifacts/<taskId>-<taskTitle>/agent-tasks/<N>-architect-integration-<taskName>.md`
 - All applicable layer coding workflows completed and approved:
@@ -19,24 +17,22 @@ blocking: true
   - `coding-background` report (if applicable)
   - `coding-view` report (if applicable)
 - Constitutions loaded (ALL):
-  - `constitution.backend` (MANDATORY)
-  - `constitution.background` (MANDATORY)
-  - `constitution.view` (MANDATORY)
-  - `constitution.clean_code` (MANDATORY)
-  - `.agent/rules/constitution/architecture/index.md` (MANDATORY)
-  - `constitution.agents_behavior` (MANDATORY)
+  - `constitution.backend`
+  - `constitution.background`
+  - `constitution.view`
+  - `constitution.clean_code`
+  - `.agent/rules/constitution/architecture/index.md`
+  - `constitution.agents_behavior`
 
 > [!IMPORTANT]
 > **This workflow runs AFTER all layer-specific coding workflows.** It validates that the 3 layers communicate correctly and comply with all constitutions. The architect is the owner.
 
-## Output (REQUIRED)
+## Output
 - Integration report using `templates.coding.integration_report`:
   - Embedded in the agent task file under "Implementation Report"
 - All layers passing compilation and integration validation
 
----
-
-## Objective (ONLY)
+## Objective
 - Validate and ensure **optimal communication** between the 3 layers of the module.
 - Verify **constitution compliance** across all layers.
 - Generate a detailed **integration report**.
@@ -46,9 +42,7 @@ blocking: true
 > This workflow ensures **no constitution violations** exist across boundaries.
 > This workflow is the **final validation** before Phase 4 closure.
 
----
-
-## Mandatory Steps
+## Instructions
 
 ### 0. Activate role
 - Activate `architect-agent` and use mandatory prefix in all messages.
@@ -57,7 +51,7 @@ blocking: true
 - All applicable layer coding workflows have Gate PASS.
 - All layer reports exist and are complete.
 - All 4 constitutions loaded.
-- If missing → **FAIL**.
+- If missing → FAIL.
 
 ### 2. Review layer reports
 - Read each layer's implementation report.
@@ -112,7 +106,7 @@ For each constitution, verify cross-layer boundaries:
   - **E2E Test Indications**: Integration test scenarios
   - **Issues found and resolutions**: If any
 
-### 7. Present to developer (Gate)
+### 7. Present to developer (Gate request)
 - Present integration report with all evidence to developer.
 - Request approval: **SI / NO**
 
@@ -125,47 +119,7 @@ approval:
     comments: <optional>
 ```
 
-### 9. Evaluate Gate
-- If `decision == SI` → go to **Step 10 (PASS)**.
-- If `decision == NO`:
-  - Identify failing layer(s).
-  - Create corrective sub-task for specific layer workflow.
-  - Re-run integration after correction.
-  - Go to **Step 11 (FAIL)**.
-
-### 10. PASS (only if Gate approved)
-- Mark integration task as `completed`.
-- Update agent task file:
-  ```yaml
-  execution:
-    status: completed
-    completed_at: <ISO-8601>
-  ```
-- Update the integration report with final assessment: `PASS`.
-- Return control to `architect-agent` for **Phase 4 closure** (Gate final de Phase 4).
-
----
-
-## FAIL (MANDATORY)
-
-### 10. Declare workflow as NOT completed
-Cases:
-- Layer workflows not completed or not approved.
-- Constitution violation at layer boundaries.
-- Compilation failure.
-- Direct View→Backend communication detected.
-- Gate = NO without resolution.
-
-Actions:
-- Identify the exact layer and violation.
-- Delegate corrective action to the appropriate layer workflow.
-- Re-run integration validation after fix.
-- Iterate until Gate PASS.
-
----
-
-## Gate (REQUIRED)
-
+## Gate
 Requirements (all mandatory):
 1. All layer coding workflows have Gate PASS.
 2. All communication paths validated (Step 3 checklist).
@@ -174,3 +128,28 @@ Requirements (all mandatory):
 5. Integration report is complete (all sections).
 6. Developer Gate PASS (`decision == SI`).
 7. No direct View→Backend communication exists.
+
+## Pass
+- Mark integration task as `completed`.
+- Update agent task file:
+  ```yaml
+  execution:
+    status: completed
+    completed_at: <ISO-8601>
+  ```
+- Update the integration report with final assessment: `PASS`.
+- Return control to `architect-agent` for **Phase 4 closure** (final Gate of Phase 4).
+
+## Fail
+- Declare workflow as NOT completed.
+- Cases:
+  - Layer workflows not completed or not approved.
+  - Constitution violation at layer boundaries.
+  - Compilation failure.
+  - Direct View→Backend communication detected.
+  - Gate = NO without resolution.
+- Actions:
+  - Identify the exact layer and violation.
+  - Delegate corrective action to the appropriate layer workflow.
+  - Re-run integration validation after fix.
+  - Iterate until Gate PASS.

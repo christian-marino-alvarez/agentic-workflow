@@ -265,10 +265,31 @@ export class ChatBackground extends Background {
               '\n---',
             ].filter(Boolean).join('\n');
           } else if (workflowState.workflow.rawContent) {
-            // Simple workflow (init, coding) — use raw content
+            // Simple workflow (init, coding) — use raw content + structured gate info
+            const gate = workflowState.workflow.gate;
+            const gateSection = gate ? [
+              '\n### ⚠️ GATE REQUIREMENTS (ALL must be satisfied before advancing)',
+              ...gate.requirements.map((r: string, i: number) => `${i + 1}. ${r}`),
+              '',
+              'When you believe ALL gate requirements are met:',
+              '1. Create required artifacts via writeFile',
+              '2. Present a <a2ui type="gate" id="gate-eval" label="Gate Evaluation"> with SI/NO options',
+              '3. DO NOT advance past the gate without user confirmation',
+            ].join('\n') : '';
+
+            const passSection = workflowState.workflow.passTarget
+              ? `\n### PASS → ${workflowState.workflow.passTarget} (automatic transition on gate SI)`
+              : '';
+            const failSection = workflowState.workflow.failBehavior
+              ? `\n### FAIL → ${workflowState.workflow.failBehavior}`
+              : '';
+
             phaseContext = [
               '\n\n---\n## ACTIVE WORKFLOW (MANDATORY — follow these instructions step by step)\n',
               workflowState.workflow.rawContent,
+              gateSection,
+              passSection,
+              failSection,
               '\n---\n',
               `Current status: ${workflowState.status}`,
               workflowState.steps ? `\nSteps: ${workflowState.steps.map((s: any) => `${s.id}. ${s.label} [${s.status}]`).join(' | ')}` : '',
@@ -287,7 +308,6 @@ export class ChatBackground extends Background {
             'ALL internal operations MUST be executed SILENTLY via tools. This includes:',
             '- Creating/writing files (init.md, artifacts, etc.) → use writeFile tool IMMEDIATELY',
             '- Loading/reading files (indexes, constitutions, templates) → use readFile tool',
-            '- Evaluating gates → do internally, only report PASS/FAIL result',
             '- Any workflow step that does not require user input',
             '',
             '### Rule 2: NEVER NARRATE PROCESS',
@@ -300,21 +320,34 @@ export class ChatBackground extends Background {
             '',
             'CORRECT behavior:',
             '- ✅ Execute the tool call directly, then report the RESULT to the user',
-            '- ✅ "Configuración registrada. ¿Qué tarea quieres iniciar?" (after silently creating init.md)',
-            '- ✅ "Gate cumplido. Todo listo." (after silently evaluating)',
             '',
-            '### Rule 3: ACT THEN ADVANCE',
+            '### Rule 3: GATE EVALUATION (CRITICAL)',
+            'When a workflow has a Gate section, you MUST follow this exact protocol:',
+            '1. Execute all required steps (create artifacts, etc.) via tools SILENTLY',
+            '2. Evaluate each gate requirement internally',
+            '3. Present the gate evaluation to the user using <a2ui type="gate">:',
+            '',
+            '<a2ui type="gate" id="gate-eval" label="Gate Evaluation: [summary of results]">',
+            '- [ ] SI',
+            '- [ ] NO',
+            '</a2ui>',
+            '',
+            'The extension handles the workflow transition AUTOMATICALLY when the user confirms.',
+            'You must NOT skip the gate confirmation. You must NOT advance beyond the gate without it.',
+            'You must NOT ask "¿Qué tarea quieres iniciar?" until the user has confirmed the gate.',
+            '',
+            '### Rule 4: ACT THEN ADVANCE',
             'When you receive user confirmation (like language + strategy):',
             '1. IMMEDIATELY call writeFile to create the required artifact (e.g. init.md)',
-            '2. Evaluate the gate internally',
-            '3. If PASS: ask the NEXT user-facing question in the SAME response',
-            '4. If FAIL: report what failed and ask for correction',
-            'ALL of this happens in ONE response turn. Do NOT just acknowledge.',
+            '2. Evaluate the gate requirements',
+            '3. Present <a2ui type="gate"> with the evaluation result',
+            '4. Wait for user confirmation before proceeding',
+            'ALL of this (steps 1-3) happens in ONE response turn. Do NOT just acknowledge.',
             '',
-            '### Rule 4: NEVER STOP MID-WORKFLOW',
-            'After receiving user input, chain ALL remaining steps until the next step that requires user input.',
+            '### Rule 5: NEVER STOP MID-WORKFLOW',
+            'After receiving user input, chain ALL remaining steps until the next step that requires user input or a gate confirmation.',
             'A response that only says Registrado/Entendido/OK without advancing the workflow is a FAILURE.',
-            'You MUST continue executing steps (via tools) and arrive at the next user-facing question.',
+            'You MUST continue executing steps (via tools) and arrive at the next user-facing question or gate.',
           ].join('\n');
 
           instructions = (instructions || '') + phaseContext + behavioralRules;

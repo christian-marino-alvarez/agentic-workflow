@@ -26,6 +26,7 @@ export class RuntimeServer extends AbstractBackend {
       RPC_COMMANDS.WORKFLOW_LOAD,
       RPC_COMMANDS.WORKFLOW_LOAD_ALL,
       RPC_COMMANDS.WORKFLOW_START,
+      RPC_COMMANDS.WORKFLOW_STEP_COMPLETE,
       RPC_COMMANDS.WORKFLOW_GATE_RESPOND,
       RPC_COMMANDS.WORKFLOW_STATUS,
       RPC_COMMANDS.WORKFLOW_RELOAD,
@@ -76,6 +77,10 @@ export class RuntimeServer extends AbstractBackend {
         const def = await this.workflowEngine.start(data);
         return { started: true, workflowId: def.id, owner: def.owner };
       }
+
+      case RPC_COMMANDS.WORKFLOW_STEP_COMPLETE:
+        this.workflowEngine.stepComplete();
+        return { completed: true };
 
       case RPC_COMMANDS.WORKFLOW_GATE_RESPOND:
         this.workflowEngine.respondToGate(data);

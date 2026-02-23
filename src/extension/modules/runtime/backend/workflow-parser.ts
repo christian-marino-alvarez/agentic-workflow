@@ -257,12 +257,15 @@ export class WorkflowParser {
 
   /**
    * Extract numbered steps from the ## Mandatory Steps section.
+   * Also supports Spanish: ## Pasos obligatorios
    */
   private extractSteps(body: string): WorkflowStep[] {
     const steps: WorkflowStep[] = [];
 
-    // Find the "Mandatory Steps" section
-    const stepsSection = this.extractSection(body, 'Mandatory Steps');
+    // Find the steps section (English or Spanish)
+    const stepsSection = this.extractSection(body, 'Mandatory Steps')
+      || this.extractSection(body, 'Pasos obligatorios')
+      || this.extractSection(body, 'Pasos Obligatorios');
     if (!stepsSection) {
       return steps;
     }
@@ -339,8 +342,8 @@ export class WorkflowParser {
 
     const requirements: string[] = [];
 
-    // Extract numbered requirements
-    const reqPattern = /^\s*\d+\.\s+(.+)/gm;
+    // Extract numbered requirements (supports both "1." and "1)" formats)
+    const reqPattern = /^\s*\d+[.)]\s+(.+)/gm;
     let match: RegExpExecArray | null;
     while ((match = reqPattern.exec(gateSection)) !== null) {
       requirements.push(match[1].trim());
@@ -372,23 +375,33 @@ export class WorkflowParser {
 
   /**
    * Extract PASS target (next workflow/phase).
+   * Supports alias patterns, workflow.X references, and launch/lanzar patterns.
    */
   private extractPassTarget(body: string): string | null {
     // Look for PASS section referencing next phase
     const passSection = this.extractSection(body, 'PASS');
-    if (!passSection) {
-      // Try inline: "task.phase.current = aliases.tasklifecycle-long.phases.phase_X.id"
-      const aliasMatch = body.match(
-        /task\.phase\.current\s*=\s*aliases\.tasklifecycle-long\.phases\.(\w+)\.id/
-      );
-      return aliasMatch ? aliasMatch[1].replace(/_/g, '-') : null;
-    }
 
-    // Check for phase reference in PASS section
-    const aliasMatch = passSection.match(
+    const searchIn = passSection || body;
+
+    // 1. Check for alias pattern: task.phase.current = aliases.tasklifecycle-long.phases.phase_X.id
+    const aliasMatch = searchIn.match(
       /task\.phase\.current\s*=\s*aliases\.tasklifecycle-long\.phases\.(\w+)\.id/
     );
-    return aliasMatch ? aliasMatch[1].replace(/_/g, '-') : null;
+    if (aliasMatch) { return aliasMatch[1].replace(/_/g, '-'); }
+
+    // 2. Check for workflow.X references (e.g., "workflow.tasklifecycle-long", "workflow.tasklifecycle-short")
+    const workflowRefs = searchIn.match(/`workflow\.([\w-]+)`/g);
+    if (workflowRefs && workflowRefs.length > 0) {
+      // Return all unique workflow targets joined
+      const targets = [...new Set(workflowRefs.map(r => r.replace(/`/g, '')))];
+      return targets.join(' | ');
+    }
+
+    // 3. Check for "lanzar/launch" pattern with backtick reference
+    const launchMatch = searchIn.match(/(?:lanzar|launch)\s+`([^`]+)`/i);
+    if (launchMatch) { return launchMatch[1]; }
+
+    return null;
   }
 
   /**

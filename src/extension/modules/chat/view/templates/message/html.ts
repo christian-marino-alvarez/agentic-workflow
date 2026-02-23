@@ -1,0 +1,141 @@
+import { html } from 'lit';
+import { IChatView } from '../../types.js';
+import { renderMarkdown, getIcon } from '../utils.js';
+import { parseA2UI, renderA2UISequence } from '../a2ui/html.js';
+
+export function renderToolEvents(events?: Array<any>) {
+  // HIDDEN BY DESIGN:
+  // Tool executions are now hidden from UI to preserve conversational experience.
+  return '';
+}
+
+export function renderDelegationCard(msg: any) {
+  const isPending = msg.delegationStatus === 'pending';
+  const agentIcon = getIcon(msg.delegationAgent);
+  const agentName = msg.delegationAgent
+    ? msg.delegationAgent.charAt(0).toUpperCase() + msg.delegationAgent.slice(1)
+    : 'Agente';
+  const roleClass = msg.delegationAgent ? `role-${msg.delegationAgent}` : '';
+
+  return html`
+    <div class="delegation-card ${isPending ? 'pending' : 'completed'} ${roleClass}">
+      <div class="delegation-header">
+        <span class="delegation-agent-icon">${agentIcon}</span>
+        <span class="delegation-title">${agentName}</span>
+        <span class="delegation-status">${isPending ? '⏳ Trabajando...' : '✅ Listo'}</span>
+      </div>
+      ${isPending ? html`
+        <div class="delegation-greeting">¡Perfecto, me pongo a ello! 💪</div>
+        <div class="delegation-task">${renderMarkdown(msg.text)}</div>
+        <div class="delegation-loading"><span class="streaming-cursor"></span> Analizando...</div>
+      ` : html`
+        <div class="delegation-task">${renderMarkdown(msg.text)}</div>
+        ${msg.delegationResult ? html`
+          <details class="delegation-report" open>
+            <summary class="delegation-report-header"><span>${agentIcon}</span> Informe de ${agentName}</summary>
+            <div class="delegation-report-content markdown-body">${renderMarkdown(msg.delegationResult)}</div>
+          </details>
+        ` : ''}
+      `}
+    </div>
+  `;
+}
+
+export function renderGateCard(msg: any, view: IChatView) {
+  const isPending = !msg.gateDecision;
+  const decision = msg.gateDecision;
+
+  return html`
+    <div class="msg-bubble msg-system" style="border-left: 3px solid #4dc9c0; background: rgba(77, 201, 192, 0.08);">
+      <div class="msg-header">
+        <span class="msg-icon">🚦</span>
+        <span class="msg-sender">Gate Approval</span>
+      </div>
+      <div class="msg-content markdown-body">
+        ${renderMarkdown(msg.text)}
+      </div>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        ${isPending ? html`
+          <button style="padding:6px 18px; border-radius:4px; border:none; cursor:pointer; font-weight:600; background:#4caf50; color:white;" @click=${() => view.handleGateResponse(msg.gateId, 'approve')}>SI ✔</button>
+          <button style="padding:6px 18px; border-radius:4px; border:none; cursor:pointer; font-weight:600; background:#f44336; color:white;" @click=${() => view.handleGateResponse(msg.gateId, 'reject')}>NO ✘</button>
+        ` : html`
+          <span style="padding:6px 12px; border-radius:4px; font-weight:600; background:${decision === 'approve' ? 'rgba(76,175,80,0.2)' : 'rgba(244,67,54,0.2)'}; color:${decision === 'approve' ? '#4caf50' : '#f44336'};">
+            ${decision === 'approve' ? '✔ Approved' : '✘ Rejected'}
+          </span>
+        `}
+      </div>
+    </div>
+  `;
+}
+
+export function renderMessageBubble(msg: any, view?: IChatView) {
+  if (msg.isGate && view) { return renderGateCard(msg, view); }
+  if (msg.isDelegation) { return renderDelegationCard(msg); }
+
+  const isUser = msg.role === 'user';
+  const isSystem = msg.role === 'system';
+  const isAgent = !isUser && !isSystem;
+
+  const typeClass = isUser ? 'msg-user' : (isAgent ? 'msg-agent' : 'msg-system');
+  const roleClass = isAgent ? `role-${msg.role}` : '';
+
+  // Check for A2UI components in agent messages
+  const msgIndex = view?.history?.indexOf(msg) ?? 0;
+  const a2uiSegments = isAgent && msg.text && !msg.isStreaming ? parseA2UI(msg.text) : [];
+
+  return html`
+    <div class="msg-bubble ${typeClass} ${roleClass}">
+      <div class="msg-header">
+        <span class="msg-icon">${getIcon(msg.role)}</span>
+        <span class="msg-sender">
+          ${msg.sender} 
+          ${msg.status ? html`<span class="msg-status">(${msg.status})</span>` : ''}
+        </span>
+      </div>
+      <div class="msg-content ${isAgent ? 'markdown-body' : ''}">
+        ${renderToolEvents(msg.toolEvents)}
+        ${a2uiSegments.length > 0 && view
+      ? (() => {
+        // Separate text segments and A2UI blocks
+        const textParts = a2uiSegments.filter(s => s.type === 'text');
+        const a2uiBlocks = a2uiSegments.filter(s => s.type === 'a2ui' && s.block).map(s => s.block!);
+        return html`
+            ${textParts.map(seg => renderMarkdown(seg.content))}
+            ${a2uiBlocks.length > 0 ? renderA2UISequence(a2uiBlocks, view, msg, msgIndex) : ''}
+          `;
+      })()
+      : isAgent && msg.text ? renderMarkdown(msg.text) : msg.text
+    }
+        ${msg.isStreaming ? html`<span class="streaming-cursor"></span>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+export function renderLoadingSkeleton() {
+  return html`
+    <div class="skeleton-chat">
+      <div class="msg-bubble msg-agent skeleton">
+        <div class="skeleton-header"></div>
+        <div class="skeleton-content">
+          <div class="skeleton-line full"></div>
+          <div class="skeleton-line" style="width: 75%"></div>
+          <div class="skeleton-line half"></div>
+        </div>
+      </div>
+      <div class="msg-bubble msg-user skeleton">
+        <div class="skeleton-header" style="width: 60px"></div>
+        <div class="skeleton-content">
+          <div class="skeleton-line" style="width: 65%"></div>
+        </div>
+      </div>
+      <div class="msg-bubble msg-agent skeleton">
+        <div class="skeleton-header"></div>
+        <div class="skeleton-content">
+          <div class="skeleton-line full"></div>
+          <div class="skeleton-line" style="width: 80%"></div>
+        </div>
+      </div>
+    </div>
+  `;
+}

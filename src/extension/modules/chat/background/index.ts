@@ -110,9 +110,12 @@ export class ChatBackground extends Background {
     let role = data.agentRole || 'backend';
 
     // Detect slash commands — trigger workflow start and prompt the workflow's owner
+    // Only match short commands like /init, /phase-1-brief — NOT file paths like /Users/...
     const textTrimmed = data.text.trim();
-    if (textTrimmed.startsWith('/')) {
-      const commandId = textTrimmed.split(' ')[0].substring(1); // e.g. "/init" -> "init"
+    const slashToken = textTrimmed.split(' ')[0]; // e.g. "/init" or "/Users/milos/..."
+    const isSlashCommand = textTrimmed.startsWith('/') && !slashToken.includes('/', 1);
+    if (isSlashCommand) {
+      const commandId = slashToken.substring(1); // e.g. "/init" -> "init"
       const initResult = await this.handleWorkflowCommand(commandId);
 
       if (!initResult.success) {
@@ -128,7 +131,7 @@ export class ChatBackground extends Background {
     }
 
     // Intercept init workflow completion: detect A2UI answers for language + strategy
-    if (!textTrimmed.startsWith('/')) {
+    if (!isSlashCommand) {
       const workflowState = await this.getWorkflowState();
       if (workflowState?.currentWorkflowId === 'workflow.init' && workflowState?.status === 'running') {
         const hasLanguage = /idioma.*:\s*(español|english)/i.test(data.text);
@@ -150,7 +153,7 @@ export class ChatBackground extends Background {
     }
 
     // Intercept task lifecycle start: after init completes, user provides task title
-    if (!textTrimmed.startsWith('/') && this.initStrategy) {
+    if (!isSlashCommand && this.initStrategy) {
       const workflowState = await this.getWorkflowState();
       if (!workflowState || workflowState.status === 'completed' || workflowState.status === 'idle') {
         const strategy = this.initStrategy;

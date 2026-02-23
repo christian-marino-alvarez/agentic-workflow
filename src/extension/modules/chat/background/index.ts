@@ -6,7 +6,7 @@ import { NAME, MESSAGES } from '../constants.js';
 import { API_ENDPOINTS, SIDECAR_BASE_URL, DEFAULT_MODELS } from '../../llm/constants.js';
 import { MESSAGES as SETTINGS_MESSAGES } from '../../settings/constants.js';
 import { MESSAGES as RUNTIME_MESSAGES } from '../../runtime/constants.js';
-import { behavioralPreamble, workflowStartPrompt, initCompletedPrompt, A2UI_INSTRUCTIONS } from '../prompts/index.js';
+import { behavioralPreamble, workflowStartPrompt, A2UI_INSTRUCTIONS } from '../prompts/index.js';
 import { randomUUID } from 'crypto';
 
 
@@ -17,7 +17,7 @@ export class ChatBackground extends Background {
   private static readonly SESSIONS_KEY = 'chat.sessions';
   private static readonly LAST_SESSION_KEY = 'chat.lastSessionId';
   private vscodeContext: vscode.ExtensionContext;
-  private initStrategy: 'long' | 'short' | null = null;
+
 
   constructor(context: vscode.ExtensionContext) {
     super(NAME, context.extensionUri, `${NAME}-view`);
@@ -130,52 +130,8 @@ export class ChatBackground extends Background {
       data.text = workflowStartPrompt(commandId);
     }
 
-    // Intercept init workflow completion: detect A2UI answers for language + strategy
-    if (!isSlashCommand) {
-      const workflowState = await this.getWorkflowState();
-      this.log(`Init detection: workflowId=${workflowState?.currentWorkflowId}, status=${workflowState?.status}`);
-      if (workflowState?.currentWorkflowId === 'workflow.init' && workflowState?.status === 'running') {
-        const hasLanguage = /idioma.*:\s*(español|english)/i.test(data.text);
-        const strategyMatch = data.text.match(/estrategia.*:\s*(long|short)/i);
-        this.log(`Init regex: hasLanguage=${hasLanguage}, strategyMatch=${strategyMatch?.[1] || 'null'}, text="${data.text.substring(0, 80)}"`);
-        if (hasLanguage && strategyMatch) {
-          const language = /español/i.test(data.text) ? 'es' : 'en';
-          const strategy = strategyMatch[1].toLowerCase() as 'long' | 'short';
-          // Create init.md artifact
-          await this.createInitArtifact(language, strategy);
-          // Advance workflow: step complete → gate approve
-          await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_STEP_COMPLETE);
-          await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_GATE_RESPONSE, { gateId: 'init', decision: 'SI' });
-          this.initStrategy = strategy;
-          this.log(`Init workflow completed: language=${language}, strategy=${strategy}`);
-          // Tell the LLM to just ask for the task
-          data.text = initCompletedPrompt(language, strategy);
-        }
-      }
-    }
-
-    // Intercept task lifecycle start: after init completes, user provides task title
-    if (!isSlashCommand && this.initStrategy) {
-      const workflowState = await this.getWorkflowState();
-      if (!workflowState || workflowState.status === 'completed' || workflowState.status === 'idle') {
-        const strategy = this.initStrategy;
-        this.initStrategy = null;
-        const lifecycleId = strategy === 'long' ? 'tasklifecycle-long' : 'tasklifecycle-short';
-        try {
-          await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_START, {
-            workflowId: lifecycleId,
-            taskId: textTrimmed.substring(0, 50),
-            strategy,
-          });
-          this.log(`Started ${lifecycleId} for task: ${textTrimmed.substring(0, 50)}`);
-        } catch (err: any) {
-          this.log(`Failed to start lifecycle: ${err.message}`);
-        }
-        // The lifecycle context is now injected via structured sections in the system prompt.
-        // The user's task text is sent as-is — no hardcoded prompt needed.
-        data.text = `El usuario quiere iniciar la tarea: "${data.text}". El workflow ${lifecycleId} ya fue lanzado. Ejecuta la primera fase según las instrucciones cargadas en tu contexto.`;
-      }
-    }
+    // Workflow transitions are handled by handleGateResponse — no hardcoded logic here.
+    // The LLM detects gate completion, presents A2UI gate confirmation, user validates, extension transitions.
 
     this.log(`Message for role "${role}": ${data.text.substring(0, 50)}...`);
 
@@ -711,48 +667,8 @@ export class ChatBackground extends Background {
   /**
    * Create init.md artifact for the init workflow gate.
    */
-  private async createInitArtifact(language: string, strategy: 'long' | 'short'): Promise<void> {
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (!workspaceFolders) { return; }
-    const root = workspaceFolders[0].uri.fsPath;
-    const artifactPath = path.join(root, '.agent/artifacts/candidate/init.md');
-
-    const langValue = language === 'es' ? 'español' : 'english';
-    const content = [
-      '# init bootstrap',
-      '',
-      '- command: /init',
-      '- role.architect: architect-agent',
-      '- constitution.loaded.in_context: true',
-      '',
-      '## Constitution (load order)',
-      '1. .agent/rules/constitution/GEMINI.location.md',
-      '2. .agent/rules/constitution/architecture/index.md',
-      '3. .agent/rules/constitution/clean-code.md',
-      '',
-      '```yaml',
-      'bootstrap:',
-      '  done: true',
-      'roles:',
-      '  architect: architect-agent',
-      'constitution:',
-      '  loaded:',
-      '    - .agent/rules/constitution/GEMINI.location.md',
-      '    - .agent/rules/constitution/architecture/index.md',
-      '    - .agent/rules/constitution/clean-code.md',
-      'language:',
-      `  value: ${langValue}`,
-      '  confirmed: true',
-      `strategy: ${strategy}`,
-      '```',
-      '',
-    ].join('\n');
-
-    const fs = await import('fs/promises');
-    await fs.mkdir(path.dirname(artifactPath), { recursive: true });
-    await fs.writeFile(artifactPath, content, 'utf-8');
-    this.log(`Init artifact created: ${artifactPath}`);
-  }
+  // createInitArtifact removed — LLM is responsible for creating artifacts via tools.
+  // The extension only interprets the workflow schema (gates, passTarget, failBehavior).
 
   /**
    * Handle roles changed notification from Settings background.
@@ -880,11 +796,64 @@ export class ChatBackground extends Background {
 
   private async handleGateResponse(data: any): Promise<any> {
     try {
-      this.log('Gate response from user', data);
-      const result = await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_GATE_RESPONSE, data);
-      return { success: true, ...result };
+      this.log('Gate response from user', JSON.stringify(data));
+
+      // 1. Read current workflow state to get passTarget BEFORE sending gate response
+      const workflowState = await this.getWorkflowState();
+      const passTarget = workflowState?.workflow?.passTarget;
+      const strategy = data.strategy || workflowState?.workflow?.id?.includes('short') ? 'short' : 'long';
+
+      // 2. Advance workflow: step complete → gate approve/reject
+      if (data.decision === 'SI') {
+        try {
+          await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_STEP_COMPLETE);
+        } catch { /* step may already be at gate */ }
+        await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_GATE_RESPONSE, {
+          gateId: data.gateId || 'gate',
+          decision: 'SI',
+        });
+        this.log(`Gate approved. passTarget=${passTarget}`);
+
+        // 3. Auto-transition to next workflow via passTarget (data-driven)
+        if (passTarget) {
+          // passTarget may be "workflow.tasklifecycle-long | workflow.tasklifecycle-short"
+          // Resolve which one based on strategy
+          const targets = passTarget.split('|').map((t: string) => t.trim());
+          let nextWorkflowId = targets[0];
+          if (targets.length > 1 && strategy) {
+            nextWorkflowId = targets.find((t: string) => t.includes(strategy)) || targets[0];
+          }
+
+          // Clean workflow. prefix if present for matching
+          const cleanId = nextWorkflowId.replace(/^workflow\./, '');
+          this.log(`Auto-transitioning to next workflow: ${cleanId} (strategy: ${strategy})`);
+
+          try {
+            const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+            await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_START, {
+              workflowId: cleanId,
+              taskId: data.taskTitle || 'task',
+              strategy,
+              dirPath: workspaceRoot ? `${workspaceRoot}/.agent/workflows` : undefined,
+            });
+            this.log(`Successfully started next workflow: ${cleanId}`);
+          } catch (err: any) {
+            this.log(`Failed to start next workflow: ${err.message}`);
+          }
+        }
+      } else {
+        // Gate rejected
+        await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_GATE_RESPONSE, {
+          gateId: data.gateId || 'gate',
+          decision: 'NO',
+          reason: data.reason,
+        });
+        this.log('Gate rejected by user');
+      }
+
+      return { success: true };
     } catch (error: any) {
-      this.log('Failed to forward gate response', error);
+      this.log('Failed to handle gate response', error);
       return { success: false, error: error.message };
     }
   }

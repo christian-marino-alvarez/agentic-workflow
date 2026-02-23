@@ -737,14 +737,46 @@ export class ChatView extends View {
 
     // Check if all blocks are resolved
     const allResolved = blocks.every((b: A2UIBlock) => msg.a2uiAnswers[b.id] !== undefined);
+
+    // Detect if any block is a gate type
+    const gateBlock = blocks.find(b => b.type === 'gate');
+    const hasGateBlock = !!gateBlock;
+
     if (allResolved) {
-      // Send all answers as silent message
-      const parts: string[] = [];
-      for (const b of blocks) {
-        const ans = msg.a2uiAnswers[b.id];
-        if (ans) { parts.push(`${b.label || b.id}: ${ans}`); }
+      if (hasGateBlock) {
+        // Gate A2UI: send GATE_RESPONSE command to background (data-driven workflow transition)
+        const gateAnswer = msg.a2uiAnswers[gateBlock!.id];
+        const decision = /^si$/i.test(gateAnswer) ? 'SI' : 'NO';
+
+        // Extract strategy from other A2UI answers if available
+        const strategyAnswer = Object.values(msg.a2uiAnswers as Record<string, string>).find(
+          (v: string) => /long|short/i.test(v)
+        );
+        const strategy = strategyAnswer && /short/i.test(strategyAnswer) ? 'short' : 'long';
+
+        this.log(`Gate A2UI confirmed: decision=${decision}, strategy=${strategy}`);
+        this.sendMessage(NAME, MESSAGES.GATE_RESPONSE, {
+          gateId: gateBlock!.id,
+          decision,
+          strategy,
+        });
+
+        // Also send as silent message for LLM context
+        const parts: string[] = [];
+        for (const b of blocks) {
+          const ans = msg.a2uiAnswers[b.id];
+          if (ans) { parts.push(`${b.label || b.id}: ${ans}`); }
+        }
+        this.sendSilentMessage(parts.join('\n'));
+      } else {
+        // Regular A2UI: send all answers as silent message
+        const parts: string[] = [];
+        for (const b of blocks) {
+          const ans = msg.a2uiAnswers[b.id];
+          if (ans) { parts.push(`${b.label || b.id}: ${ans}`); }
+        }
+        this.sendSilentMessage(parts.join('\n'));
       }
-      this.sendSilentMessage(parts.join('\n'));
     }
 
     // Detect strategy selection — request phases dynamically from filesystem

@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import { setup, createActor, type AnyActorRef } from 'xstate';
 import { WorkflowParser } from './workflow-parser.js';
 import { WorkflowPersistence } from './persistence.js';
@@ -250,6 +251,110 @@ export class WorkflowEngine {
     return undefined;
   }
 
+  /**
+   * Build a hierarchical XState machine from lifecycle phase definitions.
+   * Each phase becomes a compound state with sub-states:
+   *   phaseExecuting → phaseGate → phaseDone | phaseFailed
+   * Phase transitions are enforced by gates — cannot advance without approval.
+   */
+  private buildLifecycleMachine(phases: WorkflowDef[], lifecycleDef: WorkflowDef) {
+    const phaseStates: Record<string, any> = {};
+
+    for (let i = 0; i < phases.length; i++) {
+      const phase = phases[i];
+      const phaseKey = phase.id.replace(/\./g, '_'); // XState doesn't like dots in state names
+      const hasGate = phase.gate !== null && phase.gate !== undefined;
+      const nextPhaseKey = i < phases.length - 1
+        ? phases[i + 1].id.replace(/\./g, '_')
+        : 'lifecycle_completed';
+
+      phaseStates[phaseKey] = {
+        on: {
+          // Allow step completion within a phase
+          [ENGINE_EVENTS.STEP_COMPLETE]: hasGate
+            ? [{ target: `${phaseKey}` }] // stay in same phase until gate
+            : [],
+          // Gate events — only if phase has a gate
+          ...(hasGate ? {
+            [ENGINE_EVENTS.PHASE_GATE_APPROVE]: {
+              target: nextPhaseKey,
+              actions: ['notifyPhaseComplete'],
+            },
+            [ENGINE_EVENTS.PHASE_GATE_REJECT]: {
+              actions: ['notifyError'],
+            },
+          } : {}),
+          // Allow manual advance if no gate
+          ...(!hasGate ? {
+            [ENGINE_EVENTS.PHASE_ADVANCE]: {
+              target: nextPhaseKey,
+              actions: ['notifyPhaseComplete'],
+            },
+          } : {}),
+          [ENGINE_EVENTS.ERROR]: {
+            actions: ['notifyError'],
+          },
+        },
+        entry: [() => {
+          console.log(`[WorkflowEngine] Entered phase: ${phase.id} (owner: ${phase.owner})`);
+        }],
+      };
+    }
+
+    // Final state
+    phaseStates['lifecycle_completed'] = {
+      type: 'final' as const,
+      entry: ['notifyPhaseComplete'],
+    };
+
+    return setup({
+      types: {
+        context: {} as WorkflowContext,
+        events: {} as WorkflowEvent,
+        input: {} as { taskId: string; strategy: string; workflowDef: WorkflowDef; phases: WorkflowDef[] },
+      },
+      guards: {
+        hasGate: ({ context }) => {
+          const currentPhase = context.phases[context.currentPhaseIndex];
+          return currentPhase?.gate !== null && currentPhase?.gate !== undefined;
+        },
+      },
+      actions: this.buildMachineActions(this),
+    }).createMachine({
+      id: lifecycleDef.id,
+      initial: phases.length > 0 ? phases[0].id.replace(/\./g, '_') : 'lifecycle_completed',
+      context: ({ input }) => ({
+        taskId: input.taskId,
+        strategy: input.strategy,
+        currentWorkflowId: lifecycleDef.id,
+        currentStepIndex: 0,
+        currentPhaseIndex: 0,
+        workflowDef: input.workflowDef,
+        phases: input.phases,
+        gateResponses: {},
+        error: null,
+        startedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }),
+      states: phaseStates,
+    });
+  }
+
+  /**
+   * Detect if a workflow ID refers to a lifecycle (tasklifecycle-long or short).
+   */
+  private isLifecycleWorkflow(workflowId: string): boolean {
+    return workflowId.includes('tasklifecycle-long') || workflowId.includes('tasklifecycle-short');
+  }
+
+  /**
+   * Resolve the lifecycle directory path from a workflow ID.
+   */
+  private getLifecycleDirName(workflowId: string): string {
+    if (workflowId.includes('long')) return 'tasklifecycle-long';
+    return 'tasklifecycle-short';
+  }
+
   async start(input: StartWorkflowInput): Promise<WorkflowDef> {
     const def = this.resolveWorkflow(input.workflowId);
     if (!def) {
@@ -257,6 +362,26 @@ export class WorkflowEngine {
       throw new Error(`[WorkflowEngine] Workflow "${input.workflowId}" not loaded. Available: [${loaded.join(', ')}]`);
     }
 
+    // Detect lifecycle workflows → build hierarchical machine
+    if (this.isLifecycleWorkflow(input.workflowId)) {
+      const dirName = this.getLifecycleDirName(input.workflowId);
+      const lifecyclePath = join(this.parser['workspaceRoot'], '.agent', 'workflows', dirName);
+      const phases = await this.parser.parsePhaseDirectory(lifecyclePath);
+
+      if (phases.length > 0) {
+        console.log(`[WorkflowEngine] Building lifecycle machine with ${phases.length} phases`);
+        const machine = this.buildLifecycleMachine(phases, def);
+        this.actor = createActor(machine, {
+          input: { taskId: input.taskId, strategy: input.strategy, workflowDef: def, phases },
+        });
+        this.actor.subscribe(() => this.emitStateChange());
+        this.actor.start();
+        console.log(`[WorkflowEngine] Started lifecycle "${input.workflowId}" for task "${input.taskId}" (${phases.length} phases)`);
+        return def;
+      }
+    }
+
+    // Fallback: simple workflow machine (init, coding, etc.)
     const machine = this.createMachine(def);
     this.actor = createActor(machine, {
       input: { taskId: input.taskId, strategy: input.strategy, workflowDef: def },
@@ -268,6 +393,16 @@ export class WorkflowEngine {
     this.actor.send({ type: ENGINE_EVENTS.START } as WorkflowEvent);
     console.log(`[WorkflowEngine] Started "${input.workflowId}" for task "${input.taskId}"`);
     return def;
+  }
+
+  /**
+   * Get the currently active phase definition (for lifecycle workflows).
+   */
+  getCurrentPhase(): WorkflowDef | null {
+    if (!this.actor) return null;
+    const context = this.actor.getSnapshot().context as WorkflowContext;
+    if (!context.phases || context.phases.length === 0) return null;
+    return context.phases[context.currentPhaseIndex] || null;
   }
 
   stepComplete(): void {

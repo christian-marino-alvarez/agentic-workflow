@@ -107,6 +107,40 @@ export class WorkflowParser {
   }
 
   /**
+   * Parse phase files from a lifecycle directory (e.g., tasklifecycle-long/).
+   * Returns parsed phases sorted by phase number.
+   * Only includes files matching phase-*.md pattern (excludes index.md).
+   */
+  async parsePhaseDirectory(lifecyclePath: string): Promise<WorkflowDef[]> {
+    const files = await this.findMarkdownFiles(lifecyclePath);
+    const phases: WorkflowDef[] = [];
+
+    for (const file of files) {
+      const filename = basename(file);
+      // Only parse phase files, not index.md or other files
+      if (!filename.startsWith('phase-') || !filename.endsWith('.md')) {
+        continue;
+      }
+      try {
+        const def = await this.parse(file);
+        phases.push(def);
+      } catch (err) {
+        console.error(`[WorkflowParser] Failed to parse phase ${file}:`, err);
+      }
+    }
+
+    // Sort by phase number extracted from filename (phase-0-..., phase-1-..., etc.)
+    phases.sort((a, b) => {
+      const numA = parseInt(a.id.match(/phase-(\d+)/)?.[1] || '0', 10);
+      const numB = parseInt(b.id.match(/phase-(\d+)/)?.[1] || '0', 10);
+      return numA - numB;
+    });
+
+    console.log(`[WorkflowParser] Parsed ${phases.length} phases from ${lifecyclePath}`);
+    return phases;
+  }
+
+  /**
    * Scan .agent/rules/roles/ to build a dynamic agent registry.
    */
   async discoverAgents(rolesDir?: string): Promise<AgentRole[]> {

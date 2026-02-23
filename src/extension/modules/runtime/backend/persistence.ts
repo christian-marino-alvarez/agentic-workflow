@@ -95,10 +95,18 @@ export class WorkflowPersistence {
    */
   async loadState(): Promise<WorkflowEngineState | null> {
     const db = await this.load();
-    if (!db.activeTask) {
+    // Try activeTask first
+    if (db.activeTask && db.states[db.activeTask]) {
+      return db.states[db.activeTask];
+    }
+    // Fallback: return most recent state by updatedAt
+    const entries = Object.values(db.states);
+    if (entries.length === 0) {
       return null;
     }
-    return db.states[db.activeTask] ?? null;
+    return entries.sort((a, b) =>
+      new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()
+    )[0];
   }
 
   /**

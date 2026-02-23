@@ -811,6 +811,7 @@ export class ChatBackground extends Background {
 
       const rawResult = await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_START, {
         workflowId: commandId,
+        taskId: `task-${Date.now()}`,
         dirPath: `${workspaceRoot}/.agent/workflows`,
       }, 45_000);
 

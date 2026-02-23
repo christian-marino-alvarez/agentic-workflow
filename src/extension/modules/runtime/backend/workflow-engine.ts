@@ -358,6 +358,11 @@ export class WorkflowEngine {
   }
 
   async start(input: StartWorkflowInput): Promise<WorkflowDef> {
+    // Ensure taskId is always set — persistence layer needs it as a valid key
+    if (!input.taskId) {
+      input.taskId = `task-${Date.now()}`;
+    }
+
     const def = this.resolveWorkflow(input.workflowId);
     if (!def) {
       const loaded = Array.from(this.workflows.keys());

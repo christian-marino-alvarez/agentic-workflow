@@ -94,6 +94,21 @@ Rules:
 - type="choice" for single select (radio buttons)
 - type="confirm" for yes/no
 - type="multi" for checkboxes
+- type="gate" for workflow gate evaluations (MUST be used when asking user to approve/reject a workflow gate)
+
+### Workflow Gate Usage (CRITICAL)
+When a workflow has a Gate section and you have evaluated all requirements, you MUST present the result
+using type="gate" so the extension can handle the workflow transition automatically:
+
+\\\`\\\`\\\`
+<a2ui type="gate" id="gate-eval" label="Gate Evaluation: all requirements met">
+- [ ] SI
+- [ ] NO
+</a2ui>
+\\\`\\\`\\\`
+
+The extension will read the workflow's passTarget and automatically start the next workflow.
+You do NOT need to manually start the next workflow — just present the gate confirmation and wait.
 
 Example combining text and interactive component:
 "¡Hola! Confirmemos la configuración inicial:

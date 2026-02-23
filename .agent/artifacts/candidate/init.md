@@ -1,24 +1,14 @@
-# init bootstrap
-
-- command: /init
-- role.architect: architect-agent
-- constitution.loaded.in_context: true
-
-## Constitution (load order)
-1. .agent/rules/constitution/clean-code.md
-2. .agent/rules/constitution/agents-behavior.md
-
-```yaml
-bootstrap:
-  done: true
-roles:
-  architect: architect-agent
-constitution:
-  loaded:
-    - .agent/rules/constitution/clean-code.md
-    - .agent/rules/constitution/agents-behavior.md
+---
+version: 1.0.0
+status: candidate
 language:
-  value: español
+  value: "es"
   confirmed: true
-strategy: short
-```
+strategy:
+  value: "short"
+  confirmed: true
+---
+
+# Init Configuration
+
+Configuration established for the agentic-workflow session.

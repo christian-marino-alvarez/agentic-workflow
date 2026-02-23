@@ -622,6 +622,11 @@ export class ChatView extends View {
       const statusText = data?.status || 'unknown';
       const phase = data?.currentStep?.label || data?.currentPhase || '';
 
+      // Reset loading state on terminal workflow statuses
+      if (statusText === 'completed' || statusText === 'failed') {
+        this.isLoading = false;
+      }
+
       // Update taskSteps from engine state if available
       // Skip internal init workflow steps — only show lifecycle phases
       const isInitWorkflow = data?.currentWorkflowId === 'workflow.init';

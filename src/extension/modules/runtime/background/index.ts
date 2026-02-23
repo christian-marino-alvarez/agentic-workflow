@@ -140,7 +140,9 @@ export class RuntimeBackground extends Background {
   }
 
   private async handleWorkflowStatus(): Promise<any> {
-    return this.forwardToSidecar('workflow.status', {});
+    const raw = await this.forwardToSidecar('workflow.status', {});
+    // Unwrap JSON-RPC result wrapper from sidecar
+    return raw?.result || raw;
   }
 
   private async handleWorkflowReload(data: any): Promise<any> {

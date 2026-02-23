@@ -248,13 +248,48 @@ export class ChatBackground extends Background {
       try {
         const rawWorkflowState = await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_STATUS);
         const workflowState = rawWorkflowState?.result || rawWorkflowState;
-        if (workflowState?.workflow?.rawContent) {
-          const workflowContext = [
-            '\n\n---\n## ACTIVE WORKFLOW (MANDATORY — follow these instructions step by step)\n',
-            workflowState.workflow.rawContent,
-            '\n---\n',
-            `Current status: ${workflowState.status}`,
-            workflowState.steps ? `\nSteps: ${workflowState.steps.map((s: any) => `${s.id}. ${s.label} [${s.status}]`).join(' | ')}` : '',
+        if (workflowState?.workflow) {
+          // Build structured context from parsed sections if available
+          let phaseContext: string;
+          const sections = workflowState.parsedSections;
+          const currentPhaseId = workflowState.currentPhaseId || '';
+          const phases = workflowState.phases;
+
+          if (sections && currentPhaseId) {
+            // Lifecycle workflow with parsed phases — inject structured sections
+            const activePhase = phases?.find((p: any) => p.status === 'active');
+            phaseContext = [
+              `\n\n---\n## ACTIVE PHASE: ${activePhase?.label || currentPhaseId}`,
+              `**Owner**: ${activePhase?.owner || workflowState.workflow.owner}`,
+              sections.objective ? `**Objective**: ${sections.objective}` : '',
+              '',
+              sections.inputs.length > 0 ? `### Required Inputs\n${sections.inputs.map((i: string) => `- ${i}`).join('\n')}` : '',
+              sections.outputs.length > 0 ? `### Expected Outputs\n${sections.outputs.map((o: string) => `- ${o}`).join('\n')}` : '',
+              sections.templates.length > 0 ? `### Required Templates\n${sections.templates.map((t: string) => `- ${t}`).join('\n')}` : '',
+              '',
+              workflowState.steps ? `### Instructions (Steps)\n${workflowState.steps.map((s: any) => `${s.id}. ${s.label} [${s.status}]`).join('\n')}` : '',
+              '',
+              workflowState.workflow.gate ? `### Gate Requirements (ALL mandatory)\n${workflowState.workflow.gate.requirements.map((r: string, i: number) => `${i + 1}. ${r}`).join('\n')}` : '',
+              '',
+              workflowState.workflow.passTarget ? `### On PASS → ${workflowState.workflow.passTarget}` : '',
+              `\nCurrent status: ${workflowState.status}`,
+              phases?.length > 0 ? `\nPhases: ${phases.map((p: any) => `${p.label} [${p.status}]`).join(' → ')}` : '',
+              '\n---',
+            ].filter(Boolean).join('\n');
+          } else if (workflowState.workflow.rawContent) {
+            // Simple workflow (init, coding) — use raw content
+            phaseContext = [
+              '\n\n---\n## ACTIVE WORKFLOW (MANDATORY — follow these instructions step by step)\n',
+              workflowState.workflow.rawContent,
+              '\n---\n',
+              `Current status: ${workflowState.status}`,
+              workflowState.steps ? `\nSteps: ${workflowState.steps.map((s: any) => `${s.id}. ${s.label} [${s.status}]`).join(' | ')}` : '',
+            ].join('\n');
+          } else {
+            phaseContext = '';
+          }
+
+          const behavioralRules = [
             '\n\n## BEHAVIORAL RULES (MANDATORY — VIOLATION = SYSTEM FAILURE)',
             '',
             '### Rule 0: PROJECT IDENTITY',
@@ -293,8 +328,9 @@ export class ChatBackground extends Background {
             'A response that only says Registrado/Entendido/OK without advancing the workflow is a FAILURE.',
             'You MUST continue executing steps (via tools) and arrive at the next user-facing question.',
           ].join('\n');
-          instructions = (instructions || '') + workflowContext;
-          this.log(`Injected workflow context (${workflowState.workflow.id}) into LLM instructions`);
+
+          instructions = (instructions || '') + phaseContext + behavioralRules;
+          this.log(`Injected workflow context (${workflowState.currentPhaseId || workflowState.workflow.id}) into LLM instructions`);
 
           // 5. Load constitution files referenced in the workflow
           const constitutions: string[] = workflowState.workflow.constitutions || [];

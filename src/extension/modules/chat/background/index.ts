@@ -96,6 +96,10 @@ export class ChatBackground extends Background {
       case MESSAGES.GATE_RESPONSE:
         return this.handleGateResponse(message.payload.data);
       case MESSAGES.WORKFLOW_STATE_UPDATE:
+        // If from view (request), fetch and return; if from runtime (push), forward
+        if (message.origin === MessageOrigin.View || message.from?.includes('view')) {
+          return this.getWorkflowState();
+        }
         return this.handleWorkflowStateUpdate(message.payload.data);
 
       case MESSAGES.LIFECYCLE_PHASES_REQUEST:

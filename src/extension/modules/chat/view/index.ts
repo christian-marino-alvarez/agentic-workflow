@@ -99,6 +99,7 @@ export class ChatView extends View {
     nextStep?: string;
     nextStepIndex?: number;
     passTarget?: string;
+    failBehavior?: string;
     inputs?: string[];
     outputs?: string[];
     templates?: string[];
@@ -372,6 +373,15 @@ export class ChatView extends View {
         this.appVersion = response.version || '';
         this.log('Workflow context loaded silently');
       }
+
+      // Fetch current workflow state to populate details panel on reload
+      const stateResponse = await this.sendMessage(NAME, MESSAGES.WORKFLOW_STATE_UPDATE);
+      if (stateResponse && stateResponse.workflow) {
+        // Simulate incoming state update to populate workflowDetails
+        this.listen({
+          payload: { command: MESSAGES.WORKFLOW_STATE_UPDATE, data: stateResponse },
+        });
+      }
     } catch (error) {
       this.log('Error loading init workflow', error);
     }
@@ -642,11 +652,12 @@ export class ChatView extends View {
           nextStep: nextStepObj?.label,
           nextStepIndex: nextStepIdx >= 0 ? nextStepIdx + 1 : undefined,
           passTarget: data?.workflow?.passTarget || undefined,
-          // Parsed sections from active phase
-          inputs: data?.parsedSections?.inputs || [],
-          outputs: data?.parsedSections?.outputs || [],
-          templates: data?.parsedSections?.templates || [],
-          objective: data?.parsedSections?.objective || '',
+          failBehavior: data?.workflow?.failBehavior || undefined,
+          // Sections: prefer active phase sections, fallback to workflow-level sections
+          inputs: data?.parsedSections?.inputs || data?.workflow?.sections?.inputs || [],
+          outputs: data?.parsedSections?.outputs || data?.workflow?.sections?.outputs || [],
+          templates: data?.parsedSections?.templates || data?.workflow?.sections?.templates || [],
+          objective: data?.parsedSections?.objective || data?.workflow?.sections?.objective || '',
           currentPhaseLabel: data?.phases?.find((p: any) => p.status === 'active')?.label || '',
         };
       }

@@ -18,6 +18,7 @@ export interface WorkflowDetails {
   nextStep?: string;
   nextStepIndex?: number;
   passTarget?: string;
+  failBehavior?: string;
   // Parsed sections from workflow markdown
   inputs?: string[];
   outputs?: string[];

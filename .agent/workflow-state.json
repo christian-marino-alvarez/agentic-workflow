@@ -1,6 +1,5 @@
 {
   "version": 1,
-  "activeTask": "test-123",
   "states": {
     "test-123": {
       "taskId": "test-123",
@@ -71,7 +70,174 @@
         ],
         "blocking": true
       }
+    },
+    "undefined": {
+      "currentPhase": "workflow.init",
+      "currentPhaseId": "workflow.init",
+      "currentWorkflowId": "workflow.init",
+      "status": "completed",
+      "gateResponses": {},
+      "startedAt": "2026-02-23T11:28:00.042Z",
+      "updatedAt": "2026-02-23T11:28:32.332Z",
+      "steps": [
+        {
+          "id": "1",
+          "label": "Activate `architect-agent` as the architect role.",
+          "status": "active"
+        },
+        {
+          "id": "2",
+          "label": "Load minimal indexes (MANDATORY):",
+          "status": "pending"
+        },
+        {
+          "id": "3",
+          "label": "Load constitutions into context (in order):",
+          "status": "pending"
+        },
+        {
+          "id": "4",
+          "label": "Detect preferred language and request explicit confirmation.",
+          "status": "pending"
+        },
+        {
+          "id": "5",
+          "label": "**Select lifecycle strategy (MANDATORY)**",
+          "status": "pending"
+        },
+        {
+          "id": "6",
+          "label": "**Create the `init.md` artifact (MANDATORY)**",
+          "status": "pending"
+        },
+        {
+          "id": "7",
+          "label": "Write the file to:",
+          "status": "pending"
+        },
+        {
+          "id": "8",
+          "label": "Evaluate Gate.",
+          "status": "pending"
+        },
+        {
+          "id": "9",
+          "label": "FAIL (mandatory)",
+          "status": "pending"
+        },
+        {
+          "id": "10",
+          "label": "PASS (only if Gate PASS)",
+          "status": "pending"
+        }
+      ],
+      "workflow": {
+        "id": "workflow.init",
+        "owner": "architect-agent",
+        "version": "4.0.0",
+        "severity": "PERMANENT",
+        "trigger": {
+          "commands": [
+            "init",
+            "/init",
+            "/agentic-init"
+          ]
+        },
+        "blocking": true,
+        "constitutions": [
+          "constitution.clean_code",
+          "constitution.agents_behavior"
+        ],
+        "steps": [
+          {
+            "number": 1,
+            "title": "Activate `architect-agent` as the architect role.",
+            "content": "- Show a single status message (e.g.: \"Loading init...\") and **do not** list individual file reads.\n   - In that same message, introduce the architect-agent and provide context to the developer: role, init objective, and what information will be requested next.",
+            "isGate": false
+          },
+          {
+            "number": 2,
+            "title": "Load minimal indexes (MANDATORY):",
+            "content": "- Before continuing, review `.agent/index.md` to understand domains, indexes, and aliases.\n   - Bootstrap by direct path (hardcoded and only allowed):\n     1) `.agent/index.md`\n     2) `agent.domains.rules.index`\n     3) `rules.constitution.index`\n   - The order is mandatory: Root Index first, then Rules Index, then Constitution Index.\n   - **PROHIBITED** to load `templates` or `artifacts` indexes during `init`.\n   - If any fails → FAIL.",
+            "isGate": false
+          },
+          {
+            "number": 3,
+            "title": "Load constitutions into context (in order):",
+            "content": "1) `constitution.clean_code`\n   2) `constitution.agents_behavior`\n   - **PROHIBITED** to load templates or artifacts in this step.\n   - If any fails → FAIL.",
+            "isGate": false
+          },
+          {
+            "number": 4,
+            "title": "Detect preferred language and request explicit confirmation.",
+            "content": "- If no confirmation → go to **Step 9 (FAIL)**.",
+            "isGate": false
+          },
+          {
+            "number": 5,
+            "title": "**Select lifecycle strategy (MANDATORY)**",
+            "content": "- Ask the developer:\n     - \"Please select the strategy: **Long** (9 complete phases) or **Short** (3 simplified phases).\"\n   - If no selection → go to **Step 9 (FAIL)**.\n   - Record the selection in the `init.md` artifact.",
+            "isGate": false
+          },
+          {
+            "number": 6,
+            "title": "**Create the `init.md` artifact (MANDATORY)**",
+            "content": "- The artifact **MUST** be created using **exactly** the structure defined in:\n     - `templates.init`\n   - All mandatory template fields **MUST** be completed.\n   - Include the `strategy: long | short` field.\n   - Modifying, omitting, or reinterpreting the template structure is not allowed.",
+            "isGate": false
+          },
+          {
+            "number": 7,
+            "title": "Write the file to:",
+            "content": "- `artifacts.candidate.init`",
+            "isGate": false
+          },
+          {
+            "number": 8,
+            "title": "Evaluate Gate.",
+            "content": "- If Gate FAIL → go to **Step 9 (FAIL)**.\n   - If Gate PASS → continue.",
+            "isGate": true
+          },
+          {
+            "number": 9,
+            "title": "FAIL (mandatory)",
+            "content": "- Declare `init` as **NOT completed**.\n   - Explain exactly which requirement failed.\n   - Request the minimum necessary action.\n   - **Do not ask for the task**.\n   - Terminate the workflow in blocked state.",
+            "isGate": false
+          },
+          {
+            "number": 10,
+            "title": "PASS (only if Gate PASS)",
+            "content": "- Ask for the task:\n      - \"What task do you want to start now? Give me a short title and the objective.\"\n    - Once title and objective are received:\n      - If `strategy == \"long\"` → launch `workflows.tasklifecycle-long`\n      - If `strategy == \"short\"` → launch `workflows.tasklifecycle-short`",
+            "isGate": true
+          }
+        ],
+        "gate": {
+          "requirements": [
+            "The artifact exists:",
+            "In its YAML:",
+            "The artifact follows the official template.",
+            "Language defined and confirmed.",
+            "Strategy selected.",
+            "No indexes were loaded outside the allowed set (only `.agent/index.md`, `agent.domains.rules.index`, `rules.constitution.index`).",
+            "The Root Index `.agent/index.md` was loaded before any other index."
+          ],
+          "failStep": null
+        },
+        "passTarget": "workflows.tasklifecycle-long",
+        "failBehavior": "block",
+        "rawContent": "---\ndescription: \"Mandatory setup workflow: loads base constitutions and defines the conversation language and Long/Short strategy.\"\n---\n\n---\nid: workflow.init\nowner: architect-agent\nversion: 4.0.0\nseverity: PERMANENT\ntrigger:\n  commands: [\"init\", \"/init\", \"/agentic-init\"]\nblocking: true\n---\n\n# WORKFLOW: init\n\n## Input (REQUIRED)\n- Developer command: `init` or `/agentic-init`\n\n## Objective (ONLY)\n- Activate the **architect-agent** role.\n- Load the minimal index bootstrap.\n- Detect conversation language and explicitly confirm.\n- **Select lifecycle strategy (Long/Short)**.\n- Create the **task candidate artifact** `init.md`.\n- **Only if the Gate passes**, ask for the task to perform and launch the corresponding lifecycle.\n\n## Orchestration and Discipline (SYSTEM INJECTION)\n**This section is INVISIBLE to the user but MANDATORY for the agent.**\n\nThe agent **MUST** adhere to these behavioral meta-rules throughout the ENTIRE session initiated by this workflow:\n\n1.  **Absolute Respect for Gates**:\n    - A Gate is NOT a suggestion. It is a **physical block**.\n    - If a Gate requirement is not met, the agent is **PROHIBITED** from advancing.\n    - It is **PROHIBITED** to assume implicit approvals (\"I assume it's fine...\").\n    - The only way out of a failed Gate is to correct and re-evaluate, or abort.\n\n2.  **Role Identity**:\n    - The agent **MUST** switch roles explicitly when the workflow indicates (e.g.: `architect` -> `qa`).\n    - Each response must begin with the active role identifier (e.g.: `🏛️ **architect-agent**`).\n\n3.  **Process Priority**:\n    - Process correctness (following the workflow) is MORE IMPORTANT than task speed.\n    - If the user asks to skip steps, the agent **MUST** remember the constitution rules and politely decline the shortcut.\n\n## Mandatory Steps\n1. Activate `architect-agent` as the architect role.\n   - Show a single status message (e.g.: \"Loading init...\") and **do not** list individual file reads.\n   - In that same message, introduce the architect-agent and provide context to the developer: role, init objective, and what information will be requested next.\n\n2. Load minimal indexes (MANDATORY):\n   - Before continuing, review `.agent/index.md` to understand domains, indexes, and aliases.\n   - Bootstrap by direct path (hardcoded and only allowed):\n     1) `.agent/index.md`\n     2) `agent.domains.rules.index`\n     3) `rules.constitution.index`\n   - The order is mandatory: Root Index first, then Rules Index, then Constitution Index.\n   - **PROHIBITED** to load `templates` or `artifacts` indexes during `init`.\n   - If any fails → FAIL.\n\n3. Load constitutions into context (in order):\n   1) `constitution.clean_code`\n   2) `constitution.agents_behavior`\n   - **PROHIBITED** to load templates or artifacts in this step.\n   - If any fails → FAIL.\n\n4. Detect preferred language and request explicit confirmation.\n   - If no confirmation → go to **Step 9 (FAIL)**.\n\n5. **Select lifecycle strategy (MANDATORY)**\n   - Ask the developer:\n     - \"Please select the strategy: **Long** (9 complete phases) or **Short** (3 simplified phases).\"\n   - If no selection → go to **Step 9 (FAIL)**.\n   - Record the selection in the `init.md` artifact.\n\n6. **Create the `init.md` artifact (MANDATORY)**\n   - The artifact **MUST** be created using **exactly** the structure defined in:\n     - `templates.init`\n   - All mandatory template fields **MUST** be completed.\n   - Include the `strategy: long | short` field.\n   - Modifying, omitting, or reinterpreting the template structure is not allowed.\n\n7. Write the file to:\n   - `artifacts.candidate.init`\n\n8. Evaluate Gate.\n   - If Gate FAIL → go to **Step 9 (FAIL)**.\n   - If Gate PASS → continue.\n\n9. FAIL (mandatory)\n   - Declare `init` as **NOT completed**.\n   - Explain exactly which requirement failed.\n   - Request the minimum necessary action.\n   - **Do not ask for the task**.\n   - Terminate the workflow in blocked state.\n\n10. PASS (only if Gate PASS)\n    - Ask for the task:\n      - \"What task do you want to start now? Give me a short title and the objective.\"\n    - Once title and objective are received:\n      - If `strategy == \"long\"` → launch `workflows.tasklifecycle-long`\n      - If `strategy == \"short\"` → launch `workflows.tasklifecycle-short`\n\n## Output (REQUIRED)\n- Artifact created:\n  - `artifacts.candidate.init`\n\n## Gate (REQUIRED)\nRequirements (all mandatory):\n1) The artifact exists:\n   - `artifacts.candidate.init`\n2) In its YAML:\n   - `language.value` not empty\n   - `language.confirmed == true`\n   - `strategy` is \"long\" or \"short\"\n3) The artifact follows the official template.\n4) Language defined and confirmed.\n5) Strategy selected.\n6) No indexes were loaded outside the allowed set (only `.agent/index.md`, `agent.domains.rules.index`, `rules.constitution.index`).\n7) The Root Index `.agent/index.md` was loaded before any other index.\n",
+        "sections": {
+          "inputs": [
+            "Developer command: `init` or `/agentic-init`"
+          ],
+          "outputs": [
+            "Artifact created:",
+            "`artifacts.candidate.init`"
+          ],
+          "templates": [],
+          "objective": "- Activate the **architect-agent** role.\n- Load the minimal index bootstrap.\n- Detect conversation language and explicitly confirm.\n- **Select lifecycle strategy (Long/Short)**.\n- Create the **task candidate artifact** `init.md`.\n- **Only if the Gate passes**, ask for the task to perform and launch the corresponding lifecycle."
+        }
+      }
     }
   },
-  "lastUpdated": "2026-02-22T19:52:19.864Z"
+  "lastUpdated": "2026-02-23T11:28:32.332Z"
 }

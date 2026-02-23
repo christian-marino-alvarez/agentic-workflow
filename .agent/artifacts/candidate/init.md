@@ -1,20 +1,25 @@
----
-id: init
-title: Initial session configuration
-version: 1.0.0
-author: architect-agent
-date: '2024-07-25T12:00:00Z'
-status: candidate
+# init bootstrap
+
+- command: /init
+- role.architect: architect-agent
+- constitution.loaded.in_context: true
+
+## Constitution (load order)
+1. .agent/rules/constitution/clean-code.md
+2. .agent/rules/constitution/agents-behavior.md
+
+```yaml
+bootstrap:
+  done: true
+roles:
+  architect: architect-agent
+constitution:
+  loaded:
+    - .agent/rules/constitution/clean-code.md
+    - .agent/rules/constitution/agents-behavior.md
 language:
   value: es
   confirmed: true
-strategy: short
-tags: [init, config]
----
-
-# Initial Configuration
-
-This document registers the initial choices for the agentic session.
-
-- **Language**: Spanish (confirmed by user)
-- **Lifecycle Strategy**: Short (3 simplified phases, for rapid changes)
+strategy: long
+timestamp: 2026-02-23T20:03:46+01:00
+```

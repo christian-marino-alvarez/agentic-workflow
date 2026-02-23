@@ -414,6 +414,51 @@ export class SettingsBackground extends Background {
     return { success: true };
   }
 
+  // ─── Role File Helpers ─────────────────────────────────
+
+  /**
+   * Parse a role .md file with potential double frontmatter.
+   * Returns merged data from both blocks + the raw content + file body.
+   */
+  private parseRoleFile(raw: string): { data: Record<string, any>; body: string; raw: string } {
+    const first = matter(raw);
+    let mergedData = { ...first.data };
+    let body = first.content;
+
+    // Role files may have two frontmatter blocks:
+    //   Block 1: personality/trigger (parsed by gray-matter)
+    //   Block 2: id, owner, model, capabilities (in content)
+    if (first.content.trimStart().startsWith('---')) {
+      const second = matter(first.content.trimStart());
+      mergedData = { ...mergedData, ...second.data };
+      body = second.content;
+    }
+
+    return { data: mergedData, body, raw };
+  }
+
+  /**
+   * Write back a role .md file preserving double frontmatter structure.
+   * Model and capabilities go in the SECOND block (metadata).
+   */
+  private writeRoleFile(raw: string, updates: { model?: any; capabilities?: any }): string {
+    const first = matter(raw);
+
+    if (first.content.trimStart().startsWith('---')) {
+      // Double frontmatter: update the second block
+      const second = matter(first.content.trimStart());
+      if (updates.model !== undefined) { second.data.model = updates.model; }
+      if (updates.capabilities !== undefined) { second.data.capabilities = updates.capabilities; }
+      const secondStr = matter.stringify(second.content, second.data);
+      return matter.stringify(secondStr, first.data);
+    }
+
+    // Single frontmatter: update directly
+    if (updates.model !== undefined) { first.data.model = updates.model; }
+    if (updates.capabilities !== undefined) { first.data.capabilities = updates.capabilities; }
+    return matter.stringify(first.content, first.data);
+  }
+
   // ─── Role Discovery ────────────────────────────────────
 
   private async handleGetRoles() {
@@ -426,11 +471,9 @@ export class SettingsBackground extends Background {
       const rootPath = workspaceFolders[0].uri.fsPath;
       const rolesPath = path.join(rootPath, '.agent', 'rules', 'roles');
 
-      // Ensure directory exists
       try {
         await fs.access(rolesPath);
       } catch {
-        // If not exists, return empty
         return { success: true, roles: [] };
       }
 
@@ -449,21 +492,12 @@ export class SettingsBackground extends Background {
         try {
           const filePath = path.join(rolesPath, file);
           const content = await fs.readFile(filePath, 'utf8');
-          const parsed = matter(content);
-          if (parsed.data) {
-            if (parsed.data.icon) {
-              icon = parsed.data.icon;
-            }
-            if (parsed.data.description) {
-              description = parsed.data.description;
-            }
-            if (parsed.data.model) {
-              model = parsed.data.model;
-            }
-            if (parsed.data.capabilities) {
-              capabilities = parsed.data.capabilities;
-            }
-          }
+          const { data } = this.parseRoleFile(content);
+
+          if (data.icon) { icon = data.icon; }
+          if (data.description) { description = data.description; }
+          if (data.model) { model = data.model; }
+          if (data.capabilities) { capabilities = data.capabilities; }
         } catch (err) {
           console.warn(`Failed to parse frontmatter for role ${roleName}`, err);
         }
@@ -521,18 +555,7 @@ export class SettingsBackground extends Background {
       const filePath = path.join(rootPath, '.agent', 'rules', 'roles', `${role}.md`);
 
       const content = await fs.readFile(filePath, 'utf8');
-      const parsed = matter(content);
-
-      // Update frontmatter fields
-      if (model !== undefined) {
-        parsed.data.model = model;
-      }
-      if (capabilities !== undefined) {
-        parsed.data.capabilities = capabilities;
-      }
-
-      // Write back with updated frontmatter
-      const updated = matter.stringify(parsed.content, parsed.data);
+      const updated = this.writeRoleFile(content, { model, capabilities });
       await fs.writeFile(filePath, updated, 'utf8');
 
       // Also persist binding in VS Code settings for quick access

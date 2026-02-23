@@ -187,10 +187,27 @@ export class ChatBackground extends Background {
       if (settingsResponse && settingsResponse.success && settingsResponse.models) {
         const models = settingsResponse.models;
 
-        // 2. Resolve model for this agent role via bindings
+        // 2. Resolve model for this agent role via multiple sources:
+        //    a) VS Code settings bindings (roleBindings)
+        //    b) Role definition file frontmatter (model.id)
         const bindingsResponse = await this.sendMessage('settings', SETTINGS_MESSAGES.GET_BINDING);
         const bindings = bindingsResponse?.bindings || {};
-        const boundModelId = bindings[role] || data.modelId;
+        let boundModelId = bindings[role] || data.modelId;
+
+        // If no binding, check the role definition file for a model config
+        if (!boundModelId) {
+          const rolesResponse = await this.sendMessage('settings', SETTINGS_MESSAGES.GET_ROLES);
+          if (rolesResponse?.success && rolesResponse.roles) {
+            const roleConfig = rolesResponse.roles.find((r: any) => r.name === role);
+            if (roleConfig?.model?.id) {
+              boundModelId = roleConfig.model.id;
+              // Also use provider from role config
+              if (roleConfig.model.provider) {
+                provider = roleConfig.model.provider;
+              }
+            }
+          }
+        }
 
         // Lookup by config UUID first, then by API model name (modelName), then by display name
         const config = boundModelId
@@ -201,8 +218,13 @@ export class ChatBackground extends Background {
 
         if (config) {
           apiKey = config.apiKey || null;
-          provider = config.provider || 'gemini';
+          provider = config.provider || provider || 'gemini';
           modelName = config.modelName || config.name || DEFAULT_MODELS.GEMINI;
+        } else if (boundModelId) {
+          // No config match found — use boundModelId directly as model name
+          // This happens when the role specifies a model not in the Settings list
+          modelName = boundModelId;
+          this.log(`No config match for "${boundModelId}", using as direct model name`);
         }
 
         // Fallback: if no API key found, try any model with same provider that has a key

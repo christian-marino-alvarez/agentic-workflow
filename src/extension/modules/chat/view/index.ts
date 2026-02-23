@@ -251,18 +251,22 @@ export class ChatView extends View {
     try {
       const result = await this.sendMessage(NAME, MESSAGES.LOAD_SESSION, { sessionId: '__last__' });
       if (!result?.success) {
-        // No saved session — auto-start /init
-        this.log('No last session found, auto-starting /init');
+        // No saved session — auto-start /init after runtime is ready
+        this.log('No last session found, will auto-start /init');
+        setTimeout(async () => {
+          this.inputText = '/init';
+          await this.sendChatMessage();
+          this.inputText = '';
+        }, 2000);
+      }
+    } catch {
+      // No last session — auto-start /init after runtime is ready
+      this.log('No last session, will auto-start /init');
+      setTimeout(async () => {
         this.inputText = '/init';
         await this.sendChatMessage();
         this.inputText = '';
-      }
-    } catch {
-      // No last session — auto-start /init
-      this.log('No last session, auto-starting /init');
-      this.inputText = '/init';
-      await this.sendChatMessage();
-      this.inputText = '';
+      }, 2000);
     }
   }
 

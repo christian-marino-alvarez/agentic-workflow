@@ -48,6 +48,14 @@ export class WorkflowParser {
     const passTarget = this.extractPassTarget(bodyContent);
     const failBehavior = this.extractFailBehavior(bodyContent);
 
+    // Extract structured sections (universal schema)
+    const inputs = this.extractListItems(bodyContent, 'Input');
+    const outputs = this.extractListItems(bodyContent, 'Output');
+    const templates = this.extractListItems(bodyContent, 'Template');
+    const objective = this.extractSection(bodyContent, 'Objective')
+      || this.extractSection(bodyContent, 'Objetivo')
+      || '';
+
     const def: WorkflowDef = {
       id: frontmatter.id,
       description: frontmatter.description,
@@ -62,6 +70,12 @@ export class WorkflowParser {
       passTarget,
       failBehavior,
       rawContent,
+      sections: {
+        inputs,
+        outputs,
+        templates,
+        objective,
+      },
     };
 
     // Validate required fields
@@ -455,6 +469,22 @@ export class WorkflowParser {
 
     const content = contentLines.join('\n').trim();
     return content.length > 0 ? content : null;
+  }
+
+  /**
+   * Extract list items (lines starting with -) from a named section.
+   * Returns an array of trimmed item strings.
+   */
+  private extractListItems(body: string, sectionName: string): string[] {
+    const section = this.extractSection(body, sectionName);
+    if (!section) { return []; }
+
+    return section
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.startsWith('-'))
+      .map(line => line.replace(/^-\s*/, '').trim())
+      .filter(line => line.length > 0);
   }
 
   /**

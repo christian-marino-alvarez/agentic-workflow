@@ -86,6 +86,11 @@ export const WORKFLOW_STATES = {
   WAITING_GATE: 'waitingGate',
   COMPLETED: 'completed',
   FAILED: 'failed',
+  // Phase-level sub-states
+  PHASE_EXECUTING: 'phaseExecuting',
+  PHASE_GATE: 'phaseGate',
+  PHASE_DONE: 'phaseDone',
+  PHASE_FAILED: 'phaseFailed',
 } as const;
 
 /**
@@ -98,6 +103,9 @@ export const ENGINE_EVENTS = {
   GATE_APPROVE: 'GATE_APPROVE',
   GATE_REJECT: 'GATE_REJECT',
   PHASE_COMPLETE: 'PHASE_COMPLETE',
+  PHASE_ADVANCE: 'PHASE_ADVANCE',
+  PHASE_GATE_APPROVE: 'PHASE_GATE_APPROVE',
+  PHASE_GATE_REJECT: 'PHASE_GATE_REJECT',
   RELOAD: 'RELOAD',
   ERROR: 'ERROR',
 } as const;

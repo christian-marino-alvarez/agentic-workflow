@@ -31,6 +31,12 @@ const createMockWorkflowDef = (): WorkflowDef => ({
   passTarget: 'phase-5',
   failBehavior: 'block',
   rawContent: '# test',
+  sections: {
+    inputs: [],
+    outputs: [],
+    templates: [],
+    objective: '',
+  },
 });
 
 describe('WorkflowEngine', () => {

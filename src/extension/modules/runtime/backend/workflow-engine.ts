@@ -173,7 +173,9 @@ export class WorkflowEngine {
         strategy: input.strategy,
         currentWorkflowId: def.id,
         currentStepIndex: 0,
+        currentPhaseIndex: 0,
         workflowDef: input.workflowDef,
+        phases: [],
         gateResponses: {},
         error: null,
         startedAt: new Date().toISOString(),
@@ -310,18 +312,34 @@ export class WorkflowEngine {
           : 'pending') as 'completed' | 'active' | 'pending'
     }));
 
+    const currentPhase = context.phases.length > 0
+      ? context.phases[context.currentPhaseIndex]
+      : null;
+
+    const phasesList = context.phases.map((phase, idx) => ({
+      id: phase.id,
+      label: phase.description || phase.id,
+      owner: phase.owner,
+      status: (idx < context.currentPhaseIndex ? 'completed'
+        : idx === context.currentPhaseIndex ? 'active'
+          : 'pending') as 'completed' | 'active' | 'pending' | 'failed',
+    }));
+
     return {
       taskId: context.taskId,
       currentPhase: context.currentWorkflowId,
+      currentPhaseId: currentPhase?.id || context.currentWorkflowId,
       currentWorkflowId: context.currentWorkflowId,
       status: this.mapXStateStatus(String(snapshot.value)),
       gateResponses: context.gateResponses,
       startedAt: context.startedAt,
       updatedAt: new Date().toISOString(),
       ...(steps ? { steps } : {}),
+      ...(phasesList.length > 0 ? { phases: phasesList } : {}),
+      ...(currentPhase ? { parsedSections: currentPhase.sections } : {}),
       ...(context.workflowDef ? {
         workflow: context.workflowDef
-      } : {})
+      } : {}),
     };
   }
 

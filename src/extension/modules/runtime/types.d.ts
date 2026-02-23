@@ -33,6 +33,13 @@ export interface GateDef {
   failStep: number | null;
 }
 
+export interface ParsedSections {
+  inputs: string[];
+  outputs: string[];
+  templates: string[];
+  objective: string;
+}
+
 export interface WorkflowDef {
   id: string;
   description?: string;
@@ -47,6 +54,7 @@ export interface WorkflowDef {
   passTarget: string | null;
   failBehavior: typeof import('./constants.js').FAIL_BEHAVIOR[keyof typeof import('./constants.js').FAIL_BEHAVIOR];
   rawContent: string;
+  sections: ParsedSections;
 }
 
 // ─── Agent Registry Types ─────────────────────────────────────
@@ -62,6 +70,7 @@ export interface AgentRole {
 export interface WorkflowEngineState {
   taskId: string;
   currentPhase: string;
+  currentPhaseId: string;
   currentWorkflowId: string;
   status: typeof import('./constants.js').ENGINE_STATUS[keyof typeof import('./constants.js').ENGINE_STATUS];
   gateResponses: Record<string, { decision: string; date: string }>;
@@ -72,6 +81,13 @@ export interface WorkflowEngineState {
     label: string;
     status: 'pending' | 'active' | 'completed';
   }>;
+  phases?: Array<{
+    id: string;
+    label: string;
+    owner: string;
+    status: 'pending' | 'active' | 'completed' | 'failed';
+  }>;
+  parsedSections?: ParsedSections;
   workflow?: {
     description?: string;
     owner: string;
@@ -109,6 +125,9 @@ export type WorkflowEvent =
   | { type: typeof import('./constants.js').ENGINE_EVENTS.GATE_APPROVE; gateId: string }
   | { type: typeof import('./constants.js').ENGINE_EVENTS.GATE_REJECT; gateId: string; reason?: string }
   | { type: typeof import('./constants.js').ENGINE_EVENTS.PHASE_COMPLETE }
+  | { type: typeof import('./constants.js').ENGINE_EVENTS.PHASE_ADVANCE }
+  | { type: typeof import('./constants.js').ENGINE_EVENTS.PHASE_GATE_APPROVE; phaseId: string }
+  | { type: typeof import('./constants.js').ENGINE_EVENTS.PHASE_GATE_REJECT; phaseId: string; reason?: string }
   | { type: typeof import('./constants.js').ENGINE_EVENTS.RELOAD }
   | { type: typeof import('./constants.js').ENGINE_EVENTS.ERROR; message: string };
 
@@ -117,7 +136,9 @@ export interface WorkflowContext {
   strategy: string;
   currentWorkflowId: string;
   currentStepIndex: number;
+  currentPhaseIndex: number;
   workflowDef: WorkflowDef | null;
+  phases: WorkflowDef[];
   gateResponses: Record<string, { decision: string; date: string }>;
   error: string | null;
   startedAt: string;
@@ -139,7 +160,7 @@ export interface WorkflowStateNode {
   entry?: string[];
 }
 
-export type WorkflowStatesConfig = Record<WorkflowStateName, WorkflowStateNode>;
+export type WorkflowStatesConfig = Partial<Record<WorkflowStateName, WorkflowStateNode>> & Record<string, WorkflowStateNode>;
 
 // ─── Event Listener Types ─────────────────────────────────────
 

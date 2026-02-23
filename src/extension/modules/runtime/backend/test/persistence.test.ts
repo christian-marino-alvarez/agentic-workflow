@@ -78,6 +78,7 @@ describe('WorkflowPersistence', () => {
       await persistence.saveState({
         taskId: 'T002',
         currentPhase: 'phase-1',
+        currentPhaseId: 'phase-1',
         currentWorkflowId: 'workflow.phase-1',
         status: 'running',
         gateResponses: {},
@@ -107,6 +108,7 @@ describe('WorkflowPersistence', () => {
       await persistence.saveState({
         taskId: 'T003',
         currentPhase: 'phase-4',
+        currentPhaseId: 'phase-4',
         currentWorkflowId: 'workflow.phase-4',
         status: 'running',
         gateResponses: {},
@@ -128,6 +130,7 @@ describe('WorkflowPersistence', () => {
       await persistence.saveState({
         taskId: 'T004',
         currentPhase: 'phase-1',
+        currentPhaseId: 'phase-1',
         currentWorkflowId: 'workflow.phase-1',
         status: 'running',
         gateResponses: {},

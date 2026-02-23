@@ -168,9 +168,27 @@ export abstract class Background implements vscode.WebviewViewProvider {
     await this.killPort(port);
 
     // Resolve workspace root for the sidecar to use for file path resolution
-    const workspaceRoot = vscode.workspace?.workspaceFolders?.[0]?.uri?.fsPath || '';
+    let workspaceRoot = vscode.workspace?.workspaceFolders?.[0]?.uri?.fsPath || '';
     if (!workspaceRoot) {
-      this.log('WARNING: No workspace folder found — WORKSPACE_ROOT will be empty');
+      // Fallback: try to infer from the active editor's file path
+      const activeFile = vscode.window.activeTextEditor?.document?.uri?.fsPath;
+      if (activeFile) {
+        const path = await import('path');
+        const fs = await import('fs');
+        let dir = path.dirname(activeFile);
+        // Walk up to find a directory containing .agent/
+        for (let i = 0; i < 10 && dir !== path.dirname(dir); i++) {
+          if (fs.existsSync(path.join(dir, '.agent'))) {
+            workspaceRoot = dir;
+            this.log(`Inferred workspace root from active editor: ${workspaceRoot}`);
+            break;
+          }
+          dir = path.dirname(dir);
+        }
+      }
+      if (!workspaceRoot) {
+        this.log('WARNING: No workspace folder found — WORKSPACE_ROOT will be empty');
+      }
     }
 
     this.log(`Spawning sidecar: node ${scriptPath}`);

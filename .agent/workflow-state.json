@@ -77,8 +77,8 @@
       "currentWorkflowId": "workflow.init",
       "status": "completed",
       "gateResponses": {},
-      "startedAt": "2026-02-23T11:28:00.042Z",
-      "updatedAt": "2026-02-23T11:28:32.332Z",
+      "startedAt": "2026-02-23T11:43:06.723Z",
+      "updatedAt": "2026-02-23T11:43:44.978Z",
       "steps": [
         {
           "id": "1",
@@ -239,5 +239,5 @@
       }
     }
   },
-  "lastUpdated": "2026-02-23T11:28:32.332Z"
+  "lastUpdated": "2026-02-23T11:43:44.978Z"
 }

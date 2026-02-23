@@ -1,38 +1,34 @@
 ---
 id: workflow.coding.background
-description: On-demand coding workflow for the Background/Orchestration layer. Invoked by architect-agent during Phase 4 implementation.
 owner: background
+description: "On-demand coding workflow for the Background/Orchestration layer. Invoked by architect-agent during Phase 4 implementation."
 version: 1.0.0
-severity: PERMANENT
-trigger:
-  commands: ["coding-background"]
-blocking: true
+trigger: ["coding-background"]
+type: dynamic
 ---
 
 # WORKFLOW: coding.background
 
-## Input (REQUIRED)
+## Input
 - Agent task file assigned by architect:
   - `.agent/artifacts/<taskId>-<taskTitle>/agent-tasks/<N>-background-<taskName>.md`
 - Constitution loaded:
-  - `constitution.background` (MANDATORY)
-  - `constitution.clean_code` (MANDATORY)
-  - `.agent/rules/constitution/architecture/index.md` (MANDATORY)
-  - `constitution.agents_behavior` (MANDATORY)
+  - `constitution.background`
+  - `constitution.clean_code`
+  - `.agent/rules/constitution/architecture/index.md`
+  - `constitution.agents_behavior`
 - Role activated:
   - `roles.background`
 
 > [!IMPORTANT]
 > **This is an on-demand workflow.** It is invoked by `architect-agent` during Phase 4 as part of the implementation plan. The architect defines the execution order of coding workflows.
 
-## Output (REQUIRED)
+## Output
 - Implementation report using `templates.coding.layer_report`:
   - Embedded in the agent task file under "Implementation Report"
 - All code changes passing compilation
 
----
-
-## Objective (ONLY)
+## Objective
 - Implement the **background/orchestration layer** of the assigned task following `constitution.background`.
 - Generate a detailed implementation report.
 - Present to developer for Gate approval.
@@ -41,9 +37,7 @@ blocking: true
 > This workflow is the **ONLY** layer authorized to import `vscode`.
 > This workflow manages the **Backend ↔ View bridge** via Messaging.
 
----
-
-## Mandatory Steps
+## Instructions
 
 ### 0. Activate role
 - Activate `roles.background` and use mandatory agent prefix in all messages.
@@ -52,7 +46,7 @@ blocking: true
 - Agent task file exists and has Input section completed by architect.
 - Constitution `constitution.background` loaded.
 - Constitution `constitution.clean_code` loaded.
-- If missing → **FAIL**.
+- If missing → FAIL.
 
 ### 2. Analyze the task
 - Read the agent task Input (objective, scope, dependencies).
@@ -65,7 +59,7 @@ blocking: true
 - Write code following `constitution.background`:
   - **Orchestration**: Manage flow between VS Code, Backend, and View.
   - **Registration**: All modules register via `App.register(id, provider)`.
-  - **Messaging**: Use `core/messaging` for View communication (MANDATORY).
+  - **Messaging**: Use `core/messaging` for View communication.
   - **Type safety**: Use shared `Message` interface from `core/types`.
   - **Lifecycle**: Respect VS Code activation/deactivation.
   - **Dependency injection**: Inject services into providers.
@@ -90,7 +84,7 @@ blocking: true
   - **Results**: What was achieved, compilation status
   - **E2E Test Indications**: Scenarios for e2e testing
 
-### 6. Present to developer (Gate)
+### 6. Present to developer (Gate request)
 - Present completed task with report to developer.
 - Request approval: **SI / NO**
 
@@ -103,15 +97,16 @@ approval:
     comments: <optional>
 ```
 
-### 8. Evaluate Gate
-- If `decision == SI` → go to **Step 9 (PASS)**.
-- If `decision == NO`:
-  - Mark task as `failed`.
-  - Define corrective actions.
-  - **Do NOT advance** until resolved.
-  - Go to **Step 10 (FAIL)**.
+## Gate
+Requirements (all mandatory):
+1. Code compiles without errors.
+2. All `constitution.background` rules are satisfied.
+3. All `constitution.clean_code` rules are satisfied.
+4. Implementation report is complete (all 5 sections).
+5. Developer Gate PASS (`decision == SI`).
+6. Agent task file starts with background agent prefix.
 
-### 9. PASS (only if Gate approved)
+## Pass
 - Mark agent task as `completed`.
 - Update agent task file:
   ```yaml
@@ -122,30 +117,14 @@ approval:
 - Update the coding layer report with final status.
 - Return control to `architect-agent` for next workflow in the sequence.
 
----
-
-## FAIL (MANDATORY)
-
-### 10. Declare workflow as NOT completed
-Cases:
-- Missing inputs or constitution.
-- Compilation failure not resolved.
-- Constitution violation detected.
-- Gate = NO without resolution.
-
-Actions:
-- Identify the failure point.
-- Define corrective actions.
-- Iterate until Gate PASS.
-
----
-
-## Gate (REQUIRED)
-
-Requirements (all mandatory):
-1. Code compiles without errors.
-2. All `constitution.background` rules are satisfied.
-3. All `constitution.clean_code` rules are satisfied.
-4. Implementation report is complete (all 5 sections).
-5. Developer Gate PASS (`decision == SI`).
-6. Agent task file starts with background agent prefix.
+## Fail
+- Declare workflow as NOT completed.
+- Cases:
+  - Missing inputs or constitution.
+  - Compilation failure not resolved.
+  - Constitution violation detected.
+  - Gate = NO without resolution.
+- Actions:
+  - Identify the failure point.
+  - Define corrective actions.
+  - Iterate until Gate PASS.

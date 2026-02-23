@@ -41,7 +41,7 @@ export function renderHistory(view: IChatView) {
     return html`
       <div class="history layout-scroll chat-container layout-col">
         ${view.history.map(msg => renderMessageBubble(msg, view))}
-        ${view.isLoading ? renderActivityIndicator(view) : ''}
+        ${(view.isLoading || view.activeActivity) ? renderActivityIndicator(view) : ''}
       </div>
     `;
   }
@@ -64,7 +64,7 @@ export function renderHistory(view: IChatView) {
           </div>
         </div>
       `)}
-      ${view.isLoading ? renderActivityIndicator(view) : ''}
+      ${(view.isLoading || view.activeActivity) ? renderActivityIndicator(view) : ''}
     </div>
   `;
 }
@@ -73,6 +73,7 @@ function renderActivityIndicator(view: IChatView) {
   const activity = view.activeActivity || 'Thinking...';
   return html`
     <div class="activity-indicator">
+      <span class="activity-dot"></span>
       <span class="activity-text">${activity}</span>
     </div>
   `;

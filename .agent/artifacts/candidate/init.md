@@ -1,24 +1,20 @@
 ---
 id: init
+title: Initial session configuration
+version: 1.0.0
+author: architect-agent
+date: '2024-07-25T12:00:00Z'
 status: candidate
-timestamp: '2023-10-27T10:00:00Z'
-
 language:
-  value: "Español"
+  value: es
   confirmed: true
-
-strategy: "short"
-
-requirements:
-  indexes_loaded:
-    - .agent/index.md
-    - .agent/domains/rules/index.md
-    - .agent/domains/rules/constitutions/index.md
-  constitutions_loaded:
-    - constitution.clean_code
-    - constitution.agents_behavior
+strategy: short
+tags: [init, config]
 ---
 
-# Init Candidate
+# Initial Configuration
 
-System initialization parameters confirmed based on user input.
+This document registers the initial choices for the agentic session.
+
+- **Language**: Spanish (confirmed by user)
+- **Lifecycle Strategy**: Short (3 simplified phases, for rapid changes)

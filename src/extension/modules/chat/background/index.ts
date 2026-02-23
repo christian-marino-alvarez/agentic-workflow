@@ -639,15 +639,49 @@ export class ChatBackground extends Background {
       const workspaceFolders = vscode.workspace.workspaceFolders;
       if (!workspaceFolders) { return { success: false, error: 'No workspace' }; }
 
-      // Resolve relative paths against workspace root
-      const fullPath = path.isAbsolute(filePath)
-        ? filePath
-        : path.join(workspaceFolders[0].uri.fsPath, filePath);
+      const wsRoot = workspaceFolders[0].uri.fsPath;
 
-      const uri = vscode.Uri.file(fullPath);
-      const doc = await vscode.workspace.openTextDocument(uri);
-      await vscode.window.showTextDocument(doc, { preview: true });
-      return { success: true };
+      // Build candidate paths in priority order
+      const candidates: string[] = [];
+
+      if (path.isAbsolute(filePath)) {
+        candidates.push(filePath);
+      } else {
+        // 1. Direct path relative to workspace
+        candidates.push(path.join(wsRoot, filePath));
+        // 2. Prepend .agent/ (LLM often says "artifacts/..." instead of ".agent/artifacts/...")
+        candidates.push(path.join(wsRoot, '.agent', filePath));
+        // 3. Just the filename in .agent/artifacts/
+        const basename = path.basename(filePath);
+        candidates.push(path.join(wsRoot, '.agent', 'artifacts', '**', basename));
+      }
+
+      // Try direct candidates first
+      for (const candidate of candidates) {
+        if (!candidate.includes('*')) {
+          try {
+            const uri = vscode.Uri.file(candidate);
+            const doc = await vscode.workspace.openTextDocument(uri);
+            await vscode.window.showTextDocument(doc, { preview: true });
+            return { success: true };
+          } catch {
+            // Try next candidate
+          }
+        }
+      }
+
+      // Fallback: glob search for the filename in the workspace
+      const basename = path.basename(filePath);
+      const globPattern = new vscode.RelativePattern(wsRoot, `**/${basename}`);
+      const found = await vscode.workspace.findFiles(globPattern, '**/node_modules/**', 1);
+      if (found.length > 0) {
+        const doc = await vscode.workspace.openTextDocument(found[0]);
+        await vscode.window.showTextDocument(doc, { preview: true });
+        return { success: true };
+      }
+
+      this.log(`File not found: ${filePath} (tried ${candidates.length} candidates + glob)`);
+      return { success: false, error: `File not found: ${filePath}` };
     } catch (err: any) {
       this.log(`Failed to open file: ${err.message}`);
       return { success: false, error: err.message };

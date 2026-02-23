@@ -123,18 +123,6 @@
   "bin": {
     "agentic-workflow": "bin/cli.js"
   },
-  "files": [
-    "dist/cli",
-    "dist/core",
-    "dist/infrastructure",
-    "dist/agent",
-    "dist/runtime",
-    "bin",
-    "README.md",
-    "LICENSE",
-    "RELEASE_PROCESS.md",
-    "media"
-  ],
   "scripts": {
     "build": "node scripts/clean-dist.mjs && tsc -p tsconfig.build.json && npm run copy-assets",
     "copy-assets": "mkdir -p dist/agent && cp -r src/agentic-system-structure/rules src/agentic-system-structure/workflows src/agentic-system-structure/templates src/agentic-system-structure/artifacts dist/agent/ && cp src/agentic-system-structure/index.md dist/agent/index.md",

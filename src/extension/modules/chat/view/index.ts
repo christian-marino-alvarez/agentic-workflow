@@ -169,8 +169,11 @@ export class ChatView extends View {
    * Whether the currently selected agent is disabled (no model assigned).
    */
   get agentDisabled(): boolean {
+    // Only disabled if no agents are available at all
+    // Model resolution happens in the background via Settings bindings
+    if (this.availableAgents.length === 0) { return false; } // Don't block before agents load
     const agent = this.availableAgents.find(a => a.name === this.selectedAgent);
-    return !agent?.model?.id;
+    return !agent;
   }
 
   /**

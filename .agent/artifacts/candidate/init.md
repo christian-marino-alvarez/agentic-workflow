@@ -1,14 +1,24 @@
 ---
-version: 1.0.0
+id: init
 status: candidate
+timestamp: '2023-10-27T10:00:00Z'
+
 language:
-  value: "es"
+  value: "Español"
   confirmed: true
-strategy:
-  value: "short"
-  confirmed: true
+
+strategy: "short"
+
+requirements:
+  indexes_loaded:
+    - .agent/index.md
+    - .agent/domains/rules/index.md
+    - .agent/domains/rules/constitutions/index.md
+  constitutions_loaded:
+    - constitution.clean_code
+    - constitution.agents_behavior
 ---
 
-# Init Configuration
+# Init Candidate
 
-Configuration established for the agentic-workflow session.
+System initialization parameters confirmed based on user input.

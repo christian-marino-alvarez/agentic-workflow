@@ -6,7 +6,7 @@ import { NAME, MESSAGES } from '../constants.js';
 import { API_ENDPOINTS, SIDECAR_BASE_URL, DEFAULT_MODELS } from '../../llm/constants.js';
 import { MESSAGES as SETTINGS_MESSAGES } from '../../settings/constants.js';
 import { MESSAGES as RUNTIME_MESSAGES } from '../../runtime/constants.js';
-import { behavioralPreamble, workflowStartPrompt, initCompletedPrompt, lifecycleStartPrompt, A2UI_INSTRUCTIONS } from '../prompts/index.js';
+import { behavioralPreamble, workflowStartPrompt, initCompletedPrompt, A2UI_INSTRUCTIONS } from '../prompts/index.js';
 import { randomUUID } from 'crypto';
 
 
@@ -166,8 +166,9 @@ export class ChatBackground extends Background {
         } catch (err: any) {
           this.log(`Failed to start lifecycle: ${err.message}`);
         }
-        // Let LLM know the lifecycle has started
-        data.text = lifecycleStartPrompt(data.text, lifecycleId);
+        // The lifecycle context is now injected via structured sections in the system prompt.
+        // The user's task text is sent as-is — no hardcoded prompt needed.
+        data.text = `El usuario quiere iniciar la tarea: "${data.text}". El workflow ${lifecycleId} ya fue lanzado. Ejecuta la primera fase según las instrucciones cargadas en tu contexto.`;
       }
     }
 

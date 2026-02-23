@@ -99,6 +99,11 @@ export class ChatView extends View {
     nextStep?: string;
     nextStepIndex?: number;
     passTarget?: string;
+    inputs?: string[];
+    outputs?: string[];
+    templates?: string[];
+    objective?: string;
+    currentPhaseLabel?: string;
   } = {};
 
   /** Tracks the pending A2UI confirmation from the last assistant message */
@@ -637,6 +642,12 @@ export class ChatView extends View {
           nextStep: nextStepObj?.label,
           nextStepIndex: nextStepIdx >= 0 ? nextStepIdx + 1 : undefined,
           passTarget: data?.workflow?.passTarget || undefined,
+          // Parsed sections from active phase
+          inputs: data?.parsedSections?.inputs || [],
+          outputs: data?.parsedSections?.outputs || [],
+          templates: data?.parsedSections?.templates || [],
+          objective: data?.parsedSections?.objective || '',
+          currentPhaseLabel: data?.phases?.find((p: any) => p.status === 'active')?.label || '',
         };
       }
 

@@ -10,11 +10,25 @@ export function renderDetailsPanel(view: IChatView) {
   const total = view.taskSteps.length;
   const activeIdx = activeStep ? view.taskSteps.indexOf(activeStep) + 1 : 0;
 
+  const hasInputs = d.inputs && d.inputs.length > 0;
+  const hasOutputs = d.outputs && d.outputs.length > 0;
+  const hasObjective = d.objective && d.objective.length > 0;
+
   return html`
     <div class="details-panel-unified">
       <div class="details-columns">
 
         <div class="details-col-left">
+          <!-- Phase / Workflow header -->
+          ${d.currentPhaseLabel
+      ? html`
+              <div class="details-section-label" style="color:rgba(160,200,255,0.8)">ACTIVE PHASE</div>
+              <div class="details-row" style="margin-bottom:10px;">
+                <span class="details-agent-name" style="font-size:12px;">${d.currentPhaseLabel}</span>
+              </div>
+            `
+      : ''}
+
           <div class="details-section-label">WORKFLOW CONTEXT</div>
           <div class="details-row" style="flex-wrap:wrap;gap:6px;margin-bottom:10px;">
             <span class="details-id">${d.workflowId || '—'}</span>
@@ -22,12 +36,49 @@ export function renderDetailsPanel(view: IChatView) {
             ${d.blocking !== undefined ? html`<span class="details-tag ${d.blocking ? 'blocking' : 'nonblocking'}">${d.blocking ? 'Blocking' : 'Non-blocking'}</span>` : ''}
           </div>
 
+          <!-- Objective -->
+          ${hasObjective ? html`
+            <div class="details-section-label" style="color:rgba(180,220,160,0.8)">OBJECTIVE</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.65);margin-bottom:10px;line-height:1.4;">
+              ${d.objective}
+            </div>
+          ` : ''}
+
           <div class="details-section-label">ACTIVE AGENT</div>
           <div class="details-row" style="margin-bottom:10px;gap:6px;">
             <span class="details-agent-name">${d.owner?.replace(/-agent$/, '') || '—'}</span>
             ${d.model ? html`<span class="details-tag model">${d.model}</span>` : ''}
           </div>
 
+          <!-- Inputs / Outputs -->
+          ${hasInputs || hasOutputs ? html`
+            <div style="display:flex;gap:16px;margin-bottom:10px;">
+              ${hasInputs ? html`
+                <div style="flex:1;">
+                  <div class="details-section-label" style="color:rgba(110,200,232,0.7)">INPUTS</div>
+                  ${d.inputs!.map((item: string) => html`
+                    <div class="details-file-chip">
+                      <svg width="8" height="8" viewBox="0 0 16 16" fill="currentColor" style="flex-shrink:0;opacity:0.5"><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zM4 8l4-4v3h4v2H8v3L4 8z"/></svg>
+                      <span title="${item}">${item}</span>
+                    </div>
+                  `)}
+                </div>
+              ` : ''}
+              ${hasOutputs ? html`
+                <div style="flex:1;">
+                  <div class="details-section-label" style="color:rgba(160,232,110,0.7)">OUTPUTS</div>
+                  ${d.outputs!.map((item: string) => html`
+                    <div class="details-file-chip">
+                      <svg width="8" height="8" viewBox="0 0 16 16" fill="currentColor" style="flex-shrink:0;opacity:0.5"><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zM4 8l4 4V9h4V7H8V4L4 8z"/></svg>
+                      <span title="${item}">${item}</span>
+                    </div>
+                  `)}
+                </div>
+              ` : ''}
+            </div>
+          ` : ''}
+
+          <!-- Context Files (constitutions) -->
           <div class="details-section-label">CONTEXT FILES</div>
           <div style="display:flex;flex-direction:column;gap:3px;">
             ${d.contextFiles && d.contextFiles.length > 0

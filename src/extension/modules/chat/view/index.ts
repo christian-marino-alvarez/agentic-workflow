@@ -387,12 +387,15 @@ export class ChatView extends View {
       await new Promise(r => setTimeout(r, attempt === 0 ? 3000 : 2000));
       try {
         const stateResponse = await this.sendMessage(NAME, MESSAGES.WORKFLOW_STATE_UPDATE);
-        if (stateResponse && stateResponse.workflow) {
+        // Accept any response that has meaningful workflow data
+        if (stateResponse && (stateResponse.workflow || stateResponse.phases || stateResponse.steps || stateResponse.currentWorkflowId)) {
           this.listen({
             payload: { command: MESSAGES.WORKFLOW_STATE_UPDATE, data: stateResponse },
           });
-          this.log('Workflow state loaded on mount');
+          this.log(`Workflow state loaded on mount (workflowId: ${stateResponse.currentWorkflowId || 'unknown'})`);
           return;
+        } else {
+          this.log(`Workflow state fetch attempt ${attempt + 1}/${retries}: no useful data`);
         }
       } catch {
         this.log(`Workflow state fetch attempt ${attempt + 1}/${retries} failed`);

@@ -26,6 +26,7 @@ export class WorkflowEngine {
   private agentRegistry: Map<string, AgentRole> = new Map();
   private workflows: Map<string, WorkflowDef> = new Map();
   private listeners: Map<WorkflowEventType, Set<WorkflowEventListener>> = new Map();
+  private lastPersistedState: WorkflowEngineState | null = null;
 
   constructor(workspaceRoot: string, persistence: WorkflowPersistence) {
     this.parser = new WorkflowParser(workspaceRoot);
@@ -45,6 +46,7 @@ export class WorkflowEngine {
   private async restorePersistedState(): Promise<void> {
     const savedState = await this.persistence.loadState();
     if (savedState) {
+      this.lastPersistedState = savedState;
       console.log(`[WorkflowEngine] Restored: task=${savedState.taskId}`);
     }
   }
@@ -433,7 +435,8 @@ export class WorkflowEngine {
 
   getState(): WorkflowEngineState | null {
     if (!this.actor) {
-      return null;
+      // No live actor — return last persisted state as fallback
+      return this.lastPersistedState || null;
     }
 
     const snapshot = this.actor.getSnapshot();

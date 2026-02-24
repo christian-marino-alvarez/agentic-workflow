@@ -201,6 +201,18 @@ export const styles = [
       white-space: nowrap;
       flex-shrink: 0;
     }
+    .history-token-pill {
+      font-size: 9px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 8px;
+      color: rgba(232, 197, 110, 0.85);
+      background: rgba(232, 197, 110, 0.08);
+      border: 1px solid rgba(232, 197, 110, 0.2);
+      white-space: nowrap;
+      flex-shrink: 0;
+      font-family: var(--vscode-editor-font-family, monospace);
+    }
     .history-progress-pill {
       font-size: 10px;
       font-weight: 600;

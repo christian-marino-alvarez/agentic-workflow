@@ -6,9 +6,7 @@ export interface WorkflowMeta {
   id: string;
   path: string;
   description?: string;
-  trigger?: {
-    commands?: string[];
-  };
+  trigger: string[];
 }
 
 async function collectMarkdownFiles(root: string): Promise<string[]> {
@@ -32,11 +30,18 @@ export async function loadWorkflows(workflowsRoot: string): Promise<WorkflowMeta
     const raw = await fs.readFile(file, 'utf-8');
     const { data } = matter(raw);
     if (typeof data?.id === 'string') {
+      // Parse trigger as string[] directly
+      let trigger: string[] = [];
+      if (Array.isArray(data.trigger)) {
+        trigger = data.trigger.map(String);
+      } else if (typeof data.trigger === 'string') {
+        trigger = [data.trigger];
+      }
       workflows.push({
         id: data.id,
         path: file,
         description: typeof data.description === 'string' ? data.description : undefined,
-        trigger: data.trigger ? { commands: Array.isArray(data.trigger.commands) ? data.trigger.commands : undefined } : undefined,
+        trigger,
       });
     }
   }

@@ -1,8 +1,8 @@
-import { Agent, ModelProvider } from '@openai/agents';
+import { Agent, ModelProvider, RunContext } from '@openai/agents';
 import { OpenAIProvider } from '@openai/agents';
 import { GeminiProvider } from './adapters/gemini-provider.js';
 import { ClaudeProvider } from './adapters/claude-provider.js';
-import { RoleModelBinding, ToolDefinition } from './types.js';
+import { RoleModelBinding, ToolDefinition, AgenticContext } from './types.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -15,6 +15,100 @@ function resolveModelId(displayName: string, _provider: string): string {
   return displayName;
 }
 
+/**
+ * Build the dynamic system prompt from AgenticContext.
+ * Called per-turn by the SDK when instructions is a function.
+ */
+function buildDynamicInstructions(runContext: RunContext<AgenticContext>): string {
+  const ctx = runContext.context;
+  const parts: string[] = [BASE_SYSTEM_PROMPT];
+
+  // 1. Role persona
+  if (ctx.rolePersona) {
+    parts.push(`\n\n## Your Role Definition\n${ctx.rolePersona}`);
+  } else {
+    parts.push(`\nYou are the ${ctx.role} agent — a specialist in your domain.`);
+  }
+
+  // 2. Workflow context
+  if (ctx.workflow) {
+    const wf = ctx.workflow;
+    const sections: string[] = [`\n\n---\n## ACTIVE WORKFLOW (MANDATORY)\n`];
+
+    if (wf.rawContent) {
+      sections.push(wf.rawContent);
+    }
+
+    // Structured sections (lifecycle workflows)
+    if (wf.sections) {
+      if (wf.sections.objective) {
+        sections.push(`**[USER-FACING] Objective**: ${wf.sections.objective}`);
+      }
+      if (wf.sections.inputs && wf.sections.inputs.length > 0) {
+        sections.push(`**[SILENT] Inputs**:\n${wf.sections.inputs.map(i => `- ${i}`).join('\n')}`);
+      }
+      if (wf.sections.outputs && wf.sections.outputs.length > 0) {
+        sections.push(`**[SILENT] Outputs**:\n${wf.sections.outputs.map(o => `- ${o}`).join('\n')}`);
+      }
+    }
+
+    // Steps with status
+    if (wf.steps && wf.steps.length > 0) {
+      sections.push(`\n**[SILENT] Instructions**:\n${wf.steps.map(s => `${s.id}. ${s.label} [${s.status}]`).join('\n')}`);
+    }
+
+    // Gate requirements
+    if (wf.gate) {
+      sections.push(`\n**[USER-FACING] Gate Requirements** (ALL mandatory):\n${wf.gate.requirements.map((r, i) => `${i + 1}. ${r}`).join('\n')}`);
+      sections.push('\nWhen you believe ALL gate requirements are met:');
+      sections.push('1. Create required artifacts via writeFile');
+      sections.push('2. Present a <a2ui type="gate" id="gate-eval" label="Gate Evaluation"> with SI/NO options');
+      sections.push('3. DO NOT advance past the gate without user confirmation');
+    }
+
+    // Pass/fail transitions
+    if (wf.pass?.nextTarget) {
+      sections.push(`\n**[SILENT] Pass** → ${wf.pass.nextTarget} (automatic transition on gate SI)`);
+    }
+    if (wf.fail?.behavior) {
+      sections.push(`\n**[SILENT] Fail** → ${wf.fail.behavior}`);
+    }
+
+    // Phase list
+    if (wf.phases && wf.phases.length > 0) {
+      sections.push(`\nPhases: ${wf.phases.map(p => `${p.label} [${p.status}]`).join(' → ')}`);
+    }
+
+    sections.push('\n---\n');
+    parts.push(sections.join('\n'));
+  }
+
+  // Interpreter rules (behavioral rules for workflow execution)
+  if (ctx.workflow && (ctx.workflow as any).interpreterRules) {
+    parts.push('\n\n---\n' + (ctx.workflow as any).interpreterRules);
+  }
+
+  // 3. Constitutions
+  if (ctx.constitutions && ctx.constitutions.length > 0) {
+    parts.push('\n\n---\n## LOADED CONSTITUTIONS (MANDATORY rules you must follow)\n');
+    parts.push(ctx.constitutions.join('\n'));
+    parts.push('\n---\n');
+  }
+
+  // 4. Skills
+  if (ctx.skills && ctx.skills.length > 0) {
+    parts.push('\n\n## Available Skills\n');
+    for (const skill of ctx.skills) {
+      parts.push(`### ${skill.name}\n${skill.description}\n`);
+      if (skill.instructions) {
+        parts.push(skill.instructions);
+      }
+    }
+  }
+
+  return parts.join('');
+}
+
 export class LLMFactory {
   private extensionUri: string;
 
@@ -22,6 +116,42 @@ export class LLMFactory {
     this.extensionUri = extensionUri;
   }
 
+  /**
+   * Create an Agent with dynamic instructions powered by AgenticContext.
+   * When agenticContext is provided, instructions become a function that reads
+   * workflow, constitutions, and skills from the context per-turn.
+   */
+  async createAgentWithContext(
+    role: string,
+    binding: RoleModelBinding,
+    tools: ToolDefinition[] = [],
+    apiKey?: string,
+    provider?: string,
+  ): Promise<{ agent: Agent<AgenticContext>; modelProvider: ModelProvider }> {
+    const rawModelId = binding[role];
+    if (!rawModelId) {
+      throw new Error(`No model bound for role: ${role}`);
+    }
+
+    const modelId = resolveModelId(rawModelId, provider || rawModelId);
+    console.log(`[llm::backend] Model resolution: "${rawModelId}" → "${modelId}" (provider: ${provider})`);
+
+    const modelProvider = this.resolveProvider(provider || modelId, apiKey);
+
+    const agent = new Agent<AgenticContext>({
+      name: role,
+      instructions: buildDynamicInstructions,
+      model: await modelProvider.getModel(modelId),
+      tools: tools.map(t => t as any),
+    });
+
+    return { agent, modelProvider };
+  }
+
+  /**
+   * Legacy: create an Agent with static string instructions.
+   * Used during migration — will be removed once all callers use createAgentWithContext.
+   */
   async createAgent(role: string, binding: RoleModelBinding, tools: ToolDefinition[] = [], apiKey?: string, provider?: string, instructions?: string): Promise<Agent> {
     const rawModelId = binding[role];
     if (!rawModelId) {
@@ -32,16 +162,7 @@ export class LLMFactory {
     const modelId = resolveModelId(rawModelId, provider || rawModelId);
     console.log(`[llm::backend] Model resolution: "${rawModelId}" → "${modelId}" (provider: ${provider})`);
 
-    let modelProvider: ModelProvider;
-    const providerLower = (provider || modelId).toLowerCase();
-    // Select provider based on explicit provider field, fallback to model name
-    if (providerLower.includes('gemini') || providerLower.includes('google')) {
-      modelProvider = new GeminiProvider(apiKey || process.env.GEMINI_API_KEY || '');
-    } else if (providerLower.includes('claude') || providerLower.includes('anthropic')) {
-      modelProvider = new ClaudeProvider(apiKey || process.env.ANTHROPIC_API_KEY || '');
-    } else {
-      modelProvider = new OpenAIProvider({ apiKey: apiKey || process.env.OPENAI_API_KEY || '' });
-    }
+    const modelProvider = this.resolveProvider(provider || modelId, apiKey);
 
     // Compose system prompt: base instructions + role persona
     const agentInstructions = instructions
@@ -54,6 +175,20 @@ export class LLMFactory {
       model: await modelProvider.getModel(modelId),
       tools: tools.map(t => t as any),
     });
+  }
+
+  /**
+   * Resolve the model provider by name.
+   */
+  private resolveProvider(providerHint: string, apiKey?: string): ModelProvider {
+    const providerLower = providerHint.toLowerCase();
+    if (providerLower.includes('gemini') || providerLower.includes('google')) {
+      return new GeminiProvider(apiKey || process.env.GEMINI_API_KEY || '');
+    } else if (providerLower.includes('claude') || providerLower.includes('anthropic')) {
+      return new ClaudeProvider(apiKey || process.env.ANTHROPIC_API_KEY || '');
+    } else {
+      return new OpenAIProvider({ apiKey: apiKey || process.env.OPENAI_API_KEY || '' });
+    }
   }
 
   /**

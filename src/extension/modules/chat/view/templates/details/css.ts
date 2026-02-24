@@ -12,6 +12,8 @@ export const detailsStyles = css`
       box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
       animation: slideDownPanel 0.25s ease;
       flex-shrink: 0;
+      max-height: 50vh;
+      overflow-y: auto;
     }
 
     @keyframes slideDownPanel {
@@ -19,28 +21,64 @@ export const detailsStyles = css`
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    .details-columns {
-      display: flex;
-      flex-direction: row;
-      gap: 20px;
+    .details-header-section {
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
     }
 
-    .details-col-left {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
+    .details-collapse {
+      border-bottom: 1px solid rgba(255,255,255,0.04);
     }
 
-    .details-col-right {
-      flex: 1;
+    .details-collapse-label {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      cursor: pointer;
+      padding: 6px 0;
+      list-style: none;
       display: flex;
-      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      user-select: none;
+      opacity: 0.85;
+    }
+
+    .details-collapse-label:hover {
+      opacity: 1;
+    }
+
+    .details-collapse-label::before {
+      content: '▸';
+      font-size: 10px;
+      transition: transform 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .details-collapse[open] > .details-collapse-label::before {
+      transform: rotate(90deg);
+    }
+
+    /* Hide default marker in webkit browsers */
+    .details-collapse-label::-webkit-details-marker {
+      display: none;
+    }
+
+    .details-collapse-count {
+      font-weight: 400;
+      opacity: 0.5;
+    }
+
+    .details-collapse-content {
+      padding: 4px 0 8px 14px;
     }
 
     .details-separator {
-      width: 1px;
+      height: 1px;
+      width: 100%;
       background: rgba(255,255,255,0.08);
-      margin: 0 10px;
+      margin: 4px 0;
     }
 
     .details-section-label {
@@ -77,22 +115,10 @@ export const detailsStyles = css`
       font-weight: 500;
     }
 
-    .details-tag.severity {
-      background: rgba(248,81,73,0.15);
-      color: #f85149;
-      border: 1px solid rgba(248,81,73,0.25);
-    }
-
-    .details-tag.blocking {
-      background: rgba(248,81,73,0.1);
-      color: #f85149;
-      border: 1px solid rgba(248,81,73,0.2);
-    }
-
-    .details-tag.nonblocking {
-      background: rgba(63,185,80,0.1);
-      color: #3fb950;
-      border: 1px solid rgba(63,185,80,0.2);
+    .details-tag.type {
+      background: rgba(110,160,232,0.12);
+      color: #6ea0e8;
+      border: 1px solid rgba(110,160,232,0.25);
     }
 
     .details-tag.model {
@@ -109,15 +135,19 @@ export const detailsStyles = css`
 
     .details-file-chip {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 4px;
       font-size: 10px;
       color: rgba(126,207,179,0.9);
       padding: 1px 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      word-break: break-all;
+      overflow-wrap: anywhere;
       max-width: 100%;
+    }
+
+    .details-file-chip span {
+      word-break: break-all;
+      overflow-wrap: anywhere;
     }
 
     .details-gate-req {
@@ -173,6 +203,7 @@ export const detailsStyles = css`
       opacity: 0.8;
       padding-top: 6px;
       border-top: 1px solid rgba(255,255,255,0.05);
+      flex-wrap: wrap;
     }
 
     .details-footer-sep {

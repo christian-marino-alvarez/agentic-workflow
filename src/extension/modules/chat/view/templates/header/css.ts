@@ -14,28 +14,50 @@ export const headerStyles = css`
       flex-direction: row;
       align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
     }
 
     .actions-group {
       display: flex;
       align-items: center;
       gap: 8px;
+      flex-wrap: wrap;
     }
 
     /* Workflow info in header */
     .workflow-info {
       display: flex;
-      align-items: center;
+      align-items: center; /* centers the + button with the text vertically */
       gap: 6px;
       font-size: 11px;
       font-weight: 500;
+      flex: 1 1 200px; /* guarantees it takes some width, pushing actions down when small */
+      min-width: 0; /* needed for text truncation */
+    }
+
+    .workflow-info > svg {
+      flex-shrink: 0;
     }
 
     .workflow-label {
       color: #ffffff;
       font-weight: 500;
       font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
+
+    .agent-timer {
+      white-space: nowrap;
+      font-size: 11px;
+      color: var(--vscode-descriptionForeground);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
 
     .header-new-task {
       margin-left: 4px;
@@ -46,6 +68,7 @@ export const headerStyles = css`
       color: var(--vscode-foreground);
       font-size: 14px;
       line-height: 1;
+      flex-shrink: 0;
     }
 
     /* Header Pill Buttons (progress + details) */

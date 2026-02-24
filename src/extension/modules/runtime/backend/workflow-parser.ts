@@ -3,19 +3,22 @@
  *
  * Parses .md workflow files into structured WorkflowDef objects.
  * Uses gray-matter for YAML frontmatter extraction and custom
- * section parsing for steps, gates, and PASS/FAIL references.
+ * section parsing for the 7 mandatory sections.
  *
+ * Aligned with normalized workflow structure (T025/T026).
  * Design: Pure code, no LLM involvement. Deterministic parsing.
  */
 
 import matter from 'gray-matter';
 import { readFile, readdir } from 'node:fs/promises';
+import { existsSync, readdirSync } from 'node:fs';
 import { join, basename } from 'node:path';
-import { FAIL_BEHAVIOR } from '../constants.js';
 import type {
   WorkflowDef,
   WorkflowStep,
   GateDef,
+  PassDef,
+  FailDef,
   Frontmatter,
   AgentRole,
 } from '../types.js';
@@ -37,44 +40,54 @@ export class WorkflowParser {
 
   /**
    * Parse workflow content string into a WorkflowDef.
-   * Handles edge cases like double frontmatter (e.g., init.md).
+   * Expects normalized format: single frontmatter block, 7 mandatory sections.
    */
   parseContent(rawContent: string, source: string = 'unknown'): WorkflowDef {
     const frontmatter = this.extractFrontmatter(rawContent, source);
     const bodyContent = this.extractBody(rawContent);
-    const steps = this.extractSteps(bodyContent);
+    const steps = this.extractInstructions(bodyContent);
     const gate = this.extractGate(bodyContent);
-    const constitutions = this.extractConstitutions(bodyContent);
-    const passTarget = this.extractPassTarget(bodyContent);
-    const failBehavior = this.extractFailBehavior(bodyContent);
+    const bodyConstitutions = this.extractConstitutions(bodyContent);
+    const pass = this.extractPassDef(bodyContent, frontmatter);
+    const fail = this.extractFailDef(bodyContent);
 
-    // Extract structured sections (universal schema)
+    // Merge frontmatter context: with body-extracted constitutions (deduplicated)
+    const frontmatterContext: string[] = frontmatter.context || [];
+    const allConstitutions = [...frontmatterContext];
+    for (const c of bodyConstitutions) {
+      if (!allConstitutions.includes(c)) {
+        allConstitutions.push(c);
+      }
+    }
+
+    // Extract structured sections
     const inputs = this.extractListItems(bodyContent, 'Input');
     const outputs = this.extractListItems(bodyContent, 'Output');
-    const templates = this.extractListItems(bodyContent, 'Template');
-    const objective = this.extractSection(bodyContent, 'Objective')
-      || this.extractSection(bodyContent, 'Objetivo')
-      || '';
+    const objective = this.extractSection(bodyContent, 'Objective') || '';
+    const instructions = this.extractSection(bodyContent, 'Instructions') || '';
+    const passSection = this.extractSection(bodyContent, 'Pass') || '';
+    const failSection = this.extractSection(bodyContent, 'Fail') || '';
 
     const def: WorkflowDef = {
       id: frontmatter.id,
       description: frontmatter.description,
       owner: frontmatter.owner,
       version: frontmatter.version,
-      severity: frontmatter.severity,
       trigger: frontmatter.trigger,
-      blocking: frontmatter.blocking ?? true,
-      constitutions,
+      type: frontmatter.type,
+      constitutions: allConstitutions,
       steps,
       gate,
-      passTarget,
-      failBehavior,
+      pass,
+      fail,
       rawContent,
       sections: {
         inputs,
         outputs,
-        templates,
         objective,
+        instructions,
+        pass: passSection,
+        fail: failSection,
       },
     };
 
@@ -107,9 +120,29 @@ export class WorkflowParser {
   }
 
   /**
+   * Check if a workflow ID refers to a lifecycle directory (contains phase-*.md files).
+   * This enables data-driven detection: any directory under `.agent/workflows/`
+   * that contains `phase-*.md` files is treated as a lifecycle.
+   */
+  hasPhaseDirectory(workflowId: string): boolean {
+    // Normalize: strip prefixes like "workflow." or "workflows."
+    const dirName = workflowId.replace(/^workflows?\./, '');
+    const candidatePath = join(this.workspaceRoot, '.agent', 'workflows', dirName);
+
+    if (!existsSync(candidatePath)) { return false; }
+
+    try {
+      const entries = readdirSync(candidatePath);
+      return entries.some((e: string) => e.includes('phase-') && e.endsWith('.md'));
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Parse phase files from a lifecycle directory (e.g., tasklifecycle-long/).
    * Returns parsed phases sorted by phase number.
-   * Only includes files matching phase-*.md pattern (excludes index.md).
+   * Only includes files matching phase-*.md or short-phase-*.md pattern.
    */
   async parsePhaseDirectory(lifecyclePath: string): Promise<WorkflowDef[]> {
     const files = await this.findMarkdownFiles(lifecyclePath);
@@ -118,7 +151,7 @@ export class WorkflowParser {
     for (const file of files) {
       const filename = basename(file);
       // Only parse phase files, not index.md or other files
-      if (!filename.startsWith('phase-') || !filename.endsWith('.md')) {
+      if (!filename.includes('phase-') || !filename.endsWith('.md')) {
         continue;
       }
       try {
@@ -129,7 +162,7 @@ export class WorkflowParser {
       }
     }
 
-    // Sort by phase number extracted from filename (phase-0-..., phase-1-..., etc.)
+    // Sort by phase number extracted from filename
     phases.sort((a, b) => {
       const numA = parseInt(a.id.match(/phase-(\d+)/)?.[1] || '0', 10);
       const numB = parseInt(b.id.match(/phase-(\d+)/)?.[1] || '0', 10);
@@ -171,7 +204,6 @@ export class WorkflowParser {
 
   /**
    * Validate a WorkflowDef has all required fields.
-   * Returns structured { error, code } per constitution.backend.
    */
   private validate(def: WorkflowDef, source: string): void {
     const errors: string[] = [];
@@ -193,58 +225,19 @@ export class WorkflowParser {
   // ─── Private Parsing Methods ──────────────────────────────
 
   /**
-   * Cast raw gray-matter data to typed Frontmatter.
-   */
-  private castFrontmatter(data: Record<string, any>): Frontmatter {
-    return {
-      id: data.id,
-      description: data.description,
-      owner: data.owner,
-      version: data.version,
-      severity: data.severity,
-      trigger: data.trigger,
-      blocking: data.blocking ?? true,
-    };
-  }
-
-  /**
-   * Extract frontmatter, handling double-frontmatter files.
-   * Some files (e.g., init.md) have two --- blocks:
-   * one for the Gemini workflow description, one for the actual data.
+   * Extract frontmatter from a single YAML block using gray-matter.
    */
   private extractFrontmatter(rawContent: string, source: string): Frontmatter {
-    // Try parsing with gray-matter first (gets the FIRST frontmatter block)
     try {
       const parsed = matter(rawContent);
-
-      // If the first frontmatter has an 'id' field, use it directly
       if (parsed.data && parsed.data.id) {
         return this.castFrontmatter(parsed.data);
       }
-
-      // Otherwise, look for a second frontmatter block (double-frontmatter pattern)
-      const secondMatch = parsed.content.match(/^---\n([\s\S]*?)\n---/m);
-      if (secondMatch) {
-        try {
-          const secondParsed = matter(`---\n${secondMatch[1]}\n---`);
-          if (secondParsed.data && secondParsed.data.id) {
-            return this.castFrontmatter(secondParsed.data);
-          }
-        } catch { /* fall through to manual */ }
-      }
     } catch {
-      // gray-matter failed (likely YAML with unquoted colons) — try manual extraction
+      // gray-matter failed — try manual extraction
     }
 
-    // Fallback: manual regex extraction of frontmatter fields
-    return this.extractFrontmatterManual(rawContent, source);
-  }
-
-  /**
-   * Manual fallback for frontmatter extraction when gray-matter fails
-   * (e.g., YAML values with unquoted colons in description).
-   */
-  private extractFrontmatterManual(rawContent: string, source: string): Frontmatter {
+    // Fallback: manual regex extraction
     const fmMatch = rawContent.match(/^---\n([\s\S]*?)\n---/m);
     if (!fmMatch) {
       throw new Error(`[WorkflowParser] No frontmatter found in "${source}"`);
@@ -252,7 +245,7 @@ export class WorkflowParser {
 
     const fmBlock = fmMatch[1];
     const getField = (key: string): string | undefined => {
-      const match = fmBlock.match(new RegExp(`^${key}:\s*(.+)$`, 'm'));
+      const match = fmBlock.match(new RegExp(`^${key}:\\s*(.+)$`, 'm'));
       return match ? match[1].trim() : undefined;
     };
 
@@ -261,27 +254,9 @@ export class WorkflowParser {
       description: getField('description'),
       owner: getField('owner'),
       version: getField('version'),
-      severity: getField('severity'),
+      type: getField('type'),
       trigger: getField('trigger'),
-      blocking: getField('blocking'),
     };
-
-    // Try second frontmatter block if first had no id
-    if (!data.id) {
-      const rest = rawContent.slice(fmMatch.index! + fmMatch[0].length);
-      const secondMatch = rest.match(/^---\n([\s\S]*?)\n---/m);
-      if (secondMatch) {
-        const fm2 = secondMatch[1];
-        const getField2 = (key: string): string | undefined => {
-          const m = fm2.match(new RegExp(`^${key}:\s*(.+)$`, 'm'));
-          return m ? m[1].trim() : undefined;
-        };
-        data.id = getField2('id') || data.id;
-        data.owner = getField2('owner') || data.owner;
-        data.description = getField2('description') || data.description;
-        data.version = getField2('version') || data.version;
-      }
-    }
 
     if (!data.id) {
       throw new Error(`[WorkflowParser] No valid frontmatter with 'id' found in "${source}"`);
@@ -291,29 +266,45 @@ export class WorkflowParser {
   }
 
   /**
-   * Extract the markdown body (everything after frontmatter blocks).
+   * Cast raw gray-matter data to typed Frontmatter.
+   */
+  private castFrontmatter(data: Record<string, any>): Frontmatter {
+    // Parse trigger: ensure it's always string[]
+    let trigger: string[] = [];
+    if (Array.isArray(data.trigger)) {
+      trigger = data.trigger.map(String);
+    } else if (typeof data.trigger === 'string') {
+      trigger = [data.trigger];
+    }
+
+    return {
+      id: data.id,
+      description: data.description,
+      owner: data.owner,
+      version: data.version,
+      trigger,
+      type: (data.type === 'dynamic' ? 'dynamic' : 'static') as 'static' | 'dynamic',
+      ...(data.pass ? { pass: data.pass } : {}),
+    };
+  }
+
+  /**
+   * Extract the markdown body (everything after frontmatter block).
    */
   private extractBody(rawContent: string): string {
-    // Remove all frontmatter blocks
     let content = rawContent;
-    // Remove first frontmatter
-    content = content.replace(/^---\n[\s\S]*?\n---\n*/m, '');
-    // Remove second frontmatter if present
+    // Remove single frontmatter block
     content = content.replace(/^---\n[\s\S]*?\n---\n*/m, '');
     return content.trim();
   }
 
   /**
-   * Extract numbered steps from the ## Mandatory Steps section.
-   * Also supports Spanish: ## Pasos obligatorios
+   * Extract numbered steps from the ## Instructions section.
    */
-  private extractSteps(body: string): WorkflowStep[] {
+  private extractInstructions(body: string): WorkflowStep[] {
     const steps: WorkflowStep[] = [];
 
-    // Find the steps section (English or Spanish)
-    const stepsSection = this.extractSection(body, 'Mandatory Steps')
-      || this.extractSection(body, 'Pasos obligatorios')
-      || this.extractSection(body, 'Pasos Obligatorios');
+    const stepsSection = this.extractSection(body, 'Instructions');
     if (!stepsSection) {
       return steps;
     }
@@ -405,14 +396,69 @@ export class WorkflowParser {
   }
 
   /**
-   * Extract required constitutions from > [!IMPORTANT] blocks.
+   * Extract structured PassDef from ## Pass section.
+   * nextTarget is read from frontmatter YAML (source of truth).
+   */
+  private extractPassDef(body: string, frontmatter: Frontmatter): PassDef | null {
+    const section = this.extractSection(body, 'Pass');
+    if (!section) {
+      return null;
+    }
+
+    // Read nextTarget from frontmatter YAML — deterministic, no regex
+    let nextTarget: string | null = null;
+    if (frontmatter.pass?.nextTarget) {
+      const nt = frontmatter.pass.nextTarget;
+      if (typeof nt === 'string') {
+        // Simple string: "tasklifecycle-long"
+        nextTarget = nt;
+      } else if (typeof nt === 'object') {
+        // Conditional map: { long: "tasklifecycle-long", short: "tasklifecycle-short" }
+        const values = Object.entries(nt)
+          .map(([key, val]) => `${key}:${val}`);
+        nextTarget = values.join(' | ');
+      }
+    }
+
+    const actions = this.extractActionItems(section);
+    return { nextTarget, actions, rawContent: section };
+  }
+
+  /**
+   * Extract structured FailDef from ## Fail section.
+   */
+  private extractFailDef(body: string): FailDef | null {
+    const section = this.extractSection(body, 'Fail');
+    if (!section) {
+      return null;
+    }
+
+    const behavior: 'block' | 'retry' = /iterate|retry|resubmit/i.test(section)
+      ? 'retry'
+      : 'block';
+    const cases = this.extractActionItems(section);
+
+    return { behavior, cases, rawContent: section };
+  }
+
+  /**
+   * Extract required constitutions from `constitution.X` patterns and direct file paths.
    */
   private extractConstitutions(body: string): string[] {
     const constitutions: string[] = [];
+
+    // Pattern 1: `constitution.X` aliases
     const constPattern = /`(constitution\.\w+)`/g;
     let match: RegExpExecArray | null;
-
     while ((match = constPattern.exec(body)) !== null) {
+      if (!constitutions.includes(match[1])) {
+        constitutions.push(match[1]);
+      }
+    }
+
+    // Pattern 2: Direct file paths under `.agent/rules/` (constitutions only, not artifacts/templates)
+    const pathPattern = /`(\.agent\/rules\/[^\s`]+\.md)`/g;
+    while ((match = pathPattern.exec(body)) !== null) {
       if (!constitutions.includes(match[1])) {
         constitutions.push(match[1]);
       }
@@ -421,58 +467,11 @@ export class WorkflowParser {
     return constitutions;
   }
 
-  /**
-   * Extract PASS target (next workflow/phase).
-   * Supports alias patterns, workflow.X references, and launch/lanzar patterns.
-   */
-  private extractPassTarget(body: string): string | null {
-    // Look for PASS section referencing next phase
-    const passSection = this.extractSection(body, 'PASS');
-
-    const searchIn = passSection || body;
-
-    // 1. Check for alias pattern: task.phase.current = aliases.tasklifecycle-long.phases.phase_X.id
-    const aliasMatch = searchIn.match(
-      /task\.phase\.current\s*=\s*aliases\.tasklifecycle-long\.phases\.(\w+)\.id/
-    );
-    if (aliasMatch) { return aliasMatch[1].replace(/_/g, '-'); }
-
-    // 2. Check for workflow.X references (e.g., "workflow.tasklifecycle-long", "workflow.tasklifecycle-short")
-    const workflowRefs = searchIn.match(/`workflow\.([\w-]+)`/g);
-    if (workflowRefs && workflowRefs.length > 0) {
-      // Return all unique workflow targets joined
-      const targets = [...new Set(workflowRefs.map(r => r.replace(/`/g, '')))];
-      return targets.join(' | ');
-    }
-
-    // 3. Check for "lanzar/launch" pattern with backtick reference
-    const launchMatch = searchIn.match(/(?:lanzar|launch)\s+`([^`]+)`/i);
-    if (launchMatch) { return launchMatch[1]; }
-
-    return null;
-  }
-
-  /**
-   * Extract fail behavior from FAIL section.
-   */
-  private extractFailBehavior(body: string): typeof FAIL_BEHAVIOR[keyof typeof FAIL_BEHAVIOR] {
-    const failSection = this.extractSection(body, 'FAIL');
-    if (!failSection) {
-      return 'block';
-    }
-
-    // If the FAIL section mentions iteration or retry, return 'retry'
-    if (/iterate|retry|resubmit/i.test(failSection)) {
-      return 'retry';
-    }
-
-    return 'block';
-  }
-
   // ─── Utility Methods ──────────────────────────────────────
 
   /**
    * Extract a section by heading name (## SectionName).
+   * Matches exactly on the section name.
    */
   private extractSection(body: string, sectionName: string): string | null {
     const lines = body.split('\n');
@@ -488,7 +487,7 @@ export class WorkflowParser {
           break; // Hit next section, stop
         }
         const headingText = headingMatch[1].trim();
-        if (headingText.startsWith(sectionName)) {
+        if (headingText === sectionName || headingText.startsWith(sectionName)) {
           capturing = true;
           continue;
         }
@@ -507,7 +506,6 @@ export class WorkflowParser {
 
   /**
    * Extract list items (lines starting with -) from a named section.
-   * Returns an array of trimmed item strings.
    */
   private extractListItems(body: string, sectionName: string): string[] {
     const section = this.extractSection(body, sectionName);
@@ -518,6 +516,18 @@ export class WorkflowParser {
       .map(line => line.trim())
       .filter(line => line.startsWith('-'))
       .map(line => line.replace(/^-\s*/, '').trim())
+      .filter(line => line.length > 0);
+  }
+
+  /**
+   * Extract action items (lines starting with - or numbered) from section content.
+   */
+  private extractActionItems(content: string): string[] {
+    return content
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.startsWith('-') || /^\d+\./.test(line))
+      .map(line => line.replace(/^[-\d.]+\s*/, '').trim())
       .filter(line => line.length > 0);
   }
 

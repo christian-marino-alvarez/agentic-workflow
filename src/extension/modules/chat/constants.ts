@@ -30,6 +30,13 @@ export const MESSAGES = {
   // Dynamic lifecycle phases
   LIFECYCLE_PHASES_REQUEST: 'LIFECYCLE_PHASES_REQUEST', // View -> Background (request phases for strategy)
   LIFECYCLE_PHASES_RESPONSE: 'LIFECYCLE_PHASES_RESPONSE', // Background -> View (phases from filesystem)
+  // Phase auto-start (after workflow transition)
+  PHASE_AUTO_START: 'PHASE_AUTO_START', // Background -> View (auto-kickoff new phase)
+  // Gate continue (for internal gates without workflow transition)
+  GATE_CONTINUE: 'GATE_CONTINUE', // Background -> View (gate approved, send answer to LLM)
+  // Strategy switching
+  SWITCH_STRATEGY: 'SWITCH_STRATEGY', // View -> Background (switch lifecycle strategy)
+  STRATEGY_SWITCHED: 'STRATEGY_SWITCHED', // Background -> View (strategy switch completed, reset UI)
 } as const;
 
 export type ChatCommand = typeof MESSAGES[keyof typeof MESSAGES];

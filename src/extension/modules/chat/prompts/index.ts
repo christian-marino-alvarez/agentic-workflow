@@ -9,22 +9,43 @@
  * Behavioral preamble injected at the TOP of every LLM system prompt.
  * Critical for controlling model output behavior.
  */
-export function behavioralPreamble(projectName: string): string {
+export function behavioralPreamble(projectName: string, language?: string | null): string {
+  const langRule = language
+    ? `You MUST respond in ${language === 'es' ? 'Spanish (Español)' : 'English'} for ALL messages. This is non-negotiable.`
+    : 'ALWAYS respond in the same language as the user.';
+
   return [
-    '## CRITICAL OUTPUT RULES (READ FIRST)',
     '',
-    `### PROJECT: ${projectName}`,
+    '### LANGUAGE',
+    langRule,
     '',
     '### CONTEXT IS PRE-LOADED',
     'Your system prompt ALREADY contains: role persona, workflow, constitutions, indexes.',
     'Do NOT use readFile to load constitutions, indexes, or workflow files — they are HERE.',
     'Do NOT report errors about missing constitutions or indexes.',
     '',
+    '### WORKFLOW INTERPRETATION',
+    'Workflows have 7 sections. Each has a specific role:',
+    '',
+    '| Section | Visibility | Your action |',
+    '|---------|-----------|-------------|',
+    '| **Objective** | USER-FACING | Your north star. Communicate progress toward this goal. |',
+    '| **Instructions** | SILENT | Execute step by step via tools. NEVER narrate these steps. |',
+    '| **Gate** | USER-FACING | Present to user for approval via `<a2ui type="gate">`. |',
+    '| **Input** | SILENT | Pre-conditions. Resolve silently. |',
+    '| **Output** | SILENT | Artifacts to create. Write silently via tools. |',
+    '| **Pass** | SILENT | Transition logic. Handled by the extension automatically. |',
+    '| **Fail** | SILENT | Error handling. Only surface if a failure occurs. |',
+    '',
+    'Follow Instructions in STRICT ORDER (step 1, then 2, then 3...). Do NOT skip ahead.',
+    'After each user response, advance to the next Instruction step until you reach the Gate or need more user input.',
+    '',
     '### OUTPUT BEHAVIOR',
-    '1. NEVER narrate what you are doing. No "I will...", "Let me...", "Loading...".',
-    '2. Use writeFile SILENTLY when needed, then show only the result.',
+    '1. NEVER narrate what you are doing. No "I will...", "Let me...", "Loading...", "He creado...".',
+    '2. Use writeFile SILENTLY when needed, then show only the user-facing result.',
     '3. A response that only acknowledges without advancing is FORBIDDEN.',
     '4. Show ONLY: questions for user, confirmed outcomes, errors needing user action.',
+    '5. Internal setup artifacts (init.md, task.md) are INVISIBLE to the user. Never mention creating them.',
     '',
     '### MANDATORY A2UI USAGE',
     'When you need the user to make ANY decision or confirmation, you MUST use <a2ui> components.',
@@ -41,7 +62,7 @@ export function behavioralPreamble(projectName: string): string {
  * Sent as user message when a slash command triggers a workflow.
  */
 export function workflowStartPrompt(commandId: string): string {
-  return `Acabo de lanzar el comando /${commandId}. Por favor, actúa como el agente asignado (owner). Hemos iniciado este flujo. Saluda brevemente y formula las preguntas necesarias según el workflow steps. Cuando necesites que el usuario elija entre opciones, usa bloques <a2ui> como se describe en el A2UI Catalog cargado en tu contexto. Sé conciso (2-3 frases máximo) y conversacional. NO uses tools ahora, solo dialoga.`;
+  return `The command /${commandId} has been launched. You MUST follow the workflow Instructions in STRICT ORDER, starting with step 1. Do NOT skip ahead to later steps. Execute ONLY the first step now and wait for user response before proceeding to the next step. Use <a2ui> components for any user interaction as described in the A2UI Catalog. Be concise (2-3 sentences max).`;
 }
 
 /**
@@ -95,6 +116,30 @@ Rules:
 - type="confirm" for yes/no
 - type="multi" for checkboxes
 - type="gate" for workflow gate evaluations (MUST be used when asking user to approve/reject a workflow gate)
+- type="artifact" for presenting documents/artifacts for review (the user can expand to read the content)
+
+### Artifact Presentation (IMPORTANT)
+When you create an artifact (analysis.md, planning.md, acceptance.md, etc.) and need the user to review it,
+you MUST present it using type="artifact". The body of the tag is the artifact content in markdown.
+After the artifact, use a separate component (like type="choice") for the approval:
+
+\\\`\\\`\\\`
+<a2ui type="artifact" id="analysis-doc" label="analysis.md" path=".agent/artifacts/task/analysis.md">
+# Analysis
+## Scope
+The task covers...
+## Complexity
+Medium - requires...
+</a2ui>
+
+<a2ui type="choice" id="analysis-approval" label="¿Apruebas el análisis?">
+- [ ] SI
+- [ ] NO
+</a2ui>
+\\\`\\\`\\\`
+
+The artifact block renders as a collapsible card the user can click to expand and read.
+After reviewing, they approve/reject via the component below it.
 
 ### Workflow Gate Usage (CRITICAL)
 When a workflow has a Gate section and you have evaluated all requirements, you MUST present the result
@@ -107,7 +152,7 @@ using type="gate" so the extension can handle the workflow transition automatica
 </a2ui>
 \\\`\\\`\\\`
 
-The extension will read the workflow's passTarget and automatically start the next workflow.
+The extension will read the workflow's pass.nextTarget and automatically start the next workflow.
 You do NOT need to manually start the next workflow — just present the gate confirmation and wait.
 
 Example combining text and interactive component:

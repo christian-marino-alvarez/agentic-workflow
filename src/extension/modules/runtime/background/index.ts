@@ -153,6 +153,25 @@ export class RuntimeBackground extends Background {
     return this.forwardToSidecar('workflow.agents', {});
   }
 
+  private async handleWorkflowSwitchStrategy(data: any): Promise<any> {
+    // Ensure workflows are loaded before switching
+    const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    if (workspaceRoot) {
+      try {
+        await this.forwardToSidecar('workflow.loadAll', {
+          dirPath: `${workspaceRoot}/.agent/workflows`,
+        }, 30_000);
+      } catch (err: any) {
+        this.log('Workflow reload before switch failed:', err.message);
+      }
+    }
+
+    const result = await this.forwardToSidecar('workflow.switchStrategy', data, 15_000);
+    this.startPolling();
+    this.pollWorkflowState(true);
+    return result;
+  }
+
   private async forwardToSidecar(command: string, data: any, timeout?: number): Promise<any> {
     return this.sendMessage(`${NAME}::backend`, command, data, timeout);
   }
@@ -274,6 +293,9 @@ export class RuntimeBackground extends Background {
 
       case MESSAGES.WORKFLOW_AGENTS:
         return this.handleWorkflowAgents();
+
+      case MESSAGES.WORKFLOW_SWITCH_STRATEGY:
+        return this.handleWorkflowSwitchStrategy(message.payload.data);
 
       default:
         return super.listen(message);

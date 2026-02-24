@@ -81,6 +81,16 @@ class GeminiModel implements Model {
     const candidate = response.candidates?.[0];
     const parts = candidate?.content?.parts || [];
 
+    // Extract real usage from Gemini API
+    const usageMeta = (response as any).usageMetadata;
+    const usage = {
+      inputTokens: usageMeta?.promptTokenCount || 0,
+      outputTokens: usageMeta?.candidatesTokenCount || 0,
+      totalTokens: usageMeta?.totalTokenCount || 0,
+      promptTokens: usageMeta?.promptTokenCount || 0,
+      completionTokens: usageMeta?.candidatesTokenCount || 0,
+    };
+
     // Check for function calls
     const functionCallParts = parts.filter((p: any) => p.functionCall);
     if (functionCallParts.length > 0) {
@@ -92,16 +102,13 @@ class GeminiModel implements Model {
         arguments: JSON.stringify(p.functionCall.args || {}),
         status: 'completed',
       }));
-      return {
-        usage: { promptTokens: 0, completionTokens: 0 },
-        output,
-      } as any;
+      return { usage, output } as any;
     }
 
     // Regular text response
     const text = response.text();
     return {
-      usage: { promptTokens: 0, completionTokens: 0 },
+      usage,
       output: [{ type: 'output_text', text }]
     } as any;
   }
@@ -129,9 +136,14 @@ class GeminiModel implements Model {
 
     let fullText = '';
     const functionCalls: any[] = [];
+    let lastUsageMeta: any = null;
 
     for await (const chunk of result.stream) {
       const parts = chunk.candidates?.[0]?.content?.parts || [];
+      // Capture usage metadata from each chunk (last one has the totals)
+      if ((chunk as any).usageMetadata) {
+        lastUsageMeta = (chunk as any).usageMetadata;
+      }
 
       for (const part of parts) {
         if (part.functionCall) {
@@ -142,6 +154,13 @@ class GeminiModel implements Model {
         }
       }
     }
+
+    // Extract real usage from Gemini API
+    const usage = {
+      inputTokens: lastUsageMeta?.promptTokenCount || 0,
+      outputTokens: lastUsageMeta?.candidatesTokenCount || 0,
+      totalTokens: lastUsageMeta?.totalTokenCount || 0,
+    };
 
     // If function calls were received, emit them as function_call items
     if (functionCalls.length > 0) {
@@ -159,7 +178,7 @@ class GeminiModel implements Model {
         response: {
           id: randomUUID(),
           output: outputItems,
-          usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 }
+          usage,
         }
       };
       return;
@@ -175,7 +194,7 @@ class GeminiModel implements Model {
           status: 'completed',
           content: [{ type: 'output_text', text: fullText }]
         }],
-        usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 }
+        usage,
       }
     };
   }

@@ -35,9 +35,9 @@ task:
   artifacts:
     supplemental: []
   phase:
-    current: "phase-8-commit-push"
+    current: "completed"
     validated_by: "architect-agent"
-    updated_at: "2026-02-23T20:58:02+01:00"
+    updated_at: "2026-02-23T20:59:18+01:00"
   lifecycle:
     phases:
       phase-0-acceptance-criteria:
@@ -73,9 +73,9 @@ task:
         validated_by: "architect-agent"
         validated_at: "2026-02-23T20:58:02+01:00"
       phase-8-commit-push:
-        completed: false
-        validated_by: null
-        validated_at: null
+        completed: true
+        validated_by: "architect-agent"
+        validated_at: "2026-02-23T20:59:18+01:00"
 ```
 
 ---

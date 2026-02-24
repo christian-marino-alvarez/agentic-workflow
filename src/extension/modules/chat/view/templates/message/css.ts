@@ -36,6 +36,38 @@ export const messageStyles = css`
       font-size: 10px;
       opacity: 0.7;
     }
+
+    .msg-token-cost {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: auto;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: rgba(232, 197, 110, 0.06);
+      border: 1px solid rgba(232, 197, 110, 0.12);
+      cursor: default;
+      transition: background 0.15s;
+    }
+
+    .msg-token-cost:hover {
+      background: rgba(232, 197, 110, 0.12);
+    }
+
+    .msg-token-cost-icon { font-size: 9px; }
+
+    .msg-token-cost-value {
+      font-size: 9px;
+      font-weight: 600;
+      color: rgba(232, 197, 110, 0.8);
+      font-family: var(--vscode-editor-font-family, monospace);
+    }
+
+    .msg-token-cost-tokens {
+      font-size: 9px;
+      color: rgba(255, 255, 255, 0.3);
+      font-family: var(--vscode-editor-font-family, monospace);
+    }
     
     .msg-content {
       line-height: 1.5;
@@ -210,5 +242,49 @@ export const messageStyles = css`
       font-size: 0.88em;
       color: var(--vscode-descriptionForeground);
       padding: 4px 0;
+    }
+
+    /* ─── A2UI Composing Indicator ────────────────────────── */
+    .a2ui-composing {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      margin: 8px 0;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .a2ui-composing-dots {
+      display: flex;
+      gap: 4px;
+    }
+
+    .a2ui-composing-dots span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(232, 197, 110, 0.7);
+      animation: a2ui-dot-bounce 1.4s ease-in-out infinite;
+    }
+
+    .a2ui-composing-dots span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .a2ui-composing-dots span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes a2ui-dot-bounce {
+      0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+      40% { opacity: 1; transform: scale(1.1); }
+    }
+
+    .a2ui-composing-text {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.45);
+      font-style: italic;
     }
 `;

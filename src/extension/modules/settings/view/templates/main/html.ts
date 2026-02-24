@@ -6,6 +6,7 @@ import { renderList } from '../list/html.js';
 import { renderForm } from '../form/html.js';
 import { renderOAuthSetup } from '../oauth-setup/html.js';
 import { renderRoleBinding } from '../role-binding/html.js';
+import { renderPricing } from '../pricing/html.js';
 
 // --- Template Functions ---
 
@@ -62,6 +63,8 @@ function templateList(view: Settings): TemplateResult {
         ${renderList(view)}
         <div class="divider"></div>
         ${renderRoleBinding(view)}
+        <div class="divider"></div>
+        ${renderPricing(view)}
       </div>
     </div>
   `;

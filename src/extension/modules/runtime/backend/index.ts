@@ -32,6 +32,7 @@ export class RuntimeServer extends AbstractBackend {
       RPC_COMMANDS.WORKFLOW_RELOAD,
       RPC_COMMANDS.WORKFLOW_AGENTS,
       RPC_COMMANDS.WORKFLOW_AGENTS_REFRESH,
+      RPC_COMMANDS.WORKFLOW_SWITCH_STRATEGY,
     ]);
 
     this.setupEngineNotifications();
@@ -65,7 +66,7 @@ export class RuntimeServer extends AbstractBackend {
     switch (command) {
       case RPC_COMMANDS.WORKFLOW_LOAD: {
         const def = await this.workflowEngine.loadWorkflow(data.filePath);
-        return { id: def.id, owner: def.owner, steps: def.steps.length, blocking: def.blocking };
+        return { id: def.id, owner: def.owner, steps: def.steps.length, type: def.type };
       }
       case RPC_COMMANDS.WORKFLOW_LOAD_ALL: {
         const workflows = await this.workflowEngine.loadAllWorkflows(data.dirPath);
@@ -83,6 +84,7 @@ export class RuntimeServer extends AbstractBackend {
         return { completed: true };
 
       case RPC_COMMANDS.WORKFLOW_GATE_RESPOND:
+        // Engine internally detects lifecycle vs simple and dispatches the correct event
         this.workflowEngine.respondToGate(data);
         return { responded: true };
 
@@ -99,6 +101,11 @@ export class RuntimeServer extends AbstractBackend {
       case RPC_COMMANDS.WORKFLOW_AGENTS_REFRESH:
         await this.workflowEngine.refreshAgentRegistry();
         return { refreshed: true, count: this.workflowEngine.getAgents().length };
+
+      case RPC_COMMANDS.WORKFLOW_SWITCH_STRATEGY: {
+        const newDef = await this.workflowEngine.switchStrategy(data.strategy);
+        return { switched: true, strategy: data.strategy, workflowId: newDef.id, owner: newDef.owner };
+      }
 
       default:
         return null;

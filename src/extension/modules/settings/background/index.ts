@@ -249,6 +249,14 @@ export class SettingsBackground extends Background {
         return this.handleSaveRoleConfig(data);
       case MESSAGES.LIST_AVAILABLE_MODELS:
         return this.handleListAvailableModels(data);
+      case MESSAGES.SAVE_PRICING:
+        return this.handleSavePricing(data);
+      case MESSAGES.GET_PRICING:
+        return this.handleGetPricing();
+      case MESSAGES.TRACK_USAGE:
+        return this.handleTrackUsage(data);
+      case MESSAGES.GET_USAGE:
+        return this.handleGetUsage();
     }
   }
 
@@ -487,7 +495,9 @@ export class SettingsBackground extends Background {
         let icon: string | undefined;
         let description: string | undefined;
         let model: { provider?: string; id?: string } | undefined;
+        let models: { default?: string; routing?: string } | undefined;
         let capabilities: Record<string, boolean> | undefined;
+        let context: string[] | undefined;
 
         try {
           const filePath = path.join(rolesPath, file);
@@ -497,12 +507,14 @@ export class SettingsBackground extends Background {
           if (data.icon) { icon = data.icon; }
           if (data.description) { description = data.description; }
           if (data.model) { model = data.model; }
+          if (data.models) { models = data.models; }
           if (data.capabilities) { capabilities = data.capabilities; }
+          if (data.context && Array.isArray(data.context)) { context = data.context; }
         } catch (err) {
           console.warn(`Failed to parse frontmatter for role ${roleName}`, err);
         }
 
-        roles.push({ name: roleName, icon, description, model, capabilities });
+        roles.push({ name: roleName, icon, description, model, models, capabilities, context });
       }
 
       return { success: true, roles };
@@ -532,6 +544,77 @@ export class SettingsBackground extends Background {
   private async handleGetDisabledRoles() {
     const disabledRoles = this.configService.get<string[]>('disabledRoles', []);
     return { success: true, disabledRoles };
+  }
+
+  // ─── Pricing ──────────────────────────────────────────────
+
+  public static readonly DEFAULT_PRICING: Record<string, { input: number; output: number }> = {
+    'flash': { input: 0.30, output: 2.50 },
+    'pro': { input: 1.25, output: 10.00 },
+    'gpt': { input: 2.50, output: 10.00 },
+    'claude': { input: 3.00, output: 15.00 },
+    'default': { input: 0.30, output: 2.50 },
+  };
+
+  private async handleSavePricing(data: any) {
+    if (!data || typeof data !== 'object') { return { success: false }; }
+    await this.configService.update('pricing', data, vscode.ConfigurationTarget.Global);
+    return { success: true };
+  }
+
+  private async handleGetPricing() {
+    const pricing = this.configService.get<Record<string, { input: number; output: number }>>('pricing');
+    return { success: true, pricing: pricing || SettingsBackground.DEFAULT_PRICING };
+  }
+
+  // ─── Usage Tracking ─────────────────────────────────────────
+
+  private async handleTrackUsage(data: any) {
+    if (!data) { return { success: false }; }
+    const { inputTokens = 0, outputTokens = 0, cost = 0, model = '' } = data;
+
+    const now = new Date();
+    const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    const allUsage = this.configService.get<Record<string, any>>('usageHistory', {}) || {};
+    const month = allUsage[monthKey] || { inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCost: 0, requests: 0 };
+
+    month.inputTokens += inputTokens;
+    month.outputTokens += outputTokens;
+    month.totalTokens += inputTokens + outputTokens;
+    month.estimatedCost = Math.round((month.estimatedCost + cost) * 10000) / 10000;
+    month.requests += 1;
+    month.lastModel = model;
+    month.lastUpdated = now.toISOString();
+
+    allUsage[monthKey] = month;
+    await this.configService.update('usageHistory', allUsage, vscode.ConfigurationTarget.Global);
+
+    // Notify Settings View of updated usage (real-time card update)
+    try {
+      this.messenger.emit({
+        id: randomUUID(),
+        from: 'settings::background',
+        to: 'settings::view',
+        timestamp: Date.now(),
+        origin: MessageOrigin.Server,
+        payload: { command: 'USAGE_UPDATED', data: { month: monthKey, usage: month } }
+      });
+    } catch (_) { /* View may not be mounted */ }
+
+    return { success: true, month: monthKey, usage: month };
+  }
+
+  private async handleGetUsage() {
+    const allUsage = this.configService.get<Record<string, any>>('usageHistory', {}) || {};
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    return {
+      success: true,
+      currentMonth,
+      current: allUsage[currentMonth] || { inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCost: 0, requests: 0 },
+      history: allUsage,
+    };
   }
 
   /**

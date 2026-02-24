@@ -59,6 +59,9 @@ function renderHistoryTab(view: AppView) {
     return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const formatTokens = (n: number) => n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1_000 ? `${(n / 1_000).toFixed(1)}k` : `${n}`;
+  const formatCost = (c: number) => c < 0.001 ? '<$0.001' : `$${c.toFixed(3)}`;
+
   return html`
     <div class="history-container">
       <div class="header-actions">
@@ -98,6 +101,7 @@ function renderHistoryTab(view: AppView) {
       : sessions.map((s: any) => {
         const isCurrent = s.id === currentId;
         const isPendingDelete = view.pendingDeleteSessionId === s.id;
+        const hasTokens = s.tokenUsage?.totalTokens > 0;
         return html`
               <div class="history-card ${isCurrent ? 'current' : ''}"
                 @click=${() => {
@@ -116,6 +120,7 @@ function renderHistoryTab(view: AppView) {
                     </div>
                   </div>
                   ${s.elapsedSeconds ? html`<span class="history-time-pill" title="Task execution time">Duration ${Math.floor(s.elapsedSeconds / 60)}:${(s.elapsedSeconds % 60).toString().padStart(2, '0')}</span>` : ''}
+                  ${hasTokens ? html`<span class="history-token-pill" title="Tokens: ${formatTokens(s.tokenUsage.totalTokens)} · Requests: ${s.tokenUsage.requests || '?'}">⚡ ${formatTokens(s.tokenUsage.totalTokens)} ${formatCost(s.tokenUsage.estimatedCost)}</span>` : ''}
                   <span class="history-security ${(s.securityScore ?? 100) >= 80 ? 'safe' : (s.securityScore ?? 100) >= 50 ? 'medium' : 'warn'}" title="Security level">
                     ${(s.securityScore ?? 100) >= 80 ? 'Safe' : (s.securityScore ?? 100) >= 50 ? 'Caution' : 'Risk'} ${s.securityScore ?? 100}%
                   </span>

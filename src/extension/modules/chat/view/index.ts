@@ -17,7 +17,7 @@ export class ChatView extends View {
   }
 
   @state()
-  public history: Array<{ sender: string, text: string, role?: string, status?: string, isStreaming?: boolean, phase?: string, toolEvents?: Array<any>, isDelegation?: boolean, delegationAgent?: string, delegationStatus?: string, delegationResult?: string, isGate?: boolean, gateId?: string, gateDecision?: 'approve' | 'reject', a2uiAnswers?: Record<string, string>, a2uiDismissed?: boolean }> = [];
+  public history: Array<{ sender: string, text: string, role?: string, status?: string, isStreaming?: boolean, phase?: string, toolEvents?: Array<any>, isDelegation?: boolean, delegationAgent?: string, delegationStatus?: string, delegationResult?: string, isGate?: boolean, gateId?: string, gateDecision?: 'approve' | 'reject', a2uiAnswers?: Record<string, string>, a2uiDismissed?: boolean, isError?: boolean }> = [];
 
   @state()
   public inputText: string = '';
@@ -40,7 +40,7 @@ export class ChatView extends View {
   public showAgentDropdown: boolean = false;
 
   @state()
-  public availableAgents: Array<{ name: string; icon?: string; model?: { provider?: string; id?: string }; capabilities?: Record<string, boolean> }> = [];
+  public availableAgents: Array<{ name: string; icon?: string; model?: { provider?: string; id?: string }; capabilities?: Record<string, boolean>; context?: string[] }> = [];
   // Note: populated dynamically from the runtime backend via LIST_AGENTS_RESPONSE / AGENTS_REFRESHED
 
   public isLoading: boolean = false;
@@ -90,20 +90,19 @@ export class ChatView extends View {
   public workflowDetails: {
     workflowId?: string;
     version?: string;
-    severity?: string;
-    blocking?: boolean;
+    type?: 'static' | 'dynamic';
     owner?: string;
     model?: string;
     contextFiles?: string[];
     gateRequirements?: string[];
     nextStep?: string;
     nextStepIndex?: number;
-    passTarget?: string;
-    failBehavior?: string;
+    pass?: { nextTarget: string | null; actions: string[]; rawContent: string } | null;
+    fail?: { behavior: 'block' | 'retry'; cases: string[]; rawContent: string } | null;
     inputs?: string[];
     outputs?: string[];
-    templates?: string[];
     objective?: string;
+    instructions?: string;
     currentPhaseLabel?: string;
   } = {};
 
@@ -132,9 +131,23 @@ export class ChatView extends View {
 
   /** Cumulative token usage for the current session */
   @state()
-  public tokenUsage: { inputTokens: number; outputTokens: number; totalTokens: number; estimatedCost: number } = { inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCost: 0 };
+  public tokenUsage: {
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    estimatedCost: number;
+    requests: number;
+    byModel: Record<string, { inputTokens: number; outputTokens: number; cost: number; requests: number }>;
+  } = { inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCost: 0, requests: 0, byModel: {} };
+
+  /** Whether the usage stats panel is open */
+  @state()
+  public showUsagePanel: boolean = false;
 
   private timerInterval: ReturnType<typeof setInterval> | null = null;
+
+  /** Cached pricing config from Settings (loaded lazily on first usage) */
+  private _pricingCache: Record<string, { input: number; output: number }> | null = null;
 
   public startTimer() {
     if (this.timerInterval) { return; }
@@ -163,6 +176,10 @@ export class ChatView extends View {
     if (this.showDetails) {
       this.showTimeline = false;
     }
+  }
+
+  public toggleUsagePanel() {
+    this.showUsagePanel = !this.showUsagePanel;
   }
 
   /**
@@ -317,7 +334,8 @@ export class ChatView extends View {
           name: r.name,
           icon: r.icon,
           model: r.model,
-          capabilities: r.capabilities
+          capabilities: r.capabilities,
+          context: r.context
         }));
         this.log('Agents loaded:', this.availableAgents.length);
       } else {
@@ -504,25 +522,62 @@ export class ChatView extends View {
       const output = data?.outputTokens || 0;
       const model = (data?.model || '').toLowerCase();
 
-      // Approximate cost per 1M tokens (EUR)
-      let inputRate = 0.07;   // default: gemini flash
-      let outputRate = 0.28;
-      if (model.includes('pro')) {
-        inputRate = 1.15; outputRate = 4.60;
-      } else if (model.includes('gpt') || model.includes('codex') || model.includes('o1') || model.includes('o3') || model.includes('o4')) {
-        inputRate = 1.85; outputRate = 7.40;
-      } else if (model.includes('claude')) {
-        inputRate = 2.75; outputRate = 13.80;
+      // Load pricing from Settings (cached after first call)
+      if (!this._pricingCache) {
+        this.sendMessage('settings', SETTINGS_MESSAGES.GET_PRICING)
+          .then((res: any) => { this._pricingCache = res?.pricing || {}; })
+          .catch(() => { this._pricingCache = {}; });
       }
 
-      const cost = (input * inputRate + output * outputRate) / 1_000_000;
+      // Resolve rate: find first pricing key that matches the model name
+      const pricing = this._pricingCache || {};
+      const matchedKey = Object.keys(pricing).find(k => k !== 'default' && model.includes(k));
+      const rate = pricing[matchedKey || ''] || pricing['default'] || { input: 0.30, output: 2.50 };
+
+      const cost = (input * rate.input + output * rate.output) / 1_000_000;
+
+      // Update per-model breakdown
+      const prevModel = this.tokenUsage.byModel[model] || { inputTokens: 0, outputTokens: 0, cost: 0, requests: 0 };
+      const byModel = {
+        ...this.tokenUsage.byModel,
+        [model]: {
+          inputTokens: prevModel.inputTokens + input,
+          outputTokens: prevModel.outputTokens + output,
+          cost: prevModel.cost + cost,
+          requests: prevModel.requests + 1,
+        },
+      };
 
       this.tokenUsage = {
         inputTokens: this.tokenUsage.inputTokens + input,
         outputTokens: this.tokenUsage.outputTokens + output,
         totalTokens: this.tokenUsage.totalTokens + input + output,
         estimatedCost: this.tokenUsage.estimatedCost + cost,
+        requests: this.tokenUsage.requests + 1,
+        byModel,
       };
+
+      // Stamp cost onto the last agent message in history
+      if (input > 0 || output > 0) {
+        const historyCopy = [...this.history];
+        for (let i = historyCopy.length - 1; i >= 0; i--) {
+          const msg = historyCopy[i];
+          if (msg.role && msg.role !== 'user' && !msg.isDelegation) {
+            (msg as any).tokenCost = { inputTokens: input, outputTokens: output, cost, model };
+            this.history = historyCopy;
+            break;
+          }
+        }
+      }
+
+      // Persist to monthly usage tracking (fire-and-forget)
+      this.sendMessage('settings', SETTINGS_MESSAGES.TRACK_USAGE, {
+        inputTokens: input, outputTokens: output, cost, model,
+      }).then((res: any) => {
+        this.log('TRACK_USAGE result:', res);
+      }).catch((err: any) => {
+        this.log('TRACK_USAGE error:', err?.message || err);
+      });
     }
 
     if (command === 'SELECT_FILES_RESPONSE') {
@@ -558,7 +613,8 @@ export class ChatView extends View {
           name: r.name,
           icon: r.icon,
           model: r.model,
-          capabilities: r.capabilities
+          capabilities: r.capabilities,
+          context: r.context
         }));
         this.log('Agents refreshed:', this.availableAgents.length);
       }
@@ -581,6 +637,7 @@ export class ChatView extends View {
           role: m.role,
           ...(m.a2uiAnswers ? { a2uiAnswers: m.a2uiAnswers } : {}),
           ...(m.a2uiDismissed ? { a2uiDismissed: true } : {}),
+          ...(m.tokenCost ? { tokenCost: m.tokenCost } : {}),
         }));
         this.log(`Session restored: ${data.session.id} (${this.history.length} messages)`);
 
@@ -590,6 +647,43 @@ export class ChatView extends View {
         }
         if (data.session.elapsedSeconds) {
           this.elapsedSeconds = data.session.elapsedSeconds;
+        }
+
+        // Restore token usage totals
+        if (data.session.tokenUsage) {
+          this.tokenUsage = {
+            inputTokens: data.session.tokenUsage.inputTokens || 0,
+            outputTokens: data.session.tokenUsage.outputTokens || 0,
+            totalTokens: data.session.tokenUsage.totalTokens || 0,
+            estimatedCost: data.session.tokenUsage.estimatedCost || 0,
+            requests: data.session.tokenUsage.requests || 0,
+            byModel: data.session.tokenUsage.byModel || {},
+          };
+        } else {
+          // Backward compat: reconstruct from per-message tokenCost
+          let totalIn = 0, totalOut = 0, totalCost = 0, totalReqs = 0;
+          const byModel: Record<string, { inputTokens: number; outputTokens: number; cost: number; requests: number }> = {};
+          for (const m of this.history) {
+            const tc = (m as any).tokenCost;
+            if (!tc) { continue; }
+            totalIn += tc.inputTokens || 0;
+            totalOut += tc.outputTokens || 0;
+            totalCost += tc.cost || 0;
+            totalReqs++;
+            const model = tc.model || 'unknown';
+            if (!byModel[model]) { byModel[model] = { inputTokens: 0, outputTokens: 0, cost: 0, requests: 0 }; }
+            byModel[model].inputTokens += tc.inputTokens || 0;
+            byModel[model].outputTokens += tc.outputTokens || 0;
+            byModel[model].cost += tc.cost || 0;
+            byModel[model].requests++;
+          }
+          if (totalReqs > 0) {
+            this.tokenUsage = {
+              inputTokens: totalIn, outputTokens: totalOut,
+              totalTokens: totalIn + totalOut,
+              estimatedCost: totalCost, requests: totalReqs, byModel,
+            };
+          }
         }
 
         // Restore lifecycle strategy and reload phases
@@ -638,7 +732,7 @@ export class ChatView extends View {
       if (data?.phases && Array.isArray(data.phases) && data.phases.length > 0) {
         this.taskSteps = data.phases.map((p: any) => ({
           id: p.id || p.label,
-          label: p.label || p.id,
+          label: p.id || p.label,
           status: p.status === 'completed' ? STEP_STATUS.DONE
             : p.status === 'active' || p.status === 'executing' ? STEP_STATUS.ACTIVE
               : p.status === 'failed' ? STEP_STATUS.DONE  // show failed as done with different styling later
@@ -676,25 +770,34 @@ export class ChatView extends View {
         const nextStepIdx = nextStepObj ? steps.indexOf(nextStepObj) : -1;
         const activeAgent = this.availableAgents.find(a => a.name === data?.workflow?.owner?.replace(/-agent$/, ''));
 
+        // Merge workflow constitutions + agent context (deduplicated)
+        const workflowCtx: string[] = data?.workflow?.constitutions || [];
+        const agentCtx: string[] = activeAgent?.context || [];
+        const mergedContext = [...workflowCtx];
+        for (const c of agentCtx) {
+          if (!mergedContext.includes(c)) {
+            mergedContext.push(c);
+          }
+        }
+
         this.workflowDetails = {
           workflowId: data?.currentWorkflowId || data?.workflow?.description || '',
           version: data?.workflow?.version,
-          severity: data?.workflow?.severity,
-          blocking: data?.workflow?.blocking,
+          type: data?.workflow?.type,
           owner: data?.workflow?.owner,
           model: activeAgent?.model?.id ? (this.models.find(m => m.id === activeAgent.model!.id)?.name || activeAgent.model.id) : undefined,
-          contextFiles: data?.workflow?.constitutions || [],
+          contextFiles: mergedContext,
           gateRequirements: data?.workflow?.gate?.requirements || [],
           nextStep: nextStepObj?.label,
           nextStepIndex: nextStepIdx >= 0 ? nextStepIdx + 1 : undefined,
-          passTarget: data?.workflow?.passTarget || undefined,
-          failBehavior: data?.workflow?.failBehavior || undefined,
+          pass: data?.workflow?.pass || undefined,
+          fail: data?.workflow?.fail || undefined,
           // Sections: prefer active phase sections, fallback to workflow-level sections
           inputs: data?.parsedSections?.inputs || data?.workflow?.sections?.inputs || [],
           outputs: data?.parsedSections?.outputs || data?.workflow?.sections?.outputs || [],
-          templates: data?.parsedSections?.templates || data?.workflow?.sections?.templates || [],
           objective: data?.parsedSections?.objective || data?.workflow?.sections?.objective || '',
-          currentPhaseLabel: data?.phases?.find((p: any) => p.status === 'active')?.label || '',
+          instructions: data?.parsedSections?.instructions || data?.workflow?.sections?.instructions || '',
+          currentPhaseLabel: data?.phases?.find((p: any) => p.status === 'active')?.id || '',
         };
       }
 
@@ -716,6 +819,53 @@ export class ChatView extends View {
       this.showTimeline = true;
       this.showDetails = false;
       this.isLoading = true;
+    }
+
+    // Strategy switched: background completed the lifecycle switch — reset the entire UI
+    if (command === MESSAGES.STRATEGY_SWITCHED) {
+      const newStrategy = data?.strategy || 'long';
+      const label = data?.label || newStrategy;
+      this.log(`Strategy switched to ${newStrategy} — resetting conversation`);
+
+      // Clear all conversation history (discard previous work)
+      this.history = [];
+
+      // Update lifecycle strategy and reload timeline
+      this.lifecycleStrategy = newStrategy;
+      this.loadLifecyclePhases(newStrategy);
+
+      // Reset progress state
+      this.elapsedSeconds = 0;
+
+      // Add a system announcement as the first message in the clean session
+      this.history = [{
+        sender: 'System',
+        text: `🔄 **Strategy changed to ${label}**. Previous analysis has been discarded. Starting fresh with the new lifecycle.`,
+        role: 'system',
+      }];
+    }
+
+    // Auto-kickoff: background signals that a new lifecycle phase has started
+    if (command === MESSAGES.PHASE_AUTO_START) {
+      const phaseId = data?.phaseId || '';
+      const owner = data?.owner || 'architect';
+      this.log(`Phase auto-start received: ${phaseId} (owner: ${owner})`);
+
+      // Switch to the phase owner agent and send a kickoff message
+      if (owner && this.availableAgents.some(a => a.name === owner)) {
+        this.selectedAgent = owner;
+      }
+
+      // Send silent kickoff — the LLM will receive the new phase's workflow context
+      this.sendSilentMessage(`Phase ${phaseId} has started. Begin executing the workflow instructions for this phase.`);
+    }
+
+    // Gate continue: background signals that a gate was approved but NO workflow transition
+    // happened (internal phase gate). Now send the gate answer text to the LLM.
+    if (command === MESSAGES.GATE_CONTINUE) {
+      const answerText = data?.gateAnswerText || 'Gate approved.';
+      this.log(`Gate continue received, sending answer to LLM: ${answerText.substring(0, 60)}...`);
+      this.sendSilentMessage(answerText);
     }
   }
 
@@ -776,17 +926,24 @@ export class ChatView extends View {
 
     // Parse all blocks to check if this is the last one
     const segments = parseA2UI(msg.text || '');
-    const blocks: A2UIBlock[] = segments.filter((s: any) => s.type === 'a2ui' && s.block).map((s: any) => s.block!);
+    const allBlocks: A2UIBlock[] = segments.filter((s: any) => s.type === 'a2ui' && s.block).map((s: any) => s.block!);
+    // Filter out artifact blocks — they don't need answers
+    const blocks = allBlocks.filter((b: A2UIBlock) => b.type !== 'artifact');
 
     // Store answer
     if (!msg.a2uiAnswers) { msg.a2uiAnswers = {}; }
     msg.a2uiAnswers[blockId] = option;
 
-    // Check if all blocks are resolved
+    // Check if all interactive blocks are resolved
     const allResolved = blocks.every((b: A2UIBlock) => msg.a2uiAnswers[b.id] !== undefined);
 
-    // Detect if any block is a gate type
-    const gateBlock = blocks.find(b => b.type === 'gate');
+    // Detect if any block is an explicit gate type.
+    // ONLY type="gate" triggers engine phase transitions.
+    // SI/NO choices (type="choice") are inline approvals — they do NOT advance the workflow.
+    const isGateBlock = (b: A2UIBlock) => {
+      return b.type === 'gate';
+    };
+    const gateBlock = blocks.find(isGateBlock);
     const hasGateBlock = !!gateBlock;
 
     if (allResolved) {
@@ -795,26 +952,29 @@ export class ChatView extends View {
         const gateAnswer = msg.a2uiAnswers[gateBlock!.id];
         const decision = /^si$/i.test(gateAnswer) ? 'SI' : 'NO';
 
-        // Extract strategy from other A2UI answers if available
-        const strategyAnswer = Object.values(msg.a2uiAnswers as Record<string, string>).find(
-          (v: string) => /long|short/i.test(v)
-        );
-        const strategy = strategyAnswer && /short/i.test(strategyAnswer) ? 'short' : 'long';
+        // Use the authoritative lifecycle strategy set during init
+        const strategy = this.lifecycleStrategy || 'long';
+
+        // Build the answer text from all A2UI blocks
+        const parts: string[] = [];
+        for (const b of blocks) {
+          const ans = msg.a2uiAnswers[b.id];
+          if (ans) { parts.push(`${b.label || b.id}: ${ans}`); }
+        }
+        const gateAnswerText = parts.join('\n');
 
         this.log(`Gate A2UI confirmed: decision=${decision}, strategy=${strategy}`);
         this.sendMessage(NAME, MESSAGES.GATE_RESPONSE, {
           gateId: gateBlock!.id,
           decision,
           strategy,
+          gateAnswerText, // background relays this back via GATE_CONTINUE for non-transitioning gates
         });
 
-        // Also send as silent message for LLM context
-        const parts: string[] = [];
-        for (const b of blocks) {
-          const ans = msg.a2uiAnswers[b.id];
-          if (ans) { parts.push(`${b.label || b.id}: ${ans}`); }
-        }
-        this.sendSilentMessage(parts.join('\n'));
+        // Do NOT send sendSilentMessage here.
+        // The background decides the next step:
+        //   - If transition → emits PHASE_AUTO_START (with correct new context)
+        //   - If no transition → emits GATE_CONTINUE (with the gateAnswerText)
       } else {
         // Regular A2UI: send all answers as silent message
         const parts: string[] = [];
@@ -826,12 +986,32 @@ export class ChatView extends View {
       }
     }
 
-    // Detect strategy selection — request phases dynamically from filesystem
-    const isStrategyOption = /long|short/i.test(option);
-    if (isStrategyOption) {
-      const strategy = /short/i.test(option) ? 'short' as const : 'long' as const;
+    // Detect strategy selection by A2UI block ID (language-independent)
+    const isStrategyBlock = /strateg/i.test(blockId);
+    if (isStrategyBlock) {
+      // Determine which strategy was selected:
+      // Use the block's option index (first=long, second=short) with text fallback
+      const block = blocks.find(b => b.id === blockId);
+      const optIndex = block ? block.options.indexOf(option) : -1;
+      const strategy = (optIndex === 1 || /short|corta/i.test(option)) ? 'short' as const : 'long' as const;
+
+      // Detect strategy SWITCH: if a lifecycle is already running and the user picks a different one
+      const isSwitching = blockId.includes('switch-strategy')
+        || (this.lifecycleStrategy && this.lifecycleStrategy !== strategy);
+
       this.lifecycleStrategy = strategy;
       this.loadLifecyclePhases(strategy);
+
+      if (isSwitching) {
+        this.log(`Strategy switch detected: → ${strategy}`);
+        this.sendMessage(NAME, MESSAGES.SWITCH_STRATEGY, { strategy });
+      }
+    }
+
+    // Detect task title — update header when user provides the task name
+    if (/task.?title/i.test(blockId) && option.trim()) {
+      this.activeWorkflow = option.trim();
+      this.log(`Task title updated: "${this.activeWorkflow}"`);
     }
 
     // Trigger re-render
@@ -867,6 +1047,25 @@ export class ChatView extends View {
     this.history = historyCopy;
   }
 
+  /**
+   * Build conversation history for the LLM, injecting A2UI answers as synthetic user turns.
+   * This ensures the LLM sees user responses to A2UI choices/gates.
+   */
+  private buildLLMHistory(): Array<{ role: string; text: string }> {
+    const result: Array<{ role: string; text: string }> = [];
+    for (const m of this.history.slice(-20)) {
+      result.push({ role: m.role || 'user', text: m.text });
+      // Inject A2UI answers as synthetic user turns
+      if (m.a2uiAnswers && Object.keys(m.a2uiAnswers).length > 0) {
+        const answers = Object.entries(m.a2uiAnswers)
+          .map(([key, val]) => `${key}: ${val}`)
+          .join('\n');
+        result.push({ role: 'user', text: answers });
+      }
+    }
+    return result;
+  }
+
   public async sendChatMessage() {
     if (!this.inputText.trim() && this.attachments.length === 0) { return; }
 
@@ -890,16 +1089,26 @@ export class ChatView extends View {
         agentRole: this.selectedAgent,
         workflow: this.activeWorkflow,
         attachments: this.attachments,
-        history: this.history.slice(-20).map(m => ({ role: m.role || 'user', text: m.text }))
-      });
+        history: this.buildLLMHistory()
+      }, 120_000);
 
       this.attachments = [];
 
       // Session is saved when stream response completes (RECEIVE_MESSAGE handler)
-    } catch (error) {
+    } catch (error: any) {
       this.isLoading = false;
-      // Log silently — non-blocking errors should not pollute the chat
+      this.activeActivity = '';
+      this.pauseTimer();
+      const errorMsg = error?.message || 'Unknown error';
       this.log('Error sending message', error);
+      // Show error visually in chat
+      this.history = [...this.history, {
+        sender: '⚠️ System',
+        text: `**Error:** ${errorMsg}\n\nThe request could not be completed. Please try again.`,
+        role: 'system',
+        isError: true,
+        phase: this.currentPhase
+      }];
     }
   }
 
@@ -919,11 +1128,21 @@ export class ChatView extends View {
         agentRole: this.selectedAgent,
         workflow: this.activeWorkflow,
         attachments: [],
-        history: this.history.slice(-20).map(m => ({ role: m.role || 'user', text: m.text }))
-      });
-    } catch (error) {
+        history: this.buildLLMHistory()
+      }, 120_000);
+    } catch (error: any) {
       this.isLoading = false;
+      this.activeActivity = '';
+      const errorMsg = error?.message || 'Unknown error';
       this.log('Error sending silent message', error);
+      // Show error visually in chat
+      this.history = [...this.history, {
+        sender: '⚠️ System',
+        text: `**Error:** ${errorMsg}\n\nThe request could not be completed. Please try again.`,
+        role: 'system',
+        isError: true,
+        phase: this.currentPhase
+      }];
     }
   }
 
@@ -931,12 +1150,15 @@ export class ChatView extends View {
    * Save current session to persistent storage.
    */
   public async saveCurrentSession(): Promise<void> {
+    // Don't create orphan sessions: wait until currentSessionId is established
+    if (!this.currentSessionId) { return; }
     const messages = this.history.map(m => ({
       sender: m.sender,
       text: m.text,
       role: m.role,
       ...(m.a2uiAnswers ? { a2uiAnswers: m.a2uiAnswers } : {}),
       ...(m.a2uiDismissed ? { a2uiDismissed: true } : {}),
+      ...((m as any).tokenCost ? { tokenCost: (m as any).tokenCost } : {}),
     }));
     const done = this.taskSteps.filter(s => s.status === 'done').length;
     const total = this.taskSteps.length;
@@ -949,6 +1171,7 @@ export class ChatView extends View {
         elapsedSeconds: this.elapsedSeconds || 0,
         progress,
         lifecycleStrategy: this.lifecycleStrategy || undefined,
+        tokenUsage: this.tokenUsage,
         accessLevel: Object.values(this.agentPermissions).includes('full') ? 'full' : 'sandbox',
         securityScore: (() => {
           const perms = Object.values(this.agentPermissions);
@@ -1074,8 +1297,12 @@ export class ChatView extends View {
       const blocks: A2UIBlock[] = segments.filter((s: any) => s.type === 'a2ui' && s.block).map((s: any) => s.block!);
       if (blocks.length === 0) { break; }
 
+      // Filter out artifact blocks — they are informational, not interactive
+      const interactiveBlocks = blocks.filter((b: A2UIBlock) => b.type !== 'artifact');
+      if (interactiveBlocks.length === 0) { break; }
+
       const answers: Record<string, string> = msg.a2uiAnswers || {};
-      const unresolved = blocks.find((b: A2UIBlock) => answers[b.id] === undefined);
+      const unresolved = interactiveBlocks.find((b: A2UIBlock) => answers[b.id] === undefined);
       if (!unresolved) { break; }
 
       newPending = {
@@ -1083,7 +1310,7 @@ export class ChatView extends View {
         label: unresolved.label || unresolved.id,
         options: unresolved.options,
         msgIndex: i,
-        blockIndex: blocks.indexOf(unresolved),
+        blockIndex: interactiveBlocks.indexOf(unresolved),
       };
       break;
     }

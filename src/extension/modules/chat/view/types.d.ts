@@ -9,21 +9,20 @@ export interface TaskStep {
 export interface WorkflowDetails {
   workflowId?: string;
   version?: string;
-  severity?: string;
-  blocking?: boolean;
+  type?: 'static' | 'dynamic';
   owner?: string;
   model?: string;
   contextFiles?: string[];
   gateRequirements?: string[];
   nextStep?: string;
   nextStepIndex?: number;
-  passTarget?: string;
-  failBehavior?: string;
+  pass?: { nextTarget: string | null; actions: string[]; rawContent: string } | null;
+  fail?: { behavior: 'block' | 'retry'; cases: string[]; rawContent: string } | null;
   // Parsed sections from workflow markdown
   inputs?: string[];
   outputs?: string[];
-  templates?: string[];
   objective?: string;
+  instructions?: string;
   currentPhaseLabel?: string;
 }
 
@@ -62,7 +61,15 @@ export interface IChatView {
   activeActivity: string;
 
   // Token usage
-  tokenUsage: { inputTokens: number; outputTokens: number; totalTokens: number; estimatedCost: number };
+  tokenUsage: {
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    estimatedCost: number;
+    requests: number;
+    byModel: Record<string, { inputTokens: number; outputTokens: number; cost: number; requests: number }>;
+  };
+  showUsagePanel: boolean;
 
   // Pending A2UI confirmation (drives input area transformation)
   pendingA2UI: { blockId: string; label: string; options: string[]; msgIndex: number; blockIndex: number } | null;
@@ -72,6 +79,7 @@ export interface IChatView {
   testConnection(): void;
   toggleTimeline(): void;
   toggleDetails(): void;
+  toggleUsagePanel(): void;
 
   handleInput(e: InputEvent): void;
   handleKeyDown(e: KeyboardEvent): void;

@@ -3,22 +3,23 @@
  *
  * Pure type declarations for the workflow execution engine.
  * Shared across parser, engine, and persistence layers.
+ *
+ * Aligned with normalized workflow structure (T025/T026).
  */
 
 // ─── Workflow Definition Types ─────────────────────────────
-
-export interface TriggerDef {
-  commands?: string[];
-}
 
 export interface Frontmatter {
   id: string;
   description?: string;
   owner: string;
   version?: string;
-  severity?: typeof import('./constants.js').SEVERITY[keyof typeof import('./constants.js').SEVERITY];
-  trigger?: TriggerDef;
-  blocking: boolean;
+  trigger: string[];
+  type: 'static' | 'dynamic';
+  context?: string[];
+  pass?: {
+    nextTarget?: string | Record<string, string>;
+  };
 }
 
 export interface WorkflowStep {
@@ -33,11 +34,25 @@ export interface GateDef {
   failStep: number | null;
 }
 
+export interface PassDef {
+  nextTarget: string | null;
+  actions: string[];
+  rawContent: string;
+}
+
+export interface FailDef {
+  behavior: 'block' | 'retry';
+  cases: string[];
+  rawContent: string;
+}
+
 export interface ParsedSections {
   inputs: string[];
   outputs: string[];
-  templates: string[];
   objective: string;
+  instructions: string;
+  pass: string;
+  fail: string;
 }
 
 export interface WorkflowDef {
@@ -45,14 +60,13 @@ export interface WorkflowDef {
   description?: string;
   owner: string;
   version?: string;
-  severity?: string;
-  trigger?: TriggerDef;
-  blocking: boolean;
+  trigger: string[];
+  type: 'static' | 'dynamic';
   constitutions: string[];
   steps: WorkflowStep[];
   gate: GateDef | null;
-  passTarget: string | null;
-  failBehavior: typeof import('./constants.js').FAIL_BEHAVIOR[keyof typeof import('./constants.js').FAIL_BEHAVIOR];
+  pass: PassDef | null;
+  fail: FailDef | null;
   rawContent: string;
   sections: ParsedSections;
 }
@@ -72,6 +86,8 @@ export interface WorkflowEngineState {
   currentPhase: string;
   currentPhaseId: string;
   currentWorkflowId: string;
+  /** True when running a multi-phase lifecycle (vs a simple single-workflow). */
+  isLifecycle: boolean;
   status: typeof import('./constants.js').ENGINE_STATUS[keyof typeof import('./constants.js').ENGINE_STATUS];
   gateResponses: Record<string, { decision: string; date: string }>;
   startedAt: string;
@@ -89,11 +105,16 @@ export interface WorkflowEngineState {
   }>;
   parsedSections?: ParsedSections;
   workflow?: {
+    id: string;
     description?: string;
     owner: string;
-    severity?: string;
+    type: 'static' | 'dynamic';
     constitutions: string[];
-    blocking: boolean;
+    gate?: GateDef | null;
+    pass?: PassDef | null;
+    fail?: FailDef | null;
+    rawContent?: string;
+    sections?: ParsedSections;
   };
 }
 
@@ -128,6 +149,8 @@ export type WorkflowEvent =
   | { type: typeof import('./constants.js').ENGINE_EVENTS.PHASE_ADVANCE }
   | { type: typeof import('./constants.js').ENGINE_EVENTS.PHASE_GATE_APPROVE; phaseId: string }
   | { type: typeof import('./constants.js').ENGINE_EVENTS.PHASE_GATE_REJECT; phaseId: string; reason?: string }
+  | { type: typeof import('./constants.js').ENGINE_EVENTS.SUBTASK_START; workflowId: string }
+  | { type: typeof import('./constants.js').ENGINE_EVENTS.SUBTASK_COMPLETE; workflowId: string }
   | { type: typeof import('./constants.js').ENGINE_EVENTS.RELOAD }
   | { type: typeof import('./constants.js').ENGINE_EVENTS.ERROR; message: string };
 
@@ -135,6 +158,8 @@ export interface WorkflowContext {
   taskId: string;
   strategy: string;
   currentWorkflowId: string;
+  /** True when running a multi-phase lifecycle (vs a simple single-workflow). */
+  isLifecycle: boolean;
   currentStepIndex: number;
   currentPhaseIndex: number;
   workflowDef: WorkflowDef | null;

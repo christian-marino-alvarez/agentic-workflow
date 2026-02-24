@@ -33,8 +33,6 @@ export class WorkflowEngine {
     this.persistence = persistence;
   }
 
-
-
   private async discoverAndRegisterAgents(): Promise<void> {
     const agents = await this.parser.discoverAgents();
     this.agentRegistry.clear();
@@ -141,7 +139,7 @@ export class WorkflowEngine {
             state,
             payload: {
               workflowId: context.currentWorkflowId,
-              passTarget: context.workflowDef?.passTarget,
+              pass: context.workflowDef?.pass,
             },
           });
         }
@@ -151,6 +149,14 @@ export class WorkflowEngine {
         if (state) {
           engine.emit({ eventType: LISTENER_EVENTS.ERROR, state, payload: { error: context.error } });
         }
+      },
+      advancePhaseIndex: ({ context }: { context: WorkflowContext }) => {
+        // Increment phase index for auto-transition tracking
+        context.currentPhaseIndex = Math.min(
+          context.currentPhaseIndex + 1,
+          context.phases.length - 1
+        );
+        context.updatedAt = new Date().toISOString();
       },
     };
   }
@@ -175,6 +181,7 @@ export class WorkflowEngine {
         taskId: input.taskId,
         strategy: input.strategy,
         currentWorkflowId: def.id,
+        isLifecycle: false,
         currentStepIndex: 0,
         currentPhaseIndex: 0,
         workflowDef: input.workflowDef,
@@ -199,72 +206,16 @@ export class WorkflowEngine {
     return statusMap[value] ?? ENGINE_STATUS.RUNNING;
   }
 
-  async initialize(): Promise<void> {
-    console.log('[WorkflowEngine] Initializing...');
-    await this.discoverAndRegisterAgents();
-    await this.restorePersistedState();
-    console.log(`[WorkflowEngine] Ready (${this.agentRegistry.size} agents)`);
-  }
-
-  async refreshAgentRegistry(): Promise<void> {
-    await this.discoverAndRegisterAgents();
-    console.log(`[WorkflowEngine] Registry refreshed: ${this.agentRegistry.size} agents`);
-  }
-
-  async loadWorkflow(filePath: string): Promise<WorkflowDef> {
-    const def = await this.parser.parse(filePath);
-    this.validateWorkflowOwner(def);
-    this.workflows.set(def.id, def);
-    return def;
-  }
-
-  async loadAllWorkflows(dirPath: string): Promise<Map<string, WorkflowDef>> {
-    this.workflows = await this.parser.parseDirectory(dirPath);
-    return this.workflows;
-  }
-
-  /**
-   * Resolve a workflow by ID with fallback strategies:
-   * 1. Exact match (e.g., "workflow.init")
-   * 2. Prefixed match (e.g., "init" → "workflow.init")
-   * 3. Trigger command match (e.g., "/init" matches trigger.commands: ["init", "/init"])
-   */
-  private resolveWorkflow(workflowId: string): WorkflowDef | undefined {
-    // 1. Exact match
-    if (this.workflows.has(workflowId)) {
-      return this.workflows.get(workflowId);
-    }
-
-    // 2. Try with "workflow." prefix
-    const prefixed = `workflow.${workflowId}`;
-    if (this.workflows.has(prefixed)) {
-      return this.workflows.get(prefixed);
-    }
-
-    // 3. Search by trigger commands
-    const normalized = workflowId.replace(/^\//, ''); // strip leading /
-    for (const [, def] of this.workflows) {
-      const triggers = def.trigger?.commands || [];
-      if (triggers.some((cmd: string) => cmd.replace(/^\//, '') === normalized)) {
-        return def;
-      }
-    }
-
-    return undefined;
-  }
-
   /**
    * Build a hierarchical XState machine from lifecycle phase definitions.
-   * Each phase becomes a compound state with sub-states:
-   *   phaseExecuting → phaseGate → phaseDone | phaseFailed
-   * Phase transitions are enforced by gates — cannot advance without approval.
+   * Each phase becomes a state. Gate approval triggers auto-transition to the next phase.
    */
   private buildLifecycleMachine(phases: WorkflowDef[], lifecycleDef: WorkflowDef) {
     const phaseStates: Record<string, any> = {};
 
     for (let i = 0; i < phases.length; i++) {
       const phase = phases[i];
-      const phaseKey = phase.id.replace(/\./g, '_'); // XState doesn't like dots in state names
+      const phaseKey = phase.id.replace(/\./g, '_');
       const hasGate = phase.gate !== null && phase.gate !== undefined;
       const nextPhaseKey = i < phases.length - 1
         ? phases[i + 1].id.replace(/\./g, '_')
@@ -272,25 +223,24 @@ export class WorkflowEngine {
 
       phaseStates[phaseKey] = {
         on: {
-          // Allow step completion within a phase
           [ENGINE_EVENTS.STEP_COMPLETE]: hasGate
-            ? [{ target: `${phaseKey}` }] // stay in same phase until gate
+            ? [{ target: `${phaseKey}` }]
             : [],
-          // Gate events — only if phase has a gate
+          // Gate events — auto-transition to next phase on approval
           ...(hasGate ? {
             [ENGINE_EVENTS.PHASE_GATE_APPROVE]: {
               target: nextPhaseKey,
-              actions: ['notifyPhaseComplete'],
+              actions: ['advancePhaseIndex', 'notifyPhaseComplete'],
             },
             [ENGINE_EVENTS.PHASE_GATE_REJECT]: {
               actions: ['notifyError'],
             },
           } : {}),
-          // Allow manual advance if no gate
+          // Manual advance if no gate
           ...(!hasGate ? {
             [ENGINE_EVENTS.PHASE_ADVANCE]: {
               target: nextPhaseKey,
-              actions: ['notifyPhaseComplete'],
+              actions: ['advancePhaseIndex', 'notifyPhaseComplete'],
             },
           } : {}),
           [ENGINE_EVENTS.ERROR]: {
@@ -329,6 +279,7 @@ export class WorkflowEngine {
         taskId: input.taskId,
         strategy: input.strategy,
         currentWorkflowId: lifecycleDef.id,
+        isLifecycle: true,
         currentStepIndex: 0,
         currentPhaseIndex: 0,
         workflowDef: input.workflowDef,
@@ -343,52 +294,129 @@ export class WorkflowEngine {
   }
 
   /**
-   * Detect if a workflow ID refers to a lifecycle (tasklifecycle-long or short).
+   * Detect if a workflow ID refers to a lifecycle (contains phases in a sub-directory).
+   * Works by checking if a matching directory exists under .agent/workflows/.
    */
   private isLifecycleWorkflow(workflowId: string): boolean {
-    return workflowId.includes('tasklifecycle-long') || workflowId.includes('tasklifecycle-short');
+    // Data-driven: check if any loaded workflow's directory structure has phases
+    // For now we check common naming conventions, but the real check is in start()
+    // where we attempt to parse phase files from the directory.
+    return this.parser.hasPhaseDirectory(workflowId);
   }
 
   /**
-   * Resolve the lifecycle directory path from a workflow ID.
+   * Resolve the lifecycle directory name from a workflow ID.
+   * Strips common prefixes and normalizes.
    */
   private getLifecycleDirName(workflowId: string): string {
-    if (workflowId.includes('long')) return 'tasklifecycle-long';
-    return 'tasklifecycle-short';
+    // Remove trailing prefixes if present
+    return workflowId.replace(/^workflow\./, '').replace(/^workflows\./, '');
+  }
+
+  // ─── Public API ───────────────────────────────────────────
+
+  async initialize(): Promise<void> {
+    console.log('[WorkflowEngine] Initializing...');
+    await this.discoverAndRegisterAgents();
+    await this.restorePersistedState();
+    console.log(`[WorkflowEngine] Ready (${this.agentRegistry.size} agents)`);
+  }
+
+  async refreshAgentRegistry(): Promise<void> {
+    await this.discoverAndRegisterAgents();
+    console.log(`[WorkflowEngine] Registry refreshed: ${this.agentRegistry.size} agents`);
+  }
+
+  async loadWorkflow(filePath: string): Promise<WorkflowDef> {
+    const def = await this.parser.parse(filePath);
+    this.validateWorkflowOwner(def);
+    this.workflows.set(def.id, def);
+    return def;
+  }
+
+  async loadAllWorkflows(dirPath: string): Promise<Map<string, WorkflowDef>> {
+    this.workflows = await this.parser.parseDirectory(dirPath);
+    return this.workflows;
+  }
+
+  /**
+   * Resolve a workflow by ID with fallback strategies:
+   * 1. Exact match (e.g., "workflow.init")
+   * 2. Prefixed match (e.g., "init" → "workflow.init")
+   * 3. Trigger command match (e.g., "/init" matches trigger: ["init", "/init"])
+   */
+  private resolveWorkflow(workflowId: string): WorkflowDef | undefined {
+    // 1. Exact match
+    if (this.workflows.has(workflowId)) {
+      return this.workflows.get(workflowId);
+    }
+
+    // 2. Try with "workflow." prefix
+    const prefixed = `workflow.${workflowId}`;
+    if (this.workflows.has(prefixed)) {
+      return this.workflows.get(prefixed);
+    }
+
+    // 3. Search by trigger array (string[] directly)
+    const normalized = workflowId.replace(/^\//, '');
+    for (const [, def] of this.workflows) {
+      const triggers = def.trigger || [];
+      if (triggers.some((cmd: string) => cmd.replace(/^\//, '') === normalized)) {
+        return def;
+      }
+    }
+
+    return undefined;
   }
 
   async start(input: StartWorkflowInput): Promise<WorkflowDef> {
-    // Ensure taskId is always set — persistence layer needs it as a valid key
     if (!input.taskId) {
       input.taskId = `task-${Date.now()}`;
     }
 
-    const def = this.resolveWorkflow(input.workflowId);
-    if (!def) {
-      const loaded = Array.from(this.workflows.keys());
-      throw new Error(`[WorkflowEngine] Workflow "${input.workflowId}" not loaded. Available: [${loaded.join(', ')}]`);
-    }
-
-    // Detect lifecycle workflows → build hierarchical machine
+    // 1. Lifecycle workflows: build hierarchical machine from phase directory
+    //    These aren't individual workflow files — they're directories of phases.
     if (this.isLifecycleWorkflow(input.workflowId)) {
       const dirName = this.getLifecycleDirName(input.workflowId);
       const lifecyclePath = join(this.parser['workspaceRoot'], '.agent', 'workflows', dirName);
       const phases = await this.parser.parsePhaseDirectory(lifecyclePath);
 
       if (phases.length > 0) {
+        // Build a synthetic def for the lifecycle container
+        const lifecycleDef: WorkflowDef = {
+          id: `workflow.${dirName}`,
+          description: `Lifecycle: ${dirName}`,
+          owner: phases[0].owner,
+          trigger: [dirName],
+          type: 'static',
+          constitutions: [],
+          steps: [],
+          gate: phases[0].gate,
+          pass: null,
+          fail: null,
+          rawContent: '',
+          sections: { inputs: [], outputs: [], objective: '', instructions: '', pass: '', fail: '' },
+        };
+
         console.log(`[WorkflowEngine] Building lifecycle machine with ${phases.length} phases`);
-        const machine = this.buildLifecycleMachine(phases, def);
+        const machine = this.buildLifecycleMachine(phases, lifecycleDef);
         this.actor = createActor(machine, {
-          input: { taskId: input.taskId, strategy: input.strategy, workflowDef: def, phases },
+          input: { taskId: input.taskId, strategy: input.strategy, workflowDef: lifecycleDef, phases },
         });
         this.actor.subscribe(() => this.emitStateChange());
         this.actor.start();
         console.log(`[WorkflowEngine] Started lifecycle "${input.workflowId}" for task "${input.taskId}" (${phases.length} phases)`);
-        return def;
+        return lifecycleDef;
       }
     }
 
-    // Fallback: simple workflow machine (init, coding, etc.)
+    // 2. Simple workflows: resolve from loaded workflow definitions
+    const def = this.resolveWorkflow(input.workflowId);
+    if (!def) {
+      const loaded = Array.from(this.workflows.keys());
+      throw new Error(`[WorkflowEngine] Workflow "${input.workflowId}" not loaded. Available: [${loaded.join(', ')}]`);
+    }
+
     const machine = this.createMachine(def);
     this.actor = createActor(machine, {
       input: { taskId: input.taskId, strategy: input.strategy, workflowDef: def },
@@ -396,19 +424,88 @@ export class WorkflowEngine {
 
     this.actor.subscribe(() => this.emitStateChange());
     this.actor.start();
-    // Transition from IDLE → EXECUTING
     this.actor.send({ type: ENGINE_EVENTS.START } as WorkflowEvent);
     console.log(`[WorkflowEngine] Started "${input.workflowId}" for task "${input.taskId}"`);
     return def;
   }
 
   /**
+   * Start a dynamic subtask workflow within the current lifecycle.
+   */
+  async startSubtask(workflowId: string): Promise<WorkflowDef> {
+    const def = this.resolveWorkflow(workflowId);
+    if (!def) {
+      throw new Error(`[WorkflowEngine] Subtask workflow "${workflowId}" not loaded.`);
+    }
+
+    if (def.type !== 'dynamic') {
+      throw new Error(`[WorkflowEngine] Workflow "${workflowId}" is not dynamic (type=${def.type}).`);
+    }
+
+    const state = this.getState();
+    if (state) {
+      this.emit({
+        eventType: LISTENER_EVENTS.SUBTASK_START,
+        state,
+        payload: { workflowId: def.id, owner: def.owner },
+      });
+    }
+
+    console.log(`[WorkflowEngine] Started subtask "${workflowId}" (type: dynamic)`);
+    return def;
+  }
+
+  /**
+   * Complete a dynamic subtask workflow.
+   */
+  completeSubtask(workflowId: string): void {
+    const state = this.getState();
+    if (state) {
+      this.emit({
+        eventType: LISTENER_EVENTS.SUBTASK_COMPLETE,
+        state,
+        payload: { workflowId },
+      });
+    }
+    console.log(`[WorkflowEngine] Subtask "${workflowId}" completed`);
+  }
+
+  /**
+   * Switch lifecycle strategy (e.g., short → long or long → short).
+   * Stops the current lifecycle and starts the new one, preserving the taskId.
+   */
+  async switchStrategy(newStrategy: 'long' | 'short'): Promise<WorkflowDef> {
+    const currentState = this.getState();
+    const currentTaskId = currentState?.taskId || `task-${Date.now()}`;
+
+    // Determine new lifecycle workflow ID
+    const newLifecycleId = newStrategy === 'long' ? 'tasklifecycle-long' : 'tasklifecycle-short';
+
+    // Stop current actor if running
+    if (this.actor) {
+      try {
+        this.actor.stop();
+      } catch { /* may already be stopped */ }
+      this.actor = null;
+    }
+
+    console.log(`[WorkflowEngine] Switching strategy to "${newStrategy}" (lifecycle: ${newLifecycleId})`);
+
+    // Start the new lifecycle
+    return this.start({
+      workflowId: newLifecycleId,
+      taskId: currentTaskId,
+      strategy: newStrategy,
+    });
+  }
+
+  /**
    * Get the currently active phase definition (for lifecycle workflows).
    */
   getCurrentPhase(): WorkflowDef | null {
-    if (!this.actor) return null;
+    if (!this.actor) { return null; }
     const context = this.actor.getSnapshot().context as WorkflowContext;
-    if (!context.phases || context.phases.length === 0) return null;
+    if (!context.phases || context.phases.length === 0) { return null; }
     return context.phases[context.currentPhaseIndex] || null;
   }
 
@@ -420,15 +517,31 @@ export class WorkflowEngine {
     console.log('[WorkflowEngine] Step completed');
   }
 
+  /**
+   * Respond to a gate. Automatically dispatches the correct event
+   * based on whether the current workflow is a lifecycle (phase gate)
+   * or a simple workflow (standard gate).
+   */
   respondToGate(input: GateResponseInput): void {
     if (!this.actor) {
       throw new Error('[WorkflowEngine] No active workflow');
     }
 
+    const context = this.actor.getSnapshot().context as WorkflowContext;
+    const isLifecycle = context.isLifecycle;
+
     if (input.decision === 'SI') {
-      this.actor.send({ type: ENGINE_EVENTS.GATE_APPROVE, gateId: input.gateId } as WorkflowEvent);
+      if (isLifecycle) {
+        this.actor.send({ type: ENGINE_EVENTS.PHASE_GATE_APPROVE, phaseId: input.gateId } as WorkflowEvent);
+      } else {
+        this.actor.send({ type: ENGINE_EVENTS.GATE_APPROVE, gateId: input.gateId } as WorkflowEvent);
+      }
     } else {
-      this.actor.send({ type: ENGINE_EVENTS.GATE_REJECT, gateId: input.gateId, reason: input.reason } as WorkflowEvent);
+      if (isLifecycle) {
+        this.actor.send({ type: ENGINE_EVENTS.PHASE_GATE_REJECT, phaseId: input.gateId, reason: input.reason } as WorkflowEvent);
+      } else {
+        this.actor.send({ type: ENGINE_EVENTS.GATE_REJECT, gateId: input.gateId, reason: input.reason } as WorkflowEvent);
+      }
     }
   }
 
@@ -440,7 +553,6 @@ export class WorkflowEngine {
 
   getState(): WorkflowEngineState | null {
     if (!this.actor) {
-      // No live actor — return last persisted state as fallback
       return this.lastPersistedState || null;
     }
 
@@ -468,11 +580,17 @@ export class WorkflowEngine {
           : 'pending') as 'completed' | 'active' | 'pending' | 'failed',
     }));
 
+    // For lifecycle workflows, expose the CURRENT PHASE as the active workflow
+    // so the LLM receives phase-specific instructions, gate, and objectives.
+    // For simple workflows, use the workflowDef directly.
+    const activeWorkflow = currentPhase || context.workflowDef;
+
     return {
       taskId: context.taskId,
       currentPhase: context.currentWorkflowId,
       currentPhaseId: currentPhase?.id || context.currentWorkflowId,
       currentWorkflowId: context.currentWorkflowId,
+      isLifecycle: context.isLifecycle,
       status: this.mapXStateStatus(String(snapshot.value)),
       gateResponses: context.gateResponses,
       startedAt: context.startedAt,
@@ -480,8 +598,19 @@ export class WorkflowEngine {
       ...(steps ? { steps } : {}),
       ...(phasesList.length > 0 ? { phases: phasesList } : {}),
       ...(currentPhase ? { parsedSections: currentPhase.sections } : {}),
-      ...(context.workflowDef ? {
-        workflow: context.workflowDef
+      ...(activeWorkflow ? {
+        workflow: {
+          id: activeWorkflow.id,
+          description: activeWorkflow.description,
+          owner: activeWorkflow.owner,
+          type: activeWorkflow.type,
+          constitutions: activeWorkflow.constitutions,
+          gate: activeWorkflow.gate,
+          pass: activeWorkflow.pass,
+          fail: activeWorkflow.fail,
+          rawContent: activeWorkflow.rawContent,
+          sections: activeWorkflow.sections,
+        }
       } : {}),
     };
   }

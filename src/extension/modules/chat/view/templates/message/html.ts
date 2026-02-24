@@ -72,6 +72,21 @@ export function renderMessageBubble(msg: any, view?: IChatView) {
   if (msg.isGate && view) { return renderGateCard(msg, view); }
   if (msg.isDelegation) { return renderDelegationCard(msg); }
 
+  // Error messages: styled as a distinct error card
+  if (msg.isError || (msg.role === 'system' && msg.text?.includes('**System Error:**'))) {
+    return html`
+      <div class="msg-bubble msg-error" style="border-left: 3px solid #f44336; background: rgba(244, 67, 54, 0.08); margin: 8px 0;">
+        <div class="msg-header">
+          <span class="msg-icon">⚠️</span>
+          <span class="msg-sender" style="color: #f44336; font-weight: 600;">Error</span>
+        </div>
+        <div class="msg-content markdown-body" style="color: var(--vscode-errorForeground, #f44336);">
+          ${renderMarkdown(msg.text)}
+        </div>
+      </div>
+    `;
+  }
+
   const isUser = msg.role === 'user';
   const isSystem = msg.role === 'system';
   const isAgent = !isUser && !isSystem;
@@ -81,7 +96,17 @@ export function renderMessageBubble(msg: any, view?: IChatView) {
 
   // Check for A2UI components in agent messages
   const msgIndex = view?.history?.indexOf(msg) ?? 0;
+  const hasA2UIInStream = isAgent && msg.isStreaming && msg.text && /&lt;a2ui\s|<a2ui\s/i.test(msg.text);
   const a2uiSegments = isAgent && msg.text && !msg.isStreaming ? parseA2UI(msg.text) : [];
+
+  // During streaming: extract text before A2UI tags to show, hide the raw tags
+  let streamPreText = '';
+  if (hasA2UIInStream && msg.text) {
+    const a2uiStart = msg.text.search(/<a2ui\s/i);
+    if (a2uiStart > 0) {
+      streamPreText = msg.text.slice(0, a2uiStart);
+    }
+  }
 
   return html`
     <div class="msg-bubble ${typeClass} ${roleClass}">
@@ -91,22 +116,41 @@ export function renderMessageBubble(msg: any, view?: IChatView) {
           ${msg.sender} 
           ${msg.status ? html`<span class="msg-status">(${msg.status})</span>` : ''}
         </span>
+        ${isAgent && msg.tokenCost ? html`
+          <span class="msg-token-cost" title="Input: ${msg.tokenCost.inputTokens.toLocaleString()} · Output: ${msg.tokenCost.outputTokens.toLocaleString()} · Model: ${msg.tokenCost.model}">
+            <span class="msg-token-cost-icon">⚡</span>
+            <span class="msg-token-cost-value">${msg.tokenCost.cost < 0.001 ? '<$0.001' : `$${msg.tokenCost.cost.toFixed(3)}`
+      }</span>
+            <span class="msg-token-cost-tokens">${(() => { const t = msg.tokenCost.inputTokens + msg.tokenCost.outputTokens; return t >= 1000 ? `${(t / 1000).toFixed(1)}k` : `${t}`; })()
+      }</span>
+          </span>
+        ` : ''}
       </div>
       <div class="msg-content ${isAgent ? 'markdown-body' : ''}">
         ${renderToolEvents(msg.toolEvents)}
-        ${a2uiSegments.length > 0 && view
-      ? (() => {
-        // Separate text segments and A2UI blocks
-        const textParts = a2uiSegments.filter(s => s.type === 'text');
-        const a2uiBlocks = a2uiSegments.filter(s => s.type === 'a2ui' && s.block).map(s => s.block!);
-        return html`
+        ${hasA2UIInStream
+      ? html`
+              ${streamPreText ? renderMarkdown(streamPreText) : ''}
+              <div class="a2ui-composing">
+                <div class="a2ui-composing-dots">
+                  <span></span><span></span><span></span>
+                </div>
+                <span class="a2ui-composing-text">Composing interactive elements...</span>
+              </div>
+            `
+      : a2uiSegments.length > 0 && view
+        ? (() => {
+          // Separate text segments and A2UI blocks
+          const textParts = a2uiSegments.filter(s => s.type === 'text');
+          const a2uiBlocks = a2uiSegments.filter(s => s.type === 'a2ui' && s.block).map(s => s.block!);
+          return html`
             ${textParts.map(seg => renderMarkdown(seg.content))}
             ${a2uiBlocks.length > 0 ? renderA2UISequence(a2uiBlocks, view, msg, msgIndex) : ''}
           `;
-      })()
-      : isAgent && msg.text ? renderMarkdown(msg.text) : msg.text
+        })()
+        : isAgent && msg.text ? renderMarkdown(msg.text) : msg.text
     }
-        ${msg.isStreaming ? html`<span class="streaming-cursor"></span>` : ''}
+        ${msg.isStreaming && !hasA2UIInStream ? html`<span class="streaming-cursor"></span>` : ''}
       </div>
     </div>
   `;

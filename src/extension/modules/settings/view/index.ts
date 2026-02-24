@@ -46,6 +46,13 @@ export class Settings extends View {
   @state() accessor discoveredModels: Array<{ id: string; displayName: string }> = [];
   @state() accessor selectedModelId: string = '';
 
+  // Pricing state (USD per 1M tokens)
+  @state() accessor pricing: Record<string, { input: number; output: number }> = {};
+
+  // Monthly usage tracking
+  @state() accessor monthlyUsage: { inputTokens: number; outputTokens: number; totalTokens: number; estimatedCost: number; requests: number } = { inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCost: 0, requests: 0 };
+  @state() accessor currentMonth: string = '';
+
   private deleteTimeout: any; // Timer for auto-cancel delete
   @state() accessor pendingToggleRole: string | undefined;
   private toggleTimeout: any; // Timer for auto-cancel toggle
@@ -61,9 +68,14 @@ export class Settings extends View {
    * Handle incoming broadcast/event messages.
    */
   public override listen(message: any): void {
-    const { command } = message.payload || {};
+    const { command, data } = message.payload || {};
     if (command) {
       this.log('Event:', command);
+    }
+    // Real-time usage update from background
+    if (command === 'USAGE_UPDATED' && data) {
+      this.monthlyUsage = data.usage;
+      this.currentMonth = data.month;
     }
   }
 
@@ -77,7 +89,9 @@ export class Settings extends View {
       this.loadModels(),
       this.refreshRoles(),
       this.loadBindings(),
-      this.loadDisabledRoles()
+      this.loadDisabledRoles(),
+      this.loadPricing(),
+      this.loadUsage(),
     ]);
   }
 
@@ -162,6 +176,46 @@ export class Settings extends View {
     } catch (error: any) {
       this.log('Error loading disabled roles:', error);
     }
+  }
+
+  async loadPricing() {
+    try {
+      const result = await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.GET_PRICING);
+      if (result?.pricing) {
+        this.pricing = result.pricing;
+      }
+    } catch (error: any) {
+      this.log('Error loading pricing:', error);
+    }
+  }
+
+  async loadUsage() {
+    try {
+      const result = await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.GET_USAGE);
+      if (result?.success) {
+        this.monthlyUsage = result.current;
+        this.currentMonth = result.currentMonth;
+      }
+    } catch (error: any) {
+      this.log('Error loading usage:', error);
+    }
+  }
+
+  async updatePricing(key: string, field: 'input' | 'output', value: number) {
+    const updated = { ...this.pricing };
+    if (!updated[key]) { updated[key] = { input: 0, output: 0 }; }
+    updated[key] = { ...updated[key], [field]: value };
+    this.pricing = updated;
+    await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.SAVE_PRICING, updated);
+  }
+
+  async addPricingRow() {
+    const name = prompt('Model pattern (e.g. "llama", "mistral"):');
+    if (!name?.trim()) { return; }
+    const key = name.trim().toLowerCase();
+    const updated = { ...this.pricing, [key]: { input: 0.50, output: 2.00 } };
+    this.pricing = updated;
+    await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.SAVE_PRICING, updated);
   }
 
   async toggleRole(role: string) {

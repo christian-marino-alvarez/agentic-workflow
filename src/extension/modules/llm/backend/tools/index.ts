@@ -1,11 +1,17 @@
-import { tool } from '@openai/agents';
+import { tool, RunContext } from '@openai/agents';
 import { z } from 'zod';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import type { AgenticContext } from '../types.js';
 
-const workspaceRoot = process.env.WORKSPACE_ROOT || process.cwd();
+/**
+ * Resolve workspace root from RunContext or fallback to env var.
+ */
+function getWorkspaceRoot(runContext?: RunContext<AgenticContext>): string {
+  return runContext?.context?.workspacePath || process.env.WORKSPACE_ROOT || process.cwd();
+}
 
-function resolveSafePath(filePath: string, allowOutside: boolean): string {
+function resolveSafePath(filePath: string, workspaceRoot: string, allowOutside: boolean): string {
   const resolved = path.isAbsolute(filePath) ? filePath : path.join(workspaceRoot, filePath);
   if (!allowOutside && !resolved.startsWith(workspaceRoot)) {
     throw new Error(`Access denied: path "${filePath}" is outside the workspace.`);
@@ -19,8 +25,9 @@ export const readFileTool = tool({
   parameters: z.object({
     path: z.string().describe('File path (relative to workspace root or absolute)'),
   }),
-  execute: async (input) => {
-    const safePath = resolveSafePath(input.path, false);
+  execute: async (input, runContext?: RunContext<AgenticContext>) => {
+    const root = getWorkspaceRoot(runContext);
+    const safePath = resolveSafePath(input.path, root, false);
     const content = await fs.readFile(safePath, 'utf-8');
     const MAX = 8000;
     return content.length > MAX
@@ -36,9 +43,9 @@ export const writeFileTool = tool({
     path: z.string().describe('File path (relative to workspace root or absolute)'),
     content: z.string().describe('Content to write to the file'),
   }),
-  // Security: resolveSafePath restricts writes to workspace root
-  execute: async (input) => {
-    const safePath = resolveSafePath(input.path, false);
+  execute: async (input, runContext?: RunContext<AgenticContext>) => {
+    const root = getWorkspaceRoot(runContext);
+    const safePath = resolveSafePath(input.path, root, false);
     await fs.mkdir(path.dirname(safePath), { recursive: true });
     await fs.writeFile(safePath, input.content, 'utf-8');
     return `File written: ${safePath} (${input.content.length} chars)`;
@@ -52,13 +59,13 @@ export const runCommandTool = tool({
     command: z.string().describe('The shell command to execute'),
     cwd: z.string().optional().describe('Working directory (defaults to workspace root)'),
   }),
-  // Security: resolveSafePath restricts execution to workspace root
   timeoutMs: 30000,
-  execute: async (input) => {
+  execute: async (input, runContext?: RunContext<AgenticContext>) => {
+    const root = getWorkspaceRoot(runContext);
     const { exec } = await import('child_process');
     const { promisify } = await import('util');
     const execAsync = promisify(exec);
-    const execCwd = input.cwd ? resolveSafePath(input.cwd, false) : workspaceRoot;
+    const execCwd = input.cwd ? resolveSafePath(input.cwd, root, false) : root;
     try {
       const { stdout, stderr } = await execAsync(input.command, {
         cwd: execCwd,
@@ -81,8 +88,9 @@ export const listDirTool = tool({
   parameters: z.object({
     path: z.string().describe('Directory path (relative to workspace root or absolute)'),
   }),
-  execute: async (input) => {
-    const safePath = resolveSafePath(input.path, false);
+  execute: async (input, runContext?: RunContext<AgenticContext>) => {
+    const root = getWorkspaceRoot(runContext);
+    const safePath = resolveSafePath(input.path, root, false);
     const entries = await fs.readdir(safePath, { withFileTypes: true });
     return entries
       .map(e => e.isDirectory() ? `${e.name}/` : e.name)
@@ -98,11 +106,12 @@ export const searchFilesTool = tool({
     directory: z.string().optional().describe('Directory to search in (defaults to workspace root)'),
     filePattern: z.string().optional().describe('Glob pattern to filter files (e.g. "*.ts")'),
   }),
-  execute: async (input) => {
+  execute: async (input, runContext?: RunContext<AgenticContext>) => {
+    const root = getWorkspaceRoot(runContext);
     const { exec } = await import('child_process');
     const { promisify } = await import('util');
     const execAsync = promisify(exec);
-    const searchDir = input.directory ? resolveSafePath(input.directory, false) : workspaceRoot;
+    const searchDir = input.directory ? resolveSafePath(input.directory, root, false) : root;
     const includeFlag = input.filePattern ? `--include="${input.filePattern}"` : '';
     const cmd = `grep -rn ${includeFlag} --max-count=50 "${input.query.replace(/"/g, '\\"')}" "${searchDir}" 2>/dev/null | head -50`;
     try {

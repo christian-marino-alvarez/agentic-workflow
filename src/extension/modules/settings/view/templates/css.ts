@@ -610,5 +610,123 @@ export const styles = css`
     color: var(--vscode-testing-iconFailed, #f48771);
     border: 1px solid var(--vscode-testing-iconFailed, #f48771)40;
   }
+
+  /* === Pricing Section === */
+
+  .usage-summary {
+    background: var(--vscode-editor-background);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+  }
+
+  .usage-month {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--vscode-descriptionForeground);
+    margin-bottom: 8px;
+  }
+
+  .usage-stats {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .usage-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .usage-stat-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--vscode-foreground);
+  }
+
+  .usage-stat-value.cost {
+    color: rgba(232, 197, 110, 0.9);
+  }
+
+  .usage-stat-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--vscode-descriptionForeground);
+  }
+
+  .pricing-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .pricing-header {
+    display: grid;
+    grid-template-columns: 1fr 80px 80px;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--vscode-descriptionForeground);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .pricing-row {
+    display: grid;
+    grid-template-columns: 1fr 80px 80px;
+    gap: 8px;
+    align-items: center;
+    padding: 4px 0;
+  }
+
+  .pricing-model {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--vscode-foreground);
+  }
+
+  .pricing-input {
+    width: 100%;
+    padding: 4px 6px;
+    font-size: 12px;
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 3px;
+    text-align: right;
+    box-sizing: border-box;
+  }
+
+  .pricing-input:focus {
+    outline: none;
+    border-color: var(--vscode-focusBorder);
+  }
+
+  .pricing-actions {
+    margin-top: 8px;
+  }
+
+  .pricing-add-btn {
+    background: transparent;
+    border: 1px dashed var(--vscode-widget-border);
+    color: var(--vscode-descriptionForeground);
+    padding: 4px 12px;
+    border-radius: 3px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .pricing-add-btn:hover {
+    background: var(--vscode-button-secondaryHoverBackground);
+    color: var(--vscode-foreground);
+    border-color: var(--vscode-focusBorder);
+  }
 `;
 

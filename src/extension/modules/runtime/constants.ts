@@ -14,15 +14,6 @@ export const PATHS = {
   STATE_FILE: '.agent/workflow-state.json',
 } as const;
 
-/**
- * Rule severity levels.
- */
-export const SEVERITY = {
-  PERMANENT: 'PERMANENT',
-  MEMORY: 'MEMORY',
-  INJECTED: 'INJECTED',
-  RECOMMENDED: 'RECOMMENDED',
-} as const;
 
 /**
  * Workflow engine status values.
@@ -36,11 +27,11 @@ export const ENGINE_STATUS = {
 } as const;
 
 /**
- * Workflow fail behavior options.
+ * Workflow type classification.
  */
-export const FAIL_BEHAVIOR = {
-  BLOCK: 'block',
-  RETRY: 'retry',
+export const WORKFLOW_TYPE = {
+  STATIC: 'static',
+  DYNAMIC: 'dynamic',
 } as const;
 
 /**
@@ -57,6 +48,7 @@ export const MESSAGES = {
   WORKFLOW_RELOAD: 'WORKFLOW_RELOAD',
   WORKFLOW_STATUS: 'WORKFLOW_STATUS',
   WORKFLOW_AGENTS: 'WORKFLOW_AGENTS',
+  WORKFLOW_SWITCH_STRATEGY: 'WORKFLOW_SWITCH_STRATEGY',
 } as const;
 
 /**
@@ -75,6 +67,7 @@ export const RPC_COMMANDS = {
   WORKFLOW_RELOAD: 'workflow.reload',
   WORKFLOW_AGENTS: 'workflow.agents',
   WORKFLOW_AGENTS_REFRESH: 'workflow.agents.refresh',
+  WORKFLOW_SWITCH_STRATEGY: 'workflow.switchStrategy',
 } as const;
 
 /**
@@ -91,6 +84,8 @@ export const WORKFLOW_STATES = {
   PHASE_GATE: 'phaseGate',
   PHASE_DONE: 'phaseDone',
   PHASE_FAILED: 'phaseFailed',
+  // Subtask state
+  SUBTASK_EXECUTING: 'subtaskExecuting',
 } as const;
 
 /**
@@ -106,6 +101,8 @@ export const ENGINE_EVENTS = {
   PHASE_ADVANCE: 'PHASE_ADVANCE',
   PHASE_GATE_APPROVE: 'PHASE_GATE_APPROVE',
   PHASE_GATE_REJECT: 'PHASE_GATE_REJECT',
+  SUBTASK_START: 'SUBTASK_START',
+  SUBTASK_COMPLETE: 'SUBTASK_COMPLETE',
   RELOAD: 'RELOAD',
   ERROR: 'ERROR',
 } as const;
@@ -118,6 +115,8 @@ export const LISTENER_EVENTS = {
   GATE_REQUEST: 'gateRequest',
   STEP_EXECUTION: 'stepExecution',
   PHASE_COMPLETE: 'phaseComplete',
+  SUBTASK_START: 'subtaskStart',
+  SUBTASK_COMPLETE: 'subtaskComplete',
   ERROR: 'error',
 } as const;
 

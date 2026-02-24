@@ -6,6 +6,9 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { API_ENDPOINTS, NAME, CLAUDE_MODELS } from '../constants.js';
 import { agentTools, createDelegateTaskTool } from './tools/index.js';
 
+// Suppress OpenAI tracing exporter warning (we use Gemini, not OpenAI tracing)
+process.env.OPENAI_AGENTS_DISABLE_TRACING = '1';
+
 export class LLMVirtualBackend extends AbstractVirtualBackend {
   private factory: LLMFactory;
 
@@ -62,7 +65,7 @@ export class LLMVirtualBackend extends AbstractVirtualBackend {
   async run(req: RunRequest, reply: FastifyReply): Promise<AgentResponse> {
     const { role, input, binding, context, apiKey, provider, instructions } = req.body;
 
-    let finalInput = input;
+    let finalInput = input || '';
     if (context && context.length > 0) {
       finalInput += '\n\n[CONTEXT ATTACHMENTS]\nThe user has provided the following files for context:\n';
       context.forEach((c: any) => {
@@ -101,7 +104,7 @@ export class LLMVirtualBackend extends AbstractVirtualBackend {
   }
 
   async stream(req: RunRequest, reply: FastifyReply): Promise<void> {
-    const { role, input, binding, context, apiKey, provider, instructions } = req.body;
+    const { role, input, binding, context, apiKey, provider, instructions, messages, agenticContext } = req.body;
 
     console.log(`[llm::backend] Stream request: role=${role}, model=${binding[role]}, provider=${provider}`);
 
@@ -109,29 +112,49 @@ export class LLMVirtualBackend extends AbstractVirtualBackend {
     reply.raw.setHeader('Cache-Control', 'no-cache');
     reply.raw.setHeader('Connection', 'keep-alive');
 
-    let finalInput = input;
-    if (context && context.length > 0) {
-      finalInput += '\n\n[CONTEXT ATTACHMENTS]\nThe user has provided the following files for context:\n';
-      context.forEach((c: any) => {
-        finalInput += `- ${c.title || c.url}: ${c.url}\n`;
-      });
-      finalInput += 'Use your readFile tool to examine their contents if necessary.\n';
-    }
-
     try {
-      // Build role-specific tools: architect gets delegateTask
       const tools = this.getToolsForRole(role, apiKey, provider, binding);
-      const agent = await this.factory.createAgent(role, binding, tools, apiKey, provider, instructions);
+      let runResult: any;
+
+      if (messages && agenticContext) {
+        // ── New mode: multi-turn messages + typed context ──
+        console.log(`[llm::backend] Using AgenticContext mode (${messages.length} messages)`);
+        const { agent } = await this.factory.createAgentWithContext(role, binding, tools, apiKey, provider);
+
+        // Convert ConversationTurn[] to AgentInputItem[]
+        const agentInput = messages.map(m => ({
+          role: m.role as 'user' | 'assistant' | 'system',
+          content: m.content,
+        }));
+
+        const runner = new Runner({ tracingDisabled: true });
+        runResult = await runner.run(agent, agentInput as any, {
+          stream: true,
+          context: agenticContext,
+        } as any);
+      } else {
+        // ── Legacy mode: string input + static instructions ──
+        let finalInput = input || '';
+        if (context && (context as any).length > 0) {
+          finalInput += '\n\n[CONTEXT ATTACHMENTS]\nThe user has provided the following files for context:\n';
+          (context as any).forEach((c: any) => {
+            finalInput += `- ${c.title || c.url}: ${c.url}\n`;
+          });
+          finalInput += 'Use your readFile tool to examine their contents if necessary.\n';
+        }
+
+        const agent = await this.factory.createAgent(role, binding, tools, apiKey, provider, instructions);
+        console.log(`[llm::backend] Agent created (legacy mode), starting stream...`);
+
+        const runner = new Runner({ tracingDisabled: true });
+        runResult = await runner.run(agent, finalInput, { stream: true });
+      }
+
       console.log(`[llm::backend] Agent created, starting stream...`);
-
-      const runner = new Runner({ tracingDisabled: true });
-      const result = await runner.run(agent, finalInput, { stream: true });
-
-      const outputChars = await this.pumpStreamEvents(result as any, reply);
+      const outputChars = await this.pumpStreamEvents(runResult as any, reply);
 
       // Extract and emit token usage after stream completes
       try {
-        const runResult = result as any;
         const responses = runResult.rawResponses || [];
         let totalInput = 0;
         let totalOutput = 0;
@@ -142,7 +165,7 @@ export class LLMVirtualBackend extends AbstractVirtualBackend {
 
         // Fallback: estimate from character counts (~4 chars per token)
         if (totalInput === 0 && totalOutput === 0) {
-          const inputChars = (finalInput || '').length + (instructions || '').length;
+          const inputChars = (input || '').length + (instructions || '').length;
           totalInput = Math.ceil(inputChars / 4);
           totalOutput = Math.ceil(outputChars / 4);
         }

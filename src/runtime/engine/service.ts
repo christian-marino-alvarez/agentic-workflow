@@ -28,7 +28,7 @@ export async function runRuntime(options: RuntimeExecutionOptions): Promise<Runt
 
   const runId = crypto.randomUUID();
   const statePath = resolveStatePath(taskPath, options.statePath);
-  const workflow = { id: mapping.phaseId, path: mapping.workflowPath };
+  const workflow = { id: mapping.phaseId, path: mapping.workflowPath, trigger: [] as string[] };
 
   const state: RuntimeState = {
     version: 1,
@@ -75,7 +75,7 @@ export async function resumeRuntime(options: RuntimeExecutionOptions): Promise<R
     throw new Error(`No workflow mapping found for phase ${state.phase}.`);
   }
 
-  const workflow = { id: mapping.phaseId, path: mapping.workflowPath };
+  const workflow = { id: mapping.phaseId, path: mapping.workflowPath, trigger: [] as string[] };
   const emitter = new RuntimeEmitter({
     eventsPath: options.eventsPath,
     stdout: options.stdoutEvents ?? true

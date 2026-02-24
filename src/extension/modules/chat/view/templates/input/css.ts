@@ -125,18 +125,17 @@ export const inputStyles = css`
       border-radius: 8px;
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      cursor: default;
+      cursor: pointer;
       transition: all 0.2s ease;
     }
 
-    .token-usage:hover {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(255, 255, 255, 0.15);
+    .token-usage:hover,
+    .token-usage.active {
+      background: rgba(232, 197, 110, 0.1);
+      border-color: rgba(232, 197, 110, 0.3);
     }
 
-    .token-icon {
-      font-size: 10px;
-    }
+    .token-icon { font-size: 10px; }
 
     .token-count {
       font-size: 10px;
@@ -150,6 +149,121 @@ export const inputStyles = css`
       color: rgba(255, 255, 255, 0.4);
       margin-left: 2px;
     }
+
+    /* ─── Usage Stats Panel ──────────────────────────────────── */
+    .usage-stats-panel {
+      margin-top: 8px;
+      padding: 12px 14px;
+      background: rgba(232, 197, 110, 0.05);
+      border: 1px solid rgba(232, 197, 110, 0.15);
+      border-radius: 8px;
+      animation: slideDown 0.18s ease;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .usage-stats-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .usage-stats-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: rgba(232, 197, 110, 0.8);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .usage-stats-close {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.3);
+      cursor: pointer;
+      font-size: 11px;
+      padding: 0 2px;
+      line-height: 1;
+      transition: color 0.15s;
+    }
+    .usage-stats-close:hover { color: rgba(255,255,255,0.7); }
+
+    .usage-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .usage-stat-item {
+      padding: 7px 10px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .usage-stat-item.highlight {
+      background: rgba(232, 197, 110, 0.08);
+      border-color: rgba(232, 197, 110, 0.2);
+    }
+
+    .usage-stat-label {
+      font-size: 9px;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 3px;
+    }
+
+    .usage-stat-value {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--vscode-foreground);
+      font-family: var(--vscode-editor-font-family, monospace);
+    }
+
+    .usage-stat-value.input  { color: #7ecfb3; }
+    .usage-stat-value.output { color: #7ab8f5; }
+    .usage-stat-value.cost   { color: rgba(232, 197, 110, 0.95); }
+
+    .usage-model-breakdown {
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding-top: 8px;
+    }
+
+    .usage-model-title {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: rgba(255,255,255,0.3);
+      margin-bottom: 6px;
+    }
+
+    .usage-model-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      gap: 8px;
+      align-items: center;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 10px;
+    }
+
+    .usage-model-name {
+      color: rgba(255,255,255,0.65);
+      font-family: var(--vscode-editor-font-family, monospace);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .usage-model-reqs  { color: rgba(255,255,255,0.35); font-size: 9px; }
+    .usage-model-tokens { color: #7ecfb3; font-family: monospace; }
+    .usage-model-cost  { color: rgba(232, 197, 110, 0.8); font-family: monospace; }
 
     .agent-status-caps {
       display: flex;
@@ -249,33 +363,92 @@ export const inputStyles = css`
       color: var(--vscode-descriptionForeground);
       width: 100%;
       text-align: center;
+      margin-bottom: 2px;
     }
 
     .a2ui-input-options {
       display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
+      flex-direction: column;
+      gap: 4px;
       width: 100%;
-      justify-content: center;
     }
 
-    .a2ui-input-btn {
-      padding: 6px 16px;
-      font-size: 12px;
-      font-weight: 600;
-      border-radius: 6px;
-      border: 1px solid rgba(207, 142, 52, 0.4);
-      background: rgba(207, 142, 52, 0.15);
-      color: #cf8e34;
+    /* ─── Radio Option Row ──── */
+    .a2ui-radio-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      border-radius: 8px;
       cursor: pointer;
+      transition: all 0.15s ease;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .a2ui-radio-option:hover {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: rgba(207, 142, 52, 0.3);
+    }
+
+    .a2ui-radio-option input[type="radio"] {
+      display: none;
+    }
+
+    .a2ui-radio-indicator {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      flex-shrink: 0;
+      position: relative;
       transition: all 0.15s ease;
     }
 
-    .a2ui-input-btn:hover {
+    .a2ui-radio-indicator::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: transparent;
+      transition: all 0.15s ease;
+    }
+
+    /* Selected state */
+    .a2ui-radio-option input[type="radio"]:checked ~ .a2ui-radio-indicator {
+      border-color: #cf8e34;
+    }
+
+    .a2ui-radio-option input[type="radio"]:checked ~ .a2ui-radio-indicator::after {
       background: #cf8e34;
-      color: #fff;
-      transform: translateY(-1px);
-      box-shadow: 0 2px 8px rgba(207, 142, 52, 0.3);
+    }
+
+    .a2ui-radio-option:has(input[type="radio"]:checked) {
+      background: rgba(207, 142, 52, 0.1);
+      border-color: rgba(207, 142, 52, 0.35);
+    }
+
+    .a2ui-radio-text {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.75);
+      line-height: 1.3;
+    }
+
+    .a2ui-radio-option:has(input[type="radio"]:checked) .a2ui-radio-text {
+      color: rgba(255, 255, 255, 0.95);
+      font-weight: 500;
+    }
+
+    /* ─── Actions Row ──── */
+    .a2ui-input-actions {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+      justify-content: flex-end;
+      margin-top: 4px;
     }
 
     .a2ui-input-cancel {
@@ -297,18 +470,32 @@ export const inputStyles = css`
     }
 
     .a2ui-input-confirm {
-      padding: 6px 18px;
+      padding: 6px 20px;
       font-size: 12px;
       font-weight: 600;
       border-radius: 6px;
-      border: 1px solid rgba(207, 142, 52, 0.4);
-      background: #cf8e34;
-      color: #fff;
-      cursor: pointer;
+      border: 1px solid rgba(207, 142, 52, 0.3);
+      background: rgba(207, 142, 52, 0.12);
+      color: rgba(207, 142, 52, 0.5);
+      cursor: not-allowed;
       transition: all 0.15s ease;
     }
 
-    .a2ui-input-confirm:hover {
+    .a2ui-input-confirm:disabled {
+      opacity: 0.6;
+    }
+
+    .a2ui-input-confirm.ready,
+    .a2ui-input-confirm:not(:disabled) {
+      background: #cf8e34;
+      color: #fff;
+      cursor: pointer;
+      opacity: 1;
+      border-color: #cf8e34;
+    }
+
+    .a2ui-input-confirm.ready:hover,
+    .a2ui-input-confirm:not(:disabled):hover {
       background: #b87d2e;
       transform: translateY(-1px);
       box-shadow: 0 2px 8px rgba(207, 142, 52, 0.3);

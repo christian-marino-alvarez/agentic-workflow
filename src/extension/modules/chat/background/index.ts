@@ -17,6 +17,7 @@ export class ChatBackground extends Background {
   private static readonly SESSIONS_KEY = 'chat.sessions';
   private static readonly LAST_SESSION_KEY = 'chat.lastSessionId';
   private vscodeContext: vscode.ExtensionContext;
+  private conversationLanguage: string | null = null;
 
 
   constructor(context: vscode.ExtensionContext) {
@@ -54,6 +55,9 @@ export class ChatBackground extends Background {
         cleanText = ''; // streaming partial raw JSON
       }
     }
+
+    // 4. Normalize escaped newlines: some APIs return literal \\n instead of actual newlines
+    cleanText = cleanText.replace(/\\n/g, '\n');
 
     return cleanText.trimStart();
   }
@@ -105,6 +109,9 @@ export class ChatBackground extends Background {
       case MESSAGES.LIFECYCLE_PHASES_REQUEST:
         return this.handleLifecyclePhasesRequest(message.payload.data);
 
+      case MESSAGES.SWITCH_STRATEGY:
+        return this.handleSwitchStrategy(message.payload.data);
+
       default:
         return super.listen(message);
     }
@@ -139,8 +146,16 @@ export class ChatBackground extends Background {
 
     this.log(`Message for role "${role}": ${data.text.substring(0, 50)}...`);
 
-    // Format conversation history for LLM context
-    const inputWithHistory = this.formatInputWithHistory(data.text, data.history);
+    // Detect language selection from user A2UI responses
+    const textLower = data.text.toLowerCase();
+    if (/español|spanish/i.test(textLower) && /language|idioma|lenguaje/i.test(textLower)) {
+      this.conversationLanguage = 'es';
+      this.log('Language detected: Spanish');
+    } else if (/english|inglés/i.test(textLower) && /language|idioma|lenguaje/i.test(textLower)) {
+      this.conversationLanguage = 'en';
+      this.log('Language detected: English');
+    }
+
 
     try {
       // 1. Fetch available models and API keys from SettingsBackground
@@ -148,29 +163,45 @@ export class ChatBackground extends Background {
       let modelName = DEFAULT_MODELS.GEMINI;
       let apiKey = null;
       let provider = 'gemini';
+      let roleConfig: any = null;
 
       if (settingsResponse && settingsResponse.success && settingsResponse.models) {
         const models = settingsResponse.models;
 
-        // 2. Resolve model for this agent role via multiple sources:
-        //    a) VS Code settings bindings (roleBindings)
-        //    b) Role definition file frontmatter (model.id)
-        const bindingsResponse = await this.sendMessage('settings', SETTINGS_MESSAGES.GET_BINDING);
-        const bindings = bindingsResponse?.bindings || {};
-        let boundModelId = bindings[role] || data.modelId;
+        // 2. Determine model routing context: "routing" (fast) vs "default" (thinking)
+        const taskType = await this.resolveTaskType(data.text);
 
-        // If no binding, check the role definition file for a model config
+        // 3. Resolve model for this agent role via multiple sources (priority order):
+        //    a) Role definition `models: { default, routing }` (new schema — task-aware routing)
+        //    b) VS Code settings bindings (roleBindings — static per-role override)
+        //    c) Role definition `model: { id }` (legacy single model)
+        const rolesResponse = await this.sendMessage('settings', SETTINGS_MESSAGES.GET_ROLES);
+        roleConfig = rolesResponse?.roles?.find((r: any) => r.name === role);
+        let boundModelId: string | undefined;
+
+        // Priority 1: Task-aware routing via `models: { default, routing }`
+        if (roleConfig?.models) {
+          const routedModel = taskType === 'routing'
+            ? (roleConfig.models.routing || roleConfig.models.default)
+            : roleConfig.models.default;
+          if (routedModel) {
+            boundModelId = routedModel;
+            this.log(`Model routing: taskType=${taskType}, resolved=${routedModel}`);
+          }
+        }
+
+        // Priority 2: VS Code settings bindings (static per-role override)
         if (!boundModelId) {
-          const rolesResponse = await this.sendMessage('settings', SETTINGS_MESSAGES.GET_ROLES);
-          if (rolesResponse?.success && rolesResponse.roles) {
-            const roleConfig = rolesResponse.roles.find((r: any) => r.name === role);
-            if (roleConfig?.model?.id) {
-              boundModelId = roleConfig.model.id;
-              // Also use provider from role config
-              if (roleConfig.model.provider) {
-                provider = roleConfig.model.provider;
-              }
-            }
+          const bindingsResponse = await this.sendMessage('settings', SETTINGS_MESSAGES.GET_BINDING);
+          const bindings = bindingsResponse?.bindings || {};
+          boundModelId = bindings[role] || data.modelId;
+        }
+
+        // Priority 3: Legacy single model config from role frontmatter
+        if (!boundModelId && roleConfig?.model?.id) {
+          boundModelId = roleConfig.model.id;
+          if (roleConfig.model.provider) {
+            provider = roleConfig.model.provider;
           }
         }
 
@@ -204,183 +235,102 @@ export class ChatBackground extends Background {
 
       this.log(`Resolved model for ${role}: ${modelName} (provider: ${provider})`);
 
-      // 3. Load agent persona from the role definition file
-      let instructions: string | undefined;
-      // Critical behavioral preamble — placed FIRST so models prioritize it
-      const workspaceFolderName = vscode.workspace.workspaceFolders?.[0]?.name || 'project';
-      const BEHAVIORAL_PREAMBLE = behavioralPreamble(workspaceFolderName);
-      instructions = BEHAVIORAL_PREAMBLE;
+      // 3. Build AgenticContext for dynamic instructions
+      const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
+      let rolePersona = '';
       try {
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (workspaceFolders) {
+        if (workspacePath) {
           const fs = await import('fs/promises');
-
-          // Load role persona
-          const rolePath = path.join(workspaceFolders[0].uri.fsPath, '.agent', 'rules', 'roles', `${role}.md`);
+          const rolePath = path.join(workspacePath, '.agent', 'rules', 'roles', `${role}.md`);
           try {
-            const roleContent = await fs.readFile(rolePath, 'utf-8');
-            instructions = (instructions || '') + '\n\n' + roleContent;
-            this.log(`Loaded role persona for "${role}" (${roleContent.length} chars)`);
+            rolePersona = await fs.readFile(rolePath, 'utf-8');
+            this.log(`Loaded role persona for "${role}" (${rolePersona.length} chars)`);
           } catch {
             this.log(`No role file found for "${role}", using default persona`);
           }
-
-          // Inject A2UI interactive component instructions (inline — always available)
-          instructions = (instructions || '') + A2UI_INSTRUCTIONS;
         }
       } catch (err: any) {
-        this.log(`Failed to load instructions: ${err.message}`);
+        this.log(`Failed to load role persona: ${err.message}`);
       }
 
-      // 4. Inject active workflow as context into the LLM instructions
+      // Prepend behavioral preamble + A2UI instructions to persona
+      const workspaceFolderName = vscode.workspace.workspaceFolders?.[0]?.name || 'project';
+      const fullPersona = behavioralPreamble(workspaceFolderName, this.conversationLanguage)
+        + '\n\n' + rolePersona
+        + A2UI_INSTRUCTIONS;
+
+      // 4. Build workflow snapshot for context
+      let workflowSnapshot: any = null;
+      let constitutionContents: string[] = [];
       try {
         const rawWorkflowState = await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_STATUS);
         const workflowState = rawWorkflowState?.result || rawWorkflowState;
         if (workflowState?.workflow) {
-          // Build structured context from parsed sections if available
-          let phaseContext: string;
-          const sections = workflowState.parsedSections;
-          const currentPhaseId = workflowState.currentPhaseId || '';
-          const phases = workflowState.phases;
+          const wf = workflowState.workflow;
+          workflowSnapshot = {
+            id: wf.id || workflowState.currentWorkflowId,
+            status: workflowState.status,
+            owner: wf.owner,
+            steps: workflowState.steps,
+            gate: wf.gate,
+            pass: wf.pass,
+            fail: wf.fail,
+            rawContent: wf.rawContent,
+            sections: workflowState.parsedSections ? {
+              objective: workflowState.parsedSections.objective,
+              instructions: workflowState.parsedSections.instructions,
+              inputs: workflowState.parsedSections.inputs || [],
+              outputs: workflowState.parsedSections.outputs || [],
+            } : wf.sections ? {
+              objective: wf.sections.objective,
+              instructions: wf.sections.instructions,
+              inputs: wf.sections.inputs || [],
+              outputs: wf.sections.outputs || [],
+            } : undefined,
+            phases: workflowState.phases,
+          };
+          this.log(`Injected workflow context (${workflowState.currentPhaseId || wf.id}) into LLM instructions`);
 
-          if (sections && currentPhaseId) {
-            // Lifecycle workflow with parsed phases — inject structured sections
-            const activePhase = phases?.find((p: any) => p.status === 'active');
-            phaseContext = [
-              `\n\n---\n## ACTIVE PHASE: ${activePhase?.label || currentPhaseId}`,
-              `**Owner**: ${activePhase?.owner || workflowState.workflow.owner}`,
-              sections.objective ? `**Objective**: ${sections.objective}` : '',
-              '',
-              sections.inputs.length > 0 ? `### Required Inputs\n${sections.inputs.map((i: string) => `- ${i}`).join('\n')}` : '',
-              sections.outputs.length > 0 ? `### Expected Outputs\n${sections.outputs.map((o: string) => `- ${o}`).join('\n')}` : '',
-              sections.templates.length > 0 ? `### Required Templates\n${sections.templates.map((t: string) => `- ${t}`).join('\n')}` : '',
-              '',
-              workflowState.steps ? `### Instructions (Steps)\n${workflowState.steps.map((s: any) => `${s.id}. ${s.label} [${s.status}]`).join('\n')}` : '',
-              '',
-              workflowState.workflow.gate ? `### Gate Requirements (ALL mandatory)\n${workflowState.workflow.gate.requirements.map((r: string, i: number) => `${i + 1}. ${r}`).join('\n')}` : '',
-              '',
-              workflowState.workflow.passTarget ? `### On PASS → ${workflowState.workflow.passTarget}` : '',
-              `\nCurrent status: ${workflowState.status}`,
-              phases?.length > 0 ? `\nPhases: ${phases.map((p: any) => `${p.label} [${p.status}]`).join(' → ')}` : '',
-              '\n---',
-            ].filter(Boolean).join('\n');
-          } else if (workflowState.workflow.rawContent) {
-            // Simple workflow (init, coding) — use raw content + structured gate info
-            const gate = workflowState.workflow.gate;
-            const gateSection = gate ? [
-              '\n### ⚠️ GATE REQUIREMENTS (ALL must be satisfied before advancing)',
-              ...gate.requirements.map((r: string, i: number) => `${i + 1}. ${r}`),
-              '',
-              'When you believe ALL gate requirements are met:',
-              '1. Create required artifacts via writeFile',
-              '2. Present a <a2ui type="gate" id="gate-eval" label="Gate Evaluation"> with SI/NO options',
-              '3. DO NOT advance past the gate without user confirmation',
-            ].join('\n') : '';
 
-            const passSection = workflowState.workflow.passTarget
-              ? `\n### PASS → ${workflowState.workflow.passTarget} (automatic transition on gate SI)`
-              : '';
-            const failSection = workflowState.workflow.failBehavior
-              ? `\n### FAIL → ${workflowState.workflow.failBehavior}`
-              : '';
-
-            phaseContext = [
-              '\n\n---\n## ACTIVE WORKFLOW (MANDATORY — follow these instructions step by step)\n',
-              workflowState.workflow.rawContent,
-              gateSection,
-              passSection,
-              failSection,
-              '\n---\n',
-              `Current status: ${workflowState.status}`,
-              workflowState.steps ? `\nSteps: ${workflowState.steps.map((s: any) => `${s.id}. ${s.label} [${s.status}]`).join(' | ')}` : '',
-            ].join('\n');
-          } else {
-            phaseContext = '';
-          }
-
-          const behavioralRules = [
-            '\n\n## BEHAVIORAL RULES (MANDATORY — VIOLATION = SYSTEM FAILURE)',
-            '',
-            '### Rule 0: PROJECT IDENTITY',
-            `This project is called "${vscode.workspace.workspaceFolders?.[0]?.name || 'agentic-workflow'}". Do NOT invent or hallucinate a product name (e.g. "Extensio"). Refer to it by its real name or generically.`,
-            '',
-            '### Rule 1: SILENT EXECUTION',
-            'ALL internal operations MUST be executed SILENTLY via tools. This includes:',
-            '- Creating/writing files (init.md, artifacts, etc.) → use writeFile tool IMMEDIATELY',
-            '- Loading/reading files (indexes, constitutions, templates) → use readFile tool',
-            '- Any workflow step that does not require user input',
-            '',
-            '### Rule 2: NEVER NARRATE PROCESS',
-            'FORBIDDEN sentences (examples — do NOT output anything similar):',
-            '- ❌ "Voy a crear el archivo init.md..."',
-            '- ❌ "Ahora voy a generar..."',
-            '- ❌ "Let me create the artifact..."',
-            '- ❌ "I will now write/save/load/evaluate..."',
-            '- ❌ "Procedemos a evaluar el gate..."',
-            '',
-            'CORRECT behavior:',
-            '- ✅ Execute the tool call directly, then report the RESULT to the user',
-            '',
-            '### Rule 3: GATE EVALUATION (CRITICAL)',
-            'When a workflow has a Gate section, you MUST follow this exact protocol:',
-            '1. Execute all required steps (create artifacts, etc.) via tools SILENTLY',
-            '2. Evaluate each gate requirement internally',
-            '3. Present the gate evaluation to the user using <a2ui type="gate">:',
-            '',
-            '<a2ui type="gate" id="gate-eval" label="Gate Evaluation: [summary of results]">',
-            '- [ ] SI',
-            '- [ ] NO',
-            '</a2ui>',
-            '',
-            'The extension handles the workflow transition AUTOMATICALLY when the user confirms.',
-            'You must NOT skip the gate confirmation. You must NOT advance beyond the gate without it.',
-            'You must NOT ask "¿Qué tarea quieres iniciar?" until the user has confirmed the gate.',
-            '',
-            '### Rule 4: ACT THEN ADVANCE',
-            'When you receive user confirmation (like language + strategy):',
-            '1. IMMEDIATELY call writeFile to create the required artifact (e.g. init.md)',
-            '2. Evaluate the gate requirements',
-            '3. Present <a2ui type="gate"> with the evaluation result',
-            '4. Wait for user confirmation before proceeding',
-            'ALL of this (steps 1-3) happens in ONE response turn. Do NOT just acknowledge.',
-            '',
-            '### Rule 5: NEVER STOP MID-WORKFLOW',
-            'After receiving user input, chain ALL remaining steps until the next step that requires user input or a gate confirmation.',
-            'A response that only says Registrado/Entendido/OK without advancing the workflow is a FAILURE.',
-            'You MUST continue executing steps (via tools) and arrive at the next user-facing question or gate.',
-          ].join('\n');
-
-          instructions = (instructions || '') + phaseContext + behavioralRules;
-          this.log(`Injected workflow context (${workflowState.currentPhaseId || workflowState.workflow.id}) into LLM instructions`);
 
           // 5. Load constitution files referenced in the workflow
-          const constitutions: string[] = workflowState.workflow.constitutions || [];
-          if (constitutions.length > 0) {
-            const workspaceFolders = vscode.workspace.workspaceFolders;
-            if (workspaceFolders) {
-              const fs = await import('fs/promises');
-              const baseDir = path.join(workspaceFolders[0].uri.fsPath, '.agent', 'rules', 'constitution');
-              const constitutionContents: string[] = [];
+          const constitutionRefs: string[] = wf.constitutions || [];
+          if (constitutionRefs.length > 0 && workspacePath) {
+            const fs = await import('fs/promises');
+            const baseDir = path.join(workspacePath, '.agent', 'rules', 'constitution');
 
-              // Try to load the constitution index for alias resolution
-              let aliasMap: Record<string, string> = {};
-              try {
-                const indexContent = await fs.readFile(path.join(baseDir, 'index.md'), 'utf-8');
-                // Parse YAML-like entries: "alias_name: path/to/file.md"
-                const aliasRegex = /^\s+(\w+):\s+(.+\.md)\s*$/gm;
-                let aliasMatch;
-                while ((aliasMatch = aliasRegex.exec(indexContent)) !== null) {
-                  aliasMap[aliasMatch[1]] = aliasMatch[2];
-                }
-              } catch { /* no index file */ }
+            let aliasMap: Record<string, string> = {};
+            try {
+              const indexContent = await fs.readFile(path.join(baseDir, 'index.md'), 'utf-8');
+              const aliasRegex = /^\s+(\w+):\s+(.+\.md)\s*$/gm;
+              let aliasMatch;
+              while ((aliasMatch = aliasRegex.exec(indexContent)) !== null) {
+                aliasMap[aliasMatch[1]] = aliasMatch[2];
+              }
+            } catch { /* no index file */ }
 
-              for (const ref of constitutions) {
+            for (const ref of constitutionRefs) {
+              let loaded = false;
+
+              // Case 1: Direct file path (starts with .agent/ or /)
+              if (ref.startsWith('.agent/') || ref.startsWith('/')) {
+                const directPath = ref.startsWith('/')
+                  ? ref
+                  : path.join(workspacePath, ref);
+                try {
+                  const content = await fs.readFile(directPath, 'utf-8');
+                  constitutionContents.push(`\n### ${ref}\n${content}`);
+                  this.log(`Loaded constitution: ${ref} (direct path, ${content.length} chars)`);
+                  loaded = true;
+                } catch { /* file not found */ }
+              }
+
+              // Case 2: Alias pattern (constitution.X)
+              if (!loaded) {
                 const aliasName = ref.replace(/^constitution\./, '');
-                let loaded = false;
 
-                // Strategy 1: Resolve via index.md alias map
                 if (aliasMap[aliasName]) {
-                  const resolvedPath = path.join(workspaceFolders[0].uri.fsPath, aliasMap[aliasName]);
+                  const resolvedPath = path.join(workspacePath, aliasMap[aliasName]);
                   try {
                     const content = await fs.readFile(resolvedPath, 'utf-8');
                     constitutionContents.push(`\n### ${ref}\n${content}`);
@@ -388,34 +338,31 @@ export class ChatBackground extends Background {
                     loaded = true;
                   } catch { /* not found via index */ }
                 }
+              }
 
-                // Strategy 2: Direct name variations
-                if (!loaded) {
-                  const candidates = [
-                    aliasName.replace(/_/g, '-') + '.md',                      // clean_code → clean-code.md
-                    aliasName.replace(/_/g, '.') + '.md',                      // GEMINI_location → GEMINI.location.md
-                    aliasName.replace(/_/g, '-') + '/index.md',                // extensio_architecture → extensio-architecture/index.md
-                    aliasName + '.md',                                          // exact match
-                  ];
+              // Case 3: Fallback candidate paths
+              if (!loaded) {
+                const aliasName = ref.replace(/^constitution\./, '');
+                const candidates = [
+                  aliasName.replace(/_/g, '-') + '.md',
+                  aliasName.replace(/_/g, '.') + '.md',
+                  aliasName.replace(/_/g, '-') + '/index.md',
+                  aliasName + '.md',
+                ];
 
-                  for (const candidate of candidates) {
-                    try {
-                      const content = await fs.readFile(path.join(baseDir, candidate), 'utf-8');
-                      constitutionContents.push(`\n### ${ref}\n${content}`);
-                      this.log(`Loaded constitution: ${ref} → ${candidate} (${content.length} chars)`);
-                      loaded = true;
-                      break;
-                    } catch { /* try next */ }
-                  }
-                }
-
-                if (!loaded) {
-                  this.log(`Constitution not resolved: ${ref}`);
+                for (const candidate of candidates) {
+                  try {
+                    const content = await fs.readFile(path.join(baseDir, candidate), 'utf-8');
+                    constitutionContents.push(`\n### ${ref}\n${content}`);
+                    this.log(`Loaded constitution: ${ref} → ${candidate} (${content.length} chars)`);
+                    loaded = true;
+                    break;
+                  } catch { /* try next */ }
                 }
               }
 
-              if (constitutionContents.length > 0) {
-                instructions += '\n\n---\n## LOADED CONSTITUTIONS (MANDATORY rules you must follow)\n' + constitutionContents.join('\n') + '\n---\n';
+              if (!loaded) {
+                this.log(`Constitution not resolved: ${ref}`);
               }
             }
           }
@@ -424,14 +371,89 @@ export class ChatBackground extends Background {
         this.log(`Could not fetch workflow state for LLM context: ${err.message}`);
       }
 
-      // Create request payload matching AgentRequest interface
+      // 5b. Load agent-level context (from role's context: [] frontmatter)
+      if (roleConfig?.context && Array.isArray(roleConfig.context) && roleConfig.context.length > 0 && workspacePath) {
+        const fs = await import('fs/promises');
+        const baseDir = path.join(workspacePath, '.agent', 'rules', 'constitution');
+
+        for (const ref of roleConfig.context) {
+          // Check if already loaded from workflow constitutions
+          if (constitutionContents.some(c => c.includes(`### ${ref}`))) {
+            this.log(`Agent context already loaded (from workflow): ${ref}`);
+            continue;
+          }
+
+          let loaded = false;
+
+          // Case 1: Direct file path
+          if (ref.startsWith('.agent/') || ref.startsWith('/')) {
+            const directPath = ref.startsWith('/') ? ref : path.join(workspacePath, ref);
+            try {
+              const content = await fs.readFile(directPath, 'utf-8');
+              constitutionContents.push(`\n### ${ref}\n${content}`);
+              this.log(`Loaded agent context: ${ref} (direct path, ${content.length} chars)`);
+              loaded = true;
+            } catch { /* file not found */ }
+          }
+
+          // Case 2: Alias pattern (constitution.X)
+          if (!loaded && ref.startsWith('constitution.')) {
+            const aliasName = ref.replace(/^constitution\./, '');
+            const candidates = [
+              aliasName.replace(/_/g, '-') + '.md',
+              aliasName + '.md',
+              aliasName.replace(/_/g, '-') + '/index.md',
+            ];
+            for (const candidate of candidates) {
+              try {
+                const content = await fs.readFile(path.join(baseDir, candidate), 'utf-8');
+                constitutionContents.push(`\n### ${ref}\n${content}`);
+                this.log(`Loaded agent context: ${ref} → ${candidate} (${content.length} chars)`);
+                loaded = true;
+                break;
+              } catch { /* try next */ }
+            }
+          }
+
+          if (!loaded) {
+            this.log(`Agent context not resolved: ${ref}`);
+          }
+        }
+      }
+
+      // 6. Build conversation messages as multi-turn array
+      const messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }> = [];
+      if (data.history && data.history.length > 0) {
+        for (const msg of data.history) {
+          const turnRole = msg.role === 'user' ? 'user' as const : 'assistant' as const;
+          messages.push({ role: turnRole, content: msg.text });
+        }
+      }
+      // Add current message as last user turn
+      messages.push({ role: 'user', content: data.text });
+
+      // 7. Build AgenticContext
+      const agenticContext = {
+        workspacePath,
+        role,
+        language: (this.conversationLanguage as 'es' | 'en' | null) || null,
+        workflow: workflowSnapshot,
+        constitutions: constitutionContents,
+        rolePersona: fullPersona,
+        skills: [], // TODO: Task 4 — load from .agent/skills/
+        accessLevel: 'sandbox' as const,
+        apiKey: apiKey || undefined,
+        provider,
+      };
+
+      // Create request payload with new AgenticContext mode
       const payload = {
         role,
-        input: inputWithHistory,
+        messages,
+        agenticContext,
         binding: { [role]: modelName },
         apiKey,
         provider,
-        instructions,
         context: data.attachments ? data.attachments.map(att => ({ title: att._title, url: att._path })) : []
       };
 
@@ -560,6 +582,10 @@ export class ChatBackground extends Background {
         }
       }
 
+      // Process artifacts: create physical files and replace content with summary
+      const finalText = this.cleanMessageText(streamText);
+      const processedText = await this.processArtifacts(finalText);
+
       // Send final completion message
       this.messenger.emit({
         id: randomUUID(),
@@ -569,7 +595,7 @@ export class ChatBackground extends Background {
         origin: MessageOrigin.Server,
         payload: {
           command: MESSAGES.RECEIVE_MESSAGE,
-          data: { text: this.cleanMessageText(streamText), agentRole: role, isStreaming: false }
+          data: { text: processedText, agentRole: role, isStreaming: false }
         }
       });
 
@@ -631,6 +657,92 @@ export class ChatBackground extends Background {
   }
 
   /**
+   * Process artifact A2UI blocks in the final message text.
+   * Creates physical files on disk and replaces artifact content with a brief summary.
+   */
+  private async processArtifacts(text: string): Promise<string> {
+    const artifactRegex = /<a2ui\s+([^>]*)type="artifact"([^>]*)>([\s\S]*?)<\/a2ui>/gi;
+    let result = text;
+    let match;
+
+    // Collect all artifact matches first (to avoid regex state issues)
+    const artifacts: Array<{ fullMatch: string; attrs: string; content: string }> = [];
+    while ((match = artifactRegex.exec(text)) !== null) {
+      artifacts.push({
+        fullMatch: match[0],
+        attrs: match[1] + match[2],
+        content: match[3].trim(),
+      });
+    }
+
+    if (artifacts.length === 0) { return text; }
+
+    const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    if (!workspacePath) { return text; }
+
+    const fs = await import('fs/promises');
+
+    for (const artifact of artifacts) {
+      const pathMatch = artifact.attrs.match(/path="([^"]+)"/);
+      const labelMatch = artifact.attrs.match(/label="([^"]+)"/);
+      const idMatch = artifact.attrs.match(/id="([^"]+)"/);
+
+      if (!pathMatch) { continue; }
+
+      const artifactPath = pathMatch[1];
+      const label = labelMatch?.[1] || artifactPath.split('/').pop() || 'Document';
+      const id = idMatch?.[1] || `artifact-${Date.now()}`;
+
+      // Resolve absolute path
+      const absolutePath = path.isAbsolute(artifactPath)
+        ? artifactPath
+        : path.join(workspacePath, artifactPath);
+
+      // Create directory if needed
+      try {
+        await fs.mkdir(path.dirname(absolutePath), { recursive: true });
+      } catch { /* directory exists */ }
+
+      // Write the artifact file
+      try {
+        await fs.writeFile(absolutePath, artifact.content, 'utf-8');
+        this.log(`Artifact created: ${artifactPath} (${artifact.content.length} chars)`);
+      } catch (err: any) {
+        this.log(`Failed to create artifact ${artifactPath}: ${err.message}`);
+        continue;
+      }
+
+      // Detect purely internal bootstrap artifacts that don't need developer review.
+      // Review artifacts (analysis, planning, acceptance, etc.) MUST remain visible
+      // so the developer can inspect them before approving the gate.
+      const fileName = path.basename(artifactPath);
+      const INTERNAL_ARTIFACTS = ['init.md', 'task.md'];
+      const isInternalArtifact = (artifactPath.startsWith('.agent/') || absolutePath.includes('/.agent/'))
+        && INTERNAL_ARTIFACTS.includes(fileName);
+
+      if (isInternalArtifact) {
+        // Internal bootstrap artifact: replace with brief inline notification (no card)
+        const inlineNotice = `\n> ✅ **${fileName}** created\n`;
+        result = result.replace(artifact.fullMatch, inlineNotice);
+        this.log(`Internal artifact (hidden from chat): ${artifactPath}`);
+      } else {
+        // Review/user-facing artifact: show card with summary and Open button.
+        // IMPORTANT: The summary stored in the message must NOT include visual hints
+        // like "... click to view full document" — those are for the renderer only.
+        // If the LLM sees that text in its context, it copies it into the next artifact.
+        const lines = artifact.content.split('\n').filter(l => l.trim().length > 0);
+        const summaryLines = lines.slice(0, 5);
+        const summary = summaryLines.join('\n');
+
+        const summaryBlock = `<a2ui type="artifact" id="${id}" label="${label}" path="${artifactPath}">\n${summary}\n</a2ui>`;
+        result = result.replace(artifact.fullMatch, summaryBlock);
+      }
+    }
+
+    return result;
+  }
+
+  /**
    * Open a file in VS Code editor from a chat file link.
    */
   private async handleOpenFile(data: { path: string }): Promise<any> {
@@ -689,6 +801,47 @@ export class ChatBackground extends Background {
   }
 
   /**
+   * Determine model routing context: "routing" (fast) vs "default" (thinking).
+   *
+   * Routing signals (use fast model):
+   * - Slash commands (/init, /phase-X)
+   * - Active workflow is init (setup/transitions)
+   * - A2UI responses (Language:, Strategy:, gate SI/NO)
+   *
+   * Default signals (use thinking model):
+   * - Free-form user text within a phase workflow
+   * - Analysis, planning, implementation tasks
+   */
+  private async resolveTaskType(userMessage: string): Promise<'routing' | 'default'> {
+    const text = userMessage.trim();
+
+    // Slash commands are always fast transitions
+    if (text.startsWith('/') && !text.includes('/', 1)) {
+      return 'routing';
+    }
+
+    // A2UI responses follow "Label: Value" pattern — quick confirmations
+    const a2uiPatterns = [
+      /^(Conversation Language|Idioma|Language):\s/i,
+      /^(Estrategia|Strategy|Lifecycle).*:\s/i,
+      /:\s*(SI|NO|Yes|No)\s*$/i,
+    ];
+    if (a2uiPatterns.some(p => p.test(text))) {
+      return 'routing';
+    }
+
+    // Check if we're in the init workflow (all init interactions are transitions)
+    try {
+      const state = await this.getWorkflowState();
+      if (state?.currentWorkflowId === 'workflow.init' && state?.status === 'running') {
+        return 'routing';
+      }
+    } catch { /* fallback to default */ }
+
+    return 'default';
+  }
+
+  /**
    * Get current workflow state from Runtime.
    */
   private async getWorkflowState(): Promise<any> {
@@ -742,7 +895,7 @@ export class ChatBackground extends Background {
    * Create init.md artifact for the init workflow gate.
    */
   // createInitArtifact removed — LLM is responsible for creating artifacts via tools.
-  // The extension only interprets the workflow schema (gates, passTarget, failBehavior).
+  // The extension only interprets the workflow schema (gates, pass, fail).
 
   /**
    * Handle roles changed notification from Settings background.
@@ -873,9 +1026,9 @@ export class ChatBackground extends Background {
     try {
       this.log('Gate response from user', JSON.stringify(data));
 
-      // 1. Read current workflow state to get passTarget BEFORE sending gate response
+      // 1. Read current workflow state to get pass target BEFORE sending gate response
       const workflowState = await this.getWorkflowState();
-      const passTarget = workflowState?.workflow?.passTarget;
+      const passTarget = workflowState?.workflow?.pass?.nextTarget;
       const strategy = data.strategy || (workflowState?.workflow?.id?.includes('short') ? 'short' : 'long');
 
       // 2. Advance workflow: step complete → gate approve/reject
@@ -891,18 +1044,29 @@ export class ChatBackground extends Background {
 
         // 3. Auto-transition to next workflow via passTarget (data-driven)
         if (passTarget) {
-          // passTarget may be "workflow.tasklifecycle-long | workflow.tasklifecycle-short"
-          // Resolve which one based on strategy
+          // passTarget formats (from YAML frontmatter):
+          //   - Simple: "tasklifecycle-long"
+          //   - Conditional: "long:tasklifecycle-long | short:tasklifecycle-short"
+          let nextWorkflowId: string;
           const targets = passTarget.split('|').map((t: string) => t.trim());
-          let nextWorkflowId = targets[0];
-          if (targets.length > 1 && strategy) {
+
+          if (targets[0].includes(':')) {
+            // Conditional map: resolve by strategy key
+            const targetMap = new Map(
+              targets.map((t: string) => {
+                const [key, val] = t.split(':').map(s => s.trim());
+                return [key, val] as [string, string];
+              })
+            );
+            nextWorkflowId = targetMap.get(strategy) || targetMap.values().next().value || targets[0];
+          } else {
+            // Simple string or legacy format: pick by strategy match
             nextWorkflowId = targets.find((t: string) => t.includes(strategy)) || targets[0];
           }
 
-          // Clean workflow. prefix if present for matching
-          const cleanId = nextWorkflowId.replace(/^workflow\./, '');
+          // Clean any legacy workflow./workflows. prefix if present
+          const cleanId = nextWorkflowId.replace(/^workflows?\./, '');
           this.log(`Auto-transitioning to next workflow: ${cleanId} (strategy: ${strategy})`);
-
           try {
             const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
             await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_START, {
@@ -912,9 +1076,49 @@ export class ChatBackground extends Background {
               dirPath: workspaceRoot ? `${workspaceRoot}/.agent/workflows` : undefined,
             });
             this.log(`Successfully started next workflow: ${cleanId}`);
+
+            // Auto-kickoff: tell the view to send a silent message to start the new phase
+            // Small delay to let the engine state settle before the view queries it
+            setTimeout(() => {
+              this.emitToView(MESSAGES.PHASE_AUTO_START, {
+                phaseId: cleanId,
+                owner: workflowState.workflow?.owner?.replace(/-agent$/, '') || 'architect',
+              });
+              this.log(`Emitted PHASE_AUTO_START for ${cleanId}`);
+            }, 500);
           } catch (err: any) {
             this.log(`Failed to start next workflow: ${err.message}`);
           }
+        } else {
+          // No explicit passTarget — could be a lifecycle phase gate (engine handles transition)
+          // or a simple internal gate (no transition).
+          // Wait for the engine to process, then check if phase advanced.
+          const previousPhaseId = workflowState?.workflow?.id;
+          const gateAnswerText = data.gateAnswerText || 'Gate approved. Continue with the workflow.';
+
+          setTimeout(async () => {
+            try {
+              const newState = await this.getWorkflowState();
+              const newPhaseId = newState?.workflow?.id;
+
+              if (newPhaseId && newPhaseId !== previousPhaseId) {
+                // Engine advanced to a new phase — trigger auto-start
+                const owner = newState.workflow?.owner?.replace(/-agent$/, '') || 'architect';
+                this.emitToView(MESSAGES.PHASE_AUTO_START, {
+                  phaseId: newPhaseId,
+                  owner,
+                });
+                this.log(`Phase advanced: ${previousPhaseId} → ${newPhaseId}. Emitted PHASE_AUTO_START`);
+              } else {
+                // Same phase — internal gate, emit GATE_CONTINUE
+                this.emitToView(MESSAGES.GATE_CONTINUE, { gateAnswerText });
+                this.log(`Emitted GATE_CONTINUE (no transition, internal gate)`);
+              }
+            } catch {
+              this.emitToView(MESSAGES.GATE_CONTINUE, { gateAnswerText });
+              this.log(`Emitted GATE_CONTINUE (fallback after error)`);
+            }
+          }, 500);
         }
       } else {
         // Gate rejected
@@ -929,6 +1133,48 @@ export class ChatBackground extends Background {
       return { success: true };
     } catch (error: any) {
       this.log('Failed to handle gate response', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  private async handleSwitchStrategy(data: { strategy: 'long' | 'short' }): Promise<any> {
+    try {
+      const newStrategy = data.strategy;
+      this.log(`Switching strategy to: ${newStrategy}`);
+
+      // 1. Call runtime to switch the lifecycle engine
+      const rawResult = await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_SWITCH_STRATEGY, {
+        strategy: newStrategy,
+      }, 15_000);
+
+      const result = rawResult?.result || rawResult;
+      this.log(`Strategy switched: ${JSON.stringify(result)}`);
+
+      // 2. Create a new blank session — discard all previous conversation
+      await this.handleNewSession();
+      this.log('New session created for strategy switch (previous conversation discarded)');
+
+      // 3. Tell the view to reset its local state (clear history, update strategy)
+      const strategyLabel = newStrategy === 'long' ? 'Long (9 phases)' : 'Short (3 phases)';
+      this.emitToView(MESSAGES.STRATEGY_SWITCHED, {
+        strategy: newStrategy,
+        label: strategyLabel,
+      });
+
+      // 4. Auto-start the first phase of the new lifecycle (after a delay for UI to settle)
+      const owner = result?.owner ? result.owner.replace(/-agent$/, '') : 'architect';
+      setTimeout(() => {
+        this.emitToView(MESSAGES.PHASE_AUTO_START, {
+          phaseId: result?.workflowId || newStrategy,
+          owner,
+        });
+        this.log(`Emitted PHASE_AUTO_START for switched strategy: ${newStrategy}`);
+      }, 800);
+
+      return { success: true, strategy: newStrategy };
+    } catch (error: any) {
+      this.log(`Failed to switch strategy: ${error.message}`);
+      this.emitAgentResponse('system', `❌ **Error switching strategy:** ${error.message}`);
       return { success: false, error: error.message };
     }
   }
@@ -967,7 +1213,16 @@ export class ChatBackground extends Background {
     return this.vscodeContext.globalState.get<string>(ChatBackground.LAST_SESSION_KEY) || null;
   }
 
-  private async handleSaveSession(data: { sessionId?: string, messages: any[], taskTitle?: string, elapsedSeconds?: number, progress?: number, lifecycleStrategy?: string, accessLevel?: string, securityScore?: number }): Promise<any> {
+  private async handleSaveSession(data: { sessionId?: string, messages: any[], taskTitle?: string, elapsedSeconds?: number, progress?: number, lifecycleStrategy?: string, tokenUsage?: any, accessLevel?: string, securityScore?: number }): Promise<any> {
+    // Skip saving sessions that have no meaningful content (no user interaction)
+    const hasUserInteraction = data.messages.some((m: any) =>
+      m.role === 'user' || (m.a2uiAnswers && Object.keys(m.a2uiAnswers).length > 0)
+    );
+    if (!hasUserInteraction) {
+      this.log('Skipping save — no user interaction in session');
+      return { success: true, sessionId: data.sessionId };
+    }
+
     const sessions = this.getSessions();
     const id = data.sessionId || randomUUID();
 
@@ -996,6 +1251,7 @@ export class ChatBackground extends Background {
       securityScore: data.securityScore ?? 100,
       agents: Array.from(agentRoles),
       lifecycleStrategy: data.lifecycleStrategy || undefined,
+      tokenUsage: data.tokenUsage || undefined,
     };
 
     if (existing >= 0) {
@@ -1061,6 +1317,11 @@ export class ChatBackground extends Background {
       accessLevel: s.accessLevel || 'sandbox',
       securityScore: s.securityScore ?? 100,
       agents: s.agents || [],
+      tokenUsage: s.tokenUsage ? {
+        totalTokens: s.tokenUsage.totalTokens || 0,
+        estimatedCost: s.tokenUsage.estimatedCost || 0,
+        requests: s.tokenUsage.requests || 0,
+      } : undefined,
     }));
 
     this.messenger.emit({

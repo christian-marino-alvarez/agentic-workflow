@@ -5,6 +5,11 @@ description: "Phase 5 of the task lifecycle. Verifies the implementation with te
 version: 1.0.0
 trigger: ["phase5", "phase-5", "verification", "verify"]
 type: static
+context:
+  - .agent/rules/constitution/architecture/index.md
+  - .agent/rules/constitution/backend.md
+  - .agent/rules/constitution/background.md
+  - .agent/rules/constitution/view.md
 ---
 
 # WORKFLOW: tasklifecycle.phase-5-verification

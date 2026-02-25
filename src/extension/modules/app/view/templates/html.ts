@@ -6,12 +6,6 @@ export function render(view: AppView) {
     <nav class="tab-bar">
       <div class="tab-items">
         <button 
-          class="tab-item ${view.activeTab === 'settings' ? 'active' : ''}"
-          @click=${() => view.switchTab('settings')}
-        >
-          SETTINGS
-        </button>
-        <button 
           class="tab-item ${view.activeTab === 'chat' ? 'active' : ''}"
           @click=${() => view.switchTab('chat')}
         >
@@ -22,6 +16,12 @@ export function render(view: AppView) {
           @click=${() => view.switchTab('history')}
         >
           HISTORY
+        </button>
+        <button 
+          class="tab-item ${view.activeTab === 'settings' ? 'active' : ''}"
+          @click=${() => view.switchTab('settings')}
+        >
+          SETTINGS
         </button>
       </div>
       ${view.isSecure ? html`<span class="secure-badge">🔒 Secure</span>` : ''}
@@ -38,9 +38,9 @@ export function render(view: AppView) {
           `)}
         </div>
       ` : ''}
-      <div style="display: ${view.activeTab === 'settings' && !view.tabTransitioning ? 'contents' : 'none'}"><settings-view></settings-view></div>
       <div style="display: ${view.activeTab === 'chat' && !view.tabTransitioning ? 'contents' : 'none'}"><chat-view></chat-view></div>
       ${view.activeTab === 'history' && !view.tabTransitioning ? renderHistoryTab(view) : ''}
+      <div style="display: ${view.activeTab === 'settings' && !view.tabTransitioning ? 'contents' : 'none'}"><settings-view></settings-view></div>
     </div>
     <div class="global-footer" style="padding: 4px 10px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; font-size: 10px; color: var(--vscode-descriptionForeground); background-color: var(--vscode-sideBar-background); border-top: 1px solid var(--vscode-sideBarSectionHeader-border); opacity: 0.7; flex-shrink: 0;">
       <span>&copy; Christian Mariño</span>

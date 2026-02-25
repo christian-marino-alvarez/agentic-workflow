@@ -1,10 +1,11 @@
 {
-  "name": "agentic-workflow",
-  "displayName": "Agentic Workflow",
+  "name": "cortex-ai",
+  "displayName": "Cortex",
   "publisher": "christian-marino-alvarez",
-  "version": "1.27.0-beta.3",
-  "description": "Portable agentic workflow orchestration system with strict identity and gate discipline",
+  "version": "1.27.0-beta.4",
+  "description": "The Agentic Orchestrator for VS Code. Modular, structured, and strict lifecycle governance.",
   "type": "module",
+  "icon": "media/cortex-logo.svg",
   "workspaces": [
     "src/extension/modules/core",
     "src/extension/modules/app",
@@ -22,8 +23,8 @@
       "activitybar": [
         {
           "id": "main",
-          "title": "Agentic Workflow",
-          "icon": "media/agent-chat.svg"
+          "title": "Cortex",
+          "icon": "media/cortex-logo.svg"
         }
       ]
     },
@@ -31,8 +32,8 @@
       "main": [
         {
           "id": "mainView",
-          "name": "Agentic Workflow",
-          "icon": "media/agent-chat.svg",
+          "name": "Cortex",
+          "icon": "media/cortex-logo.svg",
           "type": "webview"
         }
       ]
@@ -121,24 +122,24 @@
           "type": "object",
           "default": {
             "flash": {
-              "input": 0.30,
-              "output": 2.50
+              "input": 0.3,
+              "output": 2.5
             },
             "pro": {
               "input": 1.25,
-              "output": 10.00
+              "output": 10
             },
             "gpt": {
-              "input": 2.50,
-              "output": 10.00
+              "input": 2.5,
+              "output": 10
             },
             "claude": {
-              "input": 3.00,
-              "output": 15.00
+              "input": 3,
+              "output": 15
             },
             "default": {
-              "input": 0.30,
-              "output": 2.50
+              "input": 0.3,
+              "output": 2.5
             }
           },
           "description": "Token pricing per model pattern (USD per 1M tokens)"

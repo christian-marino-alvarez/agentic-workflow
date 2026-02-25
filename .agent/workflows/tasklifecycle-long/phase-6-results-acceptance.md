@@ -5,6 +5,11 @@ description: "Phase 6 of the task lifecycle. Presents the final results report a
 version: 1.0.0
 trigger: ["phase6", "phase-6", "results", "acceptance"]
 type: static
+context:
+  - .agent/rules/constitution/architecture/index.md
+  - .agent/rules/constitution/backend.md
+  - .agent/rules/constitution/background.md
+  - .agent/rules/constitution/view.md
 ---
 
 # WORKFLOW: tasklifecycle.phase-6-results-acceptance

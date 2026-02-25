@@ -24,6 +24,7 @@ export interface WorkflowSnapshot {
   };
   pass?: {
     nextTarget?: string;
+    actions?: string[];
   };
   fail?: {
     behavior?: string;

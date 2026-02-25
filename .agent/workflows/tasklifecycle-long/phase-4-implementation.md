@@ -5,6 +5,11 @@ description: "Phase 4 of the task lifecycle. Executes implementation through gra
 version: 3.0.0
 trigger: ["phase4", "phase-4", "implementation", "implement"]
 type: static
+context:
+  - .agent/rules/constitution/architecture/index.md
+  - .agent/rules/constitution/backend.md
+  - .agent/rules/constitution/background.md
+  - .agent/rules/constitution/view.md
 ---
 
 # WORKFLOW: tasklifecycle.phase-4-implementation

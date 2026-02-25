@@ -5,6 +5,11 @@ description: "Phase 3 of the task lifecycle. Defines the implementation plan bas
 version: 1.0.0
 trigger: ["phase3", "phase-3", "planning", "plan"]
 type: static
+context:
+  - .agent/rules/constitution/architecture/index.md
+  - .agent/rules/constitution/backend.md
+  - .agent/rules/constitution/background.md
+  - .agent/rules/constitution/view.md
 ---
 
 # WORKFLOW: tasklifecycle.phase-3-planning

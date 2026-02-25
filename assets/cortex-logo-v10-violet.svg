@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Ultra-Minimalist, Flat (V6 Shape) with Magenta/Violet Theme -->
+  <g transform="translate(56, 64)">
+    
+    <!-- Outer "C" (The Cortex / System) -->
+    <!-- Color: Deep Violet/Indigo (Premium, tech-focused) -->
+    <path d="M 32,-40 
+             L 0,-40 
+             A 24,24 0 0,0 -24,-16 
+             L -24,16 
+             A 24,24 0 0,0 0,40 
+             L 32,40" 
+          fill="none" 
+          stroke="#6366F1" 
+          stroke-width="20" 
+          stroke-linecap="round"/>
+          
+    <!-- Inner Core (The Agent Intelligence) -->
+    <!-- Color: Bright Magenta/Pink accent (High contrast, modern) -->
+    <circle cx="16" cy="0" r="14" fill="#EC4899"/>
+    
+  </g>
+</svg>

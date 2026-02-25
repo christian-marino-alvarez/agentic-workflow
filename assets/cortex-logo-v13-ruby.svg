@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Ultra-Minimalist, Flat (V6 Shape) with Ruby/Gold Theme -->
+  <g transform="translate(56, 64)">
+    <!-- Outer "C": Ruby Red / Crimson (#E11D48) -->
+    <path d="M 32,-40 L 0,-40 A 24,24 0 0,0 -24,-16 L -24,16 A 24,24 0 0,0 0,40 L 32,40" 
+          fill="none" stroke="#E11D48" stroke-width="20" stroke-linecap="round"/>
+    <!-- Inner Core: Champagne Gold (#FBBF24) -->
+    <circle cx="16" cy="0" r="14" fill="#FBBF24"/>
+  </g>
+</svg>

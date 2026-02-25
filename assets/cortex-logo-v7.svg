@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Flat Design based on V2, No Gradients -->
+  
+  <!-- Background Layer: Solid VS Code dark theme -->
+  <rect width="128" height="128" rx="24" fill="#1E1E1E"/>
+
+  <!-- Logo Mark -->
+  <g transform="translate(64, 64)">
+    <!-- Main outer "C" shape (The System/Workflow) -->
+    <!-- Solid classic VS Code blue -->
+    <path d="M 15,-28 
+             A 36,36 0 1,0 15,28" 
+          fill="none" 
+          stroke="#007ACC" 
+          stroke-width="16" 
+          stroke-linecap="round"/>
+          
+    <!-- Inner intelligence core (The Cortex/Architect) -->
+    <!-- Solid lighter blue accent -->
+    <circle cx="8" cy="0" r="14" fill="#3794FF"/>
+    
+    <!-- Connection node (The Agent delegation point) -->
+    <!-- Solid background color to act as a cutout -->
+    <circle cx="-21" cy="0" r="6" fill="#1E1E1E"/>
+  </g>
+</svg>

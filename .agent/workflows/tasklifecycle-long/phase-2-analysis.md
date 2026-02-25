@@ -5,6 +5,11 @@ description: "Phase 2 of the task lifecycle. Deep analysis based on prior resear
 version: 1.0.0
 trigger: ["phase2", "phase-2", "analysis"]
 type: static
+context:
+  - .agent/rules/constitution/architecture/index.md
+  - .agent/rules/constitution/backend.md
+  - .agent/rules/constitution/background.md
+  - .agent/rules/constitution/view.md
 ---
 
 # WORKFLOW: tasklifecycle.phase-2-analysis

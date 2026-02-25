@@ -1,6 +1,6 @@
 # Initial Configuration
 
-- **Language**: Español
-- **Strategy**: Short
-- **Task Title**: Comitear todos los cambios de esta rama a devloo
-- **Task Objective**: Tener actualizada la rama de develop con los ultimos cambios
+- **Conversation Language:** Español
+- **Lifecycle Strategy:** Short (3 fases simplificadas)
+- **Task Title:** Refactorizar agentes
+- **Task Objective:** Tener agentes especializados en las capas de la arquitectura

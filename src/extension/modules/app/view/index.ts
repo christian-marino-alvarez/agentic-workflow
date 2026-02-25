@@ -47,6 +47,17 @@ export class AppView extends View {
     setTimeout(() => {
       this.tabTransitioning = false;
       if (tab === 'history') { this.refreshHistorySessions(); }
+      if (tab === 'chat') {
+        setTimeout(() => {
+          const cv = this.getChatView();
+          if (cv) {
+            const container = cv.renderRoot?.querySelector('.chat-container');
+            if (container) {
+              container.scrollTop = container.scrollHeight;
+            }
+          }
+        }, 50);
+      }
     }, 1000);
   }
 
@@ -84,6 +95,14 @@ export class AppView extends View {
     this.addEventListener('secure-state-changed', ((e: CustomEvent) => {
       this.isSecure = e.detail?.secure ?? false;
     }) as EventListener);
+
+    // Listen for session list updates from ChatView
+    this.addEventListener('sessions-updated', ((e: CustomEvent) => {
+      if (e.detail?.sessions) {
+        this.historySessions = e.detail.sessions;
+      }
+    }) as EventListener);
+
     setTimeout(() => { this.tabTransitioning = false; }, 1000);
   }
 

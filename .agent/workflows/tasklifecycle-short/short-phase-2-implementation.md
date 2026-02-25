@@ -11,6 +11,10 @@ models:
   routing: gemini-2.5-flash
 context:
   - .agent/artifacts/<taskId>-<taskTitle>/planning.md
+  - .agent/rules/constitution/architecture/index.md
+  - .agent/rules/constitution/backend.md
+  - .agent/rules/constitution/background.md
+  - .agent/rules/constitution/view.md
 ---
 
 # WORKFLOW: tasklifecycle-short.short-phase-2-implementation
@@ -28,16 +32,18 @@ Carry out the implementation defined in the Phase 1 planning.
 
 ## Instructions
 1. All artifacts created during this phase MUST be saved under `.agent/artifacts/<taskId>-<taskTitle>/`. Never create artifacts outside this path.
-2. Follow the Phase 1 planning faithfully.
-3. Before executing any code, create as many dynamic subtask artifacts as the planning defines, using `templates.subtask_implementation` for each subtask.
-4. Execute all subtasks defined in the previous step in sequential order. Each subtask must be approved one after another by the developer via `<a2ui>`.
-5. Before delivering results for each subtask, validate that it meets the planning objectives using `<a2ui type="choice" id="validate-subtask-<n>" label="Does subtask <n> meet the planning objectives?">` with options `SI` and `NO`.
-6. Validate that each subtask has no code errors using `<a2ui type="choice" id="no-errors-subtask-<n>" label="Is subtask <n> free of code errors?">` with options `SI` and `NO`.
-7. Present the results for each subtask using `<a2ui type="results" id="approve-subtask-<n>" path=".agent/artifacts/<taskId>-<taskTitle>/subtask-<n>.md" label="Subtask <n> — Results">` with the acceptance criteria checklist in the body. The `path` attribute is MANDATORY so the developer can open the document before accepting.
+2. Read the Phase 1 planning (`planning.md`). You MUST use the `list_dir` and `view_file` tools to proactively read the directory `.agent/artifacts/<taskId>-<taskTitle>/` and load all approved subtask plans (`subtask-<n>-plan.md`) to identify each subtask and its **designated agent owner**.
+3. Execute subtasks in sequential order. For each subtask:
+   a. **Delegate to the designated agent**: The architect MUST activate the agent assigned as owner in the subtask plan (e.g. `backend-agent`, `view-agent`, etc.) and provide the subtask plan as context.
+   b. **Agent implements**: The designated agent executes the implementation following the subtask plan scope and acceptance criteria.
+   c. **Agent presents results**: After completing the implementation, the designated agent presents what was done — explaining the changes made, files modified, and how the subtask acceptance criteria were met.
+   d. **Developer validates**: Present the results for developer approval using `<a2ui type="choice" id="approve-subtask-<n>" label="Subtask <n> — Results (by <agent-name>)">` with `SI` and `NO`, and include the acceptance criteria checklist in the body.
+4. **Present Implementation Results (Gate)**: After ALL subtasks have been implemented and individually accepted, present the final gate using `<a2ui type="gate" id="gate-eval" label="Phase 2 Implementation — Final Review">` summarizing the completed subtasks in its body. This is MANDATORY — the developer must approve (SI) to pass the gate and trigger the lifecycle engine to advance to Phase 3.
 
 ## Gate
 1. All subtasks defined in the Phase 1 planning have been executed.
-2. All results presentations have been validated and accepted by the developer via `<a2ui>`.
+2. All subtask implementations have been validated and accepted individually.
+3. The overall implementation has been approved by the developer via `<a2ui type="gate">`.
 
 ## Pass
 - All subtasks have been accepted by the developer.

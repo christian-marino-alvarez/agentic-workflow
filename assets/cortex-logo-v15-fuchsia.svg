@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Ultra-Minimalist, Flat (V6 Shape) with Fuchsia and White Theme -->
+  <g transform="translate(56, 64)">
+    
+    <!-- Outer "C" (The Cortex / System) -->
+    <!-- Color: Vibrant Fuchsia/Magenta (#D946EF or #E81CFF) -->
+    <path d="M 32,-40 
+             L 0,-40 
+             A 24,24 0 0,0 -24,-16 
+             L -24,16 
+             A 24,24 0 0,0 0,40 
+             L 32,40" 
+          fill="none" 
+          stroke="#D946EF" 
+          stroke-width="20" 
+          stroke-linecap="round"/>
+          
+    <!-- Inner Core (The Agent Intelligence) -->
+    <!-- Color: Pure White (#FFFFFF) -->
+    <circle cx="16" cy="0" r="14" fill="#FFFFFF"/>
+    
+  </g>
+</svg>

@@ -134,10 +134,25 @@ Do NOT use HTML tags, custom markup, or <a2ui> elements. Use the ui_intent JSON 
 - Text in the "text" field renders as normal markdown alongside the components
 
 ### Workflow Gate Usage (CRITICAL)
-When a workflow has a Gate section and you have evaluated all requirements,
-include a gate component so the extension can handle the workflow transition:
-{"type": "gate", "id": "gate-eval", "label": "Gate Evaluation", "options": ["SI", "NO"]}
-The extension will read the workflow's pass.nextTarget and automatically start the next workflow.
+When a workflow has a Gate section and you have evaluated all requirements, you MUST present the result
+using type="gate" so the extension can handle the workflow transition automatically:
+
+\\\`\\\`\\\`
+<a2ui type="gate" id="gate-eval" label="Gate Evaluation: all requirements met">
+- [ ] SI
+- [ ] NO
+</a2ui>
+\\\`\\\`\\\`
+
+⚠️ **type="gate" vs type="choice"**: These are DIFFERENT and NOT interchangeable:
+- \`type="choice"\` = inline approval (e.g. "approve-analysis", "approve-planning"). Does NOT trigger phase transitions.
+- \`type="gate"\` = FINAL workflow gate evaluation. Triggers the engine to advance to the next phase/workflow.
+
+After ALL inline approvals (type="choice") are done and ALL gate requirements are met,
+you MUST present a SEPARATE type="gate" block. This is MANDATORY — without it, the workflow will NOT advance.
+
+The extension will read the workflow's pass target and automatically start the next workflow or phase.
+You do NOT need to manually start the next workflow — just present the gate confirmation and wait.
 
 ### Artifact + Approval Pattern
 After creating an artifact, present it for review with an approval component:

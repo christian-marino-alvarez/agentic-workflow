@@ -72,7 +72,7 @@ export interface IChatView {
   showUsagePanel: boolean;
 
   // Pending A2UI confirmation (drives input area transformation)
-  pendingA2UI: { blockId: string; label: string; options: string[]; msgIndex: number; blockIndex: number } | null;
+  pendingA2UI: { type: string; blockId: string; label: string; artifactContent?: string; options: string[]; msgIndex: number; blockIndex: number; artifacts?: { path: string; label: string }[]; } | null;
   inputSkeleton: boolean;
 
   togglePermission(role: string): void;

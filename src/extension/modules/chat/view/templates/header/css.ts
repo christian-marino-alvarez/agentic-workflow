@@ -95,9 +95,9 @@ export const headerStyles = css`
     }
 
     .header-pill-btn.active {
-      border-color: var(--vscode-textLink-foreground);
+      border-color: var(--vscode-textLink-foreground, #3794ff);
       background: rgba(55, 148, 255, 0.1);
-      color: var(--vscode-textLink-foreground);
+      color: var(--vscode-textLink-foreground, #3794ff);
     }
 
     .progress-bar-track {
@@ -110,10 +110,10 @@ export const headerStyles = css`
 
     .progress-bar-fill {
       height: 100%;
-      background: linear-gradient(90deg, #00d4aa, #4dacff);
+      background: linear-gradient(90deg, var(--vscode-textLink-foreground, #3794ff), #007ACC);
       border-radius: 3px;
       transition: width 0.4s ease;
-      box-shadow: 0 0 4px rgba(77, 172, 255, 0.5);
+      box-shadow: 0 0 4px rgba(55, 148, 255, 0.5);
     }
 
     .progress-text {
@@ -136,7 +136,7 @@ export const headerStyles = css`
 
     .active-step-hint {
       font-size: 10px;
-      color: #569cd6;
+      color: var(--vscode-textLink-foreground, #3794ff);
       padding: 2px 0 0 22px;
       font-weight: 500;
       letter-spacing: 0.3px;

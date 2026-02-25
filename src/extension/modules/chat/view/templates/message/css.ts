@@ -22,15 +22,26 @@ export const messageStyles = css`
     }
     
     .msg-icon svg {
-      width: 14px;
-      height: 14px;
+      width: 16px;
+      height: 16px;
     }
 
     .msg-sender {
       font-weight: 600;
       color: var(--vscode-editor-foreground);
-      font-size: 11px;
+      font-size: 13px;
     }
+    
+    .msg-sender.role-architect, .msg-icon.role-architect { color: #64b5f6; }
+    .msg-sender.role-module, .msg-icon.role-module { color: #ce93d8; }
+    .msg-sender.role-view, .msg-icon.role-view { color: #80cbc4; }
+    .msg-sender.role-researcher, .msg-icon.role-researcher { color: #ffd54f; }
+    .msg-sender.role-qa, .msg-icon.role-qa { color: #f48fb1; }
+    .msg-sender.role-driver, .msg-icon.role-driver { color: #ffb74d; }
+    .msg-sender.role-engine, .msg-icon.role-engine { color: #4dd0e1; }
+    .msg-sender.role-neo, .msg-icon.role-neo { color: #aed581; }
+    .msg-sender.role-backend, .msg-icon.role-backend { color: #90a4ae; }
+    .msg-sender.role-background, .msg-icon.role-background { color: #a1887f; }
     
     .msg-status {
       font-size: 10px;
@@ -44,14 +55,14 @@ export const messageStyles = css`
       margin-left: auto;
       padding: 2px 6px;
       border-radius: 6px;
-      background: rgba(232, 197, 110, 0.06);
-      border: 1px solid rgba(232, 197, 110, 0.12);
+      background: rgba(55, 148, 255, 0.06);
+      border: 1px solid rgba(55, 148, 255, 0.12);
       cursor: default;
       transition: background 0.15s;
     }
 
     .msg-token-cost:hover {
-      background: rgba(232, 197, 110, 0.12);
+      background: rgba(55, 148, 255, 0.12);
     }
 
     .msg-token-cost-icon { font-size: 9px; }
@@ -59,7 +70,7 @@ export const messageStyles = css`
     .msg-token-cost-value {
       font-size: 9px;
       font-weight: 600;
-      color: rgba(232, 197, 110, 0.8);
+      color: rgba(55, 148, 255, 0.8);
       font-family: var(--vscode-editor-font-family, monospace);
     }
 
@@ -265,7 +276,7 @@ export const messageStyles = css`
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: rgba(232, 197, 110, 0.7);
+      background: rgba(55, 148, 255, 0.7);
       animation: a2ui-dot-bounce 1.4s ease-in-out infinite;
     }
 

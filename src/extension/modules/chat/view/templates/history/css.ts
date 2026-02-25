@@ -28,11 +28,11 @@ export const historyStyles = css`
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      color: var(--vscode-textLink-foreground);
+      color: var(--vscode-textLink-foreground, #3794ff);
       padding: 2px 10px;
       border-radius: 10px;
-      background: color-mix(in srgb, var(--vscode-textLink-foreground) 10%, transparent);
-      border: 1px solid color-mix(in srgb, var(--vscode-textLink-foreground) 25%, transparent);
+      background: rgba(55, 148, 255, 0.1);
+      border: 1px solid rgba(55, 148, 255, 0.25);
       white-space: nowrap;
     }
 
@@ -74,21 +74,7 @@ export const historyStyles = css`
       width: 2px;
       flex: 1;
       min-height: 8px;
-      background: color-mix(in srgb, var(--vscode-textLink-foreground) 30%, transparent);
-    }
-
-    .phase-group-name {
-      font-size: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      color: var(--vscode-textLink-foreground, #3794ff);
-      text-align: center;
-      max-width: 48px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      padding: 2px 0;
+      background: rgba(55, 148, 255, 0.3);
     }
 
     .phase-group-messages {

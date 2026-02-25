@@ -131,8 +131,8 @@ export const inputStyles = css`
 
     .token-usage:hover,
     .token-usage.active {
-      background: rgba(232, 197, 110, 0.1);
-      border-color: rgba(232, 197, 110, 0.3);
+      background: rgba(55, 148, 255, 0.1);
+      border-color: rgba(55, 148, 255, 0.3);
     }
 
     .token-icon { font-size: 10px; }
@@ -140,7 +140,7 @@ export const inputStyles = css`
     .token-count {
       font-size: 10px;
       font-weight: 600;
-      color: rgba(232, 197, 110, 0.9);
+      color: rgba(55, 148, 255, 0.9);
       font-family: var(--vscode-editor-font-family, monospace);
     }
 
@@ -154,8 +154,8 @@ export const inputStyles = css`
     .usage-stats-panel {
       margin-top: 8px;
       padding: 12px 14px;
-      background: rgba(232, 197, 110, 0.05);
-      border: 1px solid rgba(232, 197, 110, 0.15);
+      background: rgba(55, 148, 255, 0.05);
+      border: 1px solid rgba(55, 148, 255, 0.15);
       border-radius: 8px;
       animation: slideDown 0.18s ease;
     }
@@ -175,7 +175,7 @@ export const inputStyles = css`
     .usage-stats-title {
       font-size: 10px;
       font-weight: 700;
-      color: rgba(232, 197, 110, 0.8);
+      color: rgba(55, 148, 255, 0.8);
       letter-spacing: 0.04em;
       text-transform: uppercase;
     }
@@ -207,8 +207,8 @@ export const inputStyles = css`
     }
 
     .usage-stat-item.highlight {
-      background: rgba(232, 197, 110, 0.08);
-      border-color: rgba(232, 197, 110, 0.2);
+      background: rgba(55, 148, 255, 0.08);
+      border-color: rgba(55, 148, 255, 0.2);
     }
 
     .usage-stat-label {
@@ -228,7 +228,7 @@ export const inputStyles = css`
 
     .usage-stat-value.input  { color: #7ecfb3; }
     .usage-stat-value.output { color: #7ab8f5; }
-    .usage-stat-value.cost   { color: rgba(232, 197, 110, 0.95); }
+    .usage-stat-value.cost   { color: rgba(55, 148, 255, 0.95); }
 
     .usage-model-breakdown {
       border-top: 1px solid rgba(255,255,255,0.06);
@@ -263,7 +263,7 @@ export const inputStyles = css`
 
     .usage-model-reqs  { color: rgba(255,255,255,0.35); font-size: 9px; }
     .usage-model-tokens { color: #7ecfb3; font-family: monospace; }
-    .usage-model-cost  { color: rgba(232, 197, 110, 0.8); font-family: monospace; }
+    .usage-model-cost  { color: rgba(55, 148, 255, 0.8); font-family: monospace; }
 
     .agent-status-caps {
       display: flex;
@@ -388,7 +388,7 @@ export const inputStyles = css`
 
     .a2ui-radio-option:hover {
       background: rgba(255, 255, 255, 0.07);
-      border-color: rgba(207, 142, 52, 0.3);
+      border-color: rgba(55, 148, 255, 0.3);
     }
 
     .a2ui-radio-option input[type="radio"] {
@@ -419,16 +419,16 @@ export const inputStyles = css`
 
     /* Selected state */
     .a2ui-radio-option input[type="radio"]:checked ~ .a2ui-radio-indicator {
-      border-color: #cf8e34;
+      border-color: var(--vscode-textLink-foreground, #3794ff);
     }
 
     .a2ui-radio-option input[type="radio"]:checked ~ .a2ui-radio-indicator::after {
-      background: #cf8e34;
+      background: var(--vscode-textLink-foreground, #3794ff);
     }
 
     .a2ui-radio-option:has(input[type="radio"]:checked) {
-      background: rgba(207, 142, 52, 0.1);
-      border-color: rgba(207, 142, 52, 0.35);
+      background: rgba(55, 148, 255, 0.1);
+      border-color: rgba(55, 148, 255, 0.35);
     }
 
     .a2ui-radio-text {
@@ -474,9 +474,9 @@ export const inputStyles = css`
       font-size: 12px;
       font-weight: 600;
       border-radius: 6px;
-      border: 1px solid rgba(207, 142, 52, 0.3);
-      background: rgba(207, 142, 52, 0.12);
-      color: rgba(207, 142, 52, 0.5);
+      border: 1px solid rgba(55, 148, 255, 0.3);
+      background: rgba(55, 148, 255, 0.12);
+      color: rgba(55, 148, 255, 0.5);
       cursor: not-allowed;
       transition: all 0.15s ease;
     }
@@ -487,17 +487,17 @@ export const inputStyles = css`
 
     .a2ui-input-confirm.ready,
     .a2ui-input-confirm:not(:disabled) {
-      background: #cf8e34;
+      background: var(--vscode-textLink-foreground, #3794ff);
       color: #fff;
       cursor: pointer;
       opacity: 1;
-      border-color: #cf8e34;
+      border-color: var(--vscode-textLink-foreground, #3794ff);
     }
 
     .a2ui-input-confirm.ready:hover,
     .a2ui-input-confirm:not(:disabled):hover {
-      background: #b87d2e;
+      background: #007ACC;
       transform: translateY(-1px);
-      box-shadow: 0 2px 8px rgba(207, 142, 52, 0.3);
+      box-shadow: 0 2px 8px rgba(55, 148, 255, 0.3);
     }
 `;

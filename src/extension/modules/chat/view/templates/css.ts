@@ -52,15 +52,15 @@ export const styles = [
     }
 
     .btn {
-      padding: 6px 12px;
+      padding: 8px 16px;
       border: none;
-      border-radius: 2px;
+      border-radius: 6px;
       cursor: pointer;
-      font-size: 11px;
-      font-weight: 500;
+      font-size: 13px;
+      font-weight: 600;
       color: var(--vscode-button-foreground);
       background: var(--vscode-button-background);
-      transition: all 0.2s;
+      transition: all 0.2s ease;
     }
     
     .btn:hover {
@@ -68,12 +68,16 @@ export const styles = [
     }
     
     .btn-primary {
-      background-color: #e67e22;
+      padding: 8px 24px;
+      background-color: var(--vscode-textLink-foreground, #3794ff);
       color: #ffffff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
-    .btn-primary:hover {
-      background-color: #d35400;
+    .btn-primary:hover:not(:disabled) {
+      background-color: #007ACC;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
     
     .btn:disabled {

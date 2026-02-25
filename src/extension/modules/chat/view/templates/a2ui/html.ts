@@ -70,7 +70,7 @@ export function parseA2UI(text: string): Array<{ type: 'text' | 'a2ui'; content:
       const pathAttr = el.getAttribute('path') || undefined;
       const body = (el.textContent || '').trim();
 
-      if (blockType === 'artifact' || ['confirm', 'results', 'chart', 'error', 'warning', 'info'].includes(blockType)) {
+      if (blockType === 'artifact' || ['confirm', 'results', 'chart', 'error', 'warning', 'info', 'gate'].includes(blockType)) {
         // Body-preserving blocks: preserve body as content (don't parse as options)
         segments.push({
           type: 'a2ui',

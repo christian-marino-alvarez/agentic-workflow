@@ -74,6 +74,27 @@ export function renderMessageBubble(msg: any, view?: IChatView) {
 
   // Error messages: styled as a distinct error card
   if (msg.isError || (msg.role === 'system' && msg.text?.includes('**System Error:**'))) {
+    if (msg.text?.includes('Max turns') || msg.text?.includes('exceeded')) {
+      return html`
+        <div class="msg-bubble msg-system" style="border-left: 3px solid #ffb74d; background: rgba(255, 183, 77, 0.08); margin: 8px 0;">
+          <div class="msg-header">
+            <span class="msg-icon">⏱️</span>
+            <span class="msg-sender" style="color: #ffb74d; font-weight: 600;">Pausa Estratégica</span>
+          </div>
+          <div class="msg-content markdown-body" style="color: var(--vscode-editor-foreground);">
+            <p>El agente lleva un rato pensando y explorando información, así que ha hecho una pausa de seguridad.</p>
+            <p>Puedes revisar lo que ha hecho hasta ahora y decirle de continuar cuando estés listo.</p>
+            <div style="margin-top: 12px;">
+              <button class="btn btn-secondary" style="border: 1px solid rgba(255, 183, 77, 0.5); color: #ffb74d; background: rgba(255, 183, 77, 0.1); padding: 6px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;" 
+                      @click=${() => view && view.sendSilentMessage("Sigue trabajando en la tarea, vas por buen camino. Necesito que continúes donde lo dejaste.")}>
+                <span>▶</span> Continuar Trabajo
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     return html`
       <div class="msg-bubble msg-error" style="border-left: 3px solid #f44336; background: rgba(244, 67, 54, 0.08); margin: 8px 0;">
         <div class="msg-header">
@@ -111,8 +132,8 @@ export function renderMessageBubble(msg: any, view?: IChatView) {
   return html`
     <div class="msg-bubble ${typeClass} ${roleClass}">
       <div class="msg-header">
-        <span class="msg-icon">${getIcon(msg.role)}</span>
-        <span class="msg-sender">
+        <span class="msg-icon ${roleClass}">${getIcon(msg.role)}</span>
+        <span class="msg-sender ${roleClass}">
           ${msg.sender} 
           ${msg.status ? html`<span class="msg-status">(${msg.status})</span>` : ''}
         </span>

@@ -20,7 +20,7 @@ export const a2uiStyles = css`
     font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.3px;
-    color: rgba(232, 197, 110, 0.9);
+    color: rgba(55, 148, 255, 0.9);
     margin-bottom: 10px;
   }
 
@@ -76,11 +76,11 @@ export const a2uiStyles = css`
   }
 
   .a2ui-option input[type="radio"]:checked + .a2ui-option-radio {
-    border-color: #e67e22;
+    border-color: var(--vscode-textLink-foreground, #3794ff);
   }
 
   .a2ui-option input[type="radio"]:checked + .a2ui-option-radio::after {
-    background: #e67e22;
+    background: var(--vscode-textLink-foreground, #3794ff);
   }
 
   .a2ui-option input[type="radio"]:checked ~ .a2ui-option-text {
@@ -113,14 +113,14 @@ export const a2uiStyles = css`
   }
 
   .a2ui-btn-confirm {
-    background: #e67e22;
+    background: var(--vscode-textLink-foreground, #3794ff);
     color: white;
   }
 
   .a2ui-btn-confirm:hover {
-    background: #d35400;
+    background: #007ACC;
     transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(230, 126, 34, 0.3);
+    box-shadow: 0 2px 8px rgba(55, 148, 255, 0.3);
   }
 
   .a2ui-btn-cancel {
@@ -202,7 +202,7 @@ export const a2uiStyles = css`
   }
 
   .a2ui-active {
-    border-color: rgba(230, 126, 34, 0.3);
+    border-color: rgba(55, 148, 255, 0.3);
     animation: a2ui-fadein 0.3s ease;
   }
 
@@ -254,7 +254,7 @@ export const a2uiStyles = css`
 
   .a2ui-artifact-path {
     font-size: 10px;
-    color: rgba(232, 197, 110, 0.6);
+    color: rgba(55, 148, 255, 0.6);
     font-family: var(--vscode-editor-font-family, monospace);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -263,7 +263,7 @@ export const a2uiStyles = css`
   }
 
   .a2ui-artifact-path:hover {
-    color: rgba(232, 197, 110, 0.9);
+    color: rgba(55, 148, 255, 0.9);
     text-decoration: underline;
   }
 
@@ -272,10 +272,10 @@ export const a2uiStyles = css`
     align-items: center;
     gap: 4px;
     padding: 4px 10px;
-    border: 1px solid rgba(232, 197, 110, 0.3);
+    border: 1px solid rgba(55, 148, 255, 0.3);
     border-radius: 6px;
-    background: rgba(232, 197, 110, 0.08);
-    color: rgba(232, 197, 110, 0.8);
+    background: rgba(55, 148, 255, 0.08);
+    color: rgba(55, 148, 255, 0.8);
     font-size: 11px;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -283,9 +283,9 @@ export const a2uiStyles = css`
   }
 
   .a2ui-artifact-open:hover {
-    background: rgba(232, 197, 110, 0.15);
-    border-color: rgba(232, 197, 110, 0.5);
-    color: rgba(232, 197, 110, 1);
+    background: rgba(55, 148, 255, 0.15);
+    border-color: rgba(55, 148, 255, 0.5);
+    color: rgba(55, 148, 255, 1);
   }
 
   .a2ui-artifact-details {
@@ -338,7 +338,7 @@ export const a2uiStyles = css`
   .a2ui-artifact-content h1,
   .a2ui-artifact-content h2,
   .a2ui-artifact-content h3 {
-    color: rgba(232, 197, 110, 0.9);
+    color: rgba(55, 148, 255, 0.9);
     margin-top: 12px;
     margin-bottom: 6px;
   }
@@ -636,7 +636,7 @@ export const a2uiStyles = css`
   .a2ui-chart-bar-fill {
     height: 100%;
     border-radius: 5px;
-    background: linear-gradient(90deg, rgba(232, 197, 110, 0.5), rgba(232, 197, 110, 0.9));
+    background: linear-gradient(90deg, rgba(55, 148, 255, 0.5), rgba(55, 148, 255, 0.9));
     transition: width 0.6s ease;
   }
 

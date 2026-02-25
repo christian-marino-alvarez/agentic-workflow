@@ -747,14 +747,19 @@ export class ChatBackground extends Background {
 
         // Convert ui_intent to legacy a2ui format for backward-compatible rendering
         if (structured.ui_intent && structured.ui_intent.length > 0) {
-          const a2uiBlocks = structured.ui_intent.map(c => {
+          const escapeAttr = (val: any) => val ? String(val).replace(/"/g, '\\"') : '';
+          const a2uiBlocks = structured.ui_intent.map((c: any) => {
+            const idAttr = escapeAttr(c.id);
+            const labelAttr = escapeAttr(c.label !== undefined ? c.label : c.id);
+            const pathAttr = escapeAttr(c.path);
+
             if (c.type === 'artifact') {
-              return `<a2ui type="${c.type}" id="${c.id}" label="${c.label}"${c.path ? ` path="${c.path}"` : ''}>${c.content || ''}</a2ui>`;
+              return `<a2ui type="${c.type}" id="${idAttr}" label="${labelAttr}"${c.path ? ` path="${pathAttr}"` : ''}>${c.content || ''}</a2ui>`;
             }
-            const optionLines = (c.options || []).map((opt, i) =>
+            const optionLines = (c.options || []).map((opt: string, i: number) =>
               i === c.preselected ? `- [x] ${opt}` : `- [ ] ${opt}`
             ).join('\n');
-            return `<a2ui type="${c.type}" id="${c.id}" label="${c.label}">\n${optionLines}\n</a2ui>`;
+            return `<a2ui type="${c.type}" id="${idAttr}" label="${labelAttr}">\n${optionLines}\n</a2ui>`;
           });
           displayText = displayText + '\n\n' + a2uiBlocks.join('\n\n');
         }

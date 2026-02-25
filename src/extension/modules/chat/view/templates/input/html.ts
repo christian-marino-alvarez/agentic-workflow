@@ -151,7 +151,7 @@ function renderInputControls(view: IChatView) {
                    ${artifactHtml}
                  </div>
               </div>
-              <div class="a2ui-input-actions" style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px; align-items:center;">
+              <div class="a2ui-input-actions" style="display:flex; justify-content:${view.pendingA2UI.artifacts && view.pendingA2UI.artifacts.length > 0 ? 'space-between' : 'flex-end'}; flex-wrap:wrap; gap:12px; align-items:center;">
                 <div style="display:flex; gap:12px;">
                   <button class="btn btn-primary" style="padding:8px 32px;" @click="${() => view.confirmA2UIOption('SI')}">SI ✔</button>
                   <button class="btn a2ui-input-cancel" style="padding:8px 24px; font-weight:600; border:1px solid rgba(244, 67, 54, 0.4);" @click="${() => view.confirmA2UIOption('NO')}">NO ✘</button>
@@ -233,7 +233,7 @@ function renderInputControls(view: IChatView) {
             </label>
           `)}
         </div>
-        <div class="a2ui-input-actions" style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px; align-items:center;">
+        <div class="a2ui-input-actions" style="display:flex; justify-content:${view.pendingA2UI.artifacts && view.pendingA2UI.artifacts.length > 0 ? 'space-between' : 'flex-end'}; flex-wrap:wrap; gap:12px; align-items:center;">
           <div style="display:flex; gap:12px;">
             <button class="btn a2ui-input-confirm" disabled
                     @click="${(e: Event) => {

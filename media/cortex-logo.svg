@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <g transform="translate(56, 64)">
+    <!-- Outer "C" -->
+    <path d="M 32,-40 L 0,-40 A 24,24 0 0,0 -24,-16 L -24,16 A 24,24 0 0,0 0,40 L 32,40" 
+          fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round"/>
+    <!-- Inner Core -->
+    <circle cx="16" cy="0" r="14" fill="currentColor"/>
+  </g>
+</svg>

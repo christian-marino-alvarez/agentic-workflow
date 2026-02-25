@@ -4,7 +4,7 @@ import { styles } from './templates/css.js';
 import { render } from './templates/html.js';
 import { MESSAGES, NAME, STEP_STATUS } from '../constants.js';
 import { MESSAGES as SETTINGS_MESSAGES } from '../../settings/constants.js';
-import { parseA2UI, A2UIBlock } from './templates/a2ui/html.js';
+import { parseA2UI, A2UIBlock, isDisplayBlock } from './templates/a2ui/html.js';
 
 console.log('[chat::view] Module loading...');
 
@@ -956,8 +956,8 @@ export class ChatView extends View {
     // Parse all blocks to check if this is the last one
     const segments = parseA2UI(msg.text || '');
     const allBlocks: A2UIBlock[] = segments.filter((s: any) => s.type === 'a2ui' && s.block).map((s: any) => s.block!);
-    // Filter out artifact blocks — they don't need answers
-    const blocks = allBlocks.filter((b: A2UIBlock) => b.type !== 'artifact');
+    // Filter out artifact blocks and display blocks — they don't need answers
+    const blocks = allBlocks.filter((b: A2UIBlock) => b.type !== 'artifact' && !isDisplayBlock(b.type));
 
     // Store answer
     if (!msg.a2uiAnswers) { msg.a2uiAnswers = {}; }
@@ -1356,19 +1356,19 @@ export class ChatView extends View {
       const blocks: A2UIBlock[] = segments.filter((s: any) => s.type === 'a2ui' && s.block).map((s: any) => s.block!);
       if (blocks.length === 0) { break; }
 
-      // Filter out artifact blocks — they are informational, not interactive
-      const interactiveBlocks = blocks.filter((b: A2UIBlock) => b.type !== 'artifact');
+      // Filter out artifact blocks and display-only blocks — they are informational, not interactive
+      const interactiveBlocks = blocks.filter((b: A2UIBlock) => b.type !== 'artifact' && !isDisplayBlock(b.type));
       if (interactiveBlocks.length === 0) { break; }
 
       const answers: Record<string, string> = msg.a2uiAnswers || {};
       const unresolved = interactiveBlocks.find((b: A2UIBlock) => answers[b.id] === undefined);
       if (!unresolved) { break; }
 
-      const artifactBlocks = blocks.filter((b: A2UIBlock) => b.type === 'artifact');
-      const artifacts = artifactBlocks.map(b => ({
+      const blocksWithPaths = blocks.filter((b: A2UIBlock) => !!b.path);
+      const artifacts = blocksWithPaths.map(b => ({
         path: b.path || '',
         label: b.label || b.path?.split('/').pop() || 'Document'
-      })).filter(a => !!a.path);
+      }));
 
       newPending = {
         type: unresolved.type,

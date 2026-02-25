@@ -64,7 +64,8 @@ export function parseA2UI(text: string): Array<{ type: 'text' | 'a2ui'; content:
     } else if (node.nodeType === Node.ELEMENT_NODE && (node as Element).tagName?.toLowerCase() === 'a2ui') {
       const el = node as Element;
       const blockType = el.getAttribute('type') || 'choice';
-      const id = el.getAttribute('id') || `a2ui-${Date.now()}-${segments.length}`;
+      const rawId = el.getAttribute('id') || `a2ui-${Date.now()}-${segments.length}`;
+      const id = rawId.replace(/\\"/g, '"').replace(/^"|"$/g, '');
       const rawLabel = el.getAttribute('label') || undefined;
       const label = rawLabel?.replace(/\\"/g, '"').replace(/^"|"$/g, '') || undefined;
       const pathAttr = el.getAttribute('path') || undefined;

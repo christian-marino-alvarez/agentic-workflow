@@ -108,13 +108,23 @@ export class RuntimeBackground extends Background {
   private async handleWorkflowStart(data: any): Promise<any> {
     // Auto-load the workflow before starting if dirPath is provided
     if (data?.dirPath) {
-      try {
-        await this.forwardToSidecar('workflow.loadAll', {
-          dirPath: data.dirPath,
-        }, 30_000);
-        this.log('Workflows loaded from', data.dirPath);
-      } catch (loadErr: any) {
-        this.log('Workflow load failed:', loadErr.message);
+      // Retry loop: the Runtime sidecar may not be ready yet on startup
+      let loaded = false;
+      for (let attempt = 1; attempt <= 5 && !loaded; attempt++) {
+        try {
+          await this.forwardToSidecar('workflow.loadAll', {
+            dirPath: data.dirPath,
+          }, 5_000);
+          this.log('Workflows loaded from', data.dirPath);
+          loaded = true;
+        } catch (loadErr: any) {
+          if (attempt < 5) {
+            this.log(`Workflow load attempt ${attempt}/5 failed, retrying in 500ms...`);
+            await new Promise(r => setTimeout(r, 500));
+          } else {
+            this.log('Workflow load failed after 5 attempts:', loadErr.message);
+          }
+        }
       }
     }
 

@@ -32,6 +32,11 @@ export class AppView extends View {
     this.tabTransitioning = true;
     this.activeTab = tab;
 
+    if (tab === 'settings') {
+      const settingsView = this.renderRoot?.querySelector('settings-view') as any;
+      settingsView?.activate?.();
+    }
+
     if (tab === 'history') {
       const chatView = this.getChatView();
       if (chatView?.saveCurrentSession) { chatView.saveCurrentSession(); }

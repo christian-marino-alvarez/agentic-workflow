@@ -82,9 +82,21 @@ export class Settings extends View {
   /**
    * After first render (skeleton visible), fetch providers from backend.
    */
+  private _dataLoaded = false;
+
   override async firstUpdated() {
-    this.log('First render complete, requesting providers...');
     document.addEventListener('click', this.boundCloseDropdowns);
+    // Data loading is deferred until activate() is called (tab becomes visible)
+  }
+
+  /**
+   * Called when the Settings tab becomes visible.
+   * Loads all data on first activation, no-ops on subsequent ones.
+   */
+  async activate() {
+    if (this._dataLoaded) { return; }
+    this._dataLoaded = true;
+    this.log('Settings tab activated — loading data...');
     await Promise.all([
       this.loadModels(),
       this.refreshRoles(),
@@ -110,7 +122,7 @@ export class Settings extends View {
       // Keep loading
     }
 
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Force 1s delay for skeleton
+    // No artificial delay — load immediately
     try {
       this.log('Sending GET_REQUEST to background...');
       const data = await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.GET_REQUEST);

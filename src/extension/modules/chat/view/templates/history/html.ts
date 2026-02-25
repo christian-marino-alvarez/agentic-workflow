@@ -50,21 +50,21 @@ export function renderHistory(view: IChatView) {
   return html`
     <div class="history layout-scroll chat-container layout-col">
       ${groups.map((group, i) => html`
-        ${i > 0 && group.phase ? renderPhaseSeparator(group.phase) : ''}
+        ${group.phase ? renderPhaseSeparator(group.phase) : ''}
         <div class="phase-group ${group.phase ? 'has-phase' : ''}">
           ${group.phase ? html`
             <div class="phase-group-sidebar">
               <div class="phase-group-dot"></div>
               <div class="phase-group-line"></div>
-              <span class="phase-group-name">${group.phase}</span>
             </div>
           ` : ''}
           <div class="phase-group-messages">
             ${group.messages.map(msg => renderMessageBubble(msg, view))}
+            ${(view.isLoading || view.activeActivity) && i === groups.length - 1 ? renderActivityIndicator(view) : ''}
           </div>
         </div>
       `)}
-      ${(view.isLoading || view.activeActivity) ? renderActivityIndicator(view) : ''}
+      ${(view.isLoading || view.activeActivity) && groups.length === 0 ? renderActivityIndicator(view) : ''}
     </div>
   `;
 }
@@ -72,7 +72,7 @@ export function renderHistory(view: IChatView) {
 function renderActivityIndicator(view: IChatView) {
   const activity = view.activeActivity || 'Thinking...';
   return html`
-    <div class="activity-indicator">
+    <div class="activity-indicator" style="padding-left: 0;">
       <span class="activity-dot"></span>
       <span class="activity-text">${activity}</span>
     </div>

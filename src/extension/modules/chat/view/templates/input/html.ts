@@ -1,4 +1,6 @@
 import { html } from 'lit';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { marked } from 'marked';
 import { IChatView } from '../../types.js';
 import { getIcon } from '../utils.js';
 
@@ -136,8 +138,40 @@ function renderInputControls(view: IChatView) {
     const { label, options } = view.pendingA2UI;
     const groupName = `a2ui-radio-${Date.now()}`;
 
-    // Input type: free-text field when no options are defined
+    // Input type: free-text field or full gate card when no options are defined
     if (!options || options.length === 0) {
+      if (view.pendingA2UI.type === 'gate') {
+        const artifactHtml = unsafeHTML(marked.parse(view.pendingA2UI.artifactContent || '', { async: false }) as string);
+        return html`
+          <div class="a2ui-input-bar">
+            <div style="flex:1; width:100%;">
+              <div style="padding:14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; margin-bottom:12px;">
+                 <strong style="display:block; margin-bottom:12px; color:var(--vscode-textLink-foreground, #3794ff); font-size:14px;">🚦 ${label}</strong>
+                 <div class="markdown-body" style="font-size:13px; opacity:0.9;">
+                   ${artifactHtml}
+                 </div>
+              </div>
+              <div class="a2ui-input-actions" style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px; align-items:center;">
+                <div style="display:flex; gap:12px;">
+                  <button class="btn btn-primary" style="padding:8px 32px;" @click="${() => view.confirmA2UIOption('SI')}">SI ✔</button>
+                  <button class="btn a2ui-input-cancel" style="padding:8px 24px; font-weight:600; border:1px solid rgba(244, 67, 54, 0.4);" @click="${() => view.confirmA2UIOption('NO')}">NO ✘</button>
+                </div>
+                ${view.pendingA2UI.artifacts && view.pendingA2UI.artifacts.length > 0 ? html`
+                  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    ${view.pendingA2UI.artifacts.map((a: any) => html`
+                      <button class="btn btn-secondary file-link" data-file-path="${a.path}" style="background: rgba(55, 148, 255, 0.1); color: #3794ff; border: 1px solid rgba(55,148,255,0.4); padding: 8px 16px; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 6px;" title="Review ${a.label}">
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"/><path d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/></svg>
+                        Review ${a.label}
+                      </button>
+                    `)}
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
       return html`
         <div class="a2ui-input-bar">
           <span class="a2ui-input-label">${label}</span>
@@ -199,32 +233,47 @@ function renderInputControls(view: IChatView) {
             </label>
           `)}
         </div>
-        <div class="a2ui-input-actions">
-          <button class="btn a2ui-input-confirm" disabled
-                  @click="${(e: Event) => {
+        <div class="a2ui-input-actions" style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px; align-items:center;">
+          <div style="display:flex; gap:12px;">
+            <button class="btn a2ui-input-confirm" disabled
+                    @click="${(e: Event) => {
         const container = (e.target as HTMLElement).closest('.a2ui-input-bar');
         const selected = container?.querySelector('input[type=radio]:checked') as HTMLInputElement;
         if (selected) { view.confirmA2UIOption(selected.value); }
       }}">Confirm</button>
-          <button class="btn a2ui-input-cancel" @click="${() => view.cancelA2UI()}" title="Dismiss">✘</button>
+            <button class="btn a2ui-input-cancel" @click="${() => view.cancelA2UI()}" title="Dismiss">✘</button>
+          </div>
+          ${view.pendingA2UI.artifacts && view.pendingA2UI.artifacts.length > 0 ? html`
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              ${view.pendingA2UI.artifacts.map((a: any) => html`
+                <button class="btn btn-secondary file-link" data-file-path="${a.path}" style="background: rgba(55, 148, 255, 0.1); color: #3794ff; border: 1px solid rgba(55,148,255,0.4); padding: 8px 16px; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 6px;" title="Review ${a.label}">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"/><path d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/></svg>
+                  Review ${a.label}
+                </button>
+              `)}
+            </div>
+          ` : ''}
         </div>
       </div>
     `;
   }
 
-  const placeholder = view.agentDisabled
+  const isInputDisabled = view.agentDisabled || view.isLoading || !!view.activeActivity;
+  const placeholderText = view.agentDisabled
     ? 'Agent has no verified model — configure in Settings'
-    : `Ask the ${view.selectedAgent.charAt(0).toUpperCase() + view.selectedAgent.slice(1)} Agent...`;
+    : (view.isLoading || !!view.activeActivity)
+      ? 'Agent is working...'
+      : `Ask the ${view.selectedAgent.charAt(0).toUpperCase() + view.selectedAgent.slice(1)} Agent...`;
 
   return html`
     <div style="display:flex;gap:4px;align-items:center;">
-      <button class="btn-icon" title="Attach Context" style="background:none;border:1px solid var(--vscode-input-border);color:var(--vscode-foreground);cursor:pointer;padding:4px;border-radius:4px;" @click="${() => view.handleAttachFile()}">
+      <button class="btn-icon" title="Attach Context" style="background:none;border:1px solid var(--vscode-input-border);color:var(--vscode-foreground);cursor:pointer;padding:4px;border-radius:4px;" @click="${() => view.handleAttachFile()}" ?disabled="${isInputDisabled}">
         <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
           <path d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 1 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0V3z"/>
         </svg>
       </button>
-      <input class="input-control" type="text" style="flex:1;" .value="${view.inputText}" @input="${(e: InputEvent) => view.handleInput(e)}" @keydown="${(e: KeyboardEvent) => view.handleKeyDown(e)}" placeholder="${placeholder}" ?disabled="${view.agentDisabled}"/>
-      <button class="btn btn-primary" @click="${() => view.sendChatMessage()}" ?disabled="${view.agentDisabled}">Send</button>
+      <input class="input-control" type="text" style="flex:1;" .value="${view.inputText}" @input="${(e: InputEvent) => view.handleInput(e)}" @keydown="${(e: KeyboardEvent) => view.handleKeyDown(e)}" placeholder="${placeholderText}" ?disabled="${isInputDisabled}"/>
+      <button class="btn btn-primary" @click="${() => view.sendChatMessage()}" ?disabled="${isInputDisabled}">Send</button>
     </div>
   `;
 }

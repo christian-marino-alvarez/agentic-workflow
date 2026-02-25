@@ -60,12 +60,12 @@ export const timelineStyles = css`
     }
 
     .side-step-dot.done {
-      background: #4dacff;
+      background: #007ACC;
     }
 
     .side-step-dot.active {
-      background: #569cd6;
-      box-shadow: 0 0 0 2px rgba(86, 156, 214, 0.3);
+      background: var(--vscode-textLink-foreground, #3794ff);
+      box-shadow: 0 0 0 2px rgba(55, 148, 255, 0.3);
     }
 
     .side-step-dot.pending {
@@ -77,7 +77,7 @@ export const timelineStyles = css`
       position: absolute;
       inset: -3px;
       border-radius: 50%;
-      border: 2px solid rgba(86, 156, 214, 0.5);
+      border: 2px solid rgba(55, 148, 255, 0.5);
       animation: pulseSide 1.8s ease-in-out infinite;
     }
 

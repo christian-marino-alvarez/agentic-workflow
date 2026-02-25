@@ -7,6 +7,7 @@ import { API_ENDPOINTS, SIDECAR_BASE_URL, DEFAULT_MODELS } from '../../llm/const
 import { MESSAGES as SETTINGS_MESSAGES } from '../../settings/constants.js';
 import { MESSAGES as RUNTIME_MESSAGES } from '../../runtime/constants.js';
 import { behavioralPreamble, workflowStartPrompt, A2UI_INSTRUCTIONS } from '../prompts/index.js';
+import { tryParseStructuredResponse } from '../../llm/backend/tools/response-schema.js';
 import { randomUUID } from 'crypto';
 
 
@@ -16,6 +17,7 @@ export class ChatBackground extends Background {
   private static readonly AGENT_PREFIX_REGEX = /^\s*(?:[\p{Emoji_Presentation}\p{Extended_Pictographic}\u200d\uFE0F]+\s*)?(?:\*{1,2})?\s*\w[\w-]*(?:-agent)?\s*(?:\*{1,2})?\s*:\s*/gmu;
   private static readonly SESSIONS_KEY = 'chat.sessions';
   private static readonly LAST_SESSION_KEY = 'chat.lastSessionId';
+  private static readonly LANGUAGE_KEY = 'chat.conversationLanguage';
   private vscodeContext: vscode.ExtensionContext;
   private conversationLanguage: string | null = null;
 
@@ -23,6 +25,11 @@ export class ChatBackground extends Background {
   constructor(context: vscode.ExtensionContext) {
     super(NAME, context.extensionUri, `${NAME}-view`);
     this.vscodeContext = context;
+    // Restore persisted language preference
+    this.conversationLanguage = context.workspaceState.get<string>(ChatBackground.LANGUAGE_KEY) || null;
+    if (this.conversationLanguage) {
+      this.log(`Language restored from state: ${this.conversationLanguage}`);
+    }
     try {
       const ext = vscode.extensions.getExtension('christian-marino-alvarez.agentic-workflow');
       this.appVersion = ext?.packageJSON?.version || '0.0.0-error';
@@ -127,6 +134,14 @@ export class ChatBackground extends Background {
     const isSlashCommand = textTrimmed.startsWith('/') && !slashToken.includes('/', 1);
     if (isSlashCommand) {
       const commandId = slashToken.substring(1); // e.g. "/init" -> "init"
+
+      // New task = fresh language selection
+      if (commandId === 'init') {
+        this.conversationLanguage = null;
+        this.vscodeContext.workspaceState.update(ChatBackground.LANGUAGE_KEY, undefined);
+        this.log('Language reset for new task');
+      }
+
       const initResult = await this.handleWorkflowCommand(commandId);
 
       if (!initResult.success) {
@@ -146,20 +161,30 @@ export class ChatBackground extends Background {
 
     this.log(`Message for role "${role}": ${data.text.substring(0, 50)}...`);
 
-    // Detect language selection from user A2UI responses
+    // Detect language selection from user messages or A2UI responses
+    // Matches: "Español", "language: Español", "idioma: español", etc.
     const textLower = data.text.toLowerCase();
-    if (/español|spanish/i.test(textLower) && /language|idioma|lenguaje/i.test(textLower)) {
-      this.conversationLanguage = 'es';
-      this.log('Language detected: Spanish');
-    } else if (/english|inglés/i.test(textLower) && /language|idioma|lenguaje/i.test(textLower)) {
-      this.conversationLanguage = 'en';
-      this.log('Language detected: English');
+    if (!this.conversationLanguage) {
+      if (/español|spanish/i.test(textLower)) {
+        this.conversationLanguage = 'es';
+        this.vscodeContext.workspaceState.update(ChatBackground.LANGUAGE_KEY, 'es');
+        this.log('Language detected: Spanish');
+      } else if (/\benglish\b|inglés/i.test(textLower)) {
+        this.conversationLanguage = 'en';
+        this.vscodeContext.workspaceState.update(ChatBackground.LANGUAGE_KEY, 'en');
+        this.log('Language detected: English');
+      }
     }
 
 
     try {
-      // 1. Fetch available models and API keys from SettingsBackground
-      const settingsResponse = await this.sendMessage('settings', SETTINGS_MESSAGES.GET_REQUEST);
+      // 1. Fetch settings + roles + bindings in PARALLEL (saves ~500ms vs sequential)
+      const [settingsResponse, rolesResponse, bindingsResponse] = await Promise.all([
+        this.sendMessage('settings', SETTINGS_MESSAGES.GET_REQUEST),
+        this.sendMessage('settings', SETTINGS_MESSAGES.GET_ROLES),
+        this.sendMessage('settings', SETTINGS_MESSAGES.GET_BINDING),
+      ]);
+
       let modelName = DEFAULT_MODELS.GEMINI;
       let apiKey = null;
       let provider = 'gemini';
@@ -175,7 +200,6 @@ export class ChatBackground extends Background {
         //    a) Role definition `models: { default, routing }` (new schema — task-aware routing)
         //    b) VS Code settings bindings (roleBindings — static per-role override)
         //    c) Role definition `model: { id }` (legacy single model)
-        const rolesResponse = await this.sendMessage('settings', SETTINGS_MESSAGES.GET_ROLES);
         roleConfig = rolesResponse?.roles?.find((r: any) => r.name === role);
         let boundModelId: string | undefined;
 
@@ -192,7 +216,6 @@ export class ChatBackground extends Background {
 
         // Priority 2: VS Code settings bindings (static per-role override)
         if (!boundModelId) {
-          const bindingsResponse = await this.sendMessage('settings', SETTINGS_MESSAGES.GET_BINDING);
           const bindings = bindingsResponse?.bindings || {};
           boundModelId = bindings[role] || data.modelId;
         }
@@ -237,33 +260,38 @@ export class ChatBackground extends Background {
 
       // 3. Build AgenticContext for dynamic instructions
       const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
-      let rolePersona = '';
-      try {
-        if (workspacePath) {
-          const fs = await import('fs/promises');
-          const rolePath = path.join(workspacePath, '.agent', 'rules', 'roles', `${role}.md`);
+
+      // Load role persona + workflow status in PARALLEL
+      const [rolePersona, rawWorkflowState] = await Promise.all([
+        (async () => {
+          if (!workspacePath) { return ''; }
           try {
-            rolePersona = await fs.readFile(rolePath, 'utf-8');
-            this.log(`Loaded role persona for "${role}" (${rolePersona.length} chars)`);
+            const fs = await import('fs/promises');
+            const rolePath = path.join(workspacePath, '.agent', 'rules', 'roles', `${role}.md`);
+            const content = await fs.readFile(rolePath, 'utf-8');
+            this.log(`Loaded role persona for "${role}" (${content.length} chars)`);
+            return content;
           } catch {
             this.log(`No role file found for "${role}", using default persona`);
+            return '';
           }
-        }
-      } catch (err: any) {
-        this.log(`Failed to load role persona: ${err.message}`);
-      }
+        })(),
+        this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_STATUS).catch(() => null),
+      ]);
 
-      // Prepend behavioral preamble + A2UI instructions to persona
+      // Prepend preamble + A2UI (static first for prefix caching), then role persona (semi-static), then dynamic state
       const workspaceFolderName = vscode.workspace.workspaceFolders?.[0]?.name || 'project';
-      const fullPersona = behavioralPreamble(workspaceFolderName, this.conversationLanguage)
+      let fullPersona = behavioralPreamble(workspaceFolderName, this.conversationLanguage)
+        + A2UI_INSTRUCTIONS
         + '\n\n' + rolePersona
-        + A2UI_INSTRUCTIONS;
+        + (this.conversationLanguage
+          ? `\n\n### PRE-ESTABLISHED STATE\n- Conversation language: **${this.conversationLanguage === 'es' ? 'Español' : 'English'}** (already confirmed by the user — do NOT ask again, skip any workflow step about language selection)\n`
+          : '');
 
       // 4. Build workflow snapshot for context
       let workflowSnapshot: any = null;
       let constitutionContents: string[] = [];
       try {
-        const rawWorkflowState = await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_STATUS);
         const workflowState = rawWorkflowState?.result || rawWorkflowState;
         if (workflowState?.workflow) {
           const wf = workflowState.workflow;
@@ -271,11 +299,10 @@ export class ChatBackground extends Background {
             id: wf.id || workflowState.currentWorkflowId,
             status: workflowState.status,
             owner: wf.owner,
-            steps: workflowState.steps,
-            gate: wf.gate,
-            pass: wf.pass,
-            fail: wf.fail,
-            rawContent: wf.rawContent,
+            // Only structured data — rawContent excluded to reduce prompt size
+            gate: wf.gate ? { requirements: wf.gate.requirements } : undefined,
+            pass: wf.pass ? { nextTarget: wf.pass.nextTarget } : undefined,
+            fail: wf.fail ? { behavior: wf.fail.behavior } : undefined,
             sections: workflowState.parsedSections ? {
               objective: workflowState.parsedSections.objective,
               instructions: workflowState.parsedSections.instructions,
@@ -432,6 +459,37 @@ export class ChatBackground extends Background {
       // Add current message as last user turn
       messages.push({ role: 'user', content: data.text });
 
+      // 7. Build progress summary from conversation history
+      // Extract user decisions so the LLM knows which workflow steps are completed
+      const allUserText = messages
+        .filter(m => m.role === 'user')
+        .map(m => m.content)
+        .join('\n');
+      const decisions: string[] = [];
+
+      if (this.conversationLanguage) {
+        decisions.push(`- Language: ${this.conversationLanguage === 'es' ? 'Español' : 'English'} ✓`);
+      }
+      if (/corta|short|larga|long/i.test(allUserText)) {
+        const match = allUserText.match(/(corta|short|larga|long)\s*(\([^)]*\))?/i);
+        if (match) { decisions.push(`- Strategy: ${match[0]} ✓`); }
+      }
+      if (/task.?title|título/i.test(allUserText)) {
+        const titleMatch = allUserText.match(/(?:task.?title|título)[^:]*:\s*(.+)/i);
+        if (titleMatch) { decisions.push(`- Task title: "${titleMatch[1].trim()}" ✓`); }
+      }
+      if (/task.?objective|objetivo/i.test(allUserText)) {
+        const objMatch = allUserText.match(/(?:task.?objective|objetivo)[^:]*:\s*(.+)/i);
+        if (objMatch) { decisions.push(`- Task objective: "${objMatch[1].trim()}" ✓`); }
+      }
+
+      // Inject progress into the workflow persona if there are completed decisions
+      if (decisions.length > 0) {
+        const progressNote = `\n\n### WORKFLOW PROGRESS (DO NOT repeat these steps)\nThe following decisions are ALREADY confirmed by the user:\n${decisions.join('\n')}\n\nStart from the FIRST incomplete step. If all steps before the Gate are done, present the Gate evaluation immediately.\n`;
+        fullPersona += progressNote;
+        this.log(`Injected ${decisions.length} completed decisions into prompt`);
+      }
+
       // 7. Build AgenticContext
       const agenticContext = {
         workspacePath,
@@ -477,6 +535,7 @@ export class ChatBackground extends Background {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let streamText = '';
+      let jsonSkeletonSent = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -503,17 +562,39 @@ export class ChatBackground extends Background {
 
               if (parsed.type === 'content') {
                 streamText += parsed.content;
-                this.messenger.emit({
-                  id: randomUUID(),
-                  from: `${NAME}::background`,
-                  to: `${NAME}::view`,
-                  timestamp: Date.now(),
-                  origin: MessageOrigin.Server,
-                  payload: {
-                    command: MESSAGES.RECEIVE_MESSAGE,
-                    data: { text: this.cleanMessageText(streamText), agentRole: role, isStreaming: true }
-                  }
-                });
+                // Detect JSON mode: if response starts with '{', it's structured JSON
+                // Don't show raw JSON to the user — wait for completion to parse
+                const isJsonMode = streamText.trimStart().startsWith('{');
+                if (!isJsonMode) {
+                  // Plain text mode: stream normally
+                  this.messenger.emit({
+                    id: randomUUID(),
+                    from: `${NAME}::background`,
+                    to: `${NAME}::view`,
+                    timestamp: Date.now(),
+                    origin: MessageOrigin.Server,
+                    payload: {
+                      command: MESSAGES.RECEIVE_MESSAGE,
+                      data: { text: this.cleanMessageText(streamText), agentRole: role, isStreaming: true }
+                    }
+                  });
+                } else if (!jsonSkeletonSent) {
+                  // JSON mode: send skeleton indicator once
+                  jsonSkeletonSent = true;
+                  this.log(`JSON mode detected — sending skeleton (streamText starts: "${streamText.substring(0, 20)}...")`);
+                  this.messenger.emit({
+                    id: randomUUID(),
+                    from: `${NAME}::background`,
+                    to: `${NAME}::view`,
+                    timestamp: Date.now(),
+                    origin: MessageOrigin.Server,
+                    payload: {
+                      command: MESSAGES.RECEIVE_MESSAGE,
+                      data: { text: '', agentRole: role, isStreaming: true, showSkeleton: true }
+                    }
+                  });
+                }
+                // JSON mode with skeleton sent: silently accumulate
               } else if (parsed.type === 'tool_call' || parsed.type === 'tool_result') {
                 // Detect delegation events and emit them separately
                 const isDelegation = parsed.name === 'delegateTask';
@@ -582,8 +663,108 @@ export class ChatBackground extends Background {
         }
       }
 
+      // Try to parse as structured JSON response (Zod-validated)
+      let structured = tryParseStructuredResponse(streamText);
+
+      // If JSON-like but validation failed, retry once with a correction request
+      if (!structured && streamText.trimStart().startsWith('{')) {
+        this.log('Structured response validation failed, retrying with correction prompt...');
+
+        // Append a correction message to the conversation
+        const retryMessages = [
+          ...messages,
+          { role: 'assistant' as const, content: streamText },
+          { role: 'user' as const, content: 'Your previous response was invalid JSON (likely truncated). Please respond again with ONLY a valid, complete JSON object matching the response schema. Keep the text short and include all ui_intent components. Do NOT wrap in code fences.' },
+        ];
+
+        const retryPayload = { ...payload, messages: retryMessages };
+        try {
+          const retryResponse = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(retryPayload),
+          });
+
+          if (retryResponse.ok && retryResponse.body) {
+            const retryReader = retryResponse.body.getReader();
+            const retryDecoder = new TextDecoder();
+            let retryText = '';
+
+            while (true) {
+              const { done, value } = await retryReader.read();
+              if (done) { break; }
+              const chunk = retryDecoder.decode(value, { stream: true });
+              for (const line of chunk.split('\n')) {
+                if (line.startsWith('data: ')) {
+                  const d = line.slice(6).trim();
+                  if (d === '[DONE]') { continue; }
+                  try {
+                    const p = JSON.parse(d);
+                    if (p.type === 'content') { retryText += p.content; }
+                  } catch { /* skip */ }
+                }
+              }
+            }
+
+            const retryStructured = tryParseStructuredResponse(retryText);
+            if (retryStructured) {
+              this.log('Retry succeeded — structured response validated');
+              structured = retryStructured;
+            } else {
+              this.log('Retry also failed — falling back to error message');
+            }
+          }
+        } catch (retryErr: any) {
+          this.log('Retry request failed:', retryErr.message);
+        }
+      }
+
+      let displayText: string;
+
+      if (structured) {
+        this.log(`Structured response validated: text=${structured.text.length} chars, ui_intent=${structured.ui_intent?.length || 0} components`);
+        // Use the validated text field
+        displayText = structured.text;
+
+        // Forward workflow_state if present
+        if (structured.workflow_state) {
+          this.messenger.emit({
+            id: randomUUID(),
+            from: `${NAME}::background`,
+            to: `${NAME}::view`,
+            timestamp: Date.now(),
+            origin: MessageOrigin.Server,
+            payload: {
+              command: MESSAGES.WORKFLOW_STATE_UPDATE,
+              data: structured.workflow_state,
+            }
+          });
+        }
+
+        // Convert ui_intent to legacy a2ui format for backward-compatible rendering
+        if (structured.ui_intent && structured.ui_intent.length > 0) {
+          const a2uiBlocks = structured.ui_intent.map(c => {
+            if (c.type === 'artifact') {
+              return `<a2ui type="${c.type}" id="${c.id}" label="${c.label}"${c.path ? ` path="${c.path}"` : ''}>${c.content || ''}</a2ui>`;
+            }
+            const optionLines = (c.options || []).map((opt, i) =>
+              i === c.preselected ? `- [x] ${opt}` : `- [ ] ${opt}`
+            ).join('\n');
+            return `<a2ui type="${c.type}" id="${c.id}" label="${c.label}">\n${optionLines}\n</a2ui>`;
+          });
+          displayText = displayText + '\n\n' + a2uiBlocks.join('\n\n');
+        }
+      } else if (streamText.trimStart().startsWith('{')) {
+        // JSON mode but all parsing/retry failed — show system error
+        this.log('All structured response attempts failed — showing error');
+        displayText = `**⚠️ System Error:** The model returned an invalid response format. Please try again.\n\n> The response could not be parsed as structured JSON. This may be due to the model running out of output tokens.`;
+      } else {
+        // Fallback: treat as plain text (legacy a2ui tags will be parsed by the view)
+        displayText = streamText;
+      }
+
       // Process artifacts: create physical files and replace content with summary
-      const finalText = this.cleanMessageText(streamText);
+      const finalText = this.cleanMessageText(displayText);
       const processedText = await this.processArtifacts(finalText);
 
       // Send final completion message

@@ -6,7 +6,23 @@ import { RoleModelBinding, ToolDefinition, AgenticContext } from './types.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
-import { BASE_SYSTEM_PROMPT } from './prompts.js';
+import {
+  BASE_SYSTEM_PROMPT,
+  WORKFLOW_HEADER,
+  WORKFLOW_FOOTER,
+  GATE_INSTRUCTIONS,
+  CONSTITUTIONS_HEADER,
+  ROLE_FALLBACK,
+  ROLE_HEADER,
+  WF_OBJECTIVE,
+  WF_INPUTS,
+  WF_OUTPUTS,
+  WF_STEPS,
+  WF_GATE,
+  WF_PASS,
+  WF_FAIL,
+  WF_PHASES,
+} from './tools/prompts.js';
 
 /**
  * Pass-through: model IDs now come from Settings dropdown (dynamic discovery).
@@ -18,91 +34,60 @@ function resolveModelId(displayName: string, _provider: string): string {
 /**
  * Build the dynamic system prompt from AgenticContext.
  * Called per-turn by the SDK when instructions is a function.
+ *
+ * NOTE: This function only COMPOSES. All prompt text lives in prompts.ts.
  */
 function buildDynamicInstructions(runContext: RunContext<AgenticContext>): string {
   const ctx = runContext.context;
   const parts: string[] = [BASE_SYSTEM_PROMPT];
 
   // 1. Role persona
-  if (ctx.rolePersona) {
-    parts.push(`\n\n## Your Role Definition\n${ctx.rolePersona}`);
-  } else {
-    parts.push(`\nYou are the ${ctx.role} agent — a specialist in your domain.`);
-  }
+  parts.push(ctx.rolePersona ? ROLE_HEADER(ctx.rolePersona) : ROLE_FALLBACK(ctx.role));
 
   // 2. Workflow context
   if (ctx.workflow) {
     const wf = ctx.workflow;
-    const sections: string[] = [`\n\n---\n## ACTIVE WORKFLOW (MANDATORY)\n`];
+    const sections: string[] = [WORKFLOW_HEADER];
 
-    if (wf.rawContent) {
-      sections.push(wf.rawContent);
-    }
-
-    // Structured sections (lifecycle workflows)
+    // Use ONLY parsed sections — rawContent is the entire markdown and duplicates everything
     if (wf.sections) {
-      if (wf.sections.objective) {
-        sections.push(`**[USER-FACING] Objective**: ${wf.sections.objective}`);
-      }
-      if (wf.sections.inputs && wf.sections.inputs.length > 0) {
-        sections.push(`**[SILENT] Inputs**:\n${wf.sections.inputs.map(i => `- ${i}`).join('\n')}`);
-      }
-      if (wf.sections.outputs && wf.sections.outputs.length > 0) {
-        sections.push(`**[SILENT] Outputs**:\n${wf.sections.outputs.map(o => `- ${o}`).join('\n')}`);
-      }
+      if (wf.sections.objective) { sections.push(WF_OBJECTIVE(wf.sections.objective)); }
+      if (wf.sections.instructions) { sections.push(`\n## Instructions\n${wf.sections.instructions}\n`); }
+      if (wf.sections.inputs?.length) { sections.push(WF_INPUTS(wf.sections.inputs)); }
+      if (wf.sections.outputs?.length) { sections.push(WF_OUTPUTS(wf.sections.outputs)); }
     }
 
-    // Steps with status
-    if (wf.steps && wf.steps.length > 0) {
-      sections.push(`\n**[SILENT] Instructions**:\n${wf.steps.map(s => `${s.id}. ${s.label} [${s.status}]`).join('\n')}`);
-    }
-
-    // Gate requirements
     if (wf.gate) {
-      sections.push(`\n**[USER-FACING] Gate Requirements** (ALL mandatory):\n${wf.gate.requirements.map((r, i) => `${i + 1}. ${r}`).join('\n')}`);
-      sections.push('\nWhen you believe ALL gate requirements are met:');
-      sections.push('1. Create required artifacts via writeFile');
-      sections.push('2. Present a <a2ui type="gate" id="gate-eval" label="Gate Evaluation"> with SI/NO options');
-      sections.push('3. DO NOT advance past the gate without user confirmation');
+      sections.push(WF_GATE(wf.gate.requirements));
+      sections.push(GATE_INSTRUCTIONS);
     }
 
-    // Pass/fail transitions
-    if (wf.pass?.nextTarget) {
-      sections.push(`\n**[SILENT] Pass** → ${wf.pass.nextTarget} (automatic transition on gate SI)`);
-    }
-    if (wf.fail?.behavior) {
-      sections.push(`\n**[SILENT] Fail** → ${wf.fail.behavior}`);
-    }
+    if (wf.pass?.nextTarget) { sections.push(WF_PASS(wf.pass.nextTarget)); }
+    if (wf.fail?.behavior) { sections.push(WF_FAIL(wf.fail.behavior)); }
+    if (wf.phases?.length) { sections.push(WF_PHASES(wf.phases)); }
 
-    // Phase list
-    if (wf.phases && wf.phases.length > 0) {
-      sections.push(`\nPhases: ${wf.phases.map(p => `${p.label} [${p.status}]`).join(' → ')}`);
-    }
-
-    sections.push('\n---\n');
+    sections.push(WORKFLOW_FOOTER);
     parts.push(sections.join('\n'));
   }
 
-  // Interpreter rules (behavioral rules for workflow execution)
+  // Interpreter rules
   if (ctx.workflow && (ctx.workflow as any).interpreterRules) {
     parts.push('\n\n---\n' + (ctx.workflow as any).interpreterRules);
   }
 
   // 3. Constitutions
-  if (ctx.constitutions && ctx.constitutions.length > 0) {
-    parts.push('\n\n---\n## LOADED CONSTITUTIONS (MANDATORY rules you must follow)\n');
+  if (ctx.constitutions?.length) {
+    parts.push(CONSTITUTIONS_HEADER);
     parts.push(ctx.constitutions.join('\n'));
-    parts.push('\n---\n');
+    parts.push(WORKFLOW_FOOTER);
   }
 
   // 4. Skills
-  if (ctx.skills && ctx.skills.length > 0) {
+  if (ctx.skills?.length) {
     parts.push('\n\n## Available Skills\n');
     for (const skill of ctx.skills) {
       parts.push(`### ${skill.name}\n${skill.description}\n`);
-      if (skill.instructions) {
-        parts.push(skill.instructions);
-      }
+      if (skill.instructions) { parts.push(skill.instructions); }
     }
   }
 

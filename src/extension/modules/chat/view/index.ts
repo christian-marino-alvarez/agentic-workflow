@@ -224,16 +224,15 @@ export class ChatView extends View {
   override firstUpdated() {
     this.log('Chat view mounted');
 
-    // Run init tasks in parallel
-    this.initWorkflow();
-    this.loadModels();
-    this.loadAgents();
-    this.loadLastSession();
-
-    // Guarantee 1s skeleton preload on initial mount
-    setTimeout(() => {
+    // Run init tasks in parallel, then load session once ready
+    Promise.all([
+      this.initWorkflow(),
+      this.loadModels(),
+      this.loadAgents(),
+    ]).then(() => {
       this.initialLoading = false;
-    }, 1000);
+      this.loadLastSession();
+    });
 
     // Listen for secure state changes from Settings
     window.addEventListener('secure-state-changed', ((e: CustomEvent) => {
@@ -272,28 +271,28 @@ export class ChatView extends View {
 
   /**
    * Load the last session from persistent storage.
+   * If no session exists, immediately starts /init (no artificial delay).
    */
   private async loadLastSession() {
     try {
       const result = await this.sendMessage(NAME, MESSAGES.LOAD_SESSION, { sessionId: '__last__' });
       if (!result?.success) {
-        // No saved session — auto-start /init after runtime is ready
-        this.log('No last session found, will auto-start /init');
-        setTimeout(async () => {
-          this.inputText = '/init';
-          await this.sendChatMessage();
-          this.inputText = '';
-        }, 2000);
+        this.log('No last session found, auto-starting /init');
+        await this.autoStartInit();
       }
     } catch {
-      // No last session — auto-start /init after runtime is ready
-      this.log('No last session, will auto-start /init');
-      setTimeout(async () => {
-        this.inputText = '/init';
-        await this.sendChatMessage();
-        this.inputText = '';
-      }, 2000);
+      this.log('No last session, auto-starting /init');
+      await this.autoStartInit();
     }
+  }
+
+  /**
+   * Start /init workflow immediately. No artificial delay.
+   */
+  private async autoStartInit() {
+    this.inputText = '/init';
+    await this.sendChatMessage();
+    this.inputText = '';
   }
 
   /**
@@ -454,16 +453,19 @@ export class ChatView extends View {
         return;
       }
 
-      if (data && data.text) {
+      if (data && (data.text || data.showSkeleton)) {
+        if (data.showSkeleton) { this.log('Skeleton message received for', data.agentRole); }
         const isStreaming = data.isStreaming === true;
 
         const historyCopy = [...this.history];
         const lastMsg = historyCopy.length > 0 ? historyCopy[historyCopy.length - 1] : null;
 
         if (lastMsg && lastMsg.role === data.agentRole && lastMsg.isStreaming) {
-          lastMsg.text = data.text;
+          lastMsg.text = data.text || '';
           lastMsg.isStreaming = isStreaming;
           lastMsg.status = undefined;
+          if (data.showSkeleton) { (lastMsg as any).showSkeleton = true; }
+          else { delete (lastMsg as any).showSkeleton; }
           this.history = historyCopy;
           // Auto-save when streaming completes
           if (!isStreaming) {
@@ -473,18 +475,21 @@ export class ChatView extends View {
           }
         } else {
           if (lastMsg && lastMsg.role === data.agentRole && lastMsg.status && lastMsg.text === '') {
-            lastMsg.text = data.text;
+            lastMsg.text = data.text || '';
             lastMsg.isStreaming = isStreaming;
             lastMsg.status = undefined;
+            if (data.showSkeleton) { (lastMsg as any).showSkeleton = true; }
             this.history = historyCopy;
           } else {
-            this.history = [...this.history, {
+            const newMsg: any = {
               sender: data.agentRole ? data.agentRole.charAt(0).toUpperCase() + data.agentRole.slice(1) : 'Agent',
-              text: data.text,
+              text: data.text || '',
               role: data.agentRole,
               isStreaming,
               phase: this.currentPhase
-            }];
+            };
+            if (data.showSkeleton) { newMsg.showSkeleton = true; }
+            this.history = [...this.history, newMsg];
           }
         }
       }
@@ -1054,7 +1059,31 @@ export class ChatView extends View {
   private buildLLMHistory(): Array<{ role: string; text: string }> {
     const result: Array<{ role: string; text: string }> = [];
     for (const m of this.history.slice(-20)) {
-      result.push({ role: m.role || 'user', text: m.text });
+      // Skip empty, skeleton, or still-streaming messages
+      if (m.isStreaming || (m as any).showSkeleton) { continue; }
+      if (!m.text && !m.isDelegation) { continue; }
+
+      // Skip system messages (they're injected elsewhere)
+      if (m.role === 'system') { continue; }
+
+      // Include delegation results as assistant context
+      if (m.isDelegation || m.role === 'delegation') {
+        const delegationSummary = m.delegationResult
+          ? `[Delegation to ${m.delegationAgent}] Task: ${m.text}\nResult: ${m.delegationResult}`
+          : `[Delegation to ${m.delegationAgent}] Task: ${m.text} (in progress)`;
+        result.push({ role: 'assistant', text: delegationSummary });
+        continue;
+      }
+
+      // Clean a2ui tags from agent responses — send only the text content
+      let cleanText = m.text;
+      if (m.role !== 'user') {
+        cleanText = cleanText.replace(/<a2ui[^>]*>[\s\S]*?<\/a2ui>/gi, '').trim();
+      }
+      if (!cleanText) { continue; }
+
+      result.push({ role: m.role || 'user', text: cleanText });
+
       // Inject A2UI answers as synthetic user turns
       if (m.a2uiAnswers && Object.keys(m.a2uiAnswers).length > 0) {
         const answers = Object.entries(m.a2uiAnswers)

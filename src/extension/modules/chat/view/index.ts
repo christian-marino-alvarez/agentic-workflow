@@ -108,7 +108,12 @@ export class ChatView extends View {
 
   /** Tracks the pending A2UI confirmation from the last assistant message */
   @state()
-  public pendingA2UI: { blockId: string; label: string; options: string[]; msgIndex: number; blockIndex: number } | null = null;
+  public pendingA2UI: {
+    type: string; blockId: string; label: string; artifactContent?: string; options: string[];
+    msgIndex: number;
+    blockIndex: number;
+    artifacts?: { path: string; label: string }[];
+  } | null = null;
 
   /** Skeleton loading state for input area transitions */
   @state()
@@ -694,7 +699,13 @@ export class ChatView extends View {
         // Restore lifecycle strategy and reload phases
         if (data.session.lifecycleStrategy) {
           this.lifecycleStrategy = data.session.lifecycleStrategy;
-          this.loadLifecyclePhases(data.session.lifecycleStrategy);
+          if (data.session.taskSteps && data.session.taskSteps.length > 0) {
+            this.taskSteps = data.session.taskSteps;
+          } else {
+            this.loadLifecyclePhases(data.session.lifecycleStrategy);
+          }
+        } else if (data.session.taskSteps && data.session.taskSteps.length > 0) {
+          this.taskSteps = data.session.taskSteps;
         }
       }
     }
@@ -704,6 +715,11 @@ export class ChatView extends View {
       if (data?.sessions) {
         this.sessionList = data.sessions;
         this.log(`Session list loaded: ${data.sessions.length} sessions`);
+        // Notify AppView (parent) that sessions are available
+        this.dispatchEvent(new CustomEvent('sessions-updated', {
+          bubbles: true, composed: true,
+          detail: { sessions: data.sessions }
+        }));
       }
     }
 
@@ -821,6 +837,14 @@ export class ChatView extends View {
       this.activeWorkflow = '🔄 Initializing task...';
       this.taskSteps = [];
       this.activeWorkflowDef = null;
+
+      // Request a new session ID from the background so saveCurrentSession() works
+      this.sendMessage(NAME, MESSAGES.NEW_SESSION).then((result: any) => {
+        if (result?.sessionId) {
+          this.currentSessionId = result.sessionId;
+          this.log(`Auto-session ID assigned: ${result.sessionId}`);
+        }
+      }).catch(() => { /* silent */ });
       this.showTimeline = true;
       this.showDetails = false;
       this.isLoading = true;
@@ -1033,7 +1057,12 @@ export class ChatView extends View {
       const result = await this.sendMessage(NAME, MESSAGES.LIFECYCLE_PHASES_REQUEST, { strategy });
       const phases: Array<{ id: string; label: string }> = result?.phases || [];
       if (phases.length > 0) {
-        this.taskSteps = phases.map(p => ({ id: p.id, label: p.label, status: STEP_STATUS.PENDING as 'pending' }));
+        this.taskSteps = phases.map((p, i) => ({
+          id: p.id,
+          label: p.label,
+          // By default, assume the first phase is Active when purely loading the base strategy
+          status: i === 0 ? (STEP_STATUS.ACTIVE as 'active') : (STEP_STATUS.PENDING as 'pending')
+        }));
         this.log(`Timeline loaded: ${phases.length} phases for ${strategy}`);
       }
     } catch (err: any) {
@@ -1201,6 +1230,7 @@ export class ChatView extends View {
         progress,
         lifecycleStrategy: this.lifecycleStrategy || undefined,
         tokenUsage: this.tokenUsage,
+        taskSteps: this.taskSteps,
         accessLevel: Object.values(this.agentPermissions).includes('full') ? 'full' : 'sandbox',
         securityScore: (() => {
           const perms = Object.values(this.agentPermissions);
@@ -1334,12 +1364,21 @@ export class ChatView extends View {
       const unresolved = interactiveBlocks.find((b: A2UIBlock) => answers[b.id] === undefined);
       if (!unresolved) { break; }
 
+      const artifactBlocks = blocks.filter((b: A2UIBlock) => b.type === 'artifact');
+      const artifacts = artifactBlocks.map(b => ({
+        path: b.path || '',
+        label: b.label || b.path?.split('/').pop() || 'Document'
+      })).filter(a => !!a.path);
+
       newPending = {
+        type: unresolved.type,
         blockId: unresolved.id,
         label: unresolved.label || unresolved.id,
+        artifactContent: unresolved.artifactContent,
         options: unresolved.options,
         msgIndex: i,
         blockIndex: interactiveBlocks.indexOf(unresolved),
+        artifacts,
       };
       break;
     }

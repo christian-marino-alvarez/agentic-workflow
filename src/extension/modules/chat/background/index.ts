@@ -61,6 +61,10 @@ export class ChatBackground extends Background {
       } else {
         cleanText = ''; // streaming partial raw JSON
       }
+    } else if (/^\s*\{/.test(cleanText) && !cleanText.includes('}')) {
+      // Streaming partial raw JSON that hasn't revealed "current_phase" yet.
+      // Hides the ugly `{\n  "` from the UI while the agent is "Thinking..."
+      cleanText = '';
     }
 
     // 4. Normalize escaped newlines: some APIs return literal \\n instead of actual newlines
@@ -1394,7 +1398,7 @@ export class ChatBackground extends Background {
     return this.vscodeContext.globalState.get<string>(ChatBackground.LAST_SESSION_KEY) || null;
   }
 
-  private async handleSaveSession(data: { sessionId?: string, messages: any[], taskTitle?: string, elapsedSeconds?: number, progress?: number, lifecycleStrategy?: string, tokenUsage?: any, accessLevel?: string, securityScore?: number }): Promise<any> {
+  private async handleSaveSession(data: { sessionId?: string, messages: any[], taskTitle?: string, elapsedSeconds?: number, progress?: number, lifecycleStrategy?: string, tokenUsage?: any, accessLevel?: string, securityScore?: number, taskSteps?: any[] }): Promise<any> {
     // Skip saving sessions that have no meaningful content (no user interaction)
     const hasUserInteraction = data.messages.some((m: any) =>
       m.role === 'user' || (m.a2uiAnswers && Object.keys(m.a2uiAnswers).length > 0)
@@ -1433,6 +1437,7 @@ export class ChatBackground extends Background {
       agents: Array.from(agentRoles),
       lifecycleStrategy: data.lifecycleStrategy || undefined,
       tokenUsage: data.tokenUsage || undefined,
+      taskSteps: data.taskSteps || undefined,
     };
 
     if (existing >= 0) {

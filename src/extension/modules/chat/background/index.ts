@@ -70,6 +70,17 @@ export class ChatBackground extends Background {
     // 4. Normalize escaped newlines: some APIs return literal \\n instead of actual newlines
     cleanText = cleanText.replace(/\\n/g, '\n');
 
+    // 5. Strip trailing raw JSON structures with structured response keys ("text", "ui_intent")
+    //    This happens when the LLM appends raw JSON after normal markdown text
+    const trailingJsonMatch = cleanText.match(/\n\s*\{[^{}]*"text"\s*:\s*"[^]*$/);
+    if (trailingJsonMatch && trailingJsonMatch.index !== undefined) {
+      // Verify it looks like a structured response JSON (contains "ui_intent" or "text")
+      const jsonPart = cleanText.substring(trailingJsonMatch.index);
+      if (/"ui_intent"/.test(jsonPart) || /"text"\s*:\s*"/.test(jsonPart)) {
+        cleanText = cleanText.substring(0, trailingJsonMatch.index);
+      }
+    }
+
     return cleanText.trimStart();
   }
 
@@ -120,8 +131,7 @@ export class ChatBackground extends Background {
       case MESSAGES.LIFECYCLE_PHASES_REQUEST:
         return this.handleLifecyclePhasesRequest(message.payload.data);
 
-      case MESSAGES.SWITCH_STRATEGY:
-        return this.handleSwitchStrategy(message.payload.data);
+
 
       default:
         return super.listen(message);
@@ -774,7 +784,87 @@ export class ChatBackground extends Background {
 
       // Process artifacts: create physical files and replace content with summary
       const finalText = this.cleanMessageText(displayText);
-      const processedText = await this.processArtifacts(finalText);
+      let processedText = await this.processArtifacts(finalText);
+
+      // Auto-inject artifact review blocks when a gate is present but no artifacts are referenced
+      // This makes Review buttons LLM-independent — they're derived from the workflow output definition
+      const hasGate = /<a2ui[^>]*type="gate"/.test(processedText);
+      const hasArtifactRefs = /<a2ui[^>]*type="artifact"[^>]*path="/.test(processedText);
+
+      if (hasGate && !hasArtifactRefs) {
+        try {
+          const wfState = await this.getWorkflowState();
+          const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
+          const fs = await import('fs/promises');
+
+          // Collect candidate artifact paths from multiple sources
+          const candidatePaths: string[] = [];
+
+          // Source 1 (most reliable): YAML frontmatter output field — direct file paths
+          const yamlOutputs: string[] = wfState?.workflow?.output || [];
+          for (const p of yamlOutputs) {
+            if (p.endsWith('.md') && !p.includes('<')) {
+              candidatePaths.push(p);
+            }
+          }
+
+          // Source 2: parsedSections.outputs — text descriptions with backtick-wrapped paths
+          const sectionOutputs = wfState?.parsedSections?.outputs || wfState?.workflow?.sections?.outputs || [];
+          for (const output of sectionOutputs) {
+            const pathMatch = String(output).match(/`([^`]+\.md)`/);
+            if (pathMatch && !pathMatch[1].includes('<')) {
+              candidatePaths.push(pathMatch[1]);
+            }
+          }
+
+          // Deduplicate
+          const uniquePaths = [...new Set(candidatePaths)];
+
+          const artifactBlocks: string[] = [];
+          for (const rawPath of uniquePaths) {
+            if (rawPath.includes('<')) { continue; } // skip template paths
+            const absPath = path.join(workspacePath, rawPath);
+            try {
+              await fs.access(absPath);
+              const label = path.basename(rawPath);
+              artifactBlocks.push(`<a2ui type="artifact" id="auto-${label}" label="${label}" path="${rawPath}">Review document</a2ui>`);
+              this.log(`Auto-injected artifact reference: ${rawPath}`);
+            } catch { /* file doesn't exist yet, skip */ }
+          }
+
+          // Handle template paths (e.g. <taskId>-<taskTitle>) by glob-searching
+          const templateOutputs = [...yamlOutputs, ...sectionOutputs.map((s: string) => {
+            const m = String(s).match(/`([^`]+\.md)`/);
+            return m ? m[1] : '';
+          })].filter(p => p.includes('<') && p.endsWith('.md'));
+
+          for (const rawPath of [...new Set(templateOutputs)]) {
+            const parts = rawPath.split('/');
+            const fileName = parts[parts.length - 1];
+            const parentPattern = parts.slice(0, -1).join('/').replace(/<[^>]+>/g, '*');
+            try {
+              const glob = await import('glob');
+              const matches = await glob.glob(path.join(workspacePath, parentPattern, fileName));
+              for (const match of matches) {
+                const relPath = path.relative(workspacePath, match);
+                const label = path.basename(match);
+                if (!artifactBlocks.some(b => b.includes(`path="${relPath}"`))) {
+                  artifactBlocks.push(`<a2ui type="artifact" id="auto-${label}" label="${label}" path="${relPath}">Review document</a2ui>`);
+                  this.log(`Auto-injected artifact reference (glob): ${relPath}`);
+                }
+              }
+            } catch { /* glob not available, skip */ }
+          }
+
+          if (artifactBlocks.length > 0) {
+            // Insert artifact blocks before the gate
+            const gateRegex = /(<a2ui[^>]*type="gate")/;
+            processedText = processedText.replace(gateRegex, artifactBlocks.join('\n\n') + '\n\n$1');
+          }
+        } catch (err: any) {
+          this.log(`Auto-inject artifact refs failed: ${err.message}`);
+        }
+      }
 
       // Send final completion message
       this.messenger.emit({
@@ -905,9 +995,14 @@ export class ChatBackground extends Background {
       // Detect purely internal bootstrap artifacts that don't need developer review.
       // Review artifacts (analysis, planning, acceptance, etc.) MUST remain visible
       // so the developer can inspect them before approving the gate.
+      //
+      // EXCEPTION: If the message contains a gate, ALL artifacts must remain visible
+      // so the Review button appears — the user needs to inspect them before approving.
       const fileName = path.basename(artifactPath);
       const INTERNAL_ARTIFACTS = ['init.md', 'task.md'];
-      const isInternalArtifact = (artifactPath.startsWith('.agent/') || absolutePath.includes('/.agent/'))
+      const hasGateInText = /<a2ui[^>]*type="gate"/.test(result);
+      const isInternalArtifact = !hasGateInText
+        && (artifactPath.startsWith('.agent/') || absolutePath.includes('/.agent/'))
         && INTERNAL_ARTIFACTS.includes(fileName);
 
       if (isInternalArtifact) {
@@ -1047,37 +1142,37 @@ export class ChatBackground extends Background {
 
   /**
    * Read lifecycle phases dynamically from the workflow directory.
-   * Source of truth: .agent/workflows/tasklifecycle-{long|short}/*.md
+   * Source of truth: .agent/workflows/tasklifecycle/*.md
    */
   private async handleLifecyclePhasesRequest(data: { strategy: string }): Promise<any> {
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders) { return { phases: [] }; }
 
-    const strategy = data.strategy || 'long';
-    const dirName = `tasklifecycle-${strategy}`;
+    const dirName = data.strategy || 'tasklifecycle';
     const dirPath = vscode.Uri.joinPath(workspaceFolders[0].uri, '.agent', 'workflows', dirName);
 
     try {
       const fs = await import('fs/promises');
       const entries = await fs.readdir(dirPath.fsPath);
       const mdFiles = entries
-        .filter((f: string) => f.endsWith('.md') && /phase-\d+/.test(f))
+        .filter((f: string) => f.endsWith('.md') && (/phase-\d+/.test(f) || /^\d{2}-/.test(f)))
         .sort();
 
       const phases = mdFiles.map((filename: string) => {
         const id = filename.replace('.md', '');
         const labelPart = id
-          .replace(/^(short-)?phase-\d+-/, '')
+          .replace(/^(\d{2}-)/, '')        // strip NN- prefix
+          .replace(/^(short-)?phase-\d+-/, '') // strip phase-N- prefix
           .replace(/-/g, ' ')
           .replace(/\b\w/g, c => c.toUpperCase());
         return { id, label: labelPart };
       });
 
-      this.log(`Loaded ${phases.length} phases for ${strategy}: ${phases.map(p => p.id).join(', ')}`);
-      return { strategy, phases };
+      this.log(`Loaded ${phases.length} phases for ${dirName}: ${phases.map(p => p.id).join(', ')}`);
+      return { phases };
     } catch (err: any) {
-      this.log(`Failed to read lifecycle phases for ${strategy}: ${err.message}`);
-      return { strategy, phases: [] };
+      this.log(`Failed to read lifecycle phases for ${dirName}: ${err.message}`);
+      return { phases: [] };
     }
   }
 
@@ -1179,7 +1274,7 @@ export class ChatBackground extends Background {
     try {
       const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
       if (!workspaceRoot) {
-        this.emitAgentResponse('system', '**Error:** No workspace open');
+        this.emitAgentResponse('system', '👋 **Welcome to Extensio!** Please open a folder or workspace to begin.');
         return { success: false, error: 'No workspace open' };
       }
 
@@ -1219,7 +1314,6 @@ export class ChatBackground extends Background {
       // 1. Read current workflow state to get pass target BEFORE sending gate response
       const workflowState = await this.getWorkflowState();
       const passTarget = workflowState?.workflow?.pass?.nextTarget;
-      const strategy = data.strategy || (workflowState?.workflow?.id?.includes('short') ? 'short' : 'long');
 
       // 2. Advance workflow: step complete → gate approve/reject
       if (data.decision === 'SI') {
@@ -1235,34 +1329,33 @@ export class ChatBackground extends Background {
         // 3. Auto-transition to next workflow via passTarget (data-driven)
         if (passTarget) {
           // passTarget formats (from YAML frontmatter):
-          //   - Simple: "tasklifecycle-long"
-          //   - Conditional: "long:tasklifecycle-long | short:tasklifecycle-short"
+          //   - Simple: "tasklifecycle"
+          //   - Conditional: "key:target | key:target"
           let nextWorkflowId: string;
           const targets = passTarget.split('|').map((t: string) => t.trim());
 
           if (targets[0].includes(':')) {
-            // Conditional map: resolve by strategy key
+            // Conditional map: resolve by first value
             const targetMap = new Map(
               targets.map((t: string) => {
                 const [key, val] = t.split(':').map(s => s.trim());
                 return [key, val] as [string, string];
               })
             );
-            nextWorkflowId = targetMap.get(strategy) || targetMap.values().next().value || targets[0];
+            nextWorkflowId = targetMap.values().next().value || targets[0];
           } else {
-            // Simple string or legacy format: pick by strategy match
-            nextWorkflowId = targets.find((t: string) => t.includes(strategy)) || targets[0];
+            // Simple string: use directly
+            nextWorkflowId = targets[0];
           }
 
           // Clean any legacy workflow./workflows. prefix if present
           const cleanId = nextWorkflowId.replace(/^workflows?\./, '');
-          this.log(`Auto-transitioning to next workflow: ${cleanId} (strategy: ${strategy})`);
+          this.log(`Auto-transitioning to next workflow: ${cleanId}`);
           try {
             const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
             await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_START, {
               workflowId: cleanId,
               taskId: data.taskTitle || 'task',
-              strategy,
               dirPath: workspaceRoot ? `${workspaceRoot}/.agent/workflows` : undefined,
             });
             this.log(`Successfully started next workflow: ${cleanId}`);
@@ -1327,47 +1420,7 @@ export class ChatBackground extends Background {
     }
   }
 
-  private async handleSwitchStrategy(data: { strategy: 'long' | 'short' }): Promise<any> {
-    try {
-      const newStrategy = data.strategy;
-      this.log(`Switching strategy to: ${newStrategy}`);
 
-      // 1. Call runtime to switch the lifecycle engine
-      const rawResult = await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_SWITCH_STRATEGY, {
-        strategy: newStrategy,
-      }, 15_000);
-
-      const result = rawResult?.result || rawResult;
-      this.log(`Strategy switched: ${JSON.stringify(result)}`);
-
-      // 2. Create a new blank session — discard all previous conversation
-      await this.handleNewSession();
-      this.log('New session created for strategy switch (previous conversation discarded)');
-
-      // 3. Tell the view to reset its local state (clear history, update strategy)
-      const strategyLabel = newStrategy === 'long' ? 'Long (9 phases)' : 'Short (3 phases)';
-      this.emitToView(MESSAGES.STRATEGY_SWITCHED, {
-        strategy: newStrategy,
-        label: strategyLabel,
-      });
-
-      // 4. Auto-start the first phase of the new lifecycle (after a delay for UI to settle)
-      const owner = result?.owner ? result.owner.replace(/-agent$/, '') : 'architect';
-      setTimeout(() => {
-        this.emitToView(MESSAGES.PHASE_AUTO_START, {
-          phaseId: result?.workflowId || newStrategy,
-          owner,
-        });
-        this.log(`Emitted PHASE_AUTO_START for switched strategy: ${newStrategy}`);
-      }, 800);
-
-      return { success: true, strategy: newStrategy };
-    } catch (error: any) {
-      this.log(`Failed to switch strategy: ${error.message}`);
-      this.emitAgentResponse('system', `❌ **Error switching strategy:** ${error.message}`);
-      return { success: false, error: error.message };
-    }
-  }
 
   private async handleWorkflowStateUpdate(data: any): Promise<any> {
     this.log('Workflow state update', data);
@@ -1403,7 +1456,7 @@ export class ChatBackground extends Background {
     return this.vscodeContext.globalState.get<string>(ChatBackground.LAST_SESSION_KEY) || null;
   }
 
-  private async handleSaveSession(data: { sessionId?: string, messages: any[], taskTitle?: string, elapsedSeconds?: number, progress?: number, lifecycleStrategy?: string, tokenUsage?: any, accessLevel?: string, securityScore?: number, taskSteps?: any[] }): Promise<any> {
+  private async handleSaveSession(data: { sessionId?: string, messages: any[], taskTitle?: string, elapsedSeconds?: number, progress?: number, tokenUsage?: any, accessLevel?: string, securityScore?: number, taskSteps?: any[] }): Promise<any> {
     // Skip saving sessions that have no meaningful content (no user interaction)
     const hasUserInteraction = data.messages.some((m: any) =>
       m.role === 'user' || (m.a2uiAnswers && Object.keys(m.a2uiAnswers).length > 0)
@@ -1440,7 +1493,6 @@ export class ChatBackground extends Background {
       accessLevel: data.accessLevel || 'sandbox',
       securityScore: data.securityScore ?? 100,
       agents: Array.from(agentRoles),
-      lifecycleStrategy: data.lifecycleStrategy || undefined,
       tokenUsage: data.tokenUsage || undefined,
       taskSteps: data.taskSteps || undefined,
     };

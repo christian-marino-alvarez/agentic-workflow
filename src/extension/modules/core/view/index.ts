@@ -103,7 +103,7 @@ export abstract class View extends LitElement {
    * @param timeout Max wait time in ms (default 10s)
    * @returns       The response payload data, or void if no response expected
    */
-  protected sendMessage(to: string, command: string, data: any = {}, timeout = REQUEST_TIMEOUT): Promise<any> {
+  public sendMessage(to: string, command: string, data: any = {}, timeout = REQUEST_TIMEOUT): Promise<any> {
     const id = crypto.randomUUID();
 
     const payload = {

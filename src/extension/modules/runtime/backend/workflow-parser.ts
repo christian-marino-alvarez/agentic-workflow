@@ -133,14 +133,17 @@ export class WorkflowParser {
 
     try {
       const entries = readdirSync(candidatePath);
-      return entries.some((e: string) => e.includes('phase-') && e.endsWith('.md'));
+      // Detect lifecycle: files matching phase-*.md OR NN-*.md (numeric prefix)
+      return entries.some((e: string) =>
+        (e.includes('phase-') || /^\d{2}-/.test(e)) && e.endsWith('.md')
+      );
     } catch {
       return false;
     }
   }
 
   /**
-   * Parse phase files from a lifecycle directory (e.g., tasklifecycle-long/).
+   * Parse phase files from a lifecycle directory (e.g., tasklifecycle/).
    * Returns parsed phases sorted by phase number.
    * Only includes files matching phase-*.md or short-phase-*.md pattern.
    */
@@ -150,8 +153,9 @@ export class WorkflowParser {
 
     for (const file of files) {
       const filename = basename(file);
-      // Only parse phase files, not index.md or other files
-      if (!filename.includes('phase-') || !filename.endsWith('.md')) {
+      // Parse phase files: phase-*.md OR NN-*.md (numeric prefix)
+      const isPhase = filename.includes('phase-') || /^\d{2}-/.test(filename);
+      if (!isPhase || !filename.endsWith('.md')) {
         continue;
       }
       try {
@@ -162,10 +166,12 @@ export class WorkflowParser {
       }
     }
 
-    // Sort by phase number extracted from filename
+    // Sort by phase number: supports both 'phase-N' and 'NN-' prefixes
     phases.sort((a, b) => {
-      const numA = parseInt(a.id.match(/phase-(\d+)/)?.[1] || '0', 10);
-      const numB = parseInt(b.id.match(/phase-(\d+)/)?.[1] || '0', 10);
+      const fileA = basename(a.id);
+      const fileB = basename(b.id);
+      const numA = parseInt(fileA.match(/(?:phase-|^)(\d+)/)?.[1] || '0', 10);
+      const numB = parseInt(fileB.match(/(?:phase-|^)(\d+)/)?.[1] || '0', 10);
       return numA - numB;
     });
 
@@ -181,6 +187,9 @@ export class WorkflowParser {
     const agents: AgentRole[] = [];
 
     try {
+      if (!existsSync(dir)) {
+        return []; // Handle no workspace gracefully
+      }
       const files = await readdir(dir);
       for (const file of files) {
         if (!file.endsWith('.md')) {
@@ -279,11 +288,16 @@ export class WorkflowParser {
 
     return {
       id: data.id,
+      name: data.name,
       description: data.description,
       owner: data.owner,
       version: data.version,
       trigger,
       type: (data.type === 'dynamic' ? 'dynamic' : 'static') as 'static' | 'dynamic',
+      objective: data.objective,
+      ...(data.context ? { context: Array.isArray(data.context) ? data.context : [data.context] } : {}),
+      ...(data.input ? { input: Array.isArray(data.input) ? data.input : [data.input] } : {}),
+      ...(data.output ? { output: Array.isArray(data.output) ? data.output : [data.output] } : {}),
       ...(data.pass ? { pass: data.pass } : {}),
     };
   }
@@ -410,10 +424,10 @@ export class WorkflowParser {
     if (frontmatter.pass?.nextTarget) {
       const nt = frontmatter.pass.nextTarget;
       if (typeof nt === 'string') {
-        // Simple string: "tasklifecycle-long"
+        // Simple string: "tasklifecycle"
         nextTarget = nt;
       } else if (typeof nt === 'object') {
-        // Conditional map: { long: "tasklifecycle-long", short: "tasklifecycle-short" }
+        // Conditional map: { key: "target" }
         const values = Object.entries(nt)
           .map(([key, val]) => `${key}:${val}`);
         nextTarget = values.join(' | ');

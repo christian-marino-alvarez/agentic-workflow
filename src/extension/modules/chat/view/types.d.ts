@@ -93,4 +93,5 @@ export interface IChatView {
   confirmA2UIOption(option: string): void;
   cancelA2UI(): void;
   newSession(): void;
+  sendMessage(target: string, command: string, data?: any, timeoutMs?: number): Promise<any>;
 }

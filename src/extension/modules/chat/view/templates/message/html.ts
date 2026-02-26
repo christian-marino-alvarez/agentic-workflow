@@ -72,6 +72,36 @@ export function renderMessageBubble(msg: any, view?: IChatView) {
   if (msg.isGate && view) { return renderGateCard(msg, view); }
   if (msg.isDelegation) { return renderDelegationCard(msg); }
 
+  // Custom Empty State / Welcome Card for "No workspace"
+  if (msg.role === 'system' && msg.text?.includes('Welcome to Extensio!')) {
+    return html`
+      <div class="empty-state-card" style="margin: 20px 0; padding: 32px; background: var(--vscode-editorWidget-background, #252526); border: 1px solid var(--vscode-widget-border, #3c3c3c); border-radius: 12px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
+        <div style="margin-bottom: 20px;">
+           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="64" height="64" style="color: var(--vscode-textLink-foreground, #3794ff);">
+             <g transform="translate(64, 64)">
+               <path d="M -16,-52 C -40,-52 -56,-24 -56,0 C -56,24 -40,52 -16,52" fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round"/>
+               <path d="M -24,-30 L 30,-30" stroke="currentColor" stroke-width="20" stroke-linecap="round"/>
+               <path d="M -30,0 L 20,0" stroke="currentColor" stroke-width="20" stroke-linecap="round"/>
+               <path d="M -24,30 L 40,30" stroke="currentColor" stroke-width="20" stroke-linecap="round"/>
+             </g>
+           </svg>
+        </div>
+        <h2 style="margin: 0 0 12px 0; font-size: 1.25rem; font-weight: 600; color: var(--vscode-editor-foreground, #cccccc);">
+          Welcome to Extensio
+        </h2>
+        <p style="margin: 0 0 24px 0; font-size: 0.95rem; line-height: 1.5; color: var(--vscode-descriptionForeground, #8a8a8a);">
+          Extensio is your agentic workflow system. To get started, please open a folder or workspace in VS Code so the agents have context to work with.
+        </p>
+        <button style="background: var(--vscode-button-background, #0e639c); color: var(--vscode-button-foreground, #ffffff); border: none; padding: 8px 16px; border-radius: 4px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 13px;"
+          @click=${() => view && view.sendMessage('chat', 'OPEN_FOLDER')}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M14.5 3L8.2 3 7 1.5 1.5 1.5 1 2v12l.5.5h13l.5-.5V3.5L14.5 3zM14 13.5H2v-11h4.6l1.2 1.5H14v9.5z"/></svg>
+          Open Folder
+        </button>
+      </div>
+    `;
+  }
+
+
   // Error messages: styled as a distinct error card
   if (msg.isError || (msg.role === 'system' && msg.text?.includes('**System Error:**'))) {
     if (msg.text?.includes('Max turns') || msg.text?.includes('exceeded')) {

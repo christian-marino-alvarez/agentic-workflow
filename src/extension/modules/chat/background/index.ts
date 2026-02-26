@@ -112,6 +112,8 @@ export class ChatBackground extends Background {
         return this.handleDeleteSession(message.payload.data);
       case MESSAGES.NEW_SESSION:
         return this.handleNewSession();
+      case MESSAGES.OPEN_FOLDER:
+        return this.handleOpenFolder();
       case 'ROLES_CHANGED':
         return this.handleRolesChanged();
       case 'OPEN_FILE':
@@ -933,6 +935,11 @@ export class ChatBackground extends Background {
         }
       });
     }
+    return { success: true };
+  }
+
+  private async handleOpenFolder(): Promise<any> {
+    vscode.commands.executeCommand('vscode.openFolder');
     return { success: true };
   }
 

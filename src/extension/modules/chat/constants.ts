@@ -19,6 +19,7 @@ export const MESSAGES = {
   NEW_SESSION: 'NEW_SESSION', // Chat -> Background (start fresh)
   // Delegation
   DELEGATION_EVENT: 'DELEGATION_EVENT', // Background -> Chat (delegation status updates)
+  OPEN_FOLDER: 'OPEN_FOLDER', // Chat -> Background (trigger native VS Code open folder dialog)
   // Workflow gate integration
   GATE_REQUEST: 'GATE_REQUEST', // Runtime -> Chat (gate needs approval)
   GATE_RESPONSE: 'GATE_RESPONSE', // Chat -> Runtime (user gate decision)
@@ -34,9 +35,6 @@ export const MESSAGES = {
   PHASE_AUTO_START: 'PHASE_AUTO_START', // Background -> View (auto-kickoff new phase)
   // Gate continue (for internal gates without workflow transition)
   GATE_CONTINUE: 'GATE_CONTINUE', // Background -> View (gate approved, send answer to LLM)
-  // Strategy switching
-  SWITCH_STRATEGY: 'SWITCH_STRATEGY', // View -> Background (switch lifecycle strategy)
-  STRATEGY_SWITCHED: 'STRATEGY_SWITCHED', // Background -> View (strategy switch completed, reset UI)
 } as const;
 
 export type ChatCommand = typeof MESSAGES[keyof typeof MESSAGES];

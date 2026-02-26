@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <g transform="translate(64, 64)">
+    <!-- Background gravity well / crescent -->
+    <path d="M -16,-52 C -40,-52 -56,-24 -56,0 C -56,24 -40,52 -16,52" fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round"/>
+    <!-- Levitating horizontals to form an E -->
+    <path d="M -24,-30 L 30,-30" stroke="currentColor" stroke-width="20" stroke-linecap="round"/>
+    <path d="M -30,0 L 20,0" stroke="currentColor" stroke-width="20" stroke-linecap="round"/>
+    <path d="M -24,30 L 40,30" stroke="currentColor" stroke-width="20" stroke-linecap="round"/>
+  </g>
+</svg>

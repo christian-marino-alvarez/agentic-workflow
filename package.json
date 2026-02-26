@@ -1,11 +1,11 @@
 {
   "name": "cortex-ai",
-  "displayName": "Cortex",
+  "displayName": "Extensio",
   "publisher": "christian-marino-alvarez",
   "version": "1.27.0-beta.4",
   "description": "The Agentic Orchestrator for VS Code. Modular, structured, and strict lifecycle governance.",
   "type": "module",
-  "icon": "media/cortex-logo.svg",
+  "icon": "media/extensio-logo.svg",
   "workspaces": [
     "src/extension/modules/core",
     "src/extension/modules/app",
@@ -23,8 +23,8 @@
       "activitybar": [
         {
           "id": "main",
-          "title": "Cortex",
-          "icon": "media/cortex-logo.svg"
+          "title": "Extensio",
+          "icon": "media/extensio-logo.svg"
         }
       ]
     },
@@ -32,8 +32,8 @@
       "main": [
         {
           "id": "mainView",
-          "name": "Cortex",
-          "icon": "media/cortex-logo.svg",
+          "name": "Extensio",
+          "icon": "media/extensio-logo.svg",
           "type": "webview"
         }
       ]

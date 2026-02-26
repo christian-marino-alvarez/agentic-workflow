@@ -194,6 +194,19 @@ export function renderA2UISequence(blocks: A2UIBlock[], view: IChatView, msg: an
     const blockId = `a2ui-${block.id}-${msgIndex}`;
 
     if (isResolved) {
+      if (block.id === 'language') {
+        return html`
+          <div class="a2ui-card a2ui-completed" style="border: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.1);">
+            <div class="a2ui-result" style="display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-textLink-foreground, #3794ff)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l6 6"></path><path d="M4 14l6-6 2-3"></path><path d="M2 5h12"></path><path d="M7 2h1"></path><path d="m22 22-5-10-5 10"></path><path d="M14 18h6"></path></svg>
+                <strong>Language / Idioma:</strong>
+              </div>
+              <span style="font-weight: 600; color: var(--vscode-foreground);">${answers[block.id]}</span>
+            </div>
+          </div>
+        `;
+      }
       return html`
             <div class="a2ui-card a2ui-completed">
               <div class="a2ui-result">
@@ -205,6 +218,24 @@ export function renderA2UISequence(blocks: A2UIBlock[], view: IChatView, msg: an
     }
 
     if (isCurrent) {
+      if (block.id === 'language') {
+        return html`
+          <div class="a2ui-card a2ui-active" id="${blockId}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 16px; background: linear-gradient(145deg, rgba(20,20,20,0.3) 0%, rgba(30,30,30,0.5) 100%); border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+            <div style="background: rgba(255,255,255,0.05); border-radius: 50%; padding: 12px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.08);">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-textLink-foreground, #3794ff)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 8l6 6"></path>
+                <path d="M4 14l6-6 2-3"></path>
+                <path d="M2 5h12"></path>
+                <path d="M7 2h1"></path>
+                <path d="m22 22-5-10-5 10"></path>
+                <path d="M14 18h6"></path>
+              </svg>
+            </div>
+            <div class="a2ui-label" style="font-size: 16px; font-weight: 600; text-align: center; margin-bottom: 6px; letter-spacing: -0.2px;">Select Language</div>
+            <div class="a2ui-pending-hint" style="text-align: center; opacity: 0.6; font-size: 13px;">Please choose your preferred language below to continue</div>
+          </div>
+        `;
+      }
       // Active block — interaction happens in the input area
       return html`
             <div class="a2ui-card a2ui-active" id="${blockId}">

@@ -5,6 +5,13 @@ import { ClaudeProvider } from './adapters/claude-provider.js';
 import { RoleModelBinding, ToolDefinition, AgenticContext } from './types.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { z } from 'zod';
+
+export const AgentResponseSchema = z.object({
+  text: z.string().describe('The main text response to the user or system.'),
+  ui_intent: z.array(z.record(z.string(), z.any())).optional()
+    .describe('Optional A2UI intent objects to render rich UI components like artifacts or gates.'),
+});
 
 import {
   BASE_SYSTEM_PROMPT,
@@ -37,7 +44,7 @@ function resolveModelId(displayName: string, _provider: string): string {
  *
  * NOTE: This function only COMPOSES. All prompt text lives in prompts.ts.
  */
-function buildDynamicInstructions(runContext: RunContext<AgenticContext>): string {
+function buildDynamicInstructions(runContext: RunContext<AgenticContext>, agent: Agent<AgenticContext, typeof AgentResponseSchema>): string {
   const ctx = runContext.context;
   const parts: string[] = [BASE_SYSTEM_PROMPT];
 
@@ -91,6 +98,9 @@ function buildDynamicInstructions(runContext: RunContext<AgenticContext>): strin
     }
   }
 
+  // 5. JSON enforcement reminder (at the end to leverage recency bias)
+  parts.push(`\n\n---\n⚠️ REMINDER: You MUST respond with a valid JSON object matching the requested schema. Do NOT use plain text, markdown, or your role prefix (🏛️). Raw JSON only.`);
+
   return parts.join('');
 }
 
@@ -112,7 +122,7 @@ export class LLMFactory {
     tools: ToolDefinition[] = [],
     apiKey?: string,
     provider?: string,
-  ): Promise<{ agent: Agent<AgenticContext>; modelProvider: ModelProvider }> {
+  ): Promise<{ agent: Agent<AgenticContext, typeof AgentResponseSchema>; modelProvider: ModelProvider }> {
     const rawModelId = binding[role];
     if (!rawModelId) {
       throw new Error(`No model bound for role: ${role}`);
@@ -123,11 +133,12 @@ export class LLMFactory {
 
     const modelProvider = this.resolveProvider(provider || modelId, apiKey);
 
-    const agent = new Agent<AgenticContext>({
+    const agent = new Agent<AgenticContext, typeof AgentResponseSchema>({
       name: role,
       instructions: buildDynamicInstructions,
       model: await modelProvider.getModel(modelId),
       tools: tools.map(t => t as any),
+      outputType: AgentResponseSchema,
     });
 
     return { agent, modelProvider };
@@ -137,7 +148,7 @@ export class LLMFactory {
    * Legacy: create an Agent with static string instructions.
    * Used during migration — will be removed once all callers use createAgentWithContext.
    */
-  async createAgent(role: string, binding: RoleModelBinding, tools: ToolDefinition[] = [], apiKey?: string, provider?: string, instructions?: string): Promise<Agent> {
+  async createAgent(role: string, binding: RoleModelBinding, tools: ToolDefinition[] = [], apiKey?: string, provider?: string, instructions?: string): Promise<Agent<unknown, typeof AgentResponseSchema>> {
     const rawModelId = binding[role];
     if (!rawModelId) {
       throw new Error(`No model bound for role: ${role}`);
@@ -159,6 +170,7 @@ export class LLMFactory {
       instructions: agentInstructions,
       model: await modelProvider.getModel(modelId),
       tools: tools.map(t => t as any),
+      outputType: AgentResponseSchema,
     });
   }
 

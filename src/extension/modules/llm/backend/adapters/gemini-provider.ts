@@ -5,6 +5,74 @@ import { randomUUID } from 'crypto';
 import { extractPromptText } from './utils.js';
 
 /**
+ * Convert OpenAI Agents SDK input messages to Gemini multi-turn contents format.
+ * The SDK sends messages as an array of {type, role, content} objects.
+ * Gemini expects {role: 'user'|'model', parts: [{text}]}.
+ * 
+ * Falls back to single-user-message if input format is unexpected.
+ */
+function convertToGeminiContents(input: any): { role: string; parts: { text: string }[] }[] {
+  if (!Array.isArray(input)) {
+    return [{ role: 'user', parts: [{ text: typeof input === 'string' ? input : JSON.stringify(input) }] }];
+  }
+
+  const contents: { role: string; parts: { text: string }[] }[] = [];
+
+  for (const item of input) {
+    // Determine the Gemini role
+    let geminiRole: string;
+    const sdkRole = item.role || '';
+    if (sdkRole === 'assistant' || sdkRole === 'model') {
+      geminiRole = 'model';
+    } else {
+      geminiRole = 'user';
+    }
+
+    // Extract text content
+    let text: string;
+    if (typeof item === 'string') {
+      text = item;
+    } else if (item.type === 'input_text') {
+      text = item.text || '';
+    } else if (item.type === 'message' && typeof item.content === 'string') {
+      text = item.content;
+    } else if (item.type === 'message' && Array.isArray(item.content)) {
+      text = item.content.map((c: any) => c.text || JSON.stringify(c)).join('\n');
+    } else if (item.text) {
+      text = item.text;
+    } else if (item.content) {
+      text = typeof item.content === 'string' ? item.content : JSON.stringify(item.content);
+    } else {
+      text = JSON.stringify(item);
+    }
+
+    if (!text || text.trim().length === 0) { continue; }
+
+    // Gemini requires alternating user/model turns — merge consecutive same-role messages
+    const lastContent = contents[contents.length - 1];
+    if (lastContent && lastContent.role === geminiRole) {
+      lastContent.parts[0].text += '\n' + text;
+    } else {
+      contents.push({ role: geminiRole, parts: [{ text }] });
+    }
+  }
+
+  // Gemini requires the first message to be from 'user'
+  if (contents.length > 0 && contents[0].role !== 'user') {
+    contents.unshift({ role: 'user', parts: [{ text: '(conversation start)' }] });
+  }
+
+  // Fallback: if no valid contents were extracted
+  if (contents.length === 0) {
+    const fallbackText = extractPromptText(input);
+    return [{ role: 'user', parts: [{ text: fallbackText }] }];
+  }
+
+  console.log(`[gemini::model] Converted ${input.length} SDK messages → ${contents.length} Gemini turns`);
+  return contents;
+}
+
+/**
  * Pass-through: model IDs now come from Settings dropdown (dynamic discovery).
  */
 function resolveModelName(input: string): string {
@@ -27,20 +95,49 @@ function convertToolsToGemini(tools: any[]): any[] | undefined {
 /**
  * Clean JSON schema for Gemini compatibility:
  * - Remove unsupported keys like 'additionalProperties', '$schema'
+ * - Recursively handle nested objects, arrays, enums, anyOf/oneOf
  * - Ensure properties exist
  */
 function cleanJsonSchema(schema: any): any {
   if (!schema) { return { type: 'object', properties: {} }; }
-  const cleaned: any = { type: schema.type || 'object' };
-  if (schema.properties) {
+
+  // Handle anyOf/oneOf by taking the first non-null option
+  if (schema.anyOf || schema.oneOf) {
+    const options = schema.anyOf || schema.oneOf;
+    const nonNull = options.find((o: any) => o.type !== 'null') || options[0];
+    return cleanJsonSchema(nonNull);
+  }
+
+  const cleaned: any = {};
+
+  // Determine type
+  const schemaType = schema.type || 'object';
+  cleaned.type = schemaType === 'integer' ? 'number' : schemaType; // Gemini uses 'number' for integers too
+
+  // Description
+  if (schema.description) { cleaned.description = schema.description; }
+
+  // Enum values
+  if (schema.enum) { cleaned.enum = schema.enum; }
+
+  // Handle objects with properties
+  if (schemaType === 'object' && schema.properties) {
     cleaned.properties = {};
     for (const [key, val] of Object.entries(schema.properties)) {
-      const prop = val as any;
-      cleaned.properties[key] = { type: prop.type || 'string' };
-      if (prop.description) { cleaned.properties[key].description = prop.description; }
+      cleaned.properties[key] = cleanJsonSchema(val);
     }
   }
-  if (schema.required) { cleaned.required = schema.required; }
+
+  // Handle arrays
+  if (schemaType === 'array' && schema.items) {
+    cleaned.items = cleanJsonSchema(schema.items);
+  }
+
+  // Required fields (only for objects)
+  if (schema.required && Array.isArray(schema.required)) {
+    cleaned.required = schema.required;
+  }
+
   return cleaned;
 }
 
@@ -60,17 +157,27 @@ class GeminiModel implements Model {
   }
 
   async getResponse(request: ModelRequest): Promise<ModelResponse> {
-    const promptText = extractPromptText(request.input);
+    const contents = convertToGeminiContents(request.input);
     const sysInstruction = request.systemInstructions;
     const geminiTools = convertToolsToGemini(request.tools);
 
     const modelConfig: any = { model: this.modelName };
     if (sysInstruction) { modelConfig.systemInstruction = sysInstruction; }
 
+    // Add Structured Output config if a json_schema is provided
+    if (request.outputType && typeof request.outputType === 'object' && request.outputType.type === 'json_schema') {
+      const gSchema = cleanJsonSchema(request.outputType.schema);
+      modelConfig.generationConfig = {
+        responseMimeType: 'application/json',
+        responseSchema: gSchema,
+      };
+      console.log(`[gemini::model] Enforcing Structured Output schema: ${request.outputType.name}`);
+    }
+
     const modelObj = this.client.getGenerativeModel(modelConfig);
 
     const requestConfig: any = {
-      contents: [{ role: 'user', parts: [{ text: promptText }] }],
+      contents,
     };
     if (geminiTools) {
       requestConfig.tools = [{ functionDeclarations: geminiTools }];
@@ -116,17 +223,27 @@ class GeminiModel implements Model {
   async *getStreamedResponse(request: ModelRequest): AsyncIterable<any> {
     yield { type: 'response_started' };
 
-    const promptText = extractPromptText(request.input);
+    const contents = convertToGeminiContents(request.input);
     const sysInstruction = request.systemInstructions;
     const geminiTools = convertToolsToGemini(request.tools);
 
     const modelConfig: any = { model: this.modelName };
     if (sysInstruction) { modelConfig.systemInstruction = sysInstruction; }
 
+    // Add Structured Output config if a json_schema is provided
+    if (request.outputType && typeof request.outputType === 'object' && request.outputType.type === 'json_schema') {
+      const gSchema = cleanJsonSchema(request.outputType.schema);
+      modelConfig.generationConfig = {
+        responseMimeType: 'application/json',
+        responseSchema: gSchema,
+      };
+      console.log(`[gemini::model] Enforcing Structured Output schema: ${request.outputType.name}`);
+    }
+
     const modelObj = this.client.getGenerativeModel(modelConfig);
 
     const requestConfig: any = {
-      contents: [{ role: 'user', parts: [{ text: promptText }] }],
+      contents,
     };
     if (geminiTools) {
       requestConfig.tools = [{ functionDeclarations: geminiTools }];
@@ -137,9 +254,17 @@ class GeminiModel implements Model {
     let fullText = '';
     const functionCalls: any[] = [];
     let lastUsageMeta: any = null;
+    let lastFinishReason: string | undefined;
 
     for await (const chunk of result.stream) {
-      const parts = chunk.candidates?.[0]?.content?.parts || [];
+      const candidate = chunk.candidates?.[0];
+      const parts = candidate?.content?.parts || [];
+
+      // Capture finish reason
+      if (candidate?.finishReason) {
+        lastFinishReason = candidate.finishReason as string;
+      }
+
       // Capture usage metadata from each chunk (last one has the totals)
       if ((chunk as any).usageMetadata) {
         lastUsageMeta = (chunk as any).usageMetadata;
@@ -153,6 +278,33 @@ class GeminiModel implements Model {
           yield { type: 'output_text_delta', delta: part.text };
         }
       }
+    }
+
+    // Diagnostic: log when the model produces no output
+    if (fullText.length === 0 && functionCalls.length === 0) {
+      console.error(`[gemini::model] ⚠️ Empty response! finishReason=${lastFinishReason || 'unknown'}, usage=${JSON.stringify(lastUsageMeta)}`);
+
+      // MALFORMED_FUNCTION_CALL: retry WITHOUT tools so model falls back to text
+      if (lastFinishReason === 'MALFORMED_FUNCTION_CALL') {
+        console.log('[gemini::model] Retrying without tools (MALFORMED_FUNCTION_CALL recovery)...');
+        const retryConfig: any = { contents };
+        // No tools in retry — force text output
+        const retryResult = await modelObj.generateContentStream(retryConfig, this.requestOptions);
+        for await (const chunk of retryResult.stream) {
+          const retryCandidate = chunk.candidates?.[0];
+          const retryParts = retryCandidate?.content?.parts || [];
+          if ((chunk as any).usageMetadata) { lastUsageMeta = (chunk as any).usageMetadata; }
+          for (const part of retryParts) {
+            if (part.text) {
+              fullText += part.text;
+              yield { type: 'output_text_delta', delta: part.text };
+            }
+          }
+        }
+        console.log(`[gemini::model] Retry completed: ${fullText.length} chars`);
+      }
+    } else {
+      console.log(`[gemini::model] Stream done: ${fullText.length} chars, ${functionCalls.length} tool calls, finishReason=${lastFinishReason || 'unknown'}`);
     }
 
     // Extract real usage from Gemini API

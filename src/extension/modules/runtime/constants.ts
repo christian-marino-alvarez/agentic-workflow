@@ -50,6 +50,8 @@ export const MESSAGES = {
   WORKFLOW_AGENTS: 'WORKFLOW_AGENTS',
   WORKFLOW_RESET: 'WORKFLOW_RESET',
   WORKFLOW_SWITCH_TASK: 'WORKFLOW_SWITCH_TASK',
+  WORKFLOW_PREPARE_TURN: 'WORKFLOW_PREPARE_TURN',
+  WORKFLOW_PROCESS_RESPONSE: 'WORKFLOW_PROCESS_RESPONSE',
 } as const;
 
 /**
@@ -70,6 +72,8 @@ export const RPC_COMMANDS = {
   WORKFLOW_AGENTS_REFRESH: 'workflow.agents.refresh',
   WORKFLOW_RESET: 'workflow.reset',
   WORKFLOW_SWITCH_TASK: 'workflow.switchTask',
+  WORKFLOW_PREPARE_TURN: 'workflow.prepareTurn',
+  WORKFLOW_PROCESS_RESPONSE: 'workflow.processResponse',
 } as const;
 
 /**

@@ -1005,40 +1005,83 @@ export class ChatBackground extends Background {
     try {
       // 1. Resolve model config for this role
       const { modelName, apiKey, provider, roleConfig } = await this.resolveModelConfig(role, data.text, data.modelId);
-      // 2. Build LLM prompt (pure prompt data, no transport keys)
-      const prompt = await this.buildPrompt(role, data, roleConfig);
-      // 3. Build sidecar payload
+
+      // 2. Ask Runtime to prepare the full turn payload (contexts, prompt, workflow state)
+      const turnHistory = (data.history || []).map(h => ({
+        role: h.role as 'user' | 'assistant',
+        content: h.text,
+      }));
+
+      let turnPayload: any = null;
+      try {
+        const rpcResult = await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_PREPARE_TURN, {
+          text: data.text,
+          history: turnHistory,
+          agentRole: role,
+          language: this.conversationLanguage,
+        });
+        turnPayload = rpcResult?.result || rpcResult;
+      } catch (err: any) {
+        this.logTagged('#workflow', `prepareTurn RPC failed (falling back to local): ${err.message}`);
+      }
+
+      // 3. Build prompt — use Runtime payload if available, else fallback to local
+      let prompt: any;
+      if (turnPayload?.systemPrompt) {
+        this.logTagged('#prompt', `Using Runtime-prepared prompt (${turnPayload.systemPrompt.length} chars)`);
+        prompt = {
+          messages: turnPayload.messages,
+          context: {
+            rolePersona: turnPayload.systemPrompt,
+            workflow: turnPayload.workflowContext,
+            constitutions: [],
+            workspacePath: this.workspacePath,
+            role,
+            language: this.conversationLanguage,
+          },
+        };
+      } else {
+        prompt = await this.buildPrompt(role, data, roleConfig);
+      }
+
+      // 4. Build sidecar payload and send to LLM (transport stays in Chat)
       const payload = this.buildPayload(role, prompt, modelName, apiKey, provider, data.attachments);
       const streamResult = await this.sendWithRetry(payload, role);
       const streamText = streamResult.text;
-      // ─── Diagnostic: log raw stream result ───
+
       this.logTagged('#llm', `Stream completed: ${streamText.length} chars, starts with: "${streamText.substring(0, 80)}..."`);
-      // ─── End diagnostic ───      // Validate response against Zod schema
-      let structured = this.validateZod(streamText);
 
-      // If validation failed and workflow is active, retry once
-      if (!structured && prompt.context?.workflow) {
-        this.logTagged('#llm', 'Validation failed during workflow — retrying...');
-        structured = await this.retryWithCorrection(
-          payload,
-          prompt.messages,
-          streamText,
-          role,
-          FORMAT_CORRECTION_PROMPT,
-        );
-      }
-
+      // 5. Process response — use Runtime if available, else fallback to local
       let result: ProcessedResponse;
 
-      if (structured) {
-        result = this.processStructuredResponse(structured, prompt);
-      } else if (prompt.context?.workflow) {
-        result = this.processResponseError(streamText);
+      if (turnPayload?.systemPrompt) {
+        // Runtime-centric path: let Runtime process intents
+        try {
+          const rpcResult = await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_PROCESS_RESPONSE, {
+            llmText: streamText,
+          });
+          const processed = rpcResult?.result || rpcResult;
+
+          if (processed?.displayText !== undefined) {
+            result = {
+              displayText: processed.displayText,
+              a2ui: processed.a2ui || [],
+              messages: processed.pendingActions?.map((a: any) => ({ command: a.type, data: a.data })) || [],
+            };
+            this.logTagged('#intent', `Runtime resolved: ${result.a2ui.length} A2UI blocks, ${result.messages.length} actions`);
+          } else {
+            // Fallback if Runtime returns unexpected format
+            result = { displayText: streamText, a2ui: [], messages: [] };
+          }
+        } catch (err: any) {
+          this.logTagged('#workflow', `processResponse RPC failed (falling back to local): ${err.message}`);
+          result = this.localProcessResponse(streamText, prompt);
+        }
       } else {
-        result = { displayText: streamText, a2ui: [], messages: [] };
+        result = this.localProcessResponse(streamText, prompt);
       }
 
-      // Send final structured message to View
+      // 6. Build final message payload for View
       const messagePayload: ChatMessagePayload = {
         text: result.displayText,
         ...(result.code ? { code: result.code } : {}),
@@ -1061,6 +1104,23 @@ export class ChatBackground extends Background {
         agentRole: 'system',
         isStreaming: false,
       } as ChatMessagePayload;
+    }
+  }
+
+  /** Fallback: local response processing (pre-runtime-centric path) */
+  private localProcessResponse(streamText: string, prompt: any): ProcessedResponse {
+    let structured = this.validateZod(streamText);
+
+    if (!structured && prompt.context?.workflow) {
+      this.logTagged('#llm', 'Validation failed during workflow — using raw text');
+    }
+
+    if (structured) {
+      return this.processStructuredResponse(structured, prompt);
+    } else if (prompt.context?.workflow) {
+      return this.processResponseError(streamText);
+    } else {
+      return { displayText: streamText, a2ui: [], messages: [] };
     }
   }
 

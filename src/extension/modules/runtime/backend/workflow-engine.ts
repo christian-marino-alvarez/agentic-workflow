@@ -2,6 +2,8 @@ import { join } from 'node:path';
 import { setup, createActor, type AnyActorRef } from 'xstate';
 import { WorkflowParser } from './workflow-parser.js';
 import { WorkflowPersistence } from './persistence.js';
+import { ContextLoader } from './context-loader.js';
+import { IntentResolver, tryParseStructuredResponse } from './intent-resolver.js';
 import { ENGINE_EVENTS, WORKFLOW_STATES, LISTENER_EVENTS, ENGINE_STATUS } from '../constants.js';
 import type {
   WorkflowDef,
@@ -15,6 +17,9 @@ import type {
   WorkflowEventType,
   WorkflowEventListener,
   WorkflowStatesConfig,
+  PrepareTurnInput,
+  TurnPayload,
+  ProcessedTurnResult,
 } from '../types.js';
 
 export type { StartWorkflowInput, GateResponseInput, WorkflowEventType, WorkflowEventListener };
@@ -22,6 +27,9 @@ export type { StartWorkflowInput, GateResponseInput, WorkflowEventType, Workflow
 export class WorkflowEngine {
   private parser: WorkflowParser;
   private persistence: WorkflowPersistence;
+  private contextLoader: ContextLoader;
+  private intentResolver: IntentResolver;
+  private workspaceRoot: string;
   private actor: AnyActorRef | null = null;
   private agentRegistry: Map<string, AgentRole> = new Map();
   private workflows: Map<string, WorkflowDef> = new Map();
@@ -29,8 +37,11 @@ export class WorkflowEngine {
   private lastPersistedState: WorkflowEngineState | null = null;
 
   constructor(workspaceRoot: string, persistence: WorkflowPersistence) {
+    this.workspaceRoot = workspaceRoot;
     this.parser = new WorkflowParser(workspaceRoot);
     this.persistence = persistence;
+    this.contextLoader = new ContextLoader(workspaceRoot);
+    this.intentResolver = new IntentResolver(workspaceRoot);
   }
 
   private async discoverAndRegisterAgents(): Promise<void> {
@@ -620,6 +631,104 @@ export class WorkflowEngine {
           sections: activeWorkflow.sections,
         }
       } : {}),
+    };
+  }
+
+  // ─── Runtime-Centric Turn Processing ─────────────────────────
+
+  /**
+   * Prepare a full LLM turn payload with all contexts loaded.
+   * Chat receives this and just sends it to the LLM.
+   */
+  async prepareTurn(input: PrepareTurnInput): Promise<TurnPayload> {
+    const state = this.getState();
+    const currentPhase = state?.workflow || null;
+    const owner = currentPhase?.owner || input.agentRole;
+
+    // Load all context files
+    const constitutionRefs = currentPhase?.constitutions || [];
+    const workflowContextRefs: string[] = [];
+    // Extract context refs from parsed sections if available
+    if (state?.parsedSections?.inputs) {
+      workflowContextRefs.push(...state.parsedSections.inputs.filter(i => i.startsWith('.agent/')));
+    }
+
+    const ctx = await this.contextLoader.loadAll(owner, constitutionRefs, workflowContextRefs);
+
+    // Build system prompt
+    const systemParts: string[] = [];
+    if (ctx.agentPersona) {
+      systemParts.push(ctx.agentPersona);
+    }
+    if (ctx.constitutions.length > 0) {
+      systemParts.push(`### CONSTITUTIONS\n${ctx.constitutions.join('\n')}`);
+    }
+    if (ctx.workflowContextFiles.length > 0) {
+      systemParts.push(`### WORKFLOW CONTEXT\n${ctx.workflowContextFiles.join('\n')}`);
+    }
+    // Inject workflow instructions
+    if (state?.parsedSections?.instructions) {
+      systemParts.push(`### CURRENT PHASE INSTRUCTIONS\n${state.parsedSections.instructions}`);
+    }
+    if (state?.parsedSections?.objective) {
+      systemParts.push(`### OBJECTIVE\n${state.parsedSections.objective}`);
+    }
+    if (currentPhase?.gate) {
+      systemParts.push(`### GATE REQUIREMENTS\n${currentPhase.gate.requirements.map((r, i) => `${i + 1}. ${r}`).join('\n')}`);
+    }
+    if (input.language) {
+      systemParts.push(`### LANGUAGE\nRespond in ${input.language === 'es' ? 'Español' : 'English'}.`);
+    }
+
+    // Build messages
+    const messages: TurnPayload['messages'] = [
+      { role: 'system', content: systemParts.join('\n\n') },
+      ...input.history,
+      { role: 'user', content: input.text },
+    ];
+
+    return {
+      systemPrompt: systemParts.join('\n\n'),
+      messages,
+      workflowContext: {
+        phaseId: state?.currentPhaseId || '',
+        phaseName: currentPhase?.description || '',
+        owner,
+        status: state?.status || 'idle',
+        gate: currentPhase?.gate || null,
+      },
+      taskType: 'default',
+    };
+  }
+
+  /**
+   * Process LLM response: parse JSON, resolve intents, return display data.
+   */
+  async processResponse(llmText: string): Promise<ProcessedTurnResult> {
+    const state = this.getState();
+    const phaseId = state?.currentPhaseId || '';
+
+    // Parse structured response
+    const structured = tryParseStructuredResponse(llmText);
+    if (!structured) {
+      // Not structured JSON — pass raw text through
+      return {
+        displayText: llmText,
+        a2ui: [],
+        machineState: state,
+        pendingActions: [],
+      };
+    }
+
+    // Resolve intents via IntentResolver
+    const intents = structured.intents || [];
+    const resolution = this.intentResolver.resolve(intents, phaseId);
+
+    return {
+      displayText: structured.text,
+      a2ui: resolution.a2ui,
+      machineState: state,
+      pendingActions: resolution.pendingActions,
     };
   }
 

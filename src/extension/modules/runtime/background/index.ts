@@ -238,6 +238,11 @@ export class RuntimeBackground extends Background {
       case MESSAGES.WORKFLOW_SWITCH_TASK:
         return this.handleWorkflowSwitchTask(message.payload.data);
 
+      case MESSAGES.WORKFLOW_PREPARE_TURN:
+        return this.forwardToSidecar('workflow.prepareTurn', message.payload.data);
+
+      case MESSAGES.WORKFLOW_PROCESS_RESPONSE:
+        return this.forwardToSidecar('workflow.processResponse', message.payload.data);
 
 
       default:

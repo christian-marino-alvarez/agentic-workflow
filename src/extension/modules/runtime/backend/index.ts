@@ -34,6 +34,8 @@ export class RuntimeServer extends AbstractBackend {
       RPC_COMMANDS.WORKFLOW_AGENTS_REFRESH,
       RPC_COMMANDS.WORKFLOW_RESET,
       RPC_COMMANDS.WORKFLOW_SWITCH_TASK,
+      RPC_COMMANDS.WORKFLOW_PREPARE_TURN,
+      RPC_COMMANDS.WORKFLOW_PROCESS_RESPONSE,
     ]);
 
     this.setupEngineNotifications();
@@ -106,6 +108,16 @@ export class RuntimeServer extends AbstractBackend {
       case RPC_COMMANDS.WORKFLOW_SWITCH_TASK: {
         const switchState = await this.workflowEngine.switchToTask(data.taskId);
         return { workflowState: switchState };
+      }
+
+      case RPC_COMMANDS.WORKFLOW_PREPARE_TURN: {
+        const turnPayload = await this.workflowEngine.prepareTurn(data);
+        return turnPayload;
+      }
+
+      case RPC_COMMANDS.WORKFLOW_PROCESS_RESPONSE: {
+        const result = await this.workflowEngine.processResponse(data.llmText);
+        return result;
       }
 
 

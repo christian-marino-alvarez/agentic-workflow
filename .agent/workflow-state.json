@@ -96,32 +96,32 @@
     "task": {
       "taskId": "task",
       "currentPhase": "workflow.tasklifecycle",
-      "currentPhaseId": "workflow.tasklifecycle.03-planning",
+      "currentPhaseId": "workflow.tasklifecycle.01-init",
       "currentWorkflowId": "workflow.tasklifecycle",
       "isLifecycle": true,
       "status": "running",
       "gateResponses": {},
-      "startedAt": "2026-02-28T14:19:44.889Z",
-      "updatedAt": "2026-02-28T14:21:11.556Z",
+      "startedAt": "2026-02-28T20:52:43.317Z",
+      "updatedAt": "2026-02-28T20:52:43.318Z",
       "steps": [],
       "phases": [
         {
           "id": "workflow.tasklifecycle.01-init",
           "label": "Phase 1: Task setup with acceptance criteria already defined from init workflow.",
           "owner": "architect-agent",
-          "status": "completed"
+          "status": "active"
         },
         {
           "id": "workflow.tasklifecycle.02-analysis",
           "label": "Phase 2: Technical analysis of the task scope, affected modules, complexity, and feasibility.",
           "owner": "architect-agent",
-          "status": "completed"
+          "status": "pending"
         },
         {
           "id": "workflow.tasklifecycle.03-planning",
           "label": "Phase 3: Implementation plan with subtask delegation to specialized agents.",
           "owner": "architect-agent",
-          "status": "active"
+          "status": "pending"
         },
         {
           "id": "workflow.tasklifecycle.04-implementation",
@@ -138,69 +138,153 @@
       ],
       "parsedSections": {
         "inputs": [
-          "Approved analysis: `.agent/artifacts/<TASK>/architect/analysis-v1.md`",
-          "Including the Subtask Identification (§6) with formal subtask list."
+          "Candidate artifact created and approved by the init workflow."
         ],
         "outputs": [
-          "Artifact: `.agent/artifacts/<TASK>/architect/planning-v1.md` (global plan)",
-          "Artifacts: `.agent/artifacts/<TASK>/architect/ST-N-<name>.md` (one subtask plan per subtask)"
+          "Task folder: `.agent/artifacts/<TS>-<title-short>/`",
+          "Central task file: `.agent/artifacts/<TS>-<title-short>/task.md`"
         ],
-        "objective": "Define the implementation plan based on the approved analysis. Create a global strategy overview and **individual subtask plans** for each subtask identified in the analysis. Each subtask plan details its scope, acceptance criteria, agent assignment, workflow to invoke, and optional workflows.",
-        "instructions": "1. **Activate architect-agent** (the UI handles identification — do NOT prefix responses).\n2. **Read analysis subtasks**: Load the subtask list from analysis §6.\n3. **Create global plan**: Create `planning-v1.md` in `<TASK>/architect/` with: strategy overview, execution order, agent assignments, and estimated effort.\n4. **Create subtask plans (MANDATORY)**: For each subtask in the analysis:\n   - Create `.agent/artifacts/<TASK>/architect/ST-N-<name>.md` using `templates.subtask_plan`.\n   - Fill in: objective, affected files, subtask-specific acceptance criteria, technical specifications, workflow assignment, and optional workflows.\n   - Each subtask plan must be **self-contained** — an agent should be able to execute it without needing to read the global plan.\n5. **Update task.md**: Set `current_phase` to `phase-3-planning`.\n6. **Present Planning (Gate)**: You MUST include artifact reference and gate components in `ui_intent`:\n\n\"ui_intent\": [\n  {\n    \"type\": \"artifact\",\n    \"id\": \"planning-doc\",\n    \"label\": \"planning-v1.md\",\n    \"path\": \".agent/artifacts/<TASK>/architect/planning-v1.md\",\n    \"content\": \"Global implementation plan\"\n  },\n  {\n    \"type\": \"artifact\",\n    \"id\": \"subtask-plans\",\n    \"label\": \"architect/\",\n    \"path\": \".agent/artifacts/<TASK>/architect/\",\n    \"content\": \"Subtask plans (ST-N-*.md)\"\n  },\n  {\n    \"type\": \"gate\",\n    \"id\": \"gate-eval\",\n    \"label\": \"Implementation Plan — Review and Approve\",\n    \"options\": [\"SI\", \"NO\"]\n  }\n]\n7. **On revision**: If gate is rejected, create `planning-v2.md` (increment version). Never overwrite previous versions.",
-        "pass": "- Update `task.md`: set `phase-3-planning` status to `completed`, `current_phase` to `phase-4-implementation`.\n- Advance to implementation phase.",
-        "fail": "- Planning incomplete or rejected.\n- Address developer feedback and re-present with incremented version."
+        "objective": "Validate the candidate artifact exists and is valid. Create the task folder using the candidate's timestamp and title. Generate `task.md` as the central task state tracker. This phase serves as the entry point for the lifecycle.",
+        "instructions": "1. **Validate candidate artifact**: Confirm the latest `<TS>-candidate.md` exists in `.agent/artifacts/candidate/` with: language, task title, task objective, title-short, and 3-7 acceptance criteria.\n2. **Create task folder**: Create `.agent/artifacts/<TS>-<title-short>/` using the timestamp and title-short from the candidate.\n3. **Create task.md**: Generate `task.md` inside the task folder with:\n   - Task identification (id, title, description, created_at)\n   - Acceptance criteria (copied from candidate, all status: `pending`)\n   - Lifecycle state (current_phase: `phase-1-init`, phase-1-init status: `in_progress`)\n   - Empty subtasks list (populated in Phase 3)\n4. **Present confirmation gate**: Present a brief summary using `ui_intent`:\n\n\"ui_intent\": [\n  {\n    \"type\": \"artifact\",\n    \"id\": \"task-doc\",\n    \"label\": \"task.md\",\n    \"path\": \".agent/artifacts/<TS>-<title-short>/task.md\",\n    \"content\": \"Task definition and lifecycle state\"\n  },\n  {\n    \"type\": \"gate\",\n    \"id\": \"gate-eval\",\n    \"label\": \"Task Setup Confirmation\",\n    \"options\": [\"SI\", \"NO\"]\n  }\n]\n5. **Update task.md on Pass**: Set `phase-1-init` status to `completed` and `current_phase` to `phase-2-analysis`.",
+        "pass": "- Advance to analysis phase.",
+        "fail": "- Report missing or incomplete candidate artifact."
       },
       "workflow": {
-        "id": "workflow.tasklifecycle.03-planning",
-        "description": "Phase 3: Implementation plan with subtask delegation to specialized agents.",
+        "id": "workflow.tasklifecycle.01-init",
+        "description": "Phase 1: Task setup with acceptance criteria already defined from init workflow.",
         "owner": "architect-agent",
         "type": "static",
         "constitutions": [
-          ".agent/artifacts/<TASK>/architect/analysis-v1.md",
-          ".agent/rules/constitution/architecture.md"
+          ".agent/artifacts/candidate/<TS>-candidate.md"
         ],
         "gate": {
           "requirements": [
-            "`planning-v1.md` artifact created with complete strategy overview.",
-            "One subtask plan created per subtask from the analysis.",
-            "Each subtask plan has: objective, acceptance criteria, agent assignment, and workflow.",
-            "Developer has approved the plan via gate."
+            "Task folder created successfully.",
+            "`task.md` exists with complete task definition and lifecycle state."
           ],
           "failStep": null
         },
         "pass": {
           "nextTarget": null,
           "actions": [
-            "Update `task.md`: set `phase-3-planning` status to `completed`, `current_phase` to `phase-4-implementation`.",
-            "Advance to implementation phase."
+            "Advance to analysis phase."
           ],
-          "rawContent": "- Update `task.md`: set `phase-3-planning` status to `completed`, `current_phase` to `phase-4-implementation`.\n- Advance to implementation phase."
+          "rawContent": "- Advance to analysis phase."
         },
         "fail": {
           "behavior": "block",
           "cases": [
-            "Planning incomplete or rejected.",
-            "Address developer feedback and re-present with incremented version."
+            "Report missing or incomplete candidate artifact."
           ],
-          "rawContent": "- Planning incomplete or rejected.\n- Address developer feedback and re-present with incremented version."
+          "rawContent": "- Report missing or incomplete candidate artifact."
         },
-        "rawContent": "---\nid: workflow.tasklifecycle.03-planning\nname: Planning\ndescription: \"Phase 3: Implementation plan with subtask delegation to specialized agents.\"\nowner: architect-agent\ntrigger: [\"phase-03\", \"planning\"]\ntype: static\nobjective: \"Create a detailed implementation plan with subtask delegation, agent assignment, and execution order.\"\ncontext:\n  - .agent/artifacts/<TASK>/architect/analysis-v1.md\n  - .agent/rules/constitution/architecture.md\ninput:\n  - .agent/artifacts/<TASK>/architect/analysis-v1.md\noutput:\n  - .agent/artifacts/<TASK>/architect/planning-v1.md\n---\n\n# WORKFLOW: tasklifecycle.03-planning\n\n## Input\n- Approved analysis: `.agent/artifacts/<TASK>/architect/analysis-v1.md`\n  - Including the Subtask Identification (§6) with formal subtask list.\n\n## Output\n- Artifact: `.agent/artifacts/<TASK>/architect/planning-v1.md` (global plan)\n- Artifacts: `.agent/artifacts/<TASK>/architect/ST-N-<name>.md` (one subtask plan per subtask)\n\n## Objective\nDefine the implementation plan based on the approved analysis. Create a global strategy overview and **individual subtask plans** for each subtask identified in the analysis. Each subtask plan details its scope, acceptance criteria, agent assignment, workflow to invoke, and optional workflows.\n\n## Instructions\n1. **Activate architect-agent** (the UI handles identification — do NOT prefix responses).\n2. **Read analysis subtasks**: Load the subtask list from analysis §6.\n3. **Create global plan**: Create `planning-v1.md` in `<TASK>/architect/` with: strategy overview, execution order, agent assignments, and estimated effort.\n4. **Create subtask plans (MANDATORY)**: For each subtask in the analysis:\n   - Create `.agent/artifacts/<TASK>/architect/ST-N-<name>.md` using `templates.subtask_plan`.\n   - Fill in: objective, affected files, subtask-specific acceptance criteria, technical specifications, workflow assignment, and optional workflows.\n   - Each subtask plan must be **self-contained** — an agent should be able to execute it without needing to read the global plan.\n5. **Update task.md**: Set `current_phase` to `phase-3-planning`.\n6. **Present Planning (Gate)**: You MUST include artifact reference and gate components in `ui_intent`:\n\n\"ui_intent\": [\n  {\n    \"type\": \"artifact\",\n    \"id\": \"planning-doc\",\n    \"label\": \"planning-v1.md\",\n    \"path\": \".agent/artifacts/<TASK>/architect/planning-v1.md\",\n    \"content\": \"Global implementation plan\"\n  },\n  {\n    \"type\": \"artifact\",\n    \"id\": \"subtask-plans\",\n    \"label\": \"architect/\",\n    \"path\": \".agent/artifacts/<TASK>/architect/\",\n    \"content\": \"Subtask plans (ST-N-*.md)\"\n  },\n  {\n    \"type\": \"gate\",\n    \"id\": \"gate-eval\",\n    \"label\": \"Implementation Plan — Review and Approve\",\n    \"options\": [\"SI\", \"NO\"]\n  }\n]\n7. **On revision**: If gate is rejected, create `planning-v2.md` (increment version). Never overwrite previous versions.\n\n## Gate\n1. `planning-v1.md` artifact created with complete strategy overview.\n2. One subtask plan created per subtask from the analysis.\n3. Each subtask plan has: objective, acceptance criteria, agent assignment, and workflow.\n4. Developer has approved the plan via gate.\n\n## Pass\n- Update `task.md`: set `phase-3-planning` status to `completed`, `current_phase` to `phase-4-implementation`.\n- Advance to implementation phase.\n\n## Fail\n- Planning incomplete or rejected.\n- Address developer feedback and re-present with incremented version.",
+        "rawContent": "---\nid: workflow.tasklifecycle.01-init\nname: Init Phase\ndescription: \"Phase 1: Task setup with acceptance criteria already defined from init workflow.\"\nowner: architect-agent\ntrigger: [\"phase-01\", \"init-phase\"]\ntype: static\nobjective: \"Validate candidate artifact exists, create task folder and task.md, then transition to analysis.\"\ncontext:\n  - .agent/artifacts/candidate/<TS>-candidate.md\ninput:\n  - .agent/artifacts/candidate/<TS>-candidate.md\noutput:\n  - .agent/artifacts/<TASK>/task.md\n---\n\n# WORKFLOW: tasklifecycle.01-init\n\n## Input\n- Candidate artifact created and approved by the init workflow.\n\n## Output\n- Task folder: `.agent/artifacts/<TS>-<title-short>/`\n- Central task file: `.agent/artifacts/<TS>-<title-short>/task.md`\n\n## Objective\nValidate the candidate artifact exists and is valid. Create the task folder using the candidate's timestamp and title. Generate `task.md` as the central task state tracker. This phase serves as the entry point for the lifecycle.\n\n## Instructions\n1. **Validate candidate artifact**: Confirm the latest `<TS>-candidate.md` exists in `.agent/artifacts/candidate/` with: language, task title, task objective, title-short, and 3-7 acceptance criteria.\n2. **Create task folder**: Create `.agent/artifacts/<TS>-<title-short>/` using the timestamp and title-short from the candidate.\n3. **Create task.md**: Generate `task.md` inside the task folder with:\n   - Task identification (id, title, description, created_at)\n   - Acceptance criteria (copied from candidate, all status: `pending`)\n   - Lifecycle state (current_phase: `phase-1-init`, phase-1-init status: `in_progress`)\n   - Empty subtasks list (populated in Phase 3)\n4. **Present confirmation gate**: Present a brief summary using `ui_intent`:\n\n\"ui_intent\": [\n  {\n    \"type\": \"artifact\",\n    \"id\": \"task-doc\",\n    \"label\": \"task.md\",\n    \"path\": \".agent/artifacts/<TS>-<title-short>/task.md\",\n    \"content\": \"Task definition and lifecycle state\"\n  },\n  {\n    \"type\": \"gate\",\n    \"id\": \"gate-eval\",\n    \"label\": \"Task Setup Confirmation\",\n    \"options\": [\"SI\", \"NO\"]\n  }\n]\n5. **Update task.md on Pass**: Set `phase-1-init` status to `completed` and `current_phase` to `phase-2-analysis`.\n\n## Gate\n1. Task folder created successfully.\n2. `task.md` exists with complete task definition and lifecycle state.\n\n## Pass\n- Advance to analysis phase.\n\n## Fail\n- Report missing or incomplete candidate artifact.",
         "sections": {
           "inputs": [
-            "Approved analysis: `.agent/artifacts/<TASK>/architect/analysis-v1.md`",
-            "Including the Subtask Identification (§6) with formal subtask list."
+            "Candidate artifact created and approved by the init workflow."
           ],
           "outputs": [
-            "Artifact: `.agent/artifacts/<TASK>/architect/planning-v1.md` (global plan)",
-            "Artifacts: `.agent/artifacts/<TASK>/architect/ST-N-<name>.md` (one subtask plan per subtask)"
+            "Task folder: `.agent/artifacts/<TS>-<title-short>/`",
+            "Central task file: `.agent/artifacts/<TS>-<title-short>/task.md`"
           ],
-          "objective": "Define the implementation plan based on the approved analysis. Create a global strategy overview and **individual subtask plans** for each subtask identified in the analysis. Each subtask plan details its scope, acceptance criteria, agent assignment, workflow to invoke, and optional workflows.",
-          "instructions": "1. **Activate architect-agent** (the UI handles identification — do NOT prefix responses).\n2. **Read analysis subtasks**: Load the subtask list from analysis §6.\n3. **Create global plan**: Create `planning-v1.md` in `<TASK>/architect/` with: strategy overview, execution order, agent assignments, and estimated effort.\n4. **Create subtask plans (MANDATORY)**: For each subtask in the analysis:\n   - Create `.agent/artifacts/<TASK>/architect/ST-N-<name>.md` using `templates.subtask_plan`.\n   - Fill in: objective, affected files, subtask-specific acceptance criteria, technical specifications, workflow assignment, and optional workflows.\n   - Each subtask plan must be **self-contained** — an agent should be able to execute it without needing to read the global plan.\n5. **Update task.md**: Set `current_phase` to `phase-3-planning`.\n6. **Present Planning (Gate)**: You MUST include artifact reference and gate components in `ui_intent`:\n\n\"ui_intent\": [\n  {\n    \"type\": \"artifact\",\n    \"id\": \"planning-doc\",\n    \"label\": \"planning-v1.md\",\n    \"path\": \".agent/artifacts/<TASK>/architect/planning-v1.md\",\n    \"content\": \"Global implementation plan\"\n  },\n  {\n    \"type\": \"artifact\",\n    \"id\": \"subtask-plans\",\n    \"label\": \"architect/\",\n    \"path\": \".agent/artifacts/<TASK>/architect/\",\n    \"content\": \"Subtask plans (ST-N-*.md)\"\n  },\n  {\n    \"type\": \"gate\",\n    \"id\": \"gate-eval\",\n    \"label\": \"Implementation Plan — Review and Approve\",\n    \"options\": [\"SI\", \"NO\"]\n  }\n]\n7. **On revision**: If gate is rejected, create `planning-v2.md` (increment version). Never overwrite previous versions.",
-          "pass": "- Update `task.md`: set `phase-3-planning` status to `completed`, `current_phase` to `phase-4-implementation`.\n- Advance to implementation phase.",
-          "fail": "- Planning incomplete or rejected.\n- Address developer feedback and re-present with incremented version."
+          "objective": "Validate the candidate artifact exists and is valid. Create the task folder using the candidate's timestamp and title. Generate `task.md` as the central task state tracker. This phase serves as the entry point for the lifecycle.",
+          "instructions": "1. **Validate candidate artifact**: Confirm the latest `<TS>-candidate.md` exists in `.agent/artifacts/candidate/` with: language, task title, task objective, title-short, and 3-7 acceptance criteria.\n2. **Create task folder**: Create `.agent/artifacts/<TS>-<title-short>/` using the timestamp and title-short from the candidate.\n3. **Create task.md**: Generate `task.md` inside the task folder with:\n   - Task identification (id, title, description, created_at)\n   - Acceptance criteria (copied from candidate, all status: `pending`)\n   - Lifecycle state (current_phase: `phase-1-init`, phase-1-init status: `in_progress`)\n   - Empty subtasks list (populated in Phase 3)\n4. **Present confirmation gate**: Present a brief summary using `ui_intent`:\n\n\"ui_intent\": [\n  {\n    \"type\": \"artifact\",\n    \"id\": \"task-doc\",\n    \"label\": \"task.md\",\n    \"path\": \".agent/artifacts/<TS>-<title-short>/task.md\",\n    \"content\": \"Task definition and lifecycle state\"\n  },\n  {\n    \"type\": \"gate\",\n    \"id\": \"gate-eval\",\n    \"label\": \"Task Setup Confirmation\",\n    \"options\": [\"SI\", \"NO\"]\n  }\n]\n5. **Update task.md on Pass**: Set `phase-1-init` status to `completed` and `current_phase` to `phase-2-analysis`.",
+          "pass": "- Advance to analysis phase.",
+          "fail": "- Report missing or incomplete candidate artifact."
+        }
+      }
+    },
+    "605f23f4-5098-4f2d-a5b7-ed76ab8b0e5a": {
+      "taskId": "605f23f4-5098-4f2d-a5b7-ed76ab8b0e5a",
+      "currentPhase": "workflow.init",
+      "currentPhaseId": "workflow.init",
+      "currentWorkflowId": "workflow.init",
+      "isLifecycle": false,
+      "status": "completed",
+      "gateResponses": {},
+      "startedAt": "2026-02-28T20:51:56.404Z",
+      "updatedAt": "2026-02-28T20:52:43.275Z",
+      "steps": [
+        {
+          "id": "1",
+          "label": "**Generate timestamp**: Determine `<TS>` as the current date in `YYYYMMDD` format.",
+          "status": "active"
+        },
+        {
+          "id": "2",
+          "label": "**Welcome & select language** _(use routing model)_: Present a welcome message followed by the language choice. No other text. Always in English:",
+          "status": "pending"
+        },
+        {
+          "id": "3",
+          "label": "**Define task (in selected language)**: Present the task definition inputs in the selected language using the JSON `ui_intent` array:",
+          "status": "pending"
+        },
+        {
+          "id": "4",
+          "label": "**Generate Dynamic Acceptance Questions (in selected language)**: After receiving answers, analyze the task title and objective in the context of the project architecture. Generate between **3 and 7 contextually relevant questions** about acceptance criteria — the number depends on task complexity. Present ALL questions in a single response using `ui_intent` of type `input`. Questions should cover success criteria, scope, affected modules, edge cases, testing, or performance — chosen dynamically based on the task.",
+          "status": "pending"
+        },
+        {
+          "id": "5",
+          "label": "**Create candidate artifact and present Gate**: Using all answers, use the `writeFile` tool to create the candidate at `.agent/artifacts/candidate/<TS>-candidate.md` with the following structure:",
+          "status": "pending"
+        }
+      ],
+      "workflow": {
+        "id": "workflow.init",
+        "description": "Initialize session: define language, task, and acceptance criteria in a single flow.",
+        "owner": "architect-agent",
+        "type": "static",
+        "constitutions": [
+          ".agent/rules/constitution/architecture.md"
+        ],
+        "gate": {
+          "requirements": [
+            "Conversation language defined and confirmed.",
+            "Task title and objective defined.",
+            "Acceptance criteria questions answered (3-7).",
+            "Candidate artifact created with all information.",
+            "Configuration gate approved by developer."
+          ],
+          "failStep": null
+        },
+        "pass": {
+          "nextTarget": "tasklifecycle",
+          "actions": [
+            "Create the task folder: `.agent/artifacts/<TS>-<title-short>/`",
+            "Create `.agent/artifacts/<TS>-<title-short>/task.md` using the candidate data and lifecycle template.",
+            "Launch the unified lifecycle: `workflows.tasklifecycle`"
+          ],
+          "rawContent": "- Create the task folder: `.agent/artifacts/<TS>-<title-short>/`\n- Create `.agent/artifacts/<TS>-<title-short>/task.md` using the candidate data and lifecycle template.\n- Launch the unified lifecycle: `workflows.tasklifecycle`"
+        },
+        "fail": {
+          "behavior": "block",
+          "cases": [
+            "Explain which requirement failed.",
+            "Request the minimum necessary correction.",
+            "Do not launch the lifecycle."
+          ],
+          "rawContent": "- Explain which requirement failed.\n- Request the minimum necessary correction.\n- Do not launch the lifecycle."
+        },
+        "rawContent": "---\nid: workflow.init\nname: Init\ndescription: \"Initialize session: define language, task, and acceptance criteria in a single flow.\"\nowner: architect-agent\ntrigger: [\"init\", \"/init\", \"/agentic-init\"]\ntype: static\nobjective: \"Set up the agentic session with language, task definition, and verifiable acceptance criteria.\"\ncontext:\n  - .agent/rules/constitution/architecture.md\ninput: []\noutput:\n  - .agent/artifacts/candidate/<TS>-candidate.md\n  - .agent/artifacts/<TS>-<title-short>/task.md\npass:\n  nextTarget: tasklifecycle\n---\n\n# WORKFLOW: init\n\n## Input\n- Developer command: `/init`\n\n## Output\n- Artifact: `.agent/artifacts/candidate/<TS>-candidate.md` (language, task, and acceptance criteria)\n- Task folder: `.agent/artifacts/<TS>-<title-short>/`\n- Central task file: `.agent/artifacts/<TS>-<title-short>/task.md`\n- `<TS>` = current date in `YYYYMMDD` format (e.g., `20260226`)\n\n## Objective\nInitialize the agentic session: activate architect-agent, confirm conversation language, define the task, and establish verifiable acceptance criteria — all in a single streamlined flow. Create a single candidate artifact that consolidates everything.\n\n## Instructions\n1. **Generate timestamp**: Determine `<TS>` as the current date in `YYYYMMDD` format.\n2. **Welcome & select language** _(use routing model)_: Present a welcome message followed by the language choice. No other text. Always in English:\n\n\"ui_intent\": [\n  {\n    \"type\": \"choice\",\n    \"id\": \"language\",\n    \"label\": \"Language Selection\",\n    \"options\": [\"Español\", \"English\"]\n  }\n]\n   - Wait for response.\n\n> [!IMPORTANT]\n> **Language Rule (PERMANENT)**: Once the language is selected, **ALL subsequent content MUST be in that language** — this includes: dialog, questions, acceptance criteria, artifact content, gate descriptions, reports, analysis, planning, subtask plans, agent tasks, and results. This applies to **every phase of the lifecycle**, not just the init. The `language` field is persisted in `task.md` and all agents must respect it.\n\n3. **Define task (in selected language)**: Present the task definition inputs in the selected language using the JSON `ui_intent` array:\n   - type: \"input\", id: \"task-title\", label: \"[Task title — short, descriptive]\"\n   - type: \"input\", id: \"task-objective\", label: \"[Task objective — clear and verifiable]\"\n4. **Generate Dynamic Acceptance Questions (in selected language)**: After receiving answers, analyze the task title and objective in the context of the project architecture. Generate between **3 and 7 contextually relevant questions** about acceptance criteria — the number depends on task complexity. Present ALL questions in a single response using `ui_intent` of type `input`. Questions should cover success criteria, scope, affected modules, edge cases, testing, or performance — chosen dynamically based on the task.\n5. **Create candidate artifact and present Gate**: Using all answers, use the `writeFile` tool to create the candidate at `.agent/artifacts/candidate/<TS>-candidate.md` with the following structure:\n   - **Language**: selected language\n   - **Task**: title and objective\n   - **Title Short**: kebab-case short title derived from the task title (e.g., `fix-login-flow`)\n   - **Acceptance Criteria**: all criteria derived from the developer's answers\n\n   ⚠️ You MUST use the `writeFile` tool to create the file with the FULL content. Do NOT rely on the `ui_intent` content field for the file content — that field is only a short summary label for the UI card.\n\n   After creating the file via `writeFile`, present the gate for validation. Include an artifact reference component (pointing to the created file) followed by the gate component in `ui_intent`:\n   \n\"ui_intent\": [\n  {\n    \"type\": \"artifact\",\n    \"id\": \"init-doc\",\n    \"label\": \"<TS>-candidate.md\",\n    \"path\": \".agent/artifacts/candidate/<TS>-candidate.md\",\n    \"content\": \"Configuration summary\"\n  },\n  {\n    \"type\": \"gate\",\n    \"id\": \"gate-eval\",\n    \"label\": \"Task Initialization — Review and Approve\",\n    \"options\": [\"SI\", \"NO\"]\n  }\n]\n\n   The artifact block enables a \"Review\" button so the developer can open and inspect the document before approving. This is MANDATORY.\n\n## Gate\n1. Conversation language defined and confirmed.\n2. Task title and objective defined.\n3. Acceptance criteria questions answered (3-7).\n4. Candidate artifact created with all information.\n5. Configuration gate approved by developer.\n\n## Pass\n- Create the task folder: `.agent/artifacts/<TS>-<title-short>/`\n- Create `.agent/artifacts/<TS>-<title-short>/task.md` using the candidate data and lifecycle template.\n- Launch the unified lifecycle: `workflows.tasklifecycle`\n\n## Fail\n- Explain which requirement failed.\n- Request the minimum necessary correction.\n- Do not launch the lifecycle.\n",
+        "sections": {
+          "inputs": [
+            "Developer command: `/init`"
+          ],
+          "outputs": [
+            "Artifact: `.agent/artifacts/candidate/<TS>-candidate.md` (language, task, and acceptance criteria)",
+            "Task folder: `.agent/artifacts/<TS>-<title-short>/`",
+            "Central task file: `.agent/artifacts/<TS>-<title-short>/task.md`",
+            "`<TS>` = current date in `YYYYMMDD` format (e.g., `20260226`)"
+          ],
+          "objective": "Initialize the agentic session: activate architect-agent, confirm conversation language, define the task, and establish verifiable acceptance criteria — all in a single streamlined flow. Create a single candidate artifact that consolidates everything.",
+          "instructions": "1. **Generate timestamp**: Determine `<TS>` as the current date in `YYYYMMDD` format.\n2. **Welcome & select language** _(use routing model)_: Present a welcome message followed by the language choice. No other text. Always in English:\n\n\"ui_intent\": [\n  {\n    \"type\": \"choice\",\n    \"id\": \"language\",\n    \"label\": \"Language Selection\",\n    \"options\": [\"Español\", \"English\"]\n  }\n]\n   - Wait for response.\n\n> [!IMPORTANT]\n> **Language Rule (PERMANENT)**: Once the language is selected, **ALL subsequent content MUST be in that language** — this includes: dialog, questions, acceptance criteria, artifact content, gate descriptions, reports, analysis, planning, subtask plans, agent tasks, and results. This applies to **every phase of the lifecycle**, not just the init. The `language` field is persisted in `task.md` and all agents must respect it.\n\n3. **Define task (in selected language)**: Present the task definition inputs in the selected language using the JSON `ui_intent` array:\n   - type: \"input\", id: \"task-title\", label: \"[Task title — short, descriptive]\"\n   - type: \"input\", id: \"task-objective\", label: \"[Task objective — clear and verifiable]\"\n4. **Generate Dynamic Acceptance Questions (in selected language)**: After receiving answers, analyze the task title and objective in the context of the project architecture. Generate between **3 and 7 contextually relevant questions** about acceptance criteria — the number depends on task complexity. Present ALL questions in a single response using `ui_intent` of type `input`. Questions should cover success criteria, scope, affected modules, edge cases, testing, or performance — chosen dynamically based on the task.\n5. **Create candidate artifact and present Gate**: Using all answers, use the `writeFile` tool to create the candidate at `.agent/artifacts/candidate/<TS>-candidate.md` with the following structure:\n   - **Language**: selected language\n   - **Task**: title and objective\n   - **Title Short**: kebab-case short title derived from the task title (e.g., `fix-login-flow`)\n   - **Acceptance Criteria**: all criteria derived from the developer's answers\n\n   ⚠️ You MUST use the `writeFile` tool to create the file with the FULL content. Do NOT rely on the `ui_intent` content field for the file content — that field is only a short summary label for the UI card.\n\n   After creating the file via `writeFile`, present the gate for validation. Include an artifact reference component (pointing to the created file) followed by the gate component in `ui_intent`:\n   \n\"ui_intent\": [\n  {\n    \"type\": \"artifact\",\n    \"id\": \"init-doc\",\n    \"label\": \"<TS>-candidate.md\",\n    \"path\": \".agent/artifacts/candidate/<TS>-candidate.md\",\n    \"content\": \"Configuration summary\"\n  },\n  {\n    \"type\": \"gate\",\n    \"id\": \"gate-eval\",\n    \"label\": \"Task Initialization — Review and Approve\",\n    \"options\": [\"SI\", \"NO\"]\n  }\n]\n\n   The artifact block enables a \"Review\" button so the developer can open and inspect the document before approving. This is MANDATORY.",
+          "pass": "- Create the task folder: `.agent/artifacts/<TS>-<title-short>/`\n- Create `.agent/artifacts/<TS>-<title-short>/task.md` using the candidate data and lifecycle template.\n- Launch the unified lifecycle: `workflows.tasklifecycle`",
+          "fail": "- Explain which requirement failed.\n- Request the minimum necessary correction.\n- Do not launch the lifecycle."
         }
       }
     }
   },
-  "lastUpdated": "2026-02-28T14:21:11.556Z"
+  "lastUpdated": "2026-02-28T20:52:43.319Z"
 }

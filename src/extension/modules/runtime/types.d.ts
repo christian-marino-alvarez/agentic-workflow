@@ -207,3 +207,65 @@ export interface WorkflowStateDB {
   states: Record<string, WorkflowEngineState>;
   lastUpdated: string;
 }
+
+// ─── Runtime-Centric Turn Types ───────────────────────────────
+
+/**
+ * Input for prepareTurn: Chat sends user text + history to Runtime.
+ */
+export interface PrepareTurnInput {
+  text: string;
+  history: Array<{ role: 'user' | 'assistant'; content: string }>;
+  agentRole: string;
+  language: string | null;
+}
+
+/**
+ * What Runtime gives back to Chat so Chat can send to LLM.
+ * Contains the fully composed prompt with all contexts loaded.
+ */
+export interface TurnPayload {
+  /** System prompt: persona + constitutions + workflow instructions */
+  systemPrompt: string;
+  /** Conversation messages ready for LLM API */
+  messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>;
+  /** Current workflow context for intent resolution */
+  workflowContext: {
+    phaseId: string;
+    phaseName: string;
+    owner: string;
+    status: string;
+    gate: GateDef | null;
+  };
+  /** Metadata for routing */
+  taskType: 'routing' | 'default';
+}
+
+/**
+ * A2UI block returned from Runtime after processing LLM response.
+ */
+export interface ResolvedA2UIBlock {
+  type: string;
+  id: string;
+  label?: string;
+  path?: string;
+  content?: string;
+  options?: string[];
+  preselected?: number;
+}
+
+/**
+ * Result of Runtime processing the LLM response.
+ * Chat just renders this directly.
+ */
+export interface ProcessedTurnResult {
+  /** Text to display in chat bubble */
+  displayText: string;
+  /** A2UI blocks to render (artifact cards, gates, etc.) */
+  a2ui: ResolvedA2UIBlock[];
+  /** Updated machine state */
+  machineState: WorkflowEngineState | null;
+  /** Messages to send back to Runtime (workflow transitions, etc.) */
+  pendingActions: Array<{ type: string; data?: any }>;
+}
+

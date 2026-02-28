@@ -20,7 +20,7 @@ export class AppBackground extends Background {
   constructor(context: vscode.ExtensionContext, appVersion: string) {
     super(NAME, context.extensionUri, `${NAME}-view`);
     this.appVersion = appVersion;
-    this.log('Initialized');
+    this.logTagged('#system', 'Initialized');
 
     // Initialize domain-specific backgrounds (instantiation registers them on the global bus)
     this.settingsBg = new SettingsBackground(context);
@@ -29,11 +29,11 @@ export class AppBackground extends Background {
 
     // --- Sidecar ---
     if (process.env.VSCODE_TEST_MODE === 'true') {
-      this.log('TEST MODE: Skipping sidecar spawn');
+      this.logTagged('#system', 'TEST MODE: Skipping sidecar spawn');
     } else {
       const scriptPath = path.join(context.extensionUri.fsPath, 'dist/extension/modules/app/backend/index.js');
       this.runBackend(scriptPath, 3000).catch(err => {
-        this.log('FATAL: Failed to run backend sidecar', err);
+        this.logTagged('#system', 'FATAL: Failed to run backend sidecar', err);
       });
     }
   }

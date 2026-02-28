@@ -114,7 +114,7 @@ export class AppView extends View {
     const { command, data } = message.payload || {};
     switch (command) {
       case 'ping::response':
-        this.log('Ping response received:', data);
+        this.logTagged('#system', 'Ping response received:', data);
         break;
     }
   }

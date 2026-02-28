@@ -32,7 +32,7 @@ export class LLMBackground extends Background {
       const response = await this.sendRequestToSidecar(message.payload.data);
       return response;
     } catch (error: any) {
-      this.log('Failed to process LLM request', error);
+      this.logTagged('#llm', 'Failed to process LLM request', error);
       return { error: error.message };
     }
   }

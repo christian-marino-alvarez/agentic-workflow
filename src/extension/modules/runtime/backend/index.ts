@@ -32,13 +32,12 @@ export class RuntimeServer extends AbstractBackend {
       RPC_COMMANDS.WORKFLOW_RELOAD,
       RPC_COMMANDS.WORKFLOW_AGENTS,
       RPC_COMMANDS.WORKFLOW_AGENTS_REFRESH,
-      RPC_COMMANDS.WORKFLOW_SWITCH_STRATEGY,
+      RPC_COMMANDS.WORKFLOW_RESET,
+      RPC_COMMANDS.WORKFLOW_SWITCH_TASK,
     ]);
 
     this.setupEngineNotifications();
   }
-
-
 
   private setupEngineNotifications(): void {
     for (const eventType of Object.values(LISTENER_EVENTS)) {
@@ -47,8 +46,6 @@ export class RuntimeServer extends AbstractBackend {
       });
     }
   }
-
-
 
   private async handleSystemCommand(command: string, data: any): Promise<any> {
     if (command === RPC_COMMANDS.STATUS) {
@@ -76,17 +73,17 @@ export class RuntimeServer extends AbstractBackend {
       }
       case RPC_COMMANDS.WORKFLOW_START: {
         const def = await this.workflowEngine.start(data);
-        return { started: true, workflowId: def.id, owner: def.owner };
+        return { started: true, workflowId: def.id, owner: def.owner, workflowState: this.workflowEngine.getState() };
       }
 
       case RPC_COMMANDS.WORKFLOW_STEP_COMPLETE:
         this.workflowEngine.stepComplete();
-        return { completed: true };
+        return { completed: true, workflowState: this.workflowEngine.getState() };
 
       case RPC_COMMANDS.WORKFLOW_GATE_RESPOND:
         // Engine internally detects lifecycle vs simple and dispatches the correct event
         this.workflowEngine.respondToGate(data);
-        return { responded: true };
+        return { responded: true, workflowState: this.workflowEngine.getState() };
 
       case RPC_COMMANDS.WORKFLOW_STATUS:
         return this.workflowEngine.getState();
@@ -102,10 +99,16 @@ export class RuntimeServer extends AbstractBackend {
         await this.workflowEngine.refreshAgentRegistry();
         return { refreshed: true, count: this.workflowEngine.getAgents().length };
 
-      case RPC_COMMANDS.WORKFLOW_SWITCH_STRATEGY: {
-        const newDef = await this.workflowEngine.switchStrategy(data.strategy);
-        return { switched: true, strategy: data.strategy, workflowId: newDef.id, owner: newDef.owner };
+      case RPC_COMMANDS.WORKFLOW_RESET:
+        await this.workflowEngine.reset();
+        return { reset: true, workflowState: this.workflowEngine.getState() };
+
+      case RPC_COMMANDS.WORKFLOW_SWITCH_TASK: {
+        const switchState = await this.workflowEngine.switchToTask(data.taskId);
+        return { workflowState: switchState };
       }
+
+
 
       default:
         return null;
@@ -116,12 +119,12 @@ export class RuntimeServer extends AbstractBackend {
 
   public override async start(): Promise<void> {
     await this.workflowEngine.initialize();
-    console.log(`[${NAME}] Engine initialized`);
+    console.log(`[#workflow] [${NAME}] Engine initialized`);
     await super.start();
   }
 
   protected async listen(command: string, data: any): Promise<any> {
-    console.log(`[${NAME}] Command: ${command}`);
+    console.log(`[#workflow] [${NAME}] Command: ${command}`);
 
     const systemResult = await this.handleSystemCommand(command, data);
     if (systemResult !== null) {

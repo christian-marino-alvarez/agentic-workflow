@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Extensio Activity Bar Final</title>
+  <style>
+    body {
+      background-color: #1e1e1e;
+      color: #d4d4d4;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      gap: 40px;
+    }
+
+    .header {
+      text-align: center;
+    }
+
+    .header h1 {
+      color: #fff;
+      margin-bottom: 5px;
+    }
+
+    .preview-grid {
+      display: flex;
+      gap: 50px;
+    }
+
+    .logo-card {
+      background-color: #252526;
+      border: 1px solid #3c3c3c;
+      border-radius: 12px;
+      padding: 40px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Activity Bar Simulator */
+    .preview-box {
+      background-color: #333333;
+      /* Activity bar active background */
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+
+    .preview-box svg {
+      color: #ffffff;
+      /* Active icon in dark mode */
+      width: 32px;
+      height: 32px;
+    }
+
+    /* Large View Simulator */
+    .large-box {
+      margin-bottom: 20px;
+    }
+
+    .large-box svg {
+      color: #007acc;
+      /* VS Code Blue for large marketing view */
+      width: 160px;
+      height: 160px;
+    }
+
+    .logo-name {
+      font-size: 16px;
+      font-weight: 500;
+      color: #fff;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <h1>Official Extensio Logo (The G1 Antigravity)</h1>
+  </div>
+
+  <div class="preview-grid">
+    <div class="logo-card">
+      <div class="large-box">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+          <g transform="translate(64, 64)">
+            <!-- Background gravity well / crescent -->
+            <path d="M -16,-52 C -40,-52 -56,-24 -56,0 C -56,24 -40,52 -16,52" fill="none" stroke="currentColor"
+              stroke-width="12" stroke-linecap="round" />
+            <!-- Levitating horizontals to form an E -->
+            <path d="M -24,-30 L 30,-30" stroke="currentColor" stroke-width="20" stroke-linecap="round" />
+            <path d="M -30,0 L 20,0" stroke="currentColor" stroke-width="20" stroke-linecap="round" />
+            <path d="M -24,30 L 40,30" stroke="currentColor" stroke-width="20" stroke-linecap="round" />
+          </g>
+        </svg>
+      </div>
+      <div class="logo-name">Full Vector (Blue)</div>
+    </div>
+
+    <div class="logo-card">
+      <div class="preview-box">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+          <g transform="translate(64, 64)">
+            <!-- Background gravity well / crescent -->
+            <path d="M -16,-52 C -40,-52 -56,-24 -56,0 C -56,24 -40,52 -16,52" fill="none" stroke="currentColor"
+              stroke-width="12" stroke-linecap="round" />
+            <!-- Levitating horizontals to form an E -->
+            <path d="M -24,-30 L 30,-30" stroke="currentColor" stroke-width="20" stroke-linecap="round" />
+            <path d="M -30,0 L 20,0" stroke="currentColor" stroke-width="20" stroke-linecap="round" />
+            <path d="M -24,30 L 40,30" stroke="currentColor" stroke-width="20" stroke-linecap="round" />
+          </g>
+        </svg>
+      </div>
+      <div class="logo-name">Activity Bar Icon (White 24px)</div>
+    </div>
+  </div>
+</body>
+
+</html>

@@ -12,30 +12,9 @@ This document defines the non-negotiable rules of interaction and behavior for a
 
 ---
 
-## 1. MANDATORY IDENTIFICATION (PERMANENT - CRITICAL)
+## 1. AGENT IDENTIFICATION
 
-All agents **WITHOUT EXCEPTION** must identify themselves at the beginning of each response. It is strictly prohibited to issue any message, command, or report that does not begin with the assigned identity prefix.
-
-### Identification format:
-```
-<icon> **<agent-name>**: <message>
-```
-
-### Assigned icons:
-- 🏛️ **architect-agent**
-- 🛡️ **qa-agent**
-- 🔬 **researcher-agent**
-- 🤖 **neo-agent**
-- ⚙️ **devops-agent**
-- 🧠 **engine-agent**
-
-### Compatibility exception (PERMANENT)
-If the execution environment does not allow emoji or Markdown (for example, runtimes with strict plain text),
-the agent **MUST** use an alternative prefix on the first line:
-```
-[agent: <agent-name>] <message>
-```
-The exception only applies when the standard format is technically impossible.
+Agent identification is handled automatically by the chat UI — it displays the agent's name and icon in the message header. Agents **MUST NOT** prefix their responses with icons, names, or role titles. The response format is JSON, and any prefix text would break the structured output.
 
 ---
 
@@ -47,7 +26,6 @@ The exception only applies when the standard format is technically impossible.
 Protected files:
 - `.agent/rules/**/*.md` (Rules)
 - `.agent/workflows/**/*.md` (Workflows)
-- System indexes (`index.md`)
 
 ### 2.2 Prohibition for Operational Agents
 - ❌ **Prohibited**: `qa-agent` or `researcher-agent` modifying files in the `.agent/rules` or `.agent/workflows` folder.
@@ -70,12 +48,12 @@ Protected files:
 Each agent has authority limited exclusively to their defined domain. It is strictly prohibited for an agent to make changes to files or packages outside their jurisdiction.
 
 ### Domain limits:
-- 🏛️ **architect-agent**: Rules, workflows, and indexes. **NEVER implements functional code.**
+- 🏛️ **architect-agent**: Rules, workflows, and templates. **NEVER implements functional code.**
 - 🛡️ **qa-agent**: Limited to test code and validation. **NEVER implements production code.**
 - 🔬 **researcher-agent**: Limited to research, references, and analysis without code changes.
-- 🤖 **neo-agent**: Runtime and CLI implementation. Authorized to modify `src/runtime/**`, `src/cli/**`, `src/infrastructure/**`, and `bin/cli.js`. **DOES NOT** modify rules/workflows/indexes or `src/extension/**`.
-- ⚙️ **devops-agent**: Infrastructure and migrations. Authorized to modify `package.json`, `scripts/**`, and `src/agentic-system-structure/**`. **DOES NOT** modify rules, workflows, indexes, `src/**` (outside agentic-system-structure), or `dist/**`.
-- 🧠 **engine-agent**: Execution engine. Authorized to modify `src/engine/**`, `src/runtime/**`, `src/cli/**`, and `bin/cli.js`. **DOES NOT** modify rules, workflows, indexes, `src/extension/**`, or `dist/**`.
+- 🤖 **neo-agent**: Runtime and CLI implementation. Authorized to modify `src/runtime/**`, `src/cli/**`, `src/infrastructure/**`, and `bin/cli.js`. **DOES NOT** modify rules/workflows or `src/extension/**`.
+- ⚙️ **devops-agent**: Infrastructure and migrations. Authorized to modify `package.json`, `scripts/**`, and `src/agentic-system-structure/**`. **DOES NOT** modify rules, workflows, `src/**` (outside agentic-system-structure), or `dist/**`.
+- 🧠 **engine-agent**: Execution engine. Authorized to modify `src/engine/**`, `src/runtime/**`, `src/cli/**`, and `bin/cli.js`. **DOES NOT** modify rules, workflows, `src/extension/**`, or `dist/**`.
 
 ### 4.1 Workflow Ownership Rule (NEW - CRITICAL)
 - **No agent** can modify code if they are not the **OWNER** of the active workflow governing the current task.
@@ -91,8 +69,19 @@ If a domain (such as the CLI in `packages/cli`) does not have an assigned agent 
 
 Agents must avoid context loss by ensuring they:
 - Reference active subtasks.
-- Maintain traceability in `task.md`.
+- Maintain traceability via lifecycle artifacts.
 - Do not assume implicit states between turns.
+
+---
+
+## 5.1 LANGUAGE ENFORCEMENT (PERMANENT - CRITICAL)
+
+All agents **MUST** communicate and generate artifacts in the language specified in `task.md`.
+
+- The language is selected by the developer during the init workflow and persisted in `task.md` as the `language` field.
+- **ALL content** must respect this language: dialog, questions, artifact content, gate descriptions, reports, analysis, planning, subtask plans, agent tasks, and results.
+- **No exceptions**: Even if the agent's role definition is in a different language, the output must be in the task language.
+- If `task.md` is not yet created (pre-init), the agent follows the developer's conversation language.
 
 ---
 
@@ -185,7 +174,7 @@ To prevent unauthorized autonomy (gate omission), the following decision hierarc
 | **Constitutional (Rules)** | Proposal (Architect Only) | **YES (Always)** |
 
 ### 9.2 The Artifact as Physical Anchor (Guardrail)
-- The physical state of an approved artifact (e.g.: `brief.md` with `decision: SI`) is the **only enablement** for an agent to use tools in the next phase.
+- The physical state of an approved artifact (e.g.: `init.md` with `decision: SI`) is the **only enablement** for an agent to use tools in the next phase.
 - **Prohibition**: It is strictly prohibited for an agent to modify the approval state of an artifact they themselves have drafted without explicit developer feedback.
 
 ### 9.3 Invalidity by Omission

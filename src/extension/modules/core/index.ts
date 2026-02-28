@@ -4,7 +4,7 @@ import { Logger } from './logger.js';
 export * from './backend/index.js'; // Abstract Backend
 export * from './constants.js';
 export type { Message, MessageHandler, Payload, IMessageTransport } from './types.js';
-export { Logger } from './logger.js';
+export { Logger, LOG_TAGS } from './logger.js';
 export * from './messaging/index.js';
 export * from './messaging/types.js'; // Export Messaging Types
 export * from './background/index.js';
@@ -31,6 +31,7 @@ export abstract class App {
     // Explicit assignment for clarity
     this.context = context;
     Logger.init('Agentic Workflow');
+    Logger.registerFilterCommand(context);
   }
 
   /**

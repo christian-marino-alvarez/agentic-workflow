@@ -1,70 +1,102 @@
 import { z } from 'zod';
 
-// ─── UI Component Schema ───────────────────────────────────────────
+// ─── Intent Namespaces ─────────────────────────────────────────────
+
+/** The 4 intent namespaces. */
+export enum IntentType {
+  A2UI = 'A2UI',
+  WORKFLOW = 'WORKFLOW',
+  AGENT = 'AGENT',
+  SESSION = 'SESSION',
+}
+
+// ─── Intent Actions ────────────────────────────────────────────────
+
+/** All intent actions across namespaces. */
+export enum IntentAction {
+  // A2UI
+  SHOW = 'SHOW',
+  REQUEST = 'REQUEST',
+  // WORKFLOW
+  UPDATE = 'UPDATE',
+  START = 'START',
+  COMPLETE = 'COMPLETE',
+  // AGENT
+  DELEGATE = 'DELEGATE',
+  REPORT = 'REPORT',
+  // SESSION
+  SAVE = 'SAVE',
+  LOAD = 'LOAD',
+}
+
+// ─── Intent Components ─────────────────────────────────────────────
+
+/** All intent target components. */
+export enum IntentComponent {
+  // A2UI — SHOW
+  ARTIFACT = 'ARTIFACT',
+  RESULTS = 'RESULTS',
+  CHART = 'CHART',
+  ERROR = 'ERROR',
+  WARNING = 'WARNING',
+  INFO = 'INFO',
+  // A2UI — REQUEST
+  GATE = 'GATE',
+  CHOICE = 'CHOICE',
+  CONFIRM = 'CONFIRM',
+  INPUT = 'INPUT',
+  MULTI_SELECT = 'MULTI_SELECT',
+  // WORKFLOW
+  STATE = 'STATE',
+  PHASE = 'PHASE',
+  // AGENT
+  TASK = 'TASK',
+  USAGE = 'USAGE',
+  STATUS = 'STATUS',
+  // SESSION
+  CURRENT = 'CURRENT',
+  HISTORY = 'HISTORY',
+}
+
+// ─── Intent Schema ─────────────────────────────────────────────────
 
 /**
- * A single interactive UI component the LLM wants to present.
- * Replaces the legacy <a2ui> HTML tag approach with typed JSON.
+ * A single intent declared by the LLM.
+ * The LLM declares WHAT it wants; the Background resolves HOW.
+ *
+ * Example: { type: 'A2UI', action: 'SHOW', component: 'ARTIFACT' }
  */
-export const UIComponentSchema = z.object({
-  /** Component type */
-  type: z.enum(['choice', 'confirm', 'multi', 'gate', 'artifact', 'input']),
-  /** Unique identifier for this component */
-  id: z.string(),
-  /** User-facing label / question */
-  label: z.string(),
-  /** Selectable options (for choice/confirm/multi/gate) */
+export const IntentSchema = z.object({
+  /** Intent namespace */
+  type: z.nativeEnum(IntentType),
+  /** Action verb */
+  action: z.nativeEnum(IntentAction),
+  /** Target component */
+  component: z.nativeEnum(IntentComponent),
+  /** Optional: unique identifier for the UI element */
+  id: z.string().optional(),
+  /** Optional: user-facing label */
+  label: z.string().optional(),
+  /** Optional: selectable options (for CHOICE, MULTI_SELECT, GATE) */
   options: z.array(z.string()).optional(),
-  /** Index of pre-selected option (0-based) */
-  preselected: z.number().optional(),
-  /** Body content (for artifact type — markdown content) */
-  content: z.string().optional(),
-  /** File path (for artifact type — where to save) */
-  path: z.string().optional(),
 });
 
-export type UIComponent = z.infer<typeof UIComponentSchema>;
-
-// ─── Workflow State Schema ─────────────────────────────────────────
-
-/**
- * Structured workflow state reported by the LLM.
- * Replaces the legacy ```json:WORKFLOW_STATE``` code block approach.
- */
-export const WorkflowStateSchema = z.object({
-  /** Current lifecycle phase */
-  current_phase: z.string(),
-  /** Next expected phase (null if final) */
-  next_phase: z.string().nullable().optional(),
-  /** Progress estimate 0–100 */
-  progress: z.number().min(0).max(100),
-  /** Whether this step requires user approval */
-  requires_approval: z.boolean(),
-  /** Actions the agent plans to take */
-  intended_actions: z.array(z.string()).optional(),
-  /** Tools the agent will invoke */
-  tools_to_execute: z.array(z.string()).optional(),
-  /** Artifacts this phase should produce */
-  artifacts_expected: z.array(z.string()).optional(),
-  /** Identified risks or blockers */
-  risk_flags: z.array(z.string()).optional(),
-});
-
-export type WorkflowState = z.infer<typeof WorkflowStateSchema>;
+export type Intent = z.infer<typeof IntentSchema>;
 
 // ─── Agent Response Schema ─────────────────────────────────────────
 
 /**
  * Complete structured response from the LLM.
- * The LLM MUST respond with this JSON format.
+ * Minimal schema: text + optional code + optional intents.
+ * The LLM NEVER includes paths, labels, options, or layout data.
  */
 export const AgentResponseSchema = z.object({
   /** Markdown text response (what gets rendered to the user) */
   text: z.string(),
-  /** Interactive UI components to render (optional) */
-  ui_intent: z.array(UIComponentSchema).optional(),
-  /** Workflow state report (optional) */
-  workflow_state: WorkflowStateSchema.optional(),
+  /** Code block to display (optional — for code-heavy responses) */
+  code: z.string().optional(),
+  /** Declared intents — what the LLM wants to happen (optional) */
+  intents: z.array(IntentSchema).optional(),
 });
 
 export type AgentStructuredResponse = z.infer<typeof AgentResponseSchema>;
@@ -105,39 +137,11 @@ export function tryParseStructuredResponse(raw: string): AgentStructuredResponse
   }
 
   // Strategy 4: Truncated JSON — extract "text" field via regex
-  // Handles when the LLM runs out of tokens before closing the JSON
   if (raw.trimStart().startsWith('{')) {
     const textMatch = raw.match(/"text"\s*:\s*"((?:[^"\\]|\\.)*)"/);
     if (textMatch) {
       const text = textMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\');
-
-      // Try to extract ui_intent components individually
-      const uiIntent: UIComponent[] = [];
-      const componentRegex = /\{\s*"type"\s*:\s*"([^"]+)"\s*,\s*"id"\s*:\s*"([^"]+)"\s*,\s*"label"\s*:\s*"([^"]+)"(?:\s*,\s*"options"\s*:\s*\[((?:[^\]])*)\])?(?:\s*,\s*"preselected"\s*:\s*(\d+))?[^}]*\}/g;
-      let compMatch;
-      while ((compMatch = componentRegex.exec(raw)) !== null) {
-        const component: any = {
-          type: compMatch[1],
-          id: compMatch[2],
-          label: compMatch[3],
-        };
-        if (compMatch[4]) {
-          component.options = compMatch[4].match(/"([^"]+)"/g)?.map(s => s.replace(/"/g, '')) || [];
-        }
-        if (compMatch[5]) {
-          component.preselected = parseInt(compMatch[5], 10);
-        }
-        // Validate individual component
-        const compResult = UIComponentSchema.safeParse(component);
-        if (compResult.success) {
-          uiIntent.push(compResult.data);
-        }
-      }
-
-      return {
-        text,
-        ...(uiIntent.length > 0 ? { ui_intent: uiIntent } : {}),
-      };
+      return { text };
     }
   }
 
@@ -158,42 +162,44 @@ export const RESPONSE_JSON_SCHEMA = {
       type: 'string',
       description: 'Your markdown response text. This is what the user sees.',
     },
-    ui_intent: {
+    code: {
+      type: 'string',
+      description: 'Optional code block to display alongside the text.',
+    },
+    intents: {
       type: 'array',
-      description: 'Interactive UI components to present to the user. Use instead of HTML tags.',
+      description: 'Declare your intents — what UI components to show or what actions to take. For interactive components (INPUT, CHOICE, MULTI_SELECT), include id and label. For CHOICE/GATE, include options array.',
       items: {
         type: 'object',
-        required: ['type', 'id', 'label'],
+        required: ['type', 'action', 'component'],
         properties: {
           type: {
             type: 'string',
-            enum: ['choice', 'confirm', 'multi', 'gate', 'artifact', 'input'],
+            enum: ['A2UI', 'WORKFLOW', 'AGENT', 'SESSION'],
+            description: 'Intent namespace',
           },
-          id: { type: 'string', description: 'Unique ID for the component' },
-          label: { type: 'string', description: 'User-facing question or title' },
+          action: {
+            type: 'string',
+            description: 'Action verb: SHOW, REQUEST, UPDATE, START, COMPLETE, DELEGATE, REPORT, SAVE, LOAD',
+          },
+          component: {
+            type: 'string',
+            description: 'Target: ARTIFACT, RESULTS, CHART, ERROR, WARNING, INFO, GATE, CHOICE, CONFIRM, INPUT, MULTI_SELECT, STATE, PHASE, TASK, USAGE, STATUS, CURRENT, HISTORY',
+          },
+          id: {
+            type: 'string',
+            description: 'Unique identifier for the UI element (e.g. "language", "task-title")',
+          },
+          label: {
+            type: 'string',
+            description: 'User-facing label or question (e.g. "Select Language", "Task Title")',
+          },
           options: {
             type: 'array',
             items: { type: 'string' },
-            description: 'Selectable options (for choice/confirm/multi/gate)',
+            description: 'Selectable options for CHOICE, MULTI_SELECT, or GATE components',
           },
-          preselected: { type: 'number', description: '0-based index of preselected option' },
-          content: { type: 'string', description: 'Markdown body (for artifact type)' },
-          path: { type: 'string', description: 'File path (for artifact type)' },
         },
-      },
-    },
-    workflow_state: {
-      type: 'object',
-      description: 'Report your current workflow state.',
-      properties: {
-        current_phase: { type: 'string' },
-        next_phase: { type: ['string', 'null'] },
-        progress: { type: 'number', minimum: 0, maximum: 100 },
-        requires_approval: { type: 'boolean' },
-        intended_actions: { type: 'array', items: { type: 'string' } },
-        tools_to_execute: { type: 'array', items: { type: 'string' } },
-        artifacts_expected: { type: 'array', items: { type: 'string' } },
-        risk_flags: { type: 'array', items: { type: 'string' } },
       },
     },
   },

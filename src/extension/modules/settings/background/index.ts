@@ -36,7 +36,7 @@ export class SettingsBackground extends Background {
     this.loadModels();
     // Restore discovered models cache from settings
     this.discoveredModels = this.configService.get<Record<string, Array<{ id: string; displayName: string }>>>('discoveredModelsCache') || {};
-    this.log('SettingsBackground initialized');
+    this.logTagged('#config', 'SettingsBackground initialized');
   }
 
   // ─── Model CRUD ─────────────────────────────────────────
@@ -171,7 +171,7 @@ export class SettingsBackground extends Background {
     if (idx >= 0) {
       this.models[idx].capabilities = capabilities;
       await this.configService.update('models', this.models, vscode.ConfigurationTarget.Global);
-      this.log(`Capabilities detected for model ${modelId}:`, JSON.stringify(capabilities));
+      this.logTagged('#config', `Capabilities detected for model ${modelId}:`, JSON.stringify(capabilities));
     }
   }
 
@@ -276,7 +276,7 @@ export class SettingsBackground extends Background {
             model.apiKey = storedKey;
           }
         } catch (e: any) {
-          this.log(`Failed to resolve API key for model ${model.name}: ${e.message}`);
+          this.logTagged('#config', `Failed to resolve API key for model ${model.name}: ${e.message}`);
         }
       }
 
@@ -289,7 +289,7 @@ export class SettingsBackground extends Background {
             model.apiKey = sessions[0].accessToken;
           }
         } catch (e: any) {
-          this.log(`Failed to resolve OAuth token for model ${model.name}: ${e.message}`);
+          this.logTagged('#config', `Failed to resolve OAuth token for model ${model.name}: ${e.message}`);
         }
       }
     }
@@ -318,7 +318,7 @@ export class SettingsBackground extends Background {
     // Persist API key on successful test so Factory can find it
     if (result.success && fullModel.id && data.apiKey) {
       await this.secretService.store(`model.${fullModel.id}.apiKey`, data.apiKey);
-      this.log('API key persisted on successful test connection');
+      this.logTagged('#config', 'API key persisted on successful test connection');
     }
 
     // Discover available models from provider after successful connection
@@ -339,12 +339,12 @@ export class SettingsBackground extends Background {
       const data = await res.json() as any;
       if (data.success && data.models) {
         this.discoveredModels[provider] = data.models;
-        this.log(`Discovered ${data.models.length} models for provider ${provider}`);
+        this.logTagged('#config', `Discovered ${data.models.length} models for provider ${provider}`);
         // Persist to settings so cache survives restarts
         await this.configService.update('discoveredModelsCache', this.discoveredModels, vscode.ConfigurationTarget.Global);
       }
     } catch (e: any) {
-      this.log(`Failed to discover models for ${provider}: ${e.message}`);
+      this.logTagged('#config', `Failed to discover models for ${provider}: ${e.message}`);
     }
   }
 
@@ -471,12 +471,10 @@ export class SettingsBackground extends Background {
 
   private async handleGetRoles() {
     try {
-      const workspaceFolders = vscode.workspace.workspaceFolders;
-      if (!workspaceFolders) {
+      const rootPath = this.workspacePath;
+      if (!rootPath) {
         return { success: true, roles: [] };
       }
-
-      const rootPath = workspaceFolders[0].uri.fsPath;
       const rolesPath = path.join(rootPath, '.agent', 'rules', 'roles');
 
       try {
@@ -498,11 +496,12 @@ export class SettingsBackground extends Background {
         let models: { default?: string; routing?: string } | undefined;
         let capabilities: Record<string, boolean> | undefined;
         let context: string[] | undefined;
+        let persona: string = '';
 
         try {
           const filePath = path.join(rolesPath, file);
           const content = await fs.readFile(filePath, 'utf8');
-          const { data } = this.parseRoleFile(content);
+          const { data, raw } = this.parseRoleFile(content);
 
           if (data.icon) { icon = data.icon; }
           if (data.description) { description = data.description; }
@@ -510,16 +509,17 @@ export class SettingsBackground extends Background {
           if (data.models) { models = data.models; }
           if (data.capabilities) { capabilities = data.capabilities; }
           if (data.context && Array.isArray(data.context)) { context = data.context; }
+          persona = raw;
         } catch (err) {
           console.warn(`Failed to parse frontmatter for role ${roleName}`, err);
         }
 
-        roles.push({ name: roleName, icon, description, model, models, capabilities, context });
+        roles.push({ name: roleName, icon, description, model, models, capabilities, context, persona });
       }
 
       return { success: true, roles };
     } catch (error: any) {
-      this.log('Error discovering roles:', error.message, error.stack);
+      this.logTagged('#config', 'Error discovering roles:', error.message, error.stack);
       return { success: false, error: error.message };
     }
   }
@@ -629,12 +629,10 @@ export class SettingsBackground extends Background {
     const { role, model, capabilities } = data;
 
     try {
-      const workspaceFolders = vscode.workspace.workspaceFolders;
-      if (!workspaceFolders) {
+      const rootPath = this.workspacePath;
+      if (!rootPath) {
         return { success: false, error: 'No workspace open' };
       }
-
-      const rootPath = workspaceFolders[0].uri.fsPath;
       const filePath = path.join(rootPath, '.agent', 'rules', 'roles', `${role}.md`);
 
       const content = await fs.readFile(filePath, 'utf8');
@@ -648,7 +646,7 @@ export class SettingsBackground extends Background {
         await this.configService.update('roleBindings', bindings, vscode.ConfigurationTarget.Global);
       }
 
-      this.log(`Role config saved for ${role}`);
+      this.logTagged('#config', `Role config saved for ${role}`);
 
       // Notify Chat module to refresh its agent list
       try {
@@ -664,7 +662,7 @@ export class SettingsBackground extends Background {
 
       return { success: true };
     } catch (error: any) {
-      this.log(`Error saving role config for ${role}:`, error.message);
+      this.logTagged('#config', `Error saving role config for ${role}:`, error.message);
       return { success: false, error: error.message };
     }
   }
@@ -685,7 +683,7 @@ export class SettingsBackground extends Background {
       let session: vscode.AuthenticationSession;
 
       if (!sessions || sessions.length === 0) {
-        this.log('No active Google session. Initiating login...');
+        this.logTagged('#config', 'No active Google session. Initiating login...');
         SettingsBackground.isLoggingIn = true;
         try {
           session = await auth.createSession(GOOGLE_SCOPES);
@@ -699,18 +697,18 @@ export class SettingsBackground extends Background {
         session = sessions[0];
       }
 
-      this.log('Validating token for session...');
+      this.logTagged('#config', 'Validating token for session...');
       const tokenInfoRes = await fetch(
         `${GOOGLE_TOKENINFO_URL}?access_token=${session.accessToken}`
       );
 
       if (!tokenInfoRes.ok) {
-        this.log(`Token validation failed: ${tokenInfoRes.status} ${tokenInfoRes.statusText}`);
-        this.log('Access token invalid, attempting refresh...');
+        this.logTagged('#config', `Token validation failed: ${tokenInfoRes.status} ${tokenInfoRes.statusText}`);
+        this.logTagged('#config', 'Access token invalid, attempting refresh...');
         const newToken = await auth.refreshAccessToken();
 
         if (!newToken) {
-          this.log('Refresh failed. Token expired. Initiating re-login...');
+          this.logTagged('#config', 'Refresh failed. Token expired. Initiating re-login...');
           await auth.removeSession(session.id);
 
           SettingsBackground.isLoggingIn = true;
@@ -724,14 +722,14 @@ export class SettingsBackground extends Background {
           }
         }
 
-        this.log('Token refreshed successfully.');
+        this.logTagged('#config', 'Token refreshed successfully.');
         return { success: true, message: `Authenticated as ${session.account.label} (token refreshed)` };
       }
 
-      this.log('Token validation successful.');
+      this.logTagged('#config', 'Token validation successful.');
       return { success: true, message: `Authenticated as ${session.account.label}` };
     } catch (error: any) {
-      this.log('OAuth verification error:', error.message);
+      this.logTagged('#config', 'OAuth verification error:', error.message);
       return { success: false, message: error.message };
     }
   }
@@ -770,7 +768,7 @@ export class SettingsBackground extends Background {
       let session: vscode.AuthenticationSession;
 
       if (!sessions || sessions.length === 0) {
-        this.log('No active OpenAI session. Initiating login...');
+        this.logTagged('#config', 'No active OpenAI session. Initiating login...');
         SettingsBackground.isLoggingIn = true;
         try {
           session = await auth.createOpenAISession(OPENAI_SCOPES);
@@ -784,18 +782,18 @@ export class SettingsBackground extends Background {
         session = sessions[0];
       }
 
-      this.log('Validating OpenAI token for session...');
+      this.logTagged('#config', 'Validating OpenAI token for session...');
       const modelsRes = await fetch('https://api.openai.com/v1/models', {
         headers: { 'Authorization': `Bearer ${session.accessToken}` },
       });
 
       if (!modelsRes.ok) {
-        this.log(`OpenAI token validation failed: ${modelsRes.status}`);
-        this.log('OpenAI access token invalid, attempting refresh...');
+        this.logTagged('#config', `OpenAI token validation failed: ${modelsRes.status}`);
+        this.logTagged('#config', 'OpenAI access token invalid, attempting refresh...');
         const newToken = await auth.refreshOpenAIAccessToken();
 
         if (!newToken) {
-          this.log('OpenAI refresh failed. Initiating re-login...');
+          this.logTagged('#config', 'OpenAI refresh failed. Initiating re-login...');
           await auth.removeOpenAISession(session.id);
 
           SettingsBackground.isLoggingIn = true;
@@ -809,14 +807,14 @@ export class SettingsBackground extends Background {
           }
         }
 
-        this.log('OpenAI token refreshed successfully.');
+        this.logTagged('#config', 'OpenAI token refreshed successfully.');
         return { success: true, message: `Authenticated as ${session.account.label} (token refreshed)` };
       }
 
-      this.log('OpenAI token validation successful.');
+      this.logTagged('#config', 'OpenAI token validation successful.');
       return { success: true, message: `Authenticated as ${session.account.label}` };
     } catch (error: any) {
-      this.log('OpenAI OAuth verification error:', error.message);
+      this.logTagged('#config', 'OpenAI OAuth verification error:', error.message);
       return { success: false, message: error.message };
     }
   }
@@ -825,7 +823,7 @@ export class SettingsBackground extends Background {
 
   public setWebviewViewRef(webviewView: vscode.WebviewView): void {
     this._webviewView = webviewView;
-    this.log('SettingsBackground attached to shared Main View (ref only)');
+    this.logTagged('#config', 'SettingsBackground attached to shared Main View (ref only)');
   }
 
   protected getHtmlForWebview(webview: vscode.Webview): string {

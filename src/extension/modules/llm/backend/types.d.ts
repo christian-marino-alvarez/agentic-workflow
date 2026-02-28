@@ -114,6 +114,8 @@ export interface AgentRequest {
   provider?: string;
   /** @deprecated Use dynamic instructions via agenticContext instead */
   instructions?: string;
+  /** When true, agent is created without tools (avoids Gemini MALFORMED_FUNCTION_CALL) */
+  disableTools?: boolean;
 }
 
 export interface AgentResponse {

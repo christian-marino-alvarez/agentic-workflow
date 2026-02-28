@@ -2,7 +2,7 @@ import { View } from '../../core/view/index.js';
 import { state } from 'lit/decorators.js';
 import { styles } from './templates/css.js';
 import { render } from './templates/html.js';
-import { MESSAGES, NAME, STEP_STATUS } from '../constants.js';
+import { MESSAGES, USER_ACTIONS, NAME, STEP_STATUS } from '../constants.js';
 import { MESSAGES as SETTINGS_MESSAGES } from '../../settings/constants.js';
 import { parseA2UI, A2UIBlock, isDisplayBlock } from './templates/a2ui/html.js';
 
@@ -45,6 +45,10 @@ export class ChatView extends View {
 
   public isLoading: boolean = false;
 
+  /** Queue for silent messages — ensures sequential LLM calls (no concurrent skeleton merging) */
+  private silentMessageQueue: string[] = [];
+  private silentMessageProcessing: boolean = false;
+
   @state()
   public initialLoading: boolean = true;
 
@@ -67,6 +71,10 @@ export class ChatView extends View {
   @state()
   public currentSessionId: string = '';
 
+  protected override getSessionId(): string {
+    return this.currentSessionId;
+  }
+
   @state()
   public sessionList: Array<{ id: string, title: string, timestamp: number, messageCount: number }> = [];
 
@@ -84,6 +92,9 @@ export class ChatView extends View {
 
   @state()
   public showDetails: boolean = false;
+
+  @state()
+  public showWelcome: boolean = false;
 
   /** Rich workflow details: gate requirements, context files, next step etc. */
   @state()
@@ -119,10 +130,6 @@ export class ChatView extends View {
   @state()
   public inputSkeleton: boolean = false;
   private skeletonTimer: ReturnType<typeof setTimeout> | null = null;
-
-  /** Selected lifecycle strategy — persisted in session */
-  @state()
-  public lifecycleStrategy: 'long' | 'short' | null = null;
 
   // Execution timer
   @state()
@@ -212,7 +219,7 @@ export class ChatView extends View {
     const current = this.agentPermissions[role] || 'sandbox';
     const next = current === 'sandbox' ? 'full' : 'sandbox';
     this.agentPermissions = { ...this.agentPermissions, [role]: next };
-    this.log(`Permission toggled for ${role}: ${next}`);
+    this.logTagged('#config', `Permission toggled for ${role}: ${next}`);
   }
 
   private get participatingRoles(): string[] {
@@ -227,7 +234,7 @@ export class ChatView extends View {
   }
 
   override firstUpdated() {
-    this.log('Chat view mounted');
+    this.logTagged('#system', 'Chat view mounted');
 
     // Run init tasks in parallel, then load session once ready
     Promise.all([
@@ -246,7 +253,7 @@ export class ChatView extends View {
       if (isSecure && this.activeModelId) {
         this.verifiedModelIds.add(this.activeModelId);
       }
-      this.log(`Secure state updated: ${this.isSecure}`);
+      this.logTagged('#system', `Secure state updated: ${this.isSecure}`);
     }) as EventListener);
 
     // Auto-save session when user leaves the tab or window loses focus
@@ -275,26 +282,47 @@ export class ChatView extends View {
   }
 
   /**
-   * Load the last session from persistent storage.
-   * If no session exists, immediately starts /init (no artificial delay).
+   * Always show the welcome screen on startup.
+   * Fetches session list to show resume options if sessions exist.
    */
   private async loadLastSession() {
+    // Fetch existing sessions to populate the welcome screen
     try {
-      const result = await this.sendMessage(NAME, MESSAGES.LOAD_SESSION, { sessionId: '__last__' });
-      if (!result?.success) {
-        this.log('No last session found, auto-starting /init');
-        await this.autoStartInit();
+      const result = await this.sendMessage(NAME, MESSAGES.LIST_SESSIONS);
+      if (result?.sessions) {
+        this.handleListSessionsResponse({ sessions: result.sessions });
       }
-    } catch {
-      this.log('No last session, auto-starting /init');
-      await this.autoStartInit();
-    }
+    } catch { /* silent */ }
+
+    this.showWelcome = true;
+    this.isLoading = false;
+    this.logTagged('#session', `Welcome screen shown (${this.sessionList.length} sessions available)`);
   }
 
   /**
-   * Start /init workflow immediately. No artificial delay.
+   * Show welcome screen (called from catch paths).
    */
-  private async autoStartInit() {
+  private autoStartInit() {
+    this.showWelcome = true;
+    this.isLoading = false;
+  }
+
+  /**
+   * Start a new task from the welcome screen.
+   * Creates a session, hides welcome, and sends /init.
+   */
+  public async startNewTask() {
+    this.showWelcome = false;
+    this.isLoading = true;
+
+    try {
+      const result = await this.sendMessage(NAME, MESSAGES.NEW_SESSION);
+      if (result?.sessionId) {
+        this.currentSessionId = result.sessionId;
+        this.logTagged('#session', `Session created for new task: ${result.sessionId}`);
+      }
+    } catch { /* proceed anyway */ }
+
     this.inputText = '/init';
     await this.sendChatMessage();
     this.inputText = '';
@@ -310,10 +338,10 @@ export class ChatView extends View {
       if (data && data.models) {
         this.models = data.models;
         this.activeModelId = data.activeModelId || (data.models[0]?.id ?? '');
-        this.log('Models loaded:', this.models.length);
+        this.logTagged('#config', 'Models loaded:', this.models.length);
       }
     } catch (error) {
-      this.log('Error loading models', error);
+      this.logTagged('#config', 'Error loading models', error);
     } finally {
       this.isLoading = false;
     }
@@ -324,16 +352,16 @@ export class ChatView extends View {
    */
   private async loadAgents() {
     try {
-      this.log('loadAgents: requesting roles from settings...');
+      this.logTagged('#config', 'loadAgents: requesting roles from settings...');
       const [result, disabledResult] = await Promise.all([
         this.sendMessage('settings', SETTINGS_MESSAGES.GET_ROLES),
         this.sendMessage('settings', SETTINGS_MESSAGES.GET_DISABLED_ROLES).catch(() => ({ success: false, disabledRoles: [] }))
       ]);
-      this.log('loadAgents: raw result:', JSON.stringify(result));
+      this.logTagged('#config', 'loadAgents: raw result:', JSON.stringify(result));
       if (result?.success && result.roles) {
         const disabledSet = new Set<string>(disabledResult?.disabledRoles || []);
         const activeRoles = result.roles.filter((r: any) => !disabledSet.has(r.name));
-        this.log('loadAgents: received', result.roles.length, 'roles, disabled:', Array.from(disabledSet).join(','), ', showing:', activeRoles.length);
+        this.logTagged('#config', 'loadAgents: received', result.roles.length, 'roles, disabled:', Array.from(disabledSet).join(','), ', showing:', activeRoles.length);
         this.availableAgents = activeRoles.map((r: any) => ({
           name: r.name,
           icon: r.icon,
@@ -341,12 +369,12 @@ export class ChatView extends View {
           capabilities: r.capabilities,
           context: r.context
         }));
-        this.log('Agents loaded:', this.availableAgents.length);
+        this.logTagged('#config', 'Agents loaded:', this.availableAgents.length);
       } else {
-        this.log('loadAgents: result was empty or not successful, keeping defaults. result:', result);
+        this.logTagged('#config', 'loadAgents: result was empty or not successful, keeping defaults. result:', result);
       }
     } catch (error) {
-      this.log('Error loading agents (keeping defaults):', error);
+      this.logTagged('#config', 'Error loading agents (keeping defaults):', error);
     }
   }
 
@@ -359,7 +387,7 @@ export class ChatView extends View {
     if (!model) { return; }
 
     this.isTesting = true;
-    this.log('Testing connection from Chat for:', model.name);
+    this.logTagged('#llm', 'Testing connection from Chat for:', model.name);
 
     try {
       const result = await this.sendMessage('settings', SETTINGS_MESSAGES.TEST_CONNECTION_REQUEST, {
@@ -371,18 +399,18 @@ export class ChatView extends View {
       if (result?.success) {
         this.verifiedModelIds.add(this.activeModelId);
         this.isSecure = true;
-        this.log('Connection verified ✓');
+        this.logTagged('#llm', 'Connection verified ✓');
         // Emit secure state for the tab bar badge
         window.dispatchEvent(new CustomEvent('secure-state-changed', {
           detail: { secure: true }
         }));
       } else {
         this.isSecure = false;
-        this.log('Connection failed:', result?.error);
+        this.logTagged('#llm', 'Connection failed:', result?.error);
       }
     } catch (error: any) {
       this.isSecure = false;
-      this.log('Test connection error:', error.message);
+      this.logTagged('#llm', 'Test connection error:', error.message);
     } finally {
       this.isTesting = false;
     }
@@ -396,10 +424,10 @@ export class ChatView extends View {
       const response = await this.sendMessage(NAME, MESSAGES.LOAD_INIT);
       if (response && response.content) {
         this.appVersion = response.version || '';
-        this.log('Workflow context loaded silently');
+        this.logTagged('#workflow', 'Workflow context loaded silently');
       }
     } catch (error) {
-      this.log('Error loading init workflow', error);
+      this.logTagged('#workflow', 'Error loading init workflow', error);
     }
 
     // Fetch current workflow state with delay (sidecar needs ~2s to start)
@@ -414,496 +442,370 @@ export class ChatView extends View {
         const stateResponse = await this.sendMessage(NAME, MESSAGES.WORKFLOW_STATE_UPDATE);
         // Accept any response that has meaningful workflow data
         if (stateResponse && (stateResponse.workflow || stateResponse.phases || stateResponse.steps || stateResponse.currentWorkflowId)) {
-          this.listen({
-            payload: { command: MESSAGES.WORKFLOW_STATE_UPDATE, data: stateResponse },
-          });
-          this.log(`Workflow state loaded on mount (workflowId: ${stateResponse.currentWorkflowId || 'unknown'})`);
+          this.processPayload({ workflowState: stateResponse });
+          this.logTagged('#workflow', `Workflow state loaded on mount (workflowId: ${stateResponse.currentWorkflowId || 'unknown'})`);
           return;
         } else {
-          this.log(`Workflow state fetch attempt ${attempt + 1}/${retries}: no useful data`);
+          this.logTagged('#workflow', `Workflow state fetch attempt ${attempt + 1}/${retries}: no useful data`);
         }
       } catch {
-        this.log(`Workflow state fetch attempt ${attempt + 1}/${retries} failed`);
+        this.logTagged('#workflow', `Workflow state fetch attempt ${attempt + 1}/${retries} failed`);
       }
     }
   }
 
-  /**
-   * Handle incoming messages from Background (Event stream)
-   */
-  public override listen(message: any): void {
-    const command = message.payload?.command || message.command;
-    const data = message.payload?.data || message.data;
+  // No listen() override needed — all data flows through return payloads from sendMessage.
+  // Push events eliminated: RECEIVE_MESSAGE, DELEGATION_EVENT, USAGE_UPDATE, AGENT_STATUS,
+  // GATE_REQUEST, WORKFLOW_STATE_UPDATE, NEW_SESSION_AUTO, PHASE_AUTO_START, GATE_CONTINUE,
+  // REFRESH_AGENTS, LOAD_SESSION_RESPONSE, LIST_SESSIONS_RESPONSE, SELECT_FILES_RESPONSE.
 
-    if (command === MESSAGES.RECEIVE_MESSAGE) {
-      this.isLoading = false;
 
-      // Handle tool events (tool_call / tool_result)
-      if (data?.toolEvent) {
-        const te = data.toolEvent;
-        // Show activity feedback for tool execution
-        if (te.type === 'tool_call') {
-          const toolLabel = te.name === 'writeFile' ? 'Writing...' : te.name === 'readFile' ? 'Reading...' : 'Thinking...';
-          this.activeActivity = toolLabel;
-        } else if (te.type === 'tool_result') {
-          this.activeActivity = 'Thinking...';
-        }
-        const historyCopy = [...this.history];
-        const lastMsg = historyCopy.length > 0 ? historyCopy[historyCopy.length - 1] : null;
-        if (lastMsg && lastMsg.role === data.agentRole) {
-          if (!lastMsg.toolEvents) { lastMsg.toolEvents = []; }
-          lastMsg.toolEvents.push(data.toolEvent);
-          this.history = historyCopy;
-        }
-        return;
-      }
-
-      if (data && (data.text || data.showSkeleton)) {
-        if (data.showSkeleton) { this.log('Skeleton message received for', data.agentRole); }
-        const isStreaming = data.isStreaming === true;
-
-        const historyCopy = [...this.history];
-        const lastMsg = historyCopy.length > 0 ? historyCopy[historyCopy.length - 1] : null;
-
-        if (lastMsg && lastMsg.role === data.agentRole && lastMsg.isStreaming) {
-          lastMsg.text = data.text || '';
-          lastMsg.isStreaming = isStreaming;
-          lastMsg.status = undefined;
-          if (data.showSkeleton) { (lastMsg as any).showSkeleton = true; }
-          else { delete (lastMsg as any).showSkeleton; }
-          this.history = historyCopy;
-          // Auto-save when streaming completes
-          if (!isStreaming) {
-            this.saveCurrentSession();
-            this.activeActivity = '';
-            this.pauseTimer();
-          }
-        } else {
-          if (lastMsg && lastMsg.role === data.agentRole && lastMsg.status && lastMsg.text === '') {
-            lastMsg.text = data.text || '';
-            lastMsg.isStreaming = isStreaming;
-            lastMsg.status = undefined;
-            if (data.showSkeleton) { (lastMsg as any).showSkeleton = true; }
-            this.history = historyCopy;
-          } else {
-            const newMsg: any = {
-              sender: data.agentRole ? data.agentRole.charAt(0).toUpperCase() + data.agentRole.slice(1) : 'Agent',
-              text: data.text || '',
-              role: data.agentRole,
-              isStreaming,
-              phase: this.currentPhase
-            };
-            if (data.showSkeleton) { newMsg.showSkeleton = true; }
-            this.history = [...this.history, newMsg];
-          }
-        }
-      }
-    }
-
-    // Handle delegation events (delegation card with agent info + result)
-    if (command === MESSAGES.DELEGATION_EVENT) {
-      if (data?.type === 'tool_call' && data?.status === 'pending') {
-        // Show delegation card
-        this.history = [...this.history, {
-          sender: `🔀 Delegación → ${data.targetAgent || 'agente'}`,
-          text: `**Tarea delegada**: ${data.taskDescription || '(sin descripción)'}`,
-          role: 'delegation',
-          isDelegation: true,
-          delegationAgent: data.targetAgent,
-          delegationStatus: 'pending',
-          isStreaming: true,
-        }];
-      } else if (data?.type === 'tool_result' && data?.result) {
-        // Update the last delegation card with the result
-        const historyCopy = [...this.history];
-        const delegationMsg = historyCopy.reverse().find((m: any) => m.isDelegation && m.delegationStatus === 'pending');
-        if (delegationMsg) {
-          delegationMsg.delegationStatus = 'completed';
-          delegationMsg.delegationResult = data.result;
-          delegationMsg.isStreaming = false;
-          this.history = [...historyCopy.reverse()];
-        }
-      }
-    }
-
-    // Token usage tracking
-    if (command === MESSAGES.USAGE_UPDATE) {
-      const input = data?.inputTokens || 0;
-      const output = data?.outputTokens || 0;
-      const model = (data?.model || '').toLowerCase();
-
-      // Load pricing from Settings (cached after first call)
-      if (!this._pricingCache) {
-        this.sendMessage('settings', SETTINGS_MESSAGES.GET_PRICING)
-          .then((res: any) => { this._pricingCache = res?.pricing || {}; })
-          .catch(() => { this._pricingCache = {}; });
-      }
-
-      // Resolve rate: find first pricing key that matches the model name
-      const pricing = this._pricingCache || {};
-      const matchedKey = Object.keys(pricing).find(k => k !== 'default' && model.includes(k));
-      const rate = pricing[matchedKey || ''] || pricing['default'] || { input: 0.30, output: 2.50 };
-
-      const cost = (input * rate.input + output * rate.output) / 1_000_000;
-
-      // Update per-model breakdown
-      const prevModel = this.tokenUsage.byModel[model] || { inputTokens: 0, outputTokens: 0, cost: 0, requests: 0 };
-      const byModel = {
-        ...this.tokenUsage.byModel,
-        [model]: {
-          inputTokens: prevModel.inputTokens + input,
-          outputTokens: prevModel.outputTokens + output,
-          cost: prevModel.cost + cost,
-          requests: prevModel.requests + 1,
-        },
-      };
-
-      this.tokenUsage = {
-        inputTokens: this.tokenUsage.inputTokens + input,
-        outputTokens: this.tokenUsage.outputTokens + output,
-        totalTokens: this.tokenUsage.totalTokens + input + output,
-        estimatedCost: this.tokenUsage.estimatedCost + cost,
-        requests: this.tokenUsage.requests + 1,
-        byModel,
-      };
-
-      // Stamp cost onto the last agent message in history
-      if (input > 0 || output > 0) {
-        const historyCopy = [...this.history];
-        for (let i = historyCopy.length - 1; i >= 0; i--) {
-          const msg = historyCopy[i];
-          if (msg.role && msg.role !== 'user' && !msg.isDelegation) {
-            (msg as any).tokenCost = { inputTokens: input, outputTokens: output, cost, model };
-            this.history = historyCopy;
-            break;
-          }
-        }
-      }
-
-      // Persist to monthly usage tracking (fire-and-forget)
-      this.sendMessage('settings', SETTINGS_MESSAGES.TRACK_USAGE, {
-        inputTokens: input, outputTokens: output, cost, model,
-      }).then((res: any) => {
-        this.log('TRACK_USAGE result:', res);
-      }).catch((err: any) => {
-        this.log('TRACK_USAGE error:', err?.message || err);
-      });
-    }
-
-    if (command === 'SELECT_FILES_RESPONSE') {
-      const { files } = data;
-      if (files && Array.isArray(files)) {
-        // Add unique files
-        const newFiles = files.filter((f: string) => !this.attachments.includes(f));
-        this.attachments = [...this.attachments, ...newFiles];
-      }
-    }
-
-    if (command === 'AGENT_STATUS') {
-      const { status } = data;
-      this.isLoading = false; // Stop skeleton, show status on message
-
-      const historyCopy = [...this.history];
-      const lastMsg = historyCopy.length > 0 ? historyCopy[historyCopy.length - 1] : null;
-
-      // If the last message is from the SAME agent and it's either an empty status message or currently streaming, update it
-      // For now, simplify logic to just append a new status container if the last message is User or a different role
-      if (lastMsg && lastMsg.role !== 'user' && lastMsg.role !== 'system') {
-        lastMsg.status = status;
-        this.history = historyCopy;
-      } else {
-        this.history = [...this.history, { sender: 'System', text: '', role: 'system', status }];
-      }
-    }
-
-    // Handle agent list refresh from Chat background (triggered by Settings role changes)
-    if (command === 'REFRESH_AGENTS') {
-      if (data?.agents) {
-        this.availableAgents = data.agents.map((r: any) => ({
-          name: r.name,
-          icon: r.icon,
-          model: r.model,
-          capabilities: r.capabilities,
-          context: r.context
-        }));
-        this.log('Agents refreshed:', this.availableAgents.length);
-      }
-    }
-
-    // Handle session loaded from persistence
-    if (command === MESSAGES.LOAD_SESSION_RESPONSE) {
-      if (data?.session?.messages) {
-        this.currentSessionId = data.session.id;
-
-        // Filter out legacy auto-generated context messages
-        const contextPhrases = ['I have loaded your workflow context', 'I am the Architect Agent', 'Error loading workflow context'];
-        const filtered = data.session.messages.filter((m: any) =>
-          !contextPhrases.some(phrase => m.text?.startsWith(phrase))
-        );
-
-        this.history = filtered.map((m: any) => ({
-          sender: m.sender || (m.role === 'user' ? 'Me' : m.role?.charAt(0).toUpperCase() + m.role?.slice(1)),
-          text: m.text,
-          role: m.role,
-          ...(m.a2uiAnswers ? { a2uiAnswers: m.a2uiAnswers } : {}),
-          ...(m.a2uiDismissed ? { a2uiDismissed: true } : {}),
-          ...(m.tokenCost ? { tokenCost: m.tokenCost } : {}),
-        }));
-        this.log(`Session restored: ${data.session.id} (${this.history.length} messages)`);
-
-        // Restore task metadata
-        if (data.session.taskTitle) {
-          this.activeWorkflow = data.session.taskTitle;
-        }
-        if (data.session.elapsedSeconds) {
-          this.elapsedSeconds = data.session.elapsedSeconds;
-        }
-
-        // Restore token usage totals
-        if (data.session.tokenUsage) {
-          this.tokenUsage = {
-            inputTokens: data.session.tokenUsage.inputTokens || 0,
-            outputTokens: data.session.tokenUsage.outputTokens || 0,
-            totalTokens: data.session.tokenUsage.totalTokens || 0,
-            estimatedCost: data.session.tokenUsage.estimatedCost || 0,
-            requests: data.session.tokenUsage.requests || 0,
-            byModel: data.session.tokenUsage.byModel || {},
-          };
-        } else {
-          // Backward compat: reconstruct from per-message tokenCost
-          let totalIn = 0, totalOut = 0, totalCost = 0, totalReqs = 0;
-          const byModel: Record<string, { inputTokens: number; outputTokens: number; cost: number; requests: number }> = {};
-          for (const m of this.history) {
-            const tc = (m as any).tokenCost;
-            if (!tc) { continue; }
-            totalIn += tc.inputTokens || 0;
-            totalOut += tc.outputTokens || 0;
-            totalCost += tc.cost || 0;
-            totalReqs++;
-            const model = tc.model || 'unknown';
-            if (!byModel[model]) { byModel[model] = { inputTokens: 0, outputTokens: 0, cost: 0, requests: 0 }; }
-            byModel[model].inputTokens += tc.inputTokens || 0;
-            byModel[model].outputTokens += tc.outputTokens || 0;
-            byModel[model].cost += tc.cost || 0;
-            byModel[model].requests++;
-          }
-          if (totalReqs > 0) {
-            this.tokenUsage = {
-              inputTokens: totalIn, outputTokens: totalOut,
-              totalTokens: totalIn + totalOut,
-              estimatedCost: totalCost, requests: totalReqs, byModel,
-            };
-          }
-        }
-
-        // Restore lifecycle strategy and reload phases
-        if (data.session.lifecycleStrategy) {
-          this.lifecycleStrategy = data.session.lifecycleStrategy;
-          if (data.session.taskSteps && data.session.taskSteps.length > 0) {
-            this.taskSteps = data.session.taskSteps;
-          } else {
-            this.loadLifecyclePhases(data.session.lifecycleStrategy);
-          }
-        } else if (data.session.taskSteps && data.session.taskSteps.length > 0) {
-          this.taskSteps = data.session.taskSteps;
-        }
-      }
-    }
-
-    // Handle session list for History tab
-    if (command === MESSAGES.LIST_SESSIONS_RESPONSE) {
-      if (data?.sessions) {
-        this.sessionList = data.sessions;
-        this.log(`Session list loaded: ${data.sessions.length} sessions`);
-        // Notify AppView (parent) that sessions are available
-        this.dispatchEvent(new CustomEvent('sessions-updated', {
-          bubbles: true, composed: true,
-          detail: { sessions: data.sessions }
-        }));
-      }
-    }
-
-    // Handle gate request from workflow engine
-    if (command === MESSAGES.GATE_REQUEST) {
-      this.isLoading = false;
+  private handleDelegationEvent(data: any): void {
+    if (data?.type === 'tool_call' && data?.status === 'pending') {
       this.history = [...this.history, {
-        sender: '🚦 Gate',
-        text: data?.question || data?.label || `Gate approval required: **${data?.stepId || 'unknown'}**`,
-        role: 'gate',
-        isGate: true,
-        gateId: data?.gateId || data?.stepId || 'unknown',
+        sender: `🔀 Delegación → ${data.targetAgent || 'agente'}`,
+        text: `**Tarea delegada**: ${data.taskDescription || '(sin descripción)'}`,
+        role: 'delegation',
+        isDelegation: true,
+        delegationAgent: data.targetAgent,
+        delegationStatus: 'pending',
+        isStreaming: true,
       }];
+    } else if (data?.type === 'tool_result' && data?.result) {
+      const historyCopy = [...this.history];
+      const delegationMsg = historyCopy.reverse().find((m: any) => m.isDelegation && m.delegationStatus === 'pending');
+      if (delegationMsg) {
+        delegationMsg.delegationStatus = 'completed';
+        delegationMsg.delegationResult = data.result;
+        delegationMsg.isStreaming = false;
+        this.history = [...historyCopy.reverse()];
+      }
+    }
+  }
+
+  private handleUsageUpdate(data: any): void {
+    const input = data?.inputTokens || 0;
+    const output = data?.outputTokens || 0;
+    const model = (data?.model || '').toLowerCase();
+
+    // Load pricing from Settings (cached after first call)
+    if (!this._pricingCache) {
+      this.sendMessage('settings', SETTINGS_MESSAGES.GET_PRICING)
+        .then((res: any) => { this._pricingCache = res?.pricing || {}; })
+        .catch(() => { this._pricingCache = {}; });
     }
 
-    // Handle workflow state updates — update taskSteps + show message
-    if (command === MESSAGES.WORKFLOW_STATE_UPDATE) {
-      const statusText = data?.status || 'unknown';
-      const phase = data?.currentStep?.label || data?.currentPhase || '';
+    // Resolve rate: find first pricing key that matches the model name
+    const pricing = this._pricingCache || {};
+    const matchedKey = Object.keys(pricing).find(k => k !== 'default' && model.includes(k));
+    const rate = pricing[matchedKey || ''] || pricing['default'] || { input: 0.30, output: 2.50 };
 
-      // Reset loading state on terminal workflow statuses
-      if (statusText === 'completed' || statusText === 'failed') {
-        this.isLoading = false;
-      }
+    const cost = (input * rate.input + output * rate.output) / 1_000_000;
 
-      // Update taskSteps from engine state if available
-      // Skip internal init workflow steps — only show lifecycle phases
-      const isInitWorkflow = data?.currentWorkflowId === 'workflow.init';
+    // Update per-model breakdown
+    const prevModel = this.tokenUsage.byModel[model] || { inputTokens: 0, outputTokens: 0, cost: 0, requests: 0 };
+    const byModel = {
+      ...this.tokenUsage.byModel,
+      [model]: {
+        inputTokens: prevModel.inputTokens + input,
+        outputTokens: prevModel.outputTokens + output,
+        cost: prevModel.cost + cost,
+        requests: prevModel.requests + 1,
+      },
+    };
 
-      // Lifecycle workflows: update from phases (Brief, Implementation, Closure)
-      if (data?.phases && Array.isArray(data.phases) && data.phases.length > 0) {
-        this.taskSteps = data.phases.map((p: any) => ({
-          id: p.id || p.label,
-          label: p.id || p.label,
-          status: p.status === 'completed' ? STEP_STATUS.DONE
-            : p.status === 'active' || p.status === 'executing' ? STEP_STATUS.ACTIVE
-              : p.status === 'failed' ? STEP_STATUS.DONE  // show failed as done with different styling later
-                : STEP_STATUS.PENDING,
-        }));
-      } else if (data?.steps && Array.isArray(data.steps) && !isInitWorkflow) {
-        // Simple workflows: update from steps
-        this.taskSteps = data.steps.map((s: any) => ({
-          id: s.id || s.stepId,
-          label: s.label || s.id,
-          status: s.status === 'completed' ? STEP_STATUS.DONE
-            : s.status === 'active' || s.status === 'executing' ? STEP_STATUS.ACTIVE
-              : STEP_STATUS.PENDING,
-        }));
-      }
+    this.tokenUsage = {
+      inputTokens: this.tokenUsage.inputTokens + input,
+      outputTokens: this.tokenUsage.outputTokens + output,
+      totalTokens: this.tokenUsage.totalTokens + input + output,
+      estimatedCost: this.tokenUsage.estimatedCost + cost,
+      requests: this.tokenUsage.requests + 1,
+      byModel,
+    };
 
-      // Update workflow title from engine state
-      if (data?.taskTitle || data?.workflowId) {
-        this.activeWorkflow = data.taskTitle || data.workflowId;
-      }
-
-      // Store workflow details if provided
-      if (data?.workflow) {
-        this.activeWorkflowDef = data.workflow;
-      }
-
-      if (data?.steps && data.steps.length > 0 && !this.showTimeline) {
-        this.showTimeline = true;
-      }
-
-      // Build rich workflowDetails for the Details panel
-      if (data?.workflow || data?.steps) {
-        const steps: Array<{ id: string, label: string, status: string }> = data?.steps || [];
-        const nextStepObj = steps.find((s: any) => s.status === 'pending');
-        const nextStepIdx = nextStepObj ? steps.indexOf(nextStepObj) : -1;
-        const activeAgent = this.availableAgents.find(a => a.name === data?.workflow?.owner?.replace(/-agent$/, ''));
-
-        // Merge workflow constitutions + agent context (deduplicated)
-        const workflowCtx: string[] = data?.workflow?.constitutions || [];
-        const agentCtx: string[] = activeAgent?.context || [];
-        const mergedContext = [...workflowCtx];
-        for (const c of agentCtx) {
-          if (!mergedContext.includes(c)) {
-            mergedContext.push(c);
-          }
+    // Stamp cost onto the last agent message in history
+    if (input > 0 || output > 0) {
+      const historyCopy = [...this.history];
+      for (let i = historyCopy.length - 1; i >= 0; i--) {
+        const msg = historyCopy[i];
+        if (msg.role && msg.role !== 'user' && !msg.isDelegation) {
+          (msg as any).tokenCost = { inputTokens: input, outputTokens: output, cost, model };
+          this.history = historyCopy;
+          break;
         }
+      }
+    }
 
-        this.workflowDetails = {
-          workflowId: data?.currentWorkflowId || data?.workflow?.description || '',
-          version: data?.workflow?.version,
-          type: data?.workflow?.type,
-          owner: data?.workflow?.owner,
-          model: activeAgent?.model?.id ? (this.models.find(m => m.id === activeAgent.model!.id)?.name || activeAgent.model.id) : undefined,
-          contextFiles: mergedContext,
-          gateRequirements: data?.workflow?.gate?.requirements || [],
-          nextStep: nextStepObj?.label,
-          nextStepIndex: nextStepIdx >= 0 ? nextStepIdx + 1 : undefined,
-          pass: data?.workflow?.pass || undefined,
-          fail: data?.workflow?.fail || undefined,
-          // Sections: prefer active phase sections, fallback to workflow-level sections
-          inputs: data?.parsedSections?.inputs || data?.workflow?.sections?.inputs || [],
-          outputs: data?.parsedSections?.outputs || data?.workflow?.sections?.outputs || [],
-          objective: data?.parsedSections?.objective || data?.workflow?.sections?.objective || '',
-          instructions: data?.parsedSections?.instructions || data?.workflow?.sections?.instructions || '',
-          currentPhaseLabel: data?.phases?.find((p: any) => p.status === 'active')?.id || '',
+    // Persist to monthly usage tracking (fire-and-forget)
+    this.sendMessage('settings', SETTINGS_MESSAGES.TRACK_USAGE, {
+      inputTokens: input, outputTokens: output, cost, model,
+    }).then((res: any) => {
+      this.logTagged('#config', 'TRACK_USAGE result:', res);
+    }).catch((err: any) => {
+      this.logTagged('#config', 'TRACK_USAGE error:', err?.message || err);
+    });
+  }
+
+
+
+  private handleRefreshAgents(data: any): void {
+    if (data?.agents) {
+      this.availableAgents = data.agents.map((r: any) => ({
+        name: r.name,
+        icon: r.icon,
+        model: r.model,
+        capabilities: r.capabilities,
+        context: r.context
+      }));
+      this.logTagged('#config', 'Agents refreshed:', this.availableAgents.length);
+    }
+  }
+
+  private handleLoadSessionResponse(data: any): void {
+    if (!data?.session?.messages) { return; }
+
+    this.currentSessionId = data.session.id;
+
+    // Filter out legacy auto-generated context messages
+    const contextPhrases = ['I have loaded your workflow context', 'I am the Architect Agent', 'Error loading workflow context'];
+    const filtered = data.session.messages.filter((m: any) =>
+      !contextPhrases.some(phrase => m.text?.startsWith(phrase))
+    );
+
+    this.history = filtered.map((m: any) => ({
+      sender: m.sender || (m.role === 'user' ? 'Me' : m.role?.charAt(0).toUpperCase() + m.role?.slice(1)),
+      text: m.text,
+      role: m.role,
+      ...(m.a2uiAnswers ? { a2uiAnswers: m.a2uiAnswers } : {}),
+      ...(m.a2uiDismissed ? { a2uiDismissed: true } : {}),
+      ...(m.tokenCost ? { tokenCost: m.tokenCost } : {}),
+    }));
+    this.logTagged('#session', `Session restored: ${data.session.id} (${this.history.length} messages)`);
+
+    // Restore task metadata
+    if (data.session.taskTitle) {
+      this.activeWorkflow = data.session.taskTitle;
+    }
+    if (data.session.elapsedSeconds) {
+      this.elapsedSeconds = data.session.elapsedSeconds;
+    }
+
+    // Restore token usage totals
+    if (data.session.tokenUsage) {
+      this.tokenUsage = {
+        inputTokens: data.session.tokenUsage.inputTokens || 0,
+        outputTokens: data.session.tokenUsage.outputTokens || 0,
+        totalTokens: data.session.tokenUsage.totalTokens || 0,
+        estimatedCost: data.session.tokenUsage.estimatedCost || 0,
+        requests: data.session.tokenUsage.requests || 0,
+        byModel: data.session.tokenUsage.byModel || {},
+      };
+    } else {
+      // Backward compat: reconstruct from per-message tokenCost
+      let totalIn = 0, totalOut = 0, totalCost = 0, totalReqs = 0;
+      const byModel: Record<string, { inputTokens: number; outputTokens: number; cost: number; requests: number }> = {};
+      for (const m of this.history) {
+        const tc = (m as any).tokenCost;
+        if (!tc) { continue; }
+        totalIn += tc.inputTokens || 0;
+        totalOut += tc.outputTokens || 0;
+        totalCost += tc.cost || 0;
+        totalReqs++;
+        const model = tc.model || 'unknown';
+        if (!byModel[model]) { byModel[model] = { inputTokens: 0, outputTokens: 0, cost: 0, requests: 0 }; }
+        byModel[model].inputTokens += tc.inputTokens || 0;
+        byModel[model].outputTokens += tc.outputTokens || 0;
+        byModel[model].cost += tc.cost || 0;
+        byModel[model].requests++;
+      }
+      if (totalReqs > 0) {
+        this.tokenUsage = {
+          inputTokens: totalIn, outputTokens: totalOut,
+          totalTokens: totalIn + totalOut,
+          estimatedCost: totalCost, requests: totalReqs, byModel,
         };
       }
-
-      // Engine status is reflected in the header/timeline/details — no chat message needed
     }
 
-    // Auto-new-session triggered by /init
-    if (command === 'NEW_SESSION_AUTO') {
-      if (this.history.length > 0) {
-        this.saveCurrentSession();
-      }
-      this.history = [];
-      this.currentSessionId = '';
-      this.elapsedSeconds = 0;
-      this.activeActivity = '';
-      this.activeWorkflow = '🔄 Initializing task...';
-      this.taskSteps = [];
-      this.activeWorkflowDef = null;
+    // Restore lifecycle phases
+    if (data.session.taskSteps && data.session.taskSteps.length > 0) {
+      this.taskSteps = data.session.taskSteps;
+    } else {
+      this.loadLifecyclePhases();
+    }
+  }
 
-      // Request a new session ID from the background so saveCurrentSession() works
-      this.sendMessage(NAME, MESSAGES.NEW_SESSION).then((result: any) => {
-        if (result?.sessionId) {
-          this.currentSessionId = result.sessionId;
-          this.log(`Auto-session ID assigned: ${result.sessionId}`);
-        }
-      }).catch(() => { /* silent */ });
+  private handleListSessionsResponse(data: any): void {
+    if (data?.sessions) {
+      this.sessionList = data.sessions;
+      this.logTagged('#session', `Session list loaded: ${data.sessions.length} sessions`);
+      this.dispatchEvent(new CustomEvent('sessions-updated', {
+        bubbles: true, composed: true,
+        detail: { sessions: data.sessions }
+      }));
+    }
+  }
+
+  private handleGateRequest(data: any): void {
+    this.isLoading = false;
+    this.history = [...this.history, {
+      sender: '🚦 Gate',
+      text: data?.question || data?.label || `Gate approval required: **${data?.stepId || 'unknown'}**`,
+      role: 'gate',
+      isGate: true,
+      gateId: data?.gateId || data?.stepId || 'unknown',
+    }];
+  }
+
+  private handleWorkflowStateUpdate(data: any): void {
+    const statusText = data?.status || 'unknown';
+
+    // Reset loading state on terminal workflow statuses
+    if (statusText === 'completed' || statusText === 'failed') {
+      this.isLoading = false;
+    }
+
+    // Update taskSteps from engine state if available
+    const isInitWorkflow = data?.currentWorkflowId === 'workflow.init';
+
+    // Lifecycle workflows: update from phases (Brief, Implementation, Closure)
+    if (data?.phases && Array.isArray(data.phases) && data.phases.length > 0) {
+      this.taskSteps = data.phases.map((p: any) => {
+        const rawId = p.id || p.label || '';
+        const lastSegment = rawId.split('.').pop() || rawId;
+        const cleanLabel = lastSegment
+          .replace(/^\d{2}-/, '')
+          .replace(/^phase-\d+-/, '')
+          .replace(/-/g, ' ')
+          .replace(/\b\w/g, (c: string) => c.toUpperCase());
+        return {
+          id: rawId,
+          label: cleanLabel || rawId,
+          status: p.status === 'completed' ? STEP_STATUS.DONE
+            : p.status === 'active' || p.status === 'executing' ? STEP_STATUS.ACTIVE
+              : p.status === 'failed' ? STEP_STATUS.DONE
+                : STEP_STATUS.PENDING,
+        };
+      });
+    } else if (data?.steps && Array.isArray(data.steps) && !isInitWorkflow) {
+      this.taskSteps = data.steps.map((s: any) => ({
+        id: s.id || s.stepId,
+        label: s.label || s.id,
+        status: s.status === 'completed' ? STEP_STATUS.DONE
+          : s.status === 'active' || s.status === 'executing' ? STEP_STATUS.ACTIVE
+            : STEP_STATUS.PENDING,
+      }));
+    }
+
+    // Update workflow title from engine state
+    if (data?.taskTitle || data?.workflowId) {
+      this.activeWorkflow = data.taskTitle || data.workflowId;
+    }
+
+    // Store workflow details if provided
+    if (data?.workflow) {
+      this.activeWorkflowDef = data.workflow;
+    }
+
+    if (data?.steps && data.steps.length > 0 && !this.showTimeline) {
       this.showTimeline = true;
-      this.showDetails = false;
-      this.isLoading = true;
     }
 
-    // Strategy switched: background completed the lifecycle switch — reset the entire UI
-    if (command === MESSAGES.STRATEGY_SWITCHED) {
-      const newStrategy = data?.strategy || 'long';
-      const label = data?.label || newStrategy;
-      this.log(`Strategy switched to ${newStrategy} — resetting conversation`);
+    // Build rich workflowDetails for the Details panel
+    if (data?.workflow || data?.steps) {
+      const steps: Array<{ id: string, label: string, status: string }> = data?.steps || [];
+      const nextStepObj = steps.find((s: any) => s.status === 'pending');
+      const nextStepIdx = nextStepObj ? steps.indexOf(nextStepObj) : -1;
+      const activeAgent = this.availableAgents.find(a => a.name === data?.workflow?.owner?.replace(/-agent$/, ''));
 
-      // Clear all conversation history (discard previous work)
-      this.history = [];
-
-      // Update lifecycle strategy and reload timeline
-      this.lifecycleStrategy = newStrategy;
-      this.loadLifecyclePhases(newStrategy);
-
-      // Reset progress state
-      this.elapsedSeconds = 0;
-
-      // Add a system announcement as the first message in the clean session
-      this.history = [{
-        sender: 'System',
-        text: `🔄 **Strategy changed to ${label}**. Previous analysis has been discarded. Starting fresh with the new lifecycle.`,
-        role: 'system',
-      }];
-    }
-
-    // Auto-kickoff: background signals that a new lifecycle phase has started
-    if (command === MESSAGES.PHASE_AUTO_START) {
-      const phaseId = data?.phaseId || '';
-      const owner = data?.owner || 'architect';
-      this.log(`Phase auto-start received: ${phaseId} (owner: ${owner})`);
-
-      // Switch to the phase owner agent and send a kickoff message
-      if (owner && this.availableAgents.some(a => a.name === owner)) {
-        this.selectedAgent = owner;
+      // Merge workflow constitutions + agent context (deduplicated)
+      const workflowCtx: string[] = data?.workflow?.constitutions || [];
+      const agentCtx: string[] = activeAgent?.context || [];
+      const mergedContext = [...workflowCtx];
+      for (const c of agentCtx) {
+        if (!mergedContext.includes(c)) {
+          mergedContext.push(c);
+        }
       }
 
-      // Send silent kickoff — the LLM will receive the new phase's workflow context
-      this.sendSilentMessage(`Phase ${phaseId} has started. Begin executing the workflow instructions for this phase.`);
+      this.workflowDetails = {
+        workflowId: data?.currentWorkflowId || data?.workflow?.description || '',
+        version: data?.workflow?.version,
+        type: data?.workflow?.type,
+        owner: data?.workflow?.owner,
+        model: activeAgent?.model?.id ? (this.models.find(m => m.id === activeAgent.model!.id)?.name || activeAgent.model.id) : undefined,
+        contextFiles: mergedContext,
+        gateRequirements: data?.workflow?.gate?.requirements || [],
+        nextStep: nextStepObj?.label,
+        nextStepIndex: nextStepIdx >= 0 ? nextStepIdx + 1 : undefined,
+        pass: data?.workflow?.pass || undefined,
+        fail: data?.workflow?.fail || undefined,
+        inputs: data?.parsedSections?.inputs || data?.workflow?.sections?.inputs || [],
+        outputs: data?.parsedSections?.outputs || data?.workflow?.sections?.outputs || [],
+        objective: data?.parsedSections?.objective || data?.workflow?.sections?.objective || '',
+        instructions: data?.parsedSections?.instructions || data?.workflow?.sections?.instructions || '',
+        currentPhaseLabel: data?.phases?.find((p: any) => p.status === 'active')?.id || '',
+      };
+    }
+  }
+
+  private handleNewSessionAuto(): void {
+    if (this.history.length > 0) {
+      this.saveCurrentSession();
+    }
+    this.history = [];
+    this.currentSessionId = '';
+    this.elapsedSeconds = 0;
+    this.activeActivity = '';
+    this.activeWorkflow = '🔄 Initializing task...';
+    this.taskSteps = [];
+    this.activeWorkflowDef = null;
+
+    this.sendMessage(NAME, MESSAGES.NEW_SESSION).then((result: any) => {
+      if (result?.sessionId) {
+        this.currentSessionId = result.sessionId;
+        this.logTagged('#session', `Auto-session ID assigned: ${result.sessionId}`);
+      }
+    }).catch(() => { /* silent */ });
+    this.showTimeline = true;
+    this.showDetails = false;
+    this.isLoading = true;
+  }
+
+  private handlePhaseAutoStart(data: any): void {
+    const phaseId = data?.phaseId || '';
+    const owner = data?.owner || 'architect';
+    const createdArtifacts: string[] = data?.createdArtifacts || [];
+    this.logTagged('#lifecycle', `Phase auto-start received: ${phaseId} (owner: ${owner}, artifacts: ${createdArtifacts.length})`);
+
+    if (owner && this.availableAgents.some(a => a.name === owner)) {
+      this.selectedAgent = owner;
     }
 
-    // Gate continue: background signals that a gate was approved but NO workflow transition
-    // happened (internal phase gate). Now send the gate answer text to the LLM.
-    if (command === MESSAGES.GATE_CONTINUE) {
-      const answerText = data?.gateAnswerText || 'Gate approved.';
-      this.log(`Gate continue received, sending answer to LLM: ${answerText.substring(0, 60)}...`);
-      this.sendSilentMessage(answerText);
+    let kickoffMsg = `Phase ${phaseId} has started. Begin executing the workflow instructions for this phase.`;
+    if (createdArtifacts.length > 0) {
+      kickoffMsg += `\n\nThe following artifacts were already created automatically by pass actions and do NOT require review or re-creation: ${createdArtifacts.join(', ')}. Proceed directly with the phase instructions.`;
     }
+
+    this.sendSilentMessage(kickoffMsg);
+  }
+
+  private handleGateContinue(data: any): void {
+    const answerText = data?.gateAnswerText || 'Gate approved.';
+    this.logTagged('#gate', `Gate continue received, sending answer to LLM: ${answerText.substring(0, 60)}...`);
+    this.sendSilentMessage(answerText);
   }
 
   public handleInput(e: InputEvent) {
     this.inputText = (e.target as HTMLInputElement).value;
   }
 
-  public handleAttachFile() {
-    this.sendMessage(NAME, 'SELECT_FILES');
+  public async handleAttachFile() {
+    const payload = await this.sendMessage(NAME, 'SELECT_FILES');
+    if (payload?.files && Array.isArray(payload.files)) {
+      const newFiles = payload.files.filter((f: string) => !this.attachments.includes(f));
+      this.attachments = [...this.attachments, ...newFiles];
+    }
   }
 
   public removeAttachment(path: string) {
@@ -923,10 +825,10 @@ export class ChatView extends View {
   public handleAgentChange(role: string) {
     this.selectedAgent = role;
     this.showAgentDropdown = false;
-    this.log(`Agent switched to: ${role}`);
+    this.logTagged('#config', `Agent switched to: ${role}`);
   }
 
-  public handleGateResponse(gateId: string, decision: 'approve' | 'reject') {
+  public async handleGateResponse(gateId: string, decision: 'approve' | 'reject') {
     // Update the gate card in history to show the decision
     const historyCopy = [...this.history];
     const gateMsg = historyCopy.find(m => m.isGate && m.gateId === gateId && !m.gateDecision);
@@ -935,13 +837,18 @@ export class ChatView extends View {
       this.history = historyCopy;
     }
 
-    // Send the gate response to background
-    this.sendMessage(NAME, MESSAGES.GATE_RESPONSE, {
-      gateId,
-      decision,
-    }).catch((err) => {
-      this.log('Error sending gate response', err);
-    });
+    // Send structured user action to background and process the return
+    const command = decision === 'approve' ? USER_ACTIONS.ACCEPTED : USER_ACTIONS.DENIED;
+    try {
+      const payload = await this.sendMessage(NAME, command, {
+        target: this.selectedAgent,
+        type: gateId,
+        response: '',
+      });
+      this.processPayload(payload);
+    } catch (err) {
+      this.logTagged('#gate', 'Error sending gate response', err);
+    }
   }
 
   /**
@@ -977,12 +884,9 @@ export class ChatView extends View {
 
     if (allResolved) {
       if (hasGateBlock) {
-        // Gate A2UI: send GATE_RESPONSE command to background (data-driven workflow transition)
+        // Gate A2UI: send ACCEPTED/DENIED to background
         const gateAnswer = msg.a2uiAnswers[gateBlock!.id];
         const decision = /^si$/i.test(gateAnswer) ? 'SI' : 'NO';
-
-        // Use the authoritative lifecycle strategy set during init
-        const strategy = this.lifecycleStrategy || 'long';
 
         // Build the answer text from all A2UI blocks
         const parts: string[] = [];
@@ -992,20 +896,20 @@ export class ChatView extends View {
         }
         const gateAnswerText = parts.join('\n');
 
-        this.log(`Gate A2UI confirmed: decision=${decision}, strategy=${strategy}`);
-        this.sendMessage(NAME, MESSAGES.GATE_RESPONSE, {
-          gateId: gateBlock!.id,
-          decision,
-          strategy,
-          gateAnswerText, // background relays this back via GATE_CONTINUE for non-transitioning gates
+        const command = decision === 'SI' ? USER_ACTIONS.ACCEPTED : USER_ACTIONS.DENIED;
+        this.logTagged('#gate', `Gate A2UI confirmed: decision=${decision}`);
+        // Await response and process payload (contains phaseAutoStart for workflow transitions)
+        this.sendMessage(NAME, command, {
+          target: this.selectedAgent,
+          type: gateBlock!.id,
+          response: gateAnswerText,
+        }).then((payload: any) => {
+          if (payload) { this.processPayload(payload); }
+        }).catch((err: any) => {
+          this.logTagged('#gate', `Error processing gate response: ${err}`);
         });
-
-        // Do NOT send sendSilentMessage here.
-        // The background decides the next step:
-        //   - If transition → emits PHASE_AUTO_START (with correct new context)
-        //   - If no transition → emits GATE_CONTINUE (with the gateAnswerText)
       } else {
-        // Regular A2UI: send all answers as silent message
+        // Regular A2UI: combine all answers into a single message
         const parts: string[] = [];
         for (const b of blocks) {
           const ans = msg.a2uiAnswers[b.id];
@@ -1015,32 +919,12 @@ export class ChatView extends View {
       }
     }
 
-    // Detect strategy selection by A2UI block ID (language-independent)
-    const isStrategyBlock = /strateg/i.test(blockId);
-    if (isStrategyBlock) {
-      // Determine which strategy was selected:
-      // Use the block's option index (first=long, second=short) with text fallback
-      const block = blocks.find(b => b.id === blockId);
-      const optIndex = block ? block.options.indexOf(option) : -1;
-      const strategy = (optIndex === 1 || /short|corta/i.test(option)) ? 'short' as const : 'long' as const;
 
-      // Detect strategy SWITCH: if a lifecycle is already running and the user picks a different one
-      const isSwitching = blockId.includes('switch-strategy')
-        || (this.lifecycleStrategy && this.lifecycleStrategy !== strategy);
-
-      this.lifecycleStrategy = strategy;
-      this.loadLifecyclePhases(strategy);
-
-      if (isSwitching) {
-        this.log(`Strategy switch detected: → ${strategy}`);
-        this.sendMessage(NAME, MESSAGES.SWITCH_STRATEGY, { strategy });
-      }
-    }
 
     // Detect task title — update header when user provides the task name
     if (/task.?title/i.test(blockId) && option.trim()) {
       this.activeWorkflow = option.trim();
-      this.log(`Task title updated: "${this.activeWorkflow}"`);
+      this.logTagged('#workflow', `Task title updated: "${this.activeWorkflow}"`);
     }
 
     // Trigger re-render
@@ -1052,21 +936,20 @@ export class ChatView extends View {
   /**
    * Request lifecycle phases from filesystem and populate timeline.
    */
-  private async loadLifecyclePhases(strategy: string): Promise<void> {
+  private async loadLifecyclePhases(): Promise<void> {
     try {
-      const result = await this.sendMessage(NAME, MESSAGES.LIFECYCLE_PHASES_REQUEST, { strategy });
+      const result = await this.sendMessage(NAME, MESSAGES.LIFECYCLE_PHASES_REQUEST, { strategy: 'tasklifecycle' });
       const phases: Array<{ id: string; label: string }> = result?.phases || [];
       if (phases.length > 0) {
         this.taskSteps = phases.map((p, i) => ({
           id: p.id,
           label: p.label,
-          // By default, assume the first phase is Active when purely loading the base strategy
           status: i === 0 ? (STEP_STATUS.ACTIVE as 'active') : (STEP_STATUS.PENDING as 'pending')
         }));
-        this.log(`Timeline loaded: ${phases.length} phases for ${strategy}`);
+        this.logTagged('#lifecycle', `Timeline loaded: ${phases.length} phases`);
       }
     } catch (err: any) {
-      this.log(`Failed to load lifecycle phases: ${err.message}`);
+      this.logTagged('#lifecycle', `Failed to load lifecycle phases: ${err.message}`);
     }
   }
 
@@ -1142,7 +1025,7 @@ export class ChatView extends View {
 
     try {
       this.isLoading = true;
-      await this.sendMessage(NAME, MESSAGES.SEND_MESSAGE, {
+      const payload = await this.sendMessage(NAME, USER_ACTIONS.SEND, {
         text,
         agentRole: this.selectedAgent,
         workflow: this.activeWorkflow,
@@ -1150,16 +1033,18 @@ export class ChatView extends View {
         history: this.buildLLMHistory()
       }, 120_000);
 
+      this.isLoading = false;
+      this.activeActivity = '';
+      this.pauseTimer();
       this.attachments = [];
 
-      // Session is saved when stream response completes (RECEIVE_MESSAGE handler)
+      this.processPayload(payload);
     } catch (error: any) {
       this.isLoading = false;
       this.activeActivity = '';
       this.pauseTimer();
       const errorMsg = error?.message || 'Unknown error';
-      this.log('Error sending message', error);
-      // Show error visually in chat
+      this.logTagged('#msg', 'Error sending message', error);
       this.history = [...this.history, {
         sender: '⚠️ System',
         text: `**Error:** ${errorMsg}\n\nThe request could not be completed. Please try again.`,
@@ -1171,29 +1056,144 @@ export class ChatView extends View {
   }
 
   /**
+   * Process a ChatMessagePayload returned from the Background.
+   * Handles all side-effects: history, delegations, usage, workflow state, gates, etc.
+   */
+  private processPayload(payload: any): void {
+    if (!payload) { return; }
+
+    // New session signal
+    if (payload.newSession) {
+      this.handleNewSessionAuto();
+    }
+
+    // Main message — check for string type (not truthiness) because text="" with A2UI blocks is valid
+    if (typeof payload.text === 'string' || (payload.a2ui && payload.a2ui.length > 0)) {
+      // Serialize resolved A2UI blocks from intents into markup.
+      // The LLM now provides id, label, and options via enriched intents.
+      let displayText = payload.text;
+      if (payload.a2ui && payload.a2ui.length > 0) {
+        const a2uiMarkup = payload.a2ui.map((block: any) => {
+          const attrs = [`type="${block.type}"`, `id="${block.id}"`];
+          if (block.label) { attrs.push(`label="${block.label}"`); }
+          if (block.path) { attrs.push(`path="${block.path}"`); }
+          let body = '';
+          if (block.options && block.options.length > 0) {
+            body = block.options.map((opt: string, i: number) =>
+              `- [${i === block.preselected ? 'x' : ' '}] ${opt}`
+            ).join('\n');
+          } else if (block.content) {
+            body = block.content;
+          }
+          return `<a2ui ${attrs.join(' ')}>\n${body}\n</a2ui>`;
+        }).join('\n\n');
+        displayText = `${displayText}\n\n${a2uiMarkup}`;
+      }
+
+      this.history = [...this.history, {
+        sender: payload.agentRole ? payload.agentRole.charAt(0).toUpperCase() + payload.agentRole.slice(1) : 'Agent',
+        text: displayText,
+        role: payload.agentRole,
+        isStreaming: false,
+        phase: this.currentPhase,
+        ...(payload.toolEvents && payload.toolEvents.length > 0 ? { toolEvents: payload.toolEvents } : {}),
+      }];
+    }
+
+    // Delegations
+    if (payload.delegations) {
+      for (const d of payload.delegations) {
+        this.handleDelegationEvent(d);
+      }
+    }
+
+    // Usage
+    if (payload.usage) {
+      this.handleUsageUpdate(payload.usage);
+    }
+
+    // Workflow state update
+    if (payload.workflowState) {
+      this.handleWorkflowStateUpdate(payload.workflowState);
+    }
+
+    // Gate request
+    if (payload.gate) {
+      this.handleGateRequest(payload.gate);
+    }
+
+    // Phase auto-start
+    if (payload.phaseAutoStart) {
+      this.handlePhaseAutoStart(payload.phaseAutoStart);
+    }
+
+    // Gate continue (internal gate, no phase transition)
+    if (payload.gateContinue) {
+      this.handleGateContinue(payload.gateContinue);
+    }
+
+    // Side-effect messages (workflow state updates from intents, etc.)
+    if (payload.messages) {
+      for (const msg of payload.messages) {
+        if (msg.command === 'WORKFLOW_STATE_UPDATE') {
+          this.processPayload({ workflowState: msg.data });
+        } else {
+          this.logTagged('#system', `Unhandled side-effect command: ${msg.command}`);
+        }
+      }
+    }
+
+    this.saveCurrentSession();
+  }
+
+  /**
    * Send a message to the agent without showing it in the chat history.
    * Used by A2UI confirmations so the answer appears as a confirmed element,
    * not as a separate user message bubble.
    */
-  public async sendSilentMessage(text: string) {
+  public sendSilentMessage(text: string) {
+    // Enqueue message — prevents concurrent LLM calls from merging into the same skeleton bubble
+    this.silentMessageQueue.push(text);
+    this.logTagged('#msg', `Silent message enqueued (queue depth: ${this.silentMessageQueue.length})`);
+    if (!this.silentMessageProcessing) {
+      void this.drainSilentMessageQueue();
+    }
+  }
+
+  private async drainSilentMessageQueue(): Promise<void> {
+    this.silentMessageProcessing = true;
+    while (this.silentMessageQueue.length > 0) {
+      const text = this.silentMessageQueue.shift()!;
+      this.logTagged('#msg', `Silent message dequeued — sending (remaining: ${this.silentMessageQueue.length})`);
+      await this.executeSilentMessage(text);
+    }
+    this.silentMessageProcessing = false;
+  }
+
+  private async executeSilentMessage(text: string): Promise<void> {
     this.activeActivity = 'Thinking...';
     this.startTimer();
 
     try {
       this.isLoading = true;
-      await this.sendMessage(NAME, MESSAGES.SEND_MESSAGE, {
+      const payload = await this.sendMessage(NAME, USER_ACTIONS.SEND, {
         text,
         agentRole: this.selectedAgent,
         workflow: this.activeWorkflow,
         attachments: [],
         history: this.buildLLMHistory()
       }, 120_000);
+
+      this.isLoading = false;
+      this.activeActivity = '';
+      this.pauseTimer();
+
+      this.processPayload(payload);
     } catch (error: any) {
       this.isLoading = false;
       this.activeActivity = '';
       const errorMsg = error?.message || 'Unknown error';
-      this.log('Error sending silent message', error);
-      // Show error visually in chat
+      this.logTagged('#msg', 'Error sending silent message', error);
       this.history = [...this.history, {
         sender: '⚠️ System',
         text: `**Error:** ${errorMsg}\n\nThe request could not be completed. Please try again.`,
@@ -1228,7 +1228,7 @@ export class ChatView extends View {
         taskTitle: this.activeWorkflow || undefined,
         elapsedSeconds: this.elapsedSeconds || 0,
         progress,
-        lifecycleStrategy: this.lifecycleStrategy || undefined,
+
         tokenUsage: this.tokenUsage,
         taskSteps: this.taskSteps,
         accessLevel: Object.values(this.agentPermissions).includes('full') ? 'full' : 'sandbox',
@@ -1264,6 +1264,7 @@ export class ChatView extends View {
     this.activeWorkflowDef = null;
     this.showTimeline = true;
     this.showDetails = false;
+    this.showWelcome = false;
 
     try {
       const result = await this.sendMessage(NAME, MESSAGES.NEW_SESSION);
@@ -1281,15 +1282,27 @@ export class ChatView extends View {
   /**
    * Request session list from background.
    */
-  public requestSessions() {
-    this.sendMessage(NAME, MESSAGES.LIST_SESSIONS).catch(() => { /* silent */ });
+  public async requestSessions() {
+    try {
+      const result = await this.sendMessage(NAME, MESSAGES.LIST_SESSIONS);
+      if (result?.sessions) {
+        this.handleListSessionsResponse({ sessions: result.sessions });
+      }
+    } catch { /* silent */ }
   }
 
   /**
    * Load a specific session by id.
    */
-  public loadSession(sessionId: string) {
-    this.sendMessage(NAME, MESSAGES.LOAD_SESSION, { sessionId }).catch(() => { /* silent */ });
+  public async loadSession(sessionId: string) {
+    this.showWelcome = false;
+    try {
+      const result = await this.sendMessage(NAME, MESSAGES.LOAD_SESSION, { sessionId });
+      if (result?.success && result.session) {
+        this.handleLoadSessionResponse({ session: result.session });
+        // Workflow state will arrive via push event (emitWorkflowState)
+      }
+    } catch { /* silent */ }
   }
 
   /**
@@ -1364,11 +1377,37 @@ export class ChatView extends View {
       const unresolved = interactiveBlocks.find((b: A2UIBlock) => answers[b.id] === undefined);
       if (!unresolved) { break; }
 
+      // 1. Artifacts from A2UI blocks with explicit `path` attributes
       const blocksWithPaths = blocks.filter((b: A2UIBlock) => !!b.path);
-      const artifacts = blocksWithPaths.map(b => ({
+      let artifacts = blocksWithPaths.map(b => ({
         path: b.path || '',
         label: b.label || b.path?.split('/').pop() || 'Document'
       }));
+
+      // 2. Auto-detect artifact paths from message text when gate has no explicit paths
+      const hasGate = interactiveBlocks.some(b => b.type === 'gate');
+      if (hasGate && artifacts.length === 0) {
+        const msgText = msg.text || '';
+        // Pattern: .agent/artifacts/<path>.md
+        const pathMatches = msgText.match(/\.agent\/artifacts\/[^\s`\)]+\.md/g) || [];
+        // Pattern: `filename.md` for known artifact names
+        const knownArtifacts = ['init.md', 'acceptance.md', 'analysis.md', 'planning.md', 'verification.md', 'results.md', 'research.md', 'qa-report.md', 'performance-report.md'];
+        const fileMatches = (msgText.match(/`([^`]+\.md)`/g) || [])
+          .map((m: string) => m.replace(/`/g, ''))
+          .filter((f: string) => knownArtifacts.some(k => f.endsWith(k)));
+
+        // Deduplicate and build artifact references
+        const seenPaths = new Set<string>();
+        for (const p of [...pathMatches, ...fileMatches]) {
+          if (!seenPaths.has(p)) {
+            seenPaths.add(p);
+            artifacts.push({
+              path: p,
+              label: p.split('/').pop() || 'Document'
+            });
+          }
+        }
+      }
 
       newPending = {
         type: unresolved.type,

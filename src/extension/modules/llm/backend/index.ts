@@ -19,7 +19,7 @@ export class LLMVirtualBackend extends AbstractVirtualBackend {
 
   // Abstract method implementation
   configureRoutes(instance: FastifyInstance): void {
-    console.log(`[llm::backend] Registering routes: ${API_ENDPOINTS.RUN}, ${API_ENDPOINTS.STREAM}, /models`);
+    console.log(`[#llm] [llm::backend] Registering routes: ${API_ENDPOINTS.RUN}, ${API_ENDPOINTS.STREAM}, /models`);
     instance.post<{ Body: AgentRequest }>(API_ENDPOINTS.RUN, this.run.bind(this));
     instance.post<{ Body: AgentRequest }>(API_ENDPOINTS.STREAM, this.stream.bind(this));
 
@@ -33,7 +33,7 @@ export class LLMVirtualBackend extends AbstractVirtualBackend {
           const models = (data.models || [])
             .filter((m: any) => m.supportedGenerationMethods?.includes('generateContent'))
             .map((m: any) => ({ id: m.name.replace('models/', ''), displayName: m.displayName || m.name.replace('models/', '') }));
-          console.log(`[llm::backend] Available Gemini models (${models.length}): ${models.slice(0, 10).map((m: any) => m.id).join(', ')}...`);
+          console.log(`[#llm] [llm::backend] Available Gemini models (${models.length}): ${models.slice(0, 10).map((m: any) => m.id).join(', ')}...`);
           return { success: true, models };
         }
 
@@ -46,7 +46,7 @@ export class LLMVirtualBackend extends AbstractVirtualBackend {
             .filter((m: any) => m.id && !m.id.includes('realtime') && !m.id.includes('tts') && !m.id.includes('whisper') && !m.id.includes('dall-e') && !m.id.includes('embedding'))
             .map((m: any) => ({ id: m.id, displayName: m.id }))
             .sort((a: any, b: any) => a.id.localeCompare(b.id));
-          console.log(`[llm::backend] Available OpenAI models (${models.length}): ${models.slice(0, 10).map((m: any) => m.id).join(', ')}...`);
+          console.log(`[#llm] [llm::backend] Available OpenAI models (${models.length}): ${models.slice(0, 10).map((m: any) => m.id).join(', ')}...`);
           return { success: true, models };
         }
 
@@ -104,21 +104,21 @@ export class LLMVirtualBackend extends AbstractVirtualBackend {
   }
 
   async stream(req: RunRequest, reply: FastifyReply): Promise<void> {
-    const { role, input, binding, context, apiKey, provider, instructions, messages, agenticContext } = req.body;
+    const { role, input, binding, context, apiKey, provider, instructions, messages, agenticContext, disableTools } = req.body;
 
-    console.log(`[llm::backend] Stream request: role=${role}, model=${binding[role]}, provider=${provider}`);
+    console.log(`[#llm] [llm::backend] Stream request: role=${role}, model=${binding[role]}, provider=${provider}${disableTools ? ' (tools disabled)' : ''}`);
 
     reply.raw.setHeader('Content-Type', 'text/event-stream');
     reply.raw.setHeader('Cache-Control', 'no-cache');
     reply.raw.setHeader('Connection', 'keep-alive');
 
     try {
-      const tools = this.getToolsForRole(role, apiKey, provider, binding);
+      const tools = disableTools ? [] : this.getToolsForRole(role, apiKey, provider, binding);
       let runResult: any;
 
       if (messages && agenticContext) {
         // ── New mode: multi-turn messages + typed context ──
-        console.log(`[llm::backend] Using AgenticContext mode (${messages.length} messages)`);
+        console.log(`[#llm] [llm::backend] Using AgenticContext mode (${messages.length} messages)`);
         const { agent } = await this.factory.createAgentWithContext(role, binding, tools, apiKey, provider);
 
         // Convert ConversationTurn[] to AgentInputItem[]
@@ -144,13 +144,13 @@ export class LLMVirtualBackend extends AbstractVirtualBackend {
         }
 
         const agent = await this.factory.createAgent(role, binding, tools, apiKey, provider, instructions);
-        console.log(`[llm::backend] Agent created (legacy mode), starting stream...`);
+        console.log(`[#llm] [llm::backend] Agent created (legacy mode), starting stream...`);
 
         const runner = new Runner({ tracingDisabled: true });
         runResult = await runner.run(agent, finalInput, { stream: true });
       }
 
-      console.log(`[llm::backend] Agent created, starting stream...`);
+      console.log(`[#llm] [llm::backend] Agent created, starting stream...`);
       const outputChars = await this.pumpStreamEvents(runResult as any, reply);
 
       // Extract and emit token usage after stream completes
@@ -181,10 +181,10 @@ export class LLMVirtualBackend extends AbstractVirtualBackend {
           totalTokens: totalInput + totalOutput,
           estimated: totalInput > 0 && responses.length === 0,
         })}\n\n`);
-        console.log(`[llm::backend] Usage: ${totalInput} in / ${totalOutput} out (${modelName})${responses.length === 0 ? ' [estimated]' : ''}`);
+        console.log(`[#llm] [llm::backend] Usage: ${totalInput} in / ${totalOutput} out (${modelName})${responses.length === 0 ? ' [estimated]' : ''}`);
       } catch { /* usage extraction is non-blocking */ }
 
-      console.log(`[llm::backend] Stream completed`);
+      console.log(`[#llm] [llm::backend] Stream completed`);
 
     } catch (error: unknown) {
       console.error(`[llm::backend] Stream error:`, error);

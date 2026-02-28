@@ -1,25 +1,46 @@
 
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { Background, Message, ViewHtml, MessageOrigin } from '../../core/index.js';
-import { NAME, MESSAGES } from '../constants.js';
-import { API_ENDPOINTS, SIDECAR_BASE_URL, DEFAULT_MODELS } from '../../llm/constants.js';
+import { Background, Message, ViewHtml, MessageOrigin, Logger } from '../../core/index.js';
+import { NAME, MESSAGES, USER_ACTIONS, SERVER_EVENTS, SESSION_ACTIONS, WORKFLOW_ACTIONS, LANGUAGE_MAP, type ResolvedA2UIBlock, type ChatMessagePayload, type IntentResolution, type ProcessedResponse } from '../constants.js';
+import { API_ENDPOINTS, SIDECAR_BASE_URL } from '../../llm/constants.js';
 import { MESSAGES as SETTINGS_MESSAGES } from '../../settings/constants.js';
 import { MESSAGES as RUNTIME_MESSAGES } from '../../runtime/constants.js';
-import { behavioralPreamble, workflowStartPrompt, A2UI_INSTRUCTIONS } from '../prompts/index.js';
-import { tryParseStructuredResponse } from '../../llm/backend/tools/response-schema.js';
+import { PromptPipeline } from '../prompts/prompt-pipeline.js';
+import { behavioralPreamble, FORMAT_CORRECTION_PROMPT } from '../prompts/index.js';
+import { tryParseStructuredResponse, IntentType, IntentAction, IntentComponent, type AgentStructuredResponse, type Intent } from '../../llm/backend/tools/response-schema.js';
+import { defineResponseSchema } from '../prompts/response-format.js';
+import { SSEParserTransform, type SSEEvent } from './transforms/sse-parser.js';
+import { createErrorHandler, createToolEventAccumulator, createUsageAccumulator, createTextAccumulator, type ToolEventData, type DelegationData, type UsageData } from './transforms/event-emitters.js';
 import { randomUUID } from 'crypto';
 
+/** Variables resolved from candidate/task.md for workflow template population. */
+interface WorkflowVars {
+  TS: string;
+  TASK: string;
+  taskId: string;
+  taskTitle: string;
+  taskObjective: string;
+  titleShort: string;
+  language: string;
+  'ISO-8601': string;
+  criteria: string[];
+  [key: string]: string | string[]; // allow dynamic access
+}
 
 export class ChatBackground extends Background {
 
-  /** Matches agent identity prefixes like "🏛️ **architect-agent**:", "🔬 researcher-agent:" etc. */
-  private static readonly AGENT_PREFIX_REGEX = /^\s*(?:[\p{Emoji_Presentation}\p{Extended_Pictographic}\u200d\uFE0F]+\s*)?(?:\*{1,2})?\s*\w[\w-]*(?:-agent)?\s*(?:\*{1,2})?\s*:\s*/gmu;
+
   private static readonly SESSIONS_KEY = 'chat.sessions';
   private static readonly LAST_SESSION_KEY = 'chat.lastSessionId';
   private static readonly LANGUAGE_KEY = 'chat.conversationLanguage';
   private vscodeContext: vscode.ExtensionContext;
   private conversationLanguage: string | null = null;
+
+  // ─── Settings Cache ─────────────────────────────────────────────────────
+  private cachedModels: any[] | null = null;
+  private cachedRoles: any[] | null = null;
+  private cachedBindings: Record<string, string> | null = null;
 
 
   constructor(context: vscode.ExtensionContext) {
@@ -28,7 +49,7 @@ export class ChatBackground extends Background {
     // Restore persisted language preference
     this.conversationLanguage = context.workspaceState.get<string>(ChatBackground.LANGUAGE_KEY) || null;
     if (this.conversationLanguage) {
-      this.log(`Language restored from state: ${this.conversationLanguage}`);
+      this.logTagged('#system', `Language restored from state: ${this.conversationLanguage}`);
     }
     try {
       const ext = vscode.extensions.getExtension('christian-marino-alvarez.agentic-workflow');
@@ -36,53 +57,10 @@ export class ChatBackground extends Background {
     } catch (e) {
       this.appVersion = '0.0.0-ex';
     }
-    this.log('Initialized v' + this.appVersion);
+    this.logTagged('#system', 'Initialized v' + this.appVersion);
   }
 
-  /** Remove agent identity prefix and system JSON blocks from LLM response. */
-  private cleanMessageText(text: string): string {
-    let cleanText = text.replace(ChatBackground.AGENT_PREFIX_REGEX, '');
 
-    // 1. Strip fully closed markdown code blocks that contain "current_phase" 
-    //    (Using negative lookahead (?!```) to ensure we don't accidentally match across multiple different code blocks)
-    cleanText = cleanText.replace(/```[^\n]*\n(?:(?!```)[\s\S])*?"current_phase"(?:(?!```)[\s\S])*?```\n?/g, '');
-
-    // 2. Strip partial markdown code blocks that contain "current_phase" (happens during streaming)
-    const partialMatch = cleanText.match(/```[^\n]*\n(?:(?!```)[\s\S])*?"current_phase"[\s\S]*$/);
-    if (partialMatch && partialMatch.index !== undefined) {
-      cleanText = cleanText.substring(0, partialMatch.index);
-    }
-
-    // 3. Fallback: Catch raw JSON without markdown blocks at the very beginning of the message
-    if (/^\s*\{[\s\S]*?"current_phase"/.test(cleanText)) {
-      const lastBrace = cleanText.lastIndexOf('}');
-      if (lastBrace !== -1) {
-        cleanText = cleanText.substring(lastBrace + 1);
-      } else {
-        cleanText = ''; // streaming partial raw JSON
-      }
-    } else if (/^\s*\{/.test(cleanText) && !cleanText.includes('}')) {
-      // Streaming partial raw JSON that hasn't revealed "current_phase" yet.
-      // Hides the ugly `{\n  "` from the UI while the agent is "Thinking..."
-      cleanText = '';
-    }
-
-    // 4. Normalize escaped newlines: some APIs return literal \\n instead of actual newlines
-    cleanText = cleanText.replace(/\\n/g, '\n');
-
-    // 5. Strip trailing raw JSON structures with structured response keys ("text", "ui_intent")
-    //    This happens when the LLM appends raw JSON after normal markdown text
-    const trailingJsonMatch = cleanText.match(/\n\s*\{[^{}]*"text"\s*:\s*"[^]*$/);
-    if (trailingJsonMatch && trailingJsonMatch.index !== undefined) {
-      // Verify it looks like a structured response JSON (contains "ui_intent" or "text")
-      const jsonPart = cleanText.substring(trailingJsonMatch.index);
-      if (/"ui_intent"/.test(jsonPart) || /"text"\s*:\s*"/.test(jsonPart)) {
-        cleanText = cleanText.substring(0, trailingJsonMatch.index);
-      }
-    }
-
-    return cleanText.trimStart();
-  }
 
   /** Parse delegateTask tool call arguments safely. */
   private parseDelegationArgs(argsStr?: string): { agent?: string, task?: string } | undefined {
@@ -95,809 +73,1003 @@ export class ChatBackground extends Background {
   }
 
   public override async listen(message: Message): Promise<any> {
-    switch (message.payload.command) {
-      case MESSAGES.SEND_MESSAGE:
-        return this.handleSendMessage(message.payload.data);
-      case MESSAGES.LOAD_INIT:
-        return this.handleLoadInit();
-      case MESSAGES.SELECT_FILES:
+    if (message.origin === MessageOrigin.View) {
+      return this.listenView(message);
+    } else {
+      return this.listenBackground(message);
+    }
+  }
+
+  private async listenView(message: Message): Promise<any> {
+    const command = message.payload.command;
+    const data = message.payload.data;
+
+    if (this.isUserAction(command)) {
+      return this.handleUserAction(command as any, data);
+    }
+
+    if (this.isSessionState(command)) {
+      return this.handleSessionState(command as any, data);
+    }
+
+    if (this.isWorkflowState(command)) {
+      return this.handleWorkflowState(command as any, data);
+    }
+
+    // Pass unhandled view messages to the super layer
+    return super.listen(message);
+  }
+
+  // ─── Message Grouping Helpers ─────────────────────────────────────────────
+
+  private isUserAction(command: string): boolean {
+    return (Object.values(USER_ACTIONS) as string[]).includes(command);
+  }
+
+  private isSessionState(command: string): boolean {
+    return (Object.values(SESSION_ACTIONS) as string[]).includes(command);
+  }
+
+  private isWorkflowState(command: string): boolean {
+    return (Object.values(WORKFLOW_ACTIONS) as string[]).includes(command);
+  }
+
+  // ─── Message Group Handlers ───────────────────────────────────────────────
+
+  private async handleUserAction(command: string, data: any): Promise<ChatMessagePayload> {
+    switch (command) {
+      case USER_ACTIONS.SEND:
+        return this.handleSendMessage(data);
+      case USER_ACTIONS.SELECTED:
+        return this.handleSelection(data);
+      case USER_ACTIONS.ACCEPTED:
+        return this.handleAcceptance(data);
+      case USER_ACTIONS.DENIED:
+        return this.handleDenial(data);
+      case USER_ACTIONS.SELECT_FILES:
         return this.handleSelectFiles();
-      case MESSAGES.SAVE_SESSION:
-        return this.handleSaveSession(message.payload.data);
-      case MESSAGES.LOAD_SESSION:
-        return this.handleLoadSession(message.payload.data);
-      case MESSAGES.LIST_SESSIONS:
-        return this.handleListSessions();
-      case MESSAGES.DELETE_SESSION:
-        return this.handleDeleteSession(message.payload.data);
-      case MESSAGES.NEW_SESSION:
-        return this.handleNewSession();
-      case MESSAGES.OPEN_FOLDER:
+      case USER_ACTIONS.OPEN_FOLDER:
         return this.handleOpenFolder();
+      case USER_ACTIONS.OPEN_FILE:
+        return this.handleOpenFile(data);
+      default:
+        throw new Error(`Unhandled User Action: ${command}`);
+    }
+  }
+
+  // ─── New User Action Handlers ─────────────────────────────────────────────
+
+  private setLanguage(response: string): void {
+    const langCode = LANGUAGE_MAP[response.toLowerCase()];
+    if (langCode) {
+      this.conversationLanguage = langCode;
+      this.vscodeContext.workspaceState.update(ChatBackground.LANGUAGE_KEY, langCode);
+      this.logTagged('#config', `Language set: ${langCode}`);
+    }
+  }
+
+  private async handleSelection(data: any): Promise<ChatMessagePayload> {
+    this.logTagged('#msg', `Selection received: type=${data.type}, response=${data.response}`);
+
+    if (data.type === 'language') {
+      this.setLanguage(data.response);
+    }
+
+    // Forward to LLM as a regular message with the selection context
+    return this.handleSendMessage({
+      text: `${data.type}: ${data.response}`,
+      agentRole: data.target,
+      history: data.history,
+      attachments: [],
+    });
+  }
+
+  private async handleAcceptance(data: any): Promise<ChatMessagePayload> {
+    this.logTagged('#gate', `Gate accepted: type=${data.type}, target=${data.target}`);
+    return this.handleGateResponse({
+      gateId: data.type,
+      decision: 'SI',
+      gateAnswerText: data.response || '',
+    });
+  }
+
+  private async handleDenial(data: any): Promise<ChatMessagePayload> {
+    this.logTagged('#gate', `Gate denied: type=${data.type}, target=${data.target}, reason=${data.response}`);
+    return this.handleGateResponse({
+      gateId: data.type,
+      decision: 'NO',
+      gateAnswerText: data.response || '',
+    });
+  }
+
+  private async handleSessionState(command: string, data: any): Promise<any> {
+    switch (command) {
+      case SESSION_ACTIONS.SAVE:
+        return this.handleSaveSession(data);
+      case SESSION_ACTIONS.LOAD:
+        return this.handleLoadSession(data);
+      case SESSION_ACTIONS.LIST:
+        return this.handleListSessions();
+      case SESSION_ACTIONS.DELETE:
+        return this.handleDeleteSession(data);
+      case SESSION_ACTIONS.NEW:
+        return this.handleNewSession();
+      default:
+        throw new Error(`Unhandled Session State action: ${command}`);
+    }
+  }
+
+  private async handleWorkflowState(command: string, data: any): Promise<any> {
+    switch (command) {
+      case WORKFLOW_ACTIONS.LOAD_INIT:
+        return this.handleLoadInit();
+      case WORKFLOW_ACTIONS.STATE_UPDATE:
+        return this.getWorkflowState();
+      case WORKFLOW_ACTIONS.LIFECYCLE_PHASES_REQUEST:
+        return this.handleLifecyclePhasesRequest(data);
+      default:
+        throw new Error(`Unhandled Workflow State action: ${command}`);
+    }
+  }
+
+  private async listenBackground(message: Message): Promise<any> {
+    switch (message.payload.command) {
       case 'ROLES_CHANGED':
         return this.handleRolesChanged();
-      case 'OPEN_FILE':
-        return this.handleOpenFile(message.payload.data);
-
-      case MESSAGES.GATE_REQUEST:
-        return this.handleGateRequest(message.payload.data);
-      case MESSAGES.GATE_RESPONSE:
-        return this.handleGateResponse(message.payload.data);
-      case MESSAGES.WORKFLOW_STATE_UPDATE:
-        // If from view (request), fetch and return; if from runtime (push), forward
-        if (message.origin === MessageOrigin.View || message.from?.includes('view')) {
-          return this.getWorkflowState();
-        }
-        return this.handleWorkflowStateUpdate(message.payload.data);
-
-      case MESSAGES.LIFECYCLE_PHASES_REQUEST:
-        return this.handleLifecyclePhasesRequest(message.payload.data);
-
-
-
       default:
         return super.listen(message);
     }
   }
 
-  private async handleSendMessage(data: { text: string, agentRole: string, modelId?: string, history?: Array<{ role: string, text: string }>, attachments?: Array<{ _title: string, _path: string }> }): Promise<any> {
-    let role = data.agentRole || 'backend';
+  // ─── Settings Cache Methods ──────────────────────────────────────────────
 
-    // Detect slash commands — trigger workflow start and prompt the workflow's owner
-    // Only match short commands like /init, /phase-1-brief — NOT file paths like /Users/...
-    const textTrimmed = data.text.trim();
-    const slashToken = textTrimmed.split(' ')[0]; // e.g. "/init" or "/Users/milos/..."
-    const isSlashCommand = textTrimmed.startsWith('/') && !slashToken.includes('/', 1);
-    if (isSlashCommand) {
-      const commandId = slashToken.substring(1); // e.g. "/init" -> "init"
+  private async loadSettings(): Promise<void> {
+    const [settingsResponse, rolesResponse, bindingsResponse] = await Promise.all([
+      this.sendMessage('settings', SETTINGS_MESSAGES.GET_REQUEST),
+      this.sendMessage('settings', SETTINGS_MESSAGES.GET_ROLES),
+      this.sendMessage('settings', SETTINGS_MESSAGES.GET_BINDING),
+    ]);
 
-      // New task = fresh language selection
-      if (commandId === 'init') {
-        this.conversationLanguage = null;
-        this.vscodeContext.workspaceState.update(ChatBackground.LANGUAGE_KEY, undefined);
-        this.log('Language reset for new task');
+    this.cachedModels = settingsResponse?.success ? settingsResponse.models : [];
+    this.cachedRoles = rolesResponse?.success ? rolesResponse.roles : [];
+    this.cachedBindings = bindingsResponse?.success ? (bindingsResponse.bindings || {}) : {};
+    this.logTagged('#config', 'Settings cache loaded');
+  }
+
+  private async getSettings(): Promise<{ models: any[]; roles: any[]; bindings: Record<string, string> }> {
+    if (!this.cachedModels || !this.cachedRoles || !this.cachedBindings) {
+      await this.loadSettings();
+    }
+    return {
+      models: this.cachedModels!,
+      roles: this.cachedRoles!,
+      bindings: this.cachedBindings!,
+    };
+  }
+
+  private invalidateSettingsCache(): void {
+    this.cachedModels = null;
+    this.cachedRoles = null;
+    this.cachedBindings = null;
+    this.logTagged('#config', 'Settings cache invalidated');
+  }
+
+  // ─── Model Resolution ───────────────────────────────────────────────────
+
+  private async resolveModelConfig(role: string, text: string, overrideModelId?: string): Promise<{ modelName: string; apiKey: string | null; provider: string; roleConfig: any }> {
+    const { models, roles, bindings } = await this.getSettings();
+
+    // Defaults from Settings (first active model or first in list)
+    const defaultModel = models.find((m: any) => Boolean(m.active)) || models[0];
+    let modelName = defaultModel?.modelName || defaultModel?.name || '';
+    let apiKey = defaultModel?.apiKey || null;
+    let provider = defaultModel?.provider || 'gemini';
+    let roleConfig: any = null;
+
+    if (models.length > 0) {
+      const taskType = await this.resolveTaskType(text);
+
+      // Resolve model via priority: role routing → bindings → legacy → active
+      roleConfig = roles.find((r: any) => r.name === role);
+      let boundModelId: string | undefined;
+
+      // Priority 1: Task-aware routing via `models: { default, routing }`
+      if (roleConfig?.models) {
+        const routedModel = taskType === 'routing'
+          ? (roleConfig.models.routing || roleConfig.models.default)
+          : roleConfig.models.default;
+        if (routedModel) {
+          boundModelId = routedModel;
+          this.logTagged('#config', `Model routing: taskType=${taskType}, resolved=${routedModel}`);
+        }
       }
 
-      const initResult = await this.handleWorkflowCommand(commandId);
-
-      if (!initResult.success) {
-        return initResult; // Stop if init failed
+      // Priority 2: VS Code settings bindings
+      if (!boundModelId) {
+        boundModelId = bindings[role] || overrideModelId;
       }
 
-      // Override text and role to have the workflow owner explain the workflow
-      if (initResult.owner) {
-        role = initResult.owner;
+      // Priority 3: Legacy single model config from role frontmatter
+      if (!boundModelId && roleConfig?.model?.id) {
+        boundModelId = roleConfig.model.id;
+        if (roleConfig.model.provider) {
+          provider = roleConfig.model.provider;
+        }
       }
 
-      data.text = workflowStartPrompt(commandId);
+      // Lookup by UUID → modelName → display name → active
+      const config = boundModelId
+        ? models.find((m: any) => m.id === boundModelId)
+        || models.find((m: any) => m.modelName === boundModelId)
+        || models.find((m: any) => m.name === boundModelId)
+        : models.find((m: any) => Boolean(m.active));
+
+      if (config) {
+        apiKey = config.apiKey || null;
+        provider = config.provider || provider || 'gemini';
+        modelName = config.modelName || config.name || defaultModel?.modelName || '';
+      } else if (boundModelId) {
+        modelName = boundModelId;
+        this.logTagged('#config', `No config match for "${boundModelId}", using as direct model name`);
+      }
+
+      // Fallback: if no API key, try any model with same provider that has one
+      if (!apiKey && provider) {
+        const fallback = models.find((m: any) => m.provider === provider && m.apiKey);
+        if (fallback) {
+          apiKey = fallback.apiKey;
+          this.logTagged('#config', `API key resolved via provider fallback (${provider})`);
+        }
+      }
     }
 
-    // Workflow transitions are handled by handleGateResponse — no hardcoded logic here.
-    // The LLM detects gate completion, presents A2UI gate confirmation, user validates, extension transitions.
+    this.logTagged('#config', `Resolved model for ${role}: ${modelName} (provider: ${provider})`);
+    return { modelName, apiKey, provider, roleConfig };
+  }
 
-    this.log(`Message for role "${role}": ${data.text.substring(0, 50)}...`);
+  // ─── Prompt Data Resolution ─────────────────────────────────────────────
 
-    // Detect language selection from user messages or A2UI responses
-    // Matches: "Español", "language: Español", "idioma: español", etc.
-    const textLower = data.text.toLowerCase();
-    if (!this.conversationLanguage) {
-      if (/español|spanish/i.test(textLower)) {
-        this.conversationLanguage = 'es';
-        this.vscodeContext.workspaceState.update(ChatBackground.LANGUAGE_KEY, 'es');
-        this.log('Language detected: Spanish');
-      } else if (/\benglish\b|inglés/i.test(textLower)) {
-        this.conversationLanguage = 'en';
-        this.vscodeContext.workspaceState.update(ChatBackground.LANGUAGE_KEY, 'en');
-        this.log('Language detected: English');
+  /** Build a structured workflow snapshot for the agenticContext. */
+  private buildWorkflowSnapshot(workflowState: any): any | null {
+    if (!workflowState?.workflow) { return null; }
+    const wf = workflowState.workflow;
+    this.logTagged('#workflow', `Injected workflow context (${workflowState.currentPhaseId || wf.id}) into LLM instructions`);
+
+    // Extract clean phase id: "workflow.init" → "init"
+    const rawId = wf.id || workflowState.currentWorkflowId || '';
+    const currentPhase = workflowState.currentPhaseId || rawId.replace(/^workflow\./, '');
+
+    return {
+      id: rawId,
+      status: workflowState.status,
+      owner: wf.owner,
+      currentPhase,
+      taskId: workflowState.taskId || null,
+      gate: wf.gate ? { requirements: wf.gate.requirements } : undefined,
+      pass: wf.pass ? { nextTarget: wf.pass.nextTarget } : undefined,
+      fail: wf.fail ? { behavior: wf.fail.behavior } : undefined,
+      sections: workflowState.parsedSections ? {
+        objective: workflowState.parsedSections.objective,
+        instructions: workflowState.parsedSections.instructions,
+        inputs: workflowState.parsedSections.inputs || [],
+        outputs: workflowState.parsedSections.outputs || [],
+      } : wf.sections ? {
+        objective: wf.sections.objective,
+        instructions: wf.sections.instructions,
+        inputs: wf.sections.inputs || [],
+        outputs: wf.sections.outputs || [],
+      } : undefined,
+      phases: workflowState.phases,
+    };
+  }
+
+  /** Fetch workflow state from Runtime and build the structured snapshot. */
+  private async fetchWorkflowData(): Promise<{ snapshot: any | null; constitutionRefs: string[]; state: any }> {
+    const rawState = await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_STATUS).catch(() => null);
+    const state = rawState?.result || rawState;
+    const snapshot = this.buildWorkflowSnapshot(state);
+    const constitutionRefs: string[] = state?.workflow?.constitutions || [];
+    return { snapshot, constitutionRefs, state };
+  }
+
+  /** Load constitution files from workflow + agent role context definitions. */
+  private async loadConstitutions(constitutionRefs: string[], roleConfig: any): Promise<string[]> {
+    const workspacePath = this.workspacePath;
+    if (!workspacePath) { return []; }
+
+    const contents: string[] = [];
+    const fs = await import('fs/promises');
+    const baseDir = path.join(workspacePath, '.agent', 'rules', 'constitution');
+
+    // Lazy resolver for <TASK>, <TS>, <title-short> placeholders
+    let workflowVars: WorkflowVars | null = null;
+    const resolveRef = async (ref: string): Promise<string> => {
+      if (!ref.includes('<')) { return ref; }
+      if (!workflowVars) {
+        workflowVars = await this.resolveWorkflowVariables(workspacePath);
       }
-    }
+      return this.resolvePathPlaceholders(ref, workflowVars);
+    };
 
-
+    // Build alias map from constitution index
+    let aliasMap: Record<string, string> = {};
     try {
-      // 1. Fetch settings + roles + bindings in PARALLEL (saves ~500ms vs sequential)
-      const [settingsResponse, rolesResponse, bindingsResponse] = await Promise.all([
-        this.sendMessage('settings', SETTINGS_MESSAGES.GET_REQUEST),
-        this.sendMessage('settings', SETTINGS_MESSAGES.GET_ROLES),
-        this.sendMessage('settings', SETTINGS_MESSAGES.GET_BINDING),
-      ]);
+      const indexContent = await fs.readFile(path.join(baseDir, 'index.md'), 'utf-8');
+      const aliasRegex = /^\s+(\w+):\s+(.+\.md)\s*$/gm;
+      let aliasMatch;
+      while ((aliasMatch = aliasRegex.exec(indexContent)) !== null) {
+        aliasMap[aliasMatch[1]] = aliasMatch[2];
+      }
+    } catch { /* no index file */ }
 
-      let modelName = DEFAULT_MODELS.GEMINI;
-      let apiKey = null;
-      let provider = 'gemini';
-      let roleConfig: any = null;
+    /** Resolve a single constitution reference against multiple candidate paths. */
+    const loadRef = async (rawRef: string, source: string): Promise<void> => {
+      const ref = await resolveRef(rawRef);
 
-      if (settingsResponse && settingsResponse.success && settingsResponse.models) {
-        const models = settingsResponse.models;
-
-        // 2. Determine model routing context: "routing" (fast) vs "default" (thinking)
-        const taskType = await this.resolveTaskType(data.text);
-
-        // 3. Resolve model for this agent role via multiple sources (priority order):
-        //    a) Role definition `models: { default, routing }` (new schema — task-aware routing)
-        //    b) VS Code settings bindings (roleBindings — static per-role override)
-        //    c) Role definition `model: { id }` (legacy single model)
-        roleConfig = rolesResponse?.roles?.find((r: any) => r.name === role);
-        let boundModelId: string | undefined;
-
-        // Priority 1: Task-aware routing via `models: { default, routing }`
-        if (roleConfig?.models) {
-          const routedModel = taskType === 'routing'
-            ? (roleConfig.models.routing || roleConfig.models.default)
-            : roleConfig.models.default;
-          if (routedModel) {
-            boundModelId = routedModel;
-            this.log(`Model routing: taskType=${taskType}, resolved=${routedModel}`);
-          }
-        }
-
-        // Priority 2: VS Code settings bindings (static per-role override)
-        if (!boundModelId) {
-          const bindings = bindingsResponse?.bindings || {};
-          boundModelId = bindings[role] || data.modelId;
-        }
-
-        // Priority 3: Legacy single model config from role frontmatter
-        if (!boundModelId && roleConfig?.model?.id) {
-          boundModelId = roleConfig.model.id;
-          if (roleConfig.model.provider) {
-            provider = roleConfig.model.provider;
-          }
-        }
-
-        // Lookup by config UUID first, then by API model name (modelName), then by display name
-        const config = boundModelId
-          ? models.find((m: any) => m.id === boundModelId)
-          || models.find((m: any) => m.modelName === boundModelId)
-          || models.find((m: any) => m.name === boundModelId)
-          : models.find((m: any) => Boolean(m.active));
-
-        if (config) {
-          apiKey = config.apiKey || null;
-          provider = config.provider || provider || 'gemini';
-          modelName = config.modelName || config.name || DEFAULT_MODELS.GEMINI;
-        } else if (boundModelId) {
-          // No config match found — use boundModelId directly as model name
-          // This happens when the role specifies a model not in the Settings list
-          modelName = boundModelId;
-          this.log(`No config match for "${boundModelId}", using as direct model name`);
-        }
-
-        // Fallback: if no API key found, try any model with same provider that has a key
-        if (!apiKey && provider) {
-          const fallback = models.find((m: any) => m.provider === provider && m.apiKey);
-          if (fallback) {
-            apiKey = fallback.apiKey;
-            this.log(`API key resolved via provider fallback (${provider})`);
-          }
-        }
+      // Skip if already loaded (deduplication)
+      if (contents.some(c => c.includes(`### ${ref}`) || c.includes(`### ${rawRef}`))) {
+        this.logTagged('#prompt', `${source} already loaded: ${ref}`);
+        return;
       }
 
-      this.log(`Resolved model for ${role}: ${modelName} (provider: ${provider})`);
-
-      // 3. Build AgenticContext for dynamic instructions
-      const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
-
-      // Load role persona + workflow status in PARALLEL
-      const [rolePersona, rawWorkflowState] = await Promise.all([
-        (async () => {
-          if (!workspacePath) { return ''; }
-          try {
-            const fs = await import('fs/promises');
-            const rolePath = path.join(workspacePath, '.agent', 'rules', 'roles', `${role}.md`);
-            const content = await fs.readFile(rolePath, 'utf-8');
-            this.log(`Loaded role persona for "${role}" (${content.length} chars)`);
-            return content;
-          } catch {
-            this.log(`No role file found for "${role}", using default persona`);
-            return '';
-          }
-        })(),
-        this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_STATUS).catch(() => null),
-      ]);
-
-      // Prepend preamble + A2UI (static first for prefix caching), then role persona (semi-static), then dynamic state
-      const workspaceFolderName = vscode.workspace.workspaceFolders?.[0]?.name || 'project';
-      let fullPersona = behavioralPreamble(workspaceFolderName, this.conversationLanguage)
-        + A2UI_INSTRUCTIONS
-        + '\n\n' + rolePersona
-        + (this.conversationLanguage
-          ? `\n\n### PRE-ESTABLISHED STATE\n- Conversation language: **${this.conversationLanguage === 'es' ? 'Español' : 'English'}** (already confirmed by the user — do NOT ask again, skip any workflow step about language selection)\n`
-          : '');
-
-      // 4. Build workflow snapshot for context
-      let workflowSnapshot: any = null;
-      let constitutionContents: string[] = [];
-      try {
-        const workflowState = rawWorkflowState?.result || rawWorkflowState;
-        if (workflowState?.workflow) {
-          const wf = workflowState.workflow;
-          workflowSnapshot = {
-            id: wf.id || workflowState.currentWorkflowId,
-            status: workflowState.status,
-            owner: wf.owner,
-            // Only structured data — rawContent excluded to reduce prompt size
-            gate: wf.gate ? { requirements: wf.gate.requirements } : undefined,
-            pass: wf.pass ? { nextTarget: wf.pass.nextTarget } : undefined,
-            fail: wf.fail ? { behavior: wf.fail.behavior } : undefined,
-            sections: workflowState.parsedSections ? {
-              objective: workflowState.parsedSections.objective,
-              instructions: workflowState.parsedSections.instructions,
-              inputs: workflowState.parsedSections.inputs || [],
-              outputs: workflowState.parsedSections.outputs || [],
-            } : wf.sections ? {
-              objective: wf.sections.objective,
-              instructions: wf.sections.instructions,
-              inputs: wf.sections.inputs || [],
-              outputs: wf.sections.outputs || [],
-            } : undefined,
-            phases: workflowState.phases,
-          };
-          this.log(`Injected workflow context (${workflowState.currentPhaseId || wf.id}) into LLM instructions`);
-
-
-
-          // 5. Load constitution files referenced in the workflow
-          const constitutionRefs: string[] = wf.constitutions || [];
-          if (constitutionRefs.length > 0 && workspacePath) {
-            const fs = await import('fs/promises');
-            const baseDir = path.join(workspacePath, '.agent', 'rules', 'constitution');
-
-            let aliasMap: Record<string, string> = {};
-            try {
-              const indexContent = await fs.readFile(path.join(baseDir, 'index.md'), 'utf-8');
-              const aliasRegex = /^\s+(\w+):\s+(.+\.md)\s*$/gm;
-              let aliasMatch;
-              while ((aliasMatch = aliasRegex.exec(indexContent)) !== null) {
-                aliasMap[aliasMatch[1]] = aliasMatch[2];
-              }
-            } catch { /* no index file */ }
-
-            for (const ref of constitutionRefs) {
-              let loaded = false;
-
-              // Case 1: Direct file path (starts with .agent/ or /)
-              if (ref.startsWith('.agent/') || ref.startsWith('/')) {
-                const directPath = ref.startsWith('/')
-                  ? ref
-                  : path.join(workspacePath, ref);
-                try {
-                  const content = await fs.readFile(directPath, 'utf-8');
-                  constitutionContents.push(`\n### ${ref}\n${content}`);
-                  this.log(`Loaded constitution: ${ref} (direct path, ${content.length} chars)`);
-                  loaded = true;
-                } catch { /* file not found */ }
-              }
-
-              // Case 2: Alias pattern (constitution.X)
-              if (!loaded) {
-                const aliasName = ref.replace(/^constitution\./, '');
-
-                if (aliasMap[aliasName]) {
-                  const resolvedPath = path.join(workspacePath, aliasMap[aliasName]);
-                  try {
-                    const content = await fs.readFile(resolvedPath, 'utf-8');
-                    constitutionContents.push(`\n### ${ref}\n${content}`);
-                    this.log(`Loaded constitution: ${ref} via index (${content.length} chars)`);
-                    loaded = true;
-                  } catch { /* not found via index */ }
-                }
-              }
-
-              // Case 3: Fallback candidate paths
-              if (!loaded) {
-                const aliasName = ref.replace(/^constitution\./, '');
-                const candidates = [
-                  aliasName.replace(/_/g, '-') + '.md',
-                  aliasName.replace(/_/g, '.') + '.md',
-                  aliasName.replace(/_/g, '-') + '/index.md',
-                  aliasName + '.md',
-                ];
-
-                for (const candidate of candidates) {
-                  try {
-                    const content = await fs.readFile(path.join(baseDir, candidate), 'utf-8');
-                    constitutionContents.push(`\n### ${ref}\n${content}`);
-                    this.log(`Loaded constitution: ${ref} → ${candidate} (${content.length} chars)`);
-                    loaded = true;
-                    break;
-                  } catch { /* try next */ }
-                }
-              }
-
-              if (!loaded) {
-                this.log(`Constitution not resolved: ${ref}`);
-              }
-            }
-          }
-        }
-      } catch (err: any) {
-        this.log(`Could not fetch workflow state for LLM context: ${err.message}`);
+      // Case 1: Direct file path
+      if (ref.startsWith('.agent/') || ref.startsWith('/')) {
+        const directPath = ref.startsWith('/') ? ref : path.join(workspacePath, ref);
+        try {
+          const content = await fs.readFile(directPath, 'utf-8');
+          contents.push(`\n### ${ref}\n${content}`);
+          this.logTagged('#prompt', `Loaded ${source}: ${ref} (${content.length} chars)`);
+          return;
+        } catch { /* file not found */ }
       }
 
-      // 5b. Load agent-level context (from role's context: [] frontmatter)
-      if (roleConfig?.context && Array.isArray(roleConfig.context) && roleConfig.context.length > 0 && workspacePath) {
-        const fs = await import('fs/promises');
-        const baseDir = path.join(workspacePath, '.agent', 'rules', 'constitution');
-
-        for (const ref of roleConfig.context) {
-          // Check if already loaded from workflow constitutions
-          if (constitutionContents.some(c => c.includes(`### ${ref}`))) {
-            this.log(`Agent context already loaded (from workflow): ${ref}`);
-            continue;
-          }
-
-          let loaded = false;
-
-          // Case 1: Direct file path
-          if (ref.startsWith('.agent/') || ref.startsWith('/')) {
-            const directPath = ref.startsWith('/') ? ref : path.join(workspacePath, ref);
-            try {
-              const content = await fs.readFile(directPath, 'utf-8');
-              constitutionContents.push(`\n### ${ref}\n${content}`);
-              this.log(`Loaded agent context: ${ref} (direct path, ${content.length} chars)`);
-              loaded = true;
-            } catch { /* file not found */ }
-          }
-
-          // Case 2: Alias pattern (constitution.X)
-          if (!loaded && ref.startsWith('constitution.')) {
-            const aliasName = ref.replace(/^constitution\./, '');
-            const candidates = [
-              aliasName.replace(/_/g, '-') + '.md',
-              aliasName + '.md',
-              aliasName.replace(/_/g, '-') + '/index.md',
-            ];
-            for (const candidate of candidates) {
-              try {
-                const content = await fs.readFile(path.join(baseDir, candidate), 'utf-8');
-                constitutionContents.push(`\n### ${ref}\n${content}`);
-                this.log(`Loaded agent context: ${ref} → ${candidate} (${content.length} chars)`);
-                loaded = true;
-                break;
-              } catch { /* try next */ }
-            }
-          }
-
-          if (!loaded) {
-            this.log(`Agent context not resolved: ${ref}`);
-          }
-        }
+      // Case 2: Alias via index
+      const aliasName = ref.replace(/^constitution\./, '');
+      if (aliasMap[aliasName]) {
+        try {
+          const content = await fs.readFile(path.join(workspacePath, aliasMap[aliasName]), 'utf-8');
+          contents.push(`\n### ${ref}\n${content}`);
+          this.logTagged('#prompt', `Loaded ${source}: ${ref} via index (${content.length} chars)`);
+          return;
+        } catch { /* not found */ }
       }
 
-      // 6. Build conversation messages as multi-turn array
-      const messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }> = [];
-      if (data.history && data.history.length > 0) {
-        for (const msg of data.history) {
-          const turnRole = msg.role === 'user' ? 'user' as const : 'assistant' as const;
-          messages.push({ role: turnRole, content: msg.text });
-        }
-      }
-      // Add current message as last user turn
-      messages.push({ role: 'user', content: data.text });
-
-      // 7. Build progress summary from conversation history
-      // Extract user decisions so the LLM knows which workflow steps are completed
-      const allUserText = messages
-        .filter(m => m.role === 'user')
-        .map(m => m.content)
-        .join('\n');
-      const decisions: string[] = [];
-
-      if (this.conversationLanguage) {
-        decisions.push(`- Language: ${this.conversationLanguage === 'es' ? 'Español' : 'English'} ✓`);
-      }
-      if (/corta|short|larga|long/i.test(allUserText)) {
-        const match = allUserText.match(/(corta|short|larga|long)\s*(\([^)]*\))?/i);
-        if (match) { decisions.push(`- Strategy: ${match[0]} ✓`); }
-      }
-      if (/task.?title|título/i.test(allUserText)) {
-        const titleMatch = allUserText.match(/(?:task.?title|título)[^:]*:\s*(.+)/i);
-        if (titleMatch) { decisions.push(`- Task title: "${titleMatch[1].trim()}" ✓`); }
-      }
-      if (/task.?objective|objetivo/i.test(allUserText)) {
-        const objMatch = allUserText.match(/(?:task.?objective|objetivo)[^:]*:\s*(.+)/i);
-        if (objMatch) { decisions.push(`- Task objective: "${objMatch[1].trim()}" ✓`); }
+      // Case 3: Fallback candidate paths
+      const candidates = [
+        aliasName.replace(/_/g, '-') + '.md',
+        aliasName.replace(/_/g, '.') + '.md',
+        aliasName.replace(/_/g, '-') + '/index.md',
+        aliasName + '.md',
+      ];
+      for (const candidate of candidates) {
+        try {
+          const content = await fs.readFile(path.join(baseDir, candidate), 'utf-8');
+          contents.push(`\n### ${ref}\n${content}`);
+          this.logTagged('#prompt', `Loaded ${source}: ${ref} → ${candidate} (${content.length} chars)`);
+          return;
+        } catch { /* try next */ }
       }
 
-      // Inject progress into the workflow persona if there are completed decisions
-      if (decisions.length > 0) {
-        const progressNote = `\n\n### WORKFLOW PROGRESS (DO NOT repeat these steps)\nThe following decisions are ALREADY confirmed by the user:\n${decisions.join('\n')}\n\nStart from the FIRST incomplete step. If all steps before the Gate are done, present the Gate evaluation immediately.\n`;
-        fullPersona += progressNote;
-        this.log(`Injected ${decisions.length} completed decisions into prompt`);
-      }
+      this.logTagged('#prompt', `${source} not resolved: ${ref}`);
+    };
 
-      // 7. Build AgenticContext
-      const agenticContext = {
-        workspacePath,
+    // 1. Workflow-level constitutions
+    try {
+      for (const ref of constitutionRefs) {
+        await loadRef(ref, 'constitution');
+      }
+    } catch (err: any) {
+      this.logTagged('#prompt', `Error loading workflow constitutions: ${err.message}`);
+    }
+
+    // 2. Agent-level context (from role frontmatter context: [])
+    if (roleConfig?.context && Array.isArray(roleConfig.context)) {
+      for (const ref of roleConfig.context) {
+        await loadRef(ref, 'agent-context');
+      }
+    }
+
+    return contents;
+  }
+
+  /** Extract user decisions from conversation history for progress tracking. */
+  private buildProgressBlock(messages: Array<{ role: string; content: string }>): string {
+    const allUserText = messages
+      .filter(m => m.role === 'user')
+      .map(m => m.content)
+      .join('\n');
+
+    const decisions: string[] = [];
+
+    if (this.conversationLanguage) {
+      decisions.push(`- Language: ${this.conversationLanguage === 'es' ? 'Español' : 'English'} ✓`);
+    }
+    if (/corta|short|larga|long/i.test(allUserText)) {
+      const match = allUserText.match(/(corta|short|larga|long)\s*(\([^)]*\))?/i);
+      if (match) { decisions.push(`- Strategy: ${match[0]} ✓`); }
+    }
+    if (/task.?title|título/i.test(allUserText)) {
+      const titleMatch = allUserText.match(/(?:task.?title|título)[^:]*:\s*(.+)/i);
+      if (titleMatch) { decisions.push(`- Task title: "${titleMatch[1].trim()}" ✓`); }
+    }
+    if (/task.?objective|objetivo/i.test(allUserText)) {
+      const objMatch = allUserText.match(/(?:task.?objective|objetivo)[^:]*:\s*(.+)/i);
+      if (objMatch) { decisions.push(`- Task objective: "${objMatch[1].trim()}" ✓`); }
+    }
+
+    if (decisions.length === 0) { return ''; }
+
+    this.logTagged('#prompt', `Injected ${decisions.length} completed decisions into prompt`);
+    return `### WORKFLOW PROGRESS (DO NOT repeat these steps)\nThe following decisions are ALREADY confirmed by the user:\n${decisions.join('\n')}\n\nStart from the FIRST incomplete step. If all steps before the Gate are done, present the Gate evaluation immediately.`;
+  }
+
+  /** Build multi-turn conversation messages from history + current text. */
+  private buildMessages(text: string, history?: Array<{ role: string; text: string }>): Array<{ role: 'user' | 'assistant' | 'system'; content: string }> {
+    const messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }> = [];
+    if (history && history.length > 0) {
+      for (const msg of history) {
+        const turnRole = msg.role === 'user' ? 'user' as const : 'assistant' as const;
+        messages.push({ role: turnRole, content: msg.text });
+      }
+    }
+    messages.push({ role: 'user', content: text });
+    return messages;
+  }
+
+  // ─── Prompt Composition ─────────────────────────────────────────────────
+
+  /**
+   * Build the complete LLM prompt from message data and role config.
+   * Returns only LLM-relevant data — no API keys or transport config.
+   */
+  private async buildPrompt(
+    role: string,
+    data: {
+      text: string;
+      history?: Array<{ role: string; text: string }>;
+      attachments?: Array<{ _title: string; _path: string }>
+    },
+    roleConfig: any,
+  ): Promise<{ messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>; context: { rolePersona: string; workflow: any; constitutions: string[]; workspacePath: string; role: string; language: string | null } }> {
+    const rolePersona = roleConfig?.persona || '';
+    const {
+      snapshot,
+      constitutionRefs
+    } = await this.fetchWorkflowData();
+    const constitutionContents = await this.loadConstitutions(constitutionRefs, roleConfig);
+
+    // Build conversation messages
+    const messages = this.buildMessages(data.text, data.history);
+
+    // Build progress from conversation history
+    const progressBlock = this.buildProgressBlock(messages);
+
+    // Compose system prompt via pipeline
+    const pipeline = new PromptPipeline()
+      .add('preamble', behavioralPreamble(this.workspaceName, this.conversationLanguage))
+      .add('instructions', defineResponseSchema())
+      .add('persona', rolePersona)
+      .addIf(!!this.conversationLanguage, 'language',
+        `### PRE-ESTABLISHED STATE\n- Conversation language: **${this.conversationLanguage === 'es' ? 'Español' : 'English'}** (already confirmed by the user — do NOT ask again, skip any workflow step about language selection)`)
+      .addIf(constitutionContents.length > 0, 'constitutions',
+        `### CONSTITUTIONS\n${constitutionContents.join('\n')}`)
+      .addIf(!!progressBlock, 'progress', progressBlock);
+
+    const fullPersona = pipeline.build();
+
+    // Diagnostic logging
+    for (const seg of pipeline.debug()) {
+      this.logTagged('#prompt', `[PROMPT] ${seg.name}: ${seg.chars} chars`);
+    }
+
+    return {
+      messages,
+      context: {
+        rolePersona: fullPersona,
+        workflow: snapshot,
+        constitutions: constitutionContents,
+        workspacePath: this.workspacePath,
         role,
         language: (this.conversationLanguage as 'es' | 'en' | null) || null,
-        workflow: workflowSnapshot,
-        constitutions: constitutionContents,
-        rolePersona: fullPersona,
-        skills: [], // TODO: Task 4 — load from .agent/skills/
-        accessLevel: 'sandbox' as const,
-        apiKey: apiKey || undefined,
-        provider,
-      };
+      },
+    };
+  }
 
-      // Create request payload with new AgenticContext mode
-      const payload = {
-        role,
-        messages,
-        agenticContext,
-        binding: { [role]: modelName },
-        apiKey,
-        provider,
-        context: data.attachments ? data.attachments.map(att => ({ title: att._title, url: att._path })) : []
-      };
+  // ─── Stream Reading ─────────────────────────────────────────────────────
 
-      const url = `${SIDECAR_BASE_URL}${API_ENDPOINTS.STREAM}`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
+  /** Retryable error patterns (case-insensitive). */
+  private static readonly RETRYABLE_ERRORS = [
+    'rate limit', '429', '503', 'overloaded', 'timeout', 'ECONNREFUSED', 'ECONNRESET',
+  ];
 
-      if (!response.ok) {
-        throw new Error(`Sidecar HTTP error: ${response.statusText}`);
-      }
+  /**
+   * POST payload to the sidecar. Returns the raw Response.
+   */
+  private async sendRequest(payload: any, signal?: AbortSignal): Promise<Response> {
+    const url = `${SIDECAR_BASE_URL}${API_ENDPOINTS.STREAM}`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal,
+    });
 
-      if (!response.body) {
-        throw new Error('No stream available from sidecar');
-      }
+    if (!response.ok) {
+      throw new Error(`Sidecar HTTP error: ${response.statusText}`);
+    }
+    if (!response.body) {
+      throw new Error('No stream available from sidecar');
+    }
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let streamText = '';
-      let jsonSkeletonSent = false;
+    return response;
+  }
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
+  /**
+   * Read an SSE stream from a sidecar Response via TransformStream pipeline.
+   *
+   * Pipeline:
+   *   response.body → TextDecoder → SSEParser → ErrorHandler → ToolAccumulator → UsageAccumulator → TextAccumulator
+   *
+   * All data is accumulated and returned — no mid-request push to View.
+   */
+  private async readResponse(response: Response, role: string, signal?: AbortSignal): Promise<{
+    text: string;
+    toolEvents: ToolEventData[];
+    delegations: DelegationData[];
+    usage: UsageData | null;
+  }> {
+    // Create accumulators
+    const toolAccumulator = createToolEventAccumulator(role, this.parseDelegationArgs.bind(this));
+    const usageAccumulator = createUsageAccumulator();
+
+    // Compose the pipeline
+    const eventStream = response.body!
+      .pipeThrough(new TextDecoderStream())
+      .pipeThrough(new SSEParserTransform())
+      .pipeThrough(createErrorHandler(role, this.emitAgentResponse.bind(this)))
+      .pipeThrough(toolAccumulator.transform)
+      .pipeThrough(usageAccumulator.transform);
+
+    // Sink: accumulate text
+    const textAccumulator = createTextAccumulator();
+    await eventStream.pipeTo(textAccumulator.writable, { signal });
+
+    return {
+      text: textAccumulator.getText(),
+      toolEvents: toolAccumulator.getToolEvents(),
+      delegations: toolAccumulator.getDelegations(),
+      usage: usageAccumulator.getUsage(),
+    };
+  }
+
+  // ─── Zod Validation ─────────────────────────────────────────────────────
+
+  /** Validate raw LLM response text against the structured JSON schema (Zod). */
+  private validateZod(json: string) {
+    return tryParseStructuredResponse(json);
+  }
+
+  // ─── Response Processing ──────────────────────────────────────────────
+
+  /** Process a validated structured LLM response → resolve intents */
+  private processStructuredResponse(structured: AgentStructuredResponse, prompt: any): ProcessedResponse {
+    this.logTagged('#llm', `Structured response validated: text=${structured.text.length} chars, intents=${structured.intents?.length || 0}`);
+
+    const result: ProcessedResponse = {
+      displayText: structured.text,
+      code: structured.code || undefined,
+      a2ui: [],
+      messages: [],
+    };
+
+    if (structured.intents && structured.intents.length > 0) {
+      const resolution = this.resolveIntents(structured.intents, prompt);
+      result.a2ui = resolution.a2ui;
+      result.messages = resolution.messages;
+    }
+
+    return result;
+  }
+
+  /** Process a failed validation → error A2UI block */
+  private processResponseError(streamText: string): ProcessedResponse {
+    this.logTagged('#llm', 'All structured response attempts failed — emitting error block');
+    return {
+      displayText: streamText || '',
+      a2ui: [{ type: 'error', id: `error-${Date.now()}`, label: 'Invalid response format — please try again' }],
+      messages: [],
+    };
+  }
+
+  // ─── Intent Resolution ──────────────────────────────────────────────────
+
+  /**
+   * Resolve declared intents into a unified IntentResolution.
+   * Pure data — no side-effects. The caller emits messages.
+   */
+  private resolveIntents(intents: Intent[], prompt: any): IntentResolution {
+    const resolution: IntentResolution = { a2ui: [], messages: [] };
+
+    for (const intent of intents) {
+      const key = `${intent.type}:${intent.action}:${intent.component}`;
+      this.logTagged('#intent', `Resolving: ${key}`);
+
+      switch (intent.type) {
+        case IntentType.A2UI: {
+          const block = this.resolveA2UIIntent(intent, prompt);
+          if (block) {
+            resolution.a2ui.push(block);
+          }
           break;
         }
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const dataStr = line.slice(6);
-            if (dataStr.trim() === '[DONE]') {
-              continue;
-            }
-
-            try {
-              const parsed = JSON.parse(dataStr);
-              if (parsed.error) {
-                this.emitAgentResponse(role, `**Error:** ${parsed.error}`);
-                return { success: false, error: parsed.error };
-              }
-
-              if (parsed.type === 'content') {
-                streamText += parsed.content;
-                // Detect JSON mode: if response starts with '{', it's structured JSON
-                // Don't show raw JSON to the user — wait for completion to parse
-                const isJsonMode = streamText.trimStart().startsWith('{');
-                if (!isJsonMode) {
-                  // Plain text mode: stream normally
-                  this.messenger.emit({
-                    id: randomUUID(),
-                    from: `${NAME}::background`,
-                    to: `${NAME}::view`,
-                    timestamp: Date.now(),
-                    origin: MessageOrigin.Server,
-                    payload: {
-                      command: MESSAGES.RECEIVE_MESSAGE,
-                      data: { text: this.cleanMessageText(streamText), agentRole: role, isStreaming: true }
-                    }
-                  });
-                } else if (!jsonSkeletonSent) {
-                  // JSON mode: send skeleton indicator once
-                  jsonSkeletonSent = true;
-                  this.log(`JSON mode detected — sending skeleton (streamText starts: "${streamText.substring(0, 20)}...")`);
-                  this.messenger.emit({
-                    id: randomUUID(),
-                    from: `${NAME}::background`,
-                    to: `${NAME}::view`,
-                    timestamp: Date.now(),
-                    origin: MessageOrigin.Server,
-                    payload: {
-                      command: MESSAGES.RECEIVE_MESSAGE,
-                      data: { text: '', agentRole: role, isStreaming: true, showSkeleton: true }
-                    }
-                  });
-                }
-                // JSON mode with skeleton sent: silently accumulate
-              } else if (parsed.type === 'tool_call' || parsed.type === 'tool_result') {
-                // Detect delegation events and emit them separately
-                const isDelegation = parsed.name === 'delegateTask';
-                if (isDelegation) {
-                  this.messenger.emit({
-                    id: randomUUID(),
-                    from: `${NAME}::background`,
-                    to: `${NAME}::view`,
-                    timestamp: Date.now(),
-                    origin: MessageOrigin.Server,
-                    payload: {
-                      command: MESSAGES.DELEGATION_EVENT,
-                      data: {
-                        type: parsed.type, // 'tool_call' or 'tool_result'
-                        agentRole: role,
-                        targetAgent: parsed.type === 'tool_call' ? this.parseDelegationArgs(parsed.arguments)?.agent : undefined,
-                        taskDescription: parsed.type === 'tool_call' ? this.parseDelegationArgs(parsed.arguments)?.task : undefined,
-                        result: parsed.type === 'tool_result' ? parsed.output : undefined,
-                        status: parsed.type === 'tool_call' ? 'pending' : 'completed',
-                      }
-                    }
-                  });
-                }
-                // Also emit as regular tool event for the streaming view
-                this.messenger.emit({
-                  id: randomUUID(),
-                  from: `${NAME}::background`,
-                  to: `${NAME}::view`,
-                  timestamp: Date.now(),
-                  origin: MessageOrigin.Server,
-                  payload: {
-                    command: MESSAGES.RECEIVE_MESSAGE,
-                    data: {
-                      text: '',
-                      agentRole: role,
-                      isStreaming: true,
-                      toolEvent: parsed,
-                    }
-                  }
-                });
-              } else if (parsed.type === 'usage') {
-                // Forward token usage to the View for display
-                this.messenger.emit({
-                  id: randomUUID(),
-                  from: `${NAME}::background`,
-                  to: `${NAME}::view`,
-                  timestamp: Date.now(),
-                  origin: MessageOrigin.Server,
-                  payload: {
-                    command: MESSAGES.USAGE_UPDATE,
-                    data: {
-                      model: parsed.model,
-                      provider: parsed.provider,
-                      role: parsed.role,
-                      inputTokens: parsed.inputTokens || 0,
-                      outputTokens: parsed.outputTokens || 0,
-                      totalTokens: parsed.totalTokens || 0,
-                    }
-                  }
-                });
-              }
-            } catch (e) {
-              // Ignore partial chunk JSON parse errors
-            }
+        case IntentType.WORKFLOW: {
+          const messages = this.resolveWorkflowIntent(intent, prompt);
+          if (messages.length > 0) {
+            resolution.messages.push(...messages);
           }
+          break;
         }
+        case IntentType.AGENT:
+        case IntentType.SESSION: {
+          const messages = this.resolveAgentSessionIntent(intent);
+          if (messages.length > 0) {
+            resolution.messages.push(...messages);
+          }
+          break;
+        }
+        default:
+          this.logTagged('#intent', `Unknown namespace: ${intent.type}`);
       }
+    }
 
-      // Try to parse as structured JSON response (Zod-validated)
-      let structured = tryParseStructuredResponse(streamText);
+    return resolution;
+  }
 
-      // If JSON-like but validation failed, retry once with a correction request
-      if (!structured && streamText.trimStart().startsWith('{')) {
-        this.log('Structured response validation failed, retrying with correction prompt...');
+  /** Resolve A2UI intents → ResolvedA2UIBlock | null */
+  private resolveA2UIIntent(intent: Intent, prompt: any): ResolvedA2UIBlock | null {
+    if (intent.action === IntentAction.SHOW) {
+      switch (intent.component) {
+        case IntentComponent.ARTIFACT:
+        case IntentComponent.RESULTS: {
+          const artifact = this.resolveCurrentArtifact(prompt);
+          if (artifact) {
+            const type = intent.component === IntentComponent.ARTIFACT ? 'artifact' : 'results' as const;
+            return {
+              type, id: `${type}-${artifact.id}`,
+              label: artifact.label,
+              path: artifact.path,
+              content: artifact.content,
+            };
+          }
+          return null;
+        }
+        case IntentComponent.ERROR:
+        case IntentComponent.WARNING:
+        case IntentComponent.INFO: {
+          const type = intent.component.toLowerCase() as 'error' | 'warning' | 'info';
+          return { type, id: `${type}-${Date.now()}`, label: type };
+        }
+        default:
+          this.logTagged('#intent', `Unknown SHOW component: ${intent.component}`);
+          return null;
+      }
+    }
 
-        // Append a correction message to the conversation
-        const retryMessages = [
-          ...messages,
-          { role: 'assistant' as const, content: streamText },
-          { role: 'user' as const, content: 'Your previous response was invalid JSON (likely truncated). Please respond again with ONLY a valid, complete JSON object matching the response schema. Keep the text short and include all ui_intent components. Do NOT wrap in code fences.' },
-        ];
+    if (intent.action === IntentAction.REQUEST) {
+      const id = intent.id || `${intent.component.toLowerCase()}-${Date.now()}`;
+      const label = intent.label || intent.component.charAt(0) + intent.component.slice(1).toLowerCase();
+      switch (intent.component) {
+        case IntentComponent.GATE:
+          return { type: 'gate', id, label, options: intent.options || ['SI', 'NO'], preselected: 0 };
+        case IntentComponent.CHOICE:
+          return { type: 'choice', id, label, options: intent.options || ['SI', 'NO'], preselected: 0 };
+        case IntentComponent.CONFIRM:
+          return { type: 'confirm', id, label };
+        case IntentComponent.INPUT:
+          return { type: 'input', id, label };
+        case IntentComponent.MULTI_SELECT:
+          return { type: 'multi', id, label, options: intent.options || [] };
+        default:
+          this.logTagged('#intent', `Unknown REQUEST component: ${intent.component}`);
+          return null;
+      }
+    }
 
-        const retryPayload = { ...payload, messages: retryMessages };
+    return null;
+  }
+
+  /** Resolve WORKFLOW intents → declarative messages (no side-effects) */
+  private resolveWorkflowIntent(intent: Intent, prompt: any): Array<{ command: string; data: any }> {
+    const messages: Array<{ command: string; data: any }> = [];
+
+    if (intent.action === IntentAction.UPDATE && intent.component === IntentComponent.STATE) {
+      const workflow = prompt.context?.workflow;
+      if (workflow) {
+        messages.push({
+          command: MESSAGES.WORKFLOW_STATE_UPDATE,
+          data: {
+            current_phase: workflow.currentPhase || workflow.id,
+            progress: workflow.progress || 0,
+            requires_approval: true,
+          },
+        });
+      }
+    } else if (intent.action === IntentAction.COMPLETE && intent.component === IntentComponent.PHASE) {
+      this.logTagged('#lifecycle', 'Phase completion requested');
+    } else if (intent.action === IntentAction.START && intent.component === IntentComponent.PHASE) {
+      this.logTagged('#lifecycle', 'Phase start requested');
+    }
+
+    return messages;
+  }
+
+  /** Resolve AGENT / SESSION intents — currently deferred */
+  private resolveAgentSessionIntent(intent: Intent): Array<{ command: string; data: any }> {
+    this.logTagged('#intent', `${intent.type} intents handled externally`);
+    return [];
+  }
+
+  /**
+   * Resolve the current artifact from the workflow context.
+   * Returns artifact metadata (path, label, content preview) or null.
+   */
+  private resolveCurrentArtifact(prompt: any): { id: string; label: string; path: string; content?: string } | null {
+    const workflow = prompt.context?.workflow;
+    if (!workflow) { return null; }
+
+    // Extract clean phase keyword from IDs like:
+    //   "workflow.init" → "init"
+    //   "workflow.tasklifecycle.01-init" → "init"
+    //   "tasklifecycle.02-analysis" → "analysis"
+    const rawPhase = workflow.currentPhase || workflow.id?.replace(/^workflow\./, '') || 'init';
+    // Strip everything up to and including "NN-" prefix (e.g. "tasklifecycle.01-init" → "init")
+    const phase = rawPhase.replace(/^(?:tasklifecycle\.)?(?:\d{2}-)?/, '');
+
+    // Common artifact patterns per phase
+    const artifactMap: Record<string, { file: string; label: string }> = {
+      init: { file: 'task.md', label: 'task.md' },
+      analysis: { file: 'architect/analysis-v1.md', label: 'Analysis' },
+      planning: { file: 'architect/planning-v1.md', label: 'Planning' },
+      implementation: { file: 'architect/implementation.md', label: 'Implementation' },
+      verification: { file: 'architect/verification-v1.md', label: 'Verification' },
+      results: { file: 'architect/results-v1.md', label: 'Results' },
+      review: { file: 'architect/results-v1.md', label: 'Results' },
+    };
+
+    const mapping = artifactMap[phase];
+    const file = mapping?.file || `${phase}.md`;
+    const label = mapping?.label || phase;
+
+    // Resolve the real task folder in .agent/artifacts/
+    // Pass-actions create folders like "20260228-task" but engine taskId can be different
+    const taskFolder = this.resolveTaskArtifactFolder();
+
+    const artifactPath = (phase === 'init' && !taskFolder)
+      ? `.agent/artifacts/${file}`
+      : `.agent/artifacts/${taskFolder || 'task'}/${file}`;
+
+    return { id: `${phase}-artifact`, label, path: artifactPath };
+  }
+
+  /**
+   * Find the most recent task folder in .agent/artifacts/.
+   * Pass-actions create folders like "20260228-<title-short>".
+   * Returns the folder name or null if not found.
+   */
+  private resolveTaskArtifactFolder(): string | null {
+    try {
+      const fs = require('fs');
+      const artifactsRoot = this.workspacePath
+        ? require('path').join(this.workspacePath, '.agent', 'artifacts')
+        : null;
+      if (!artifactsRoot || !fs.existsSync(artifactsRoot)) { return null; }
+
+      const entries = fs.readdirSync(artifactsRoot, { withFileTypes: true }) as any[];
+      // Find directories matching YYYYMMDD-* pattern (task folders)
+      const taskDirs = entries
+        .filter((e: any) => e.isDirectory() && /^\d{8}-/.test(e.name))
+        .map((e: any) => e.name)
+        .sort()
+        .reverse(); // Most recent first
+
+      return taskDirs.length > 0 ? taskDirs[0] : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Send request + read response with automatic retry for transient errors.
+   * Each retry creates a fresh AbortController so the previous stream is cleanly aborted.
+   */
+  private async sendWithRetry(payload: any, role: string, maxRetries = 2): Promise<{
+    text: string;
+    toolEvents: ToolEventData[];
+    delegations: DelegationData[];
+    usage: UsageData | null;
+  }> {
+    let lastError: Error = new Error('No attempts made');
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      const abort = new AbortController();
+
+      try {
+        const response = await this.sendRequest(payload, abort.signal);
+        return await this.readResponse(response, role, abort.signal);
+      } catch (err: any) {
+        abort.abort(); // clean up the in-flight stream
+        lastError = err;
+
+        const msg = (err.message || '').toLowerCase();
+        const isRetryable = ChatBackground.RETRYABLE_ERRORS.some(p => msg.includes(p.toLowerCase()));
+
+        if (!isRetryable || attempt === maxRetries) { throw err; }
+
+        const delay = 1000 * (attempt + 1);
+        this.logTagged('#llm', `Attempt ${attempt + 1} failed (${err.message}). Retrying in ${delay}ms...`);
+        await new Promise(r => setTimeout(r, delay));
+      }
+    }
+
+    throw lastError;
+  }
+
+  /**
+   * Retry with a correction prompt.
+   * Appends the failed response + correction message to the conversation,
+   * sends a new request, and validates the result against Zod.
+   *
+   * Reusable for: validation failures, transform errors, format correction.
+   */
+  private async retryWithCorrection(
+    payload: any,
+    messages: any[],
+    failedText: string,
+    role: string,
+    correctionPrompt: string,
+  ): Promise<AgentStructuredResponse | null> {
+    const retryMessages = [
+      ...messages,
+      { role: 'assistant' as const, content: failedText },
+      { role: 'user' as const, content: correctionPrompt },
+    ];
+
+    try {
+      const retryResult = await this.sendWithRetry({ ...payload, messages: retryMessages }, role);
+      const structured = this.validateZod(retryResult.text);
+      if (structured) {
+        this.logTagged('#llm', 'Retry correction succeeded');
+      } else {
+        this.logTagged('#llm', 'Retry correction also failed');
+      }
+      return structured;
+    } catch (err: any) {
+      this.logTagged('#llm', `Retry correction request failed: ${err.message}`);
+      return null;
+    }
+  }
+
+  // ─── Payload Construction ───────────────────────────────────────────────
+
+  /** Merge prompt data with transport config into sidecar payload. */
+  private buildPayload(
+    role: string,
+    prompt: { messages: any[]; context: any },
+    modelName: string,
+    apiKey: string | null,
+    provider: string,
+    attachments?: Array<{ _title: string; _path: string }>,
+  ): any {
+    return {
+      role,
+      messages: prompt.messages,
+      agenticContext: {
+        ...prompt.context,
+        apiKey: apiKey || undefined,
+        provider,
+        accessLevel: 'sandbox' as const,
+        skills: [],
+      },
+      binding: { [role]: modelName },
+      apiKey,
+      provider,
+      context: attachments ? attachments.map(att => ({ title: att._title, url: att._path })) : [],
+      // Disable tools during workflow conversations to avoid Gemini MALFORMED_FUNCTION_CALL
+      disableTools: !!prompt.context?.workflow,
+    };
+  }
+
+  // ─── handleSendMessage ──────────────────────────────────────────────────
+
+  private async handleSendMessage(data: { text: string, agentRole: string, modelId?: string, history?: Array<{ role: string, text: string }>, attachments?: Array<{ _title: string, _path: string }> }): Promise<ChatMessagePayload> {
+    const role = data.agentRole || 'backend';
+
+    this.logTagged('#msg', `Message for role "${role}": ${data.text.substring(0, 50)}...`);
+
+    // Detect slash commands (e.g. /init) and ensure the workflow is started in the engine
+    const trimmedText = data.text.trim();
+    if (trimmedText.startsWith('/') && !trimmedText.includes(' ')) {
+      const commandId = trimmedText.slice(1); // "init"
+      const currentState = await this.getWorkflowState();
+      // Only start if no workflow is already running
+      if (!currentState || currentState.status === 'completed' || !currentState.currentWorkflowId) {
+        this.logTagged('#workflow', `Slash command detected: /${commandId} — starting workflow`);
         try {
-          const retryResponse = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(retryPayload),
-          });
-
-          if (retryResponse.ok && retryResponse.body) {
-            const retryReader = retryResponse.body.getReader();
-            const retryDecoder = new TextDecoder();
-            let retryText = '';
-
-            while (true) {
-              const { done, value } = await retryReader.read();
-              if (done) { break; }
-              const chunk = retryDecoder.decode(value, { stream: true });
-              for (const line of chunk.split('\n')) {
-                if (line.startsWith('data: ')) {
-                  const d = line.slice(6).trim();
-                  if (d === '[DONE]') { continue; }
-                  try {
-                    const p = JSON.parse(d);
-                    if (p.type === 'content') { retryText += p.content; }
-                  } catch { /* skip */ }
-                }
-              }
-            }
-
-            const retryStructured = tryParseStructuredResponse(retryText);
-            if (retryStructured) {
-              this.log('Retry succeeded — structured response validated');
-              structured = retryStructured;
-            } else {
-              this.log('Retry also failed — falling back to error message');
-            }
-          }
-        } catch (retryErr: any) {
-          this.log('Retry request failed:', retryErr.message);
+          await this.handleWorkflowCommand(commandId);
+        } catch (err: any) {
+          this.logTagged('#workflow', `Warning: Workflow start for /${commandId} failed: ${err.message}`);
         }
       }
+    }
 
-      let displayText: string;
+    try {
+      // 1. Resolve model config for this role
+      const { modelName, apiKey, provider, roleConfig } = await this.resolveModelConfig(role, data.text, data.modelId);
+      // 2. Build LLM prompt (pure prompt data, no transport keys)
+      const prompt = await this.buildPrompt(role, data, roleConfig);
+      // 3. Build sidecar payload
+      const payload = this.buildPayload(role, prompt, modelName, apiKey, provider, data.attachments);
+      const streamResult = await this.sendWithRetry(payload, role);
+      const streamText = streamResult.text;
+      // ─── Diagnostic: log raw stream result ───
+      this.logTagged('#llm', `Stream completed: ${streamText.length} chars, starts with: "${streamText.substring(0, 80)}..."`);
+      // ─── End diagnostic ───      // Validate response against Zod schema
+      let structured = this.validateZod(streamText);
+
+      // If validation failed and workflow is active, retry once
+      if (!structured && prompt.context?.workflow) {
+        this.logTagged('#llm', 'Validation failed during workflow — retrying...');
+        structured = await this.retryWithCorrection(
+          payload,
+          prompt.messages,
+          streamText,
+          role,
+          FORMAT_CORRECTION_PROMPT,
+        );
+      }
+
+      let result: ProcessedResponse;
 
       if (structured) {
-        this.log(`Structured response validated: text=${structured.text.length} chars, ui_intent=${structured.ui_intent?.length || 0} components`);
-        // Use the validated text field
-        displayText = structured.text;
-
-        // Forward workflow_state if present
-        if (structured.workflow_state) {
-          this.messenger.emit({
-            id: randomUUID(),
-            from: `${NAME}::background`,
-            to: `${NAME}::view`,
-            timestamp: Date.now(),
-            origin: MessageOrigin.Server,
-            payload: {
-              command: MESSAGES.WORKFLOW_STATE_UPDATE,
-              data: structured.workflow_state,
-            }
-          });
-        }
-
-        // Convert ui_intent to legacy a2ui format for backward-compatible rendering
-        if (structured.ui_intent && structured.ui_intent.length > 0) {
-          const escapeAttr = (val: any) => val ? String(val).replace(/"/g, '\\"') : '';
-          const a2uiBlocks = structured.ui_intent.map((c: any) => {
-            const idAttr = escapeAttr(c.id);
-            const labelAttr = escapeAttr(c.label !== undefined ? c.label : c.id);
-            const pathAttr = escapeAttr(c.path);
-
-            if (c.type === 'artifact') {
-              return `<a2ui type="${c.type}" id="${idAttr}" label="${labelAttr}"${c.path ? ` path="${pathAttr}"` : ''}>${c.content || ''}</a2ui>`;
-            }
-            const optionLines = (c.options || []).map((opt: string, i: number) =>
-              i === c.preselected ? `- [x] ${opt}` : `- [ ] ${opt}`
-            ).join('\n');
-            return `<a2ui type="${c.type}" id="${idAttr}" label="${labelAttr}">\n${optionLines}\n</a2ui>`;
-          });
-          displayText = displayText + '\n\n' + a2uiBlocks.join('\n\n');
-        }
-      } else if (streamText.trimStart().startsWith('{')) {
-        // JSON mode but all parsing/retry failed — show system error
-        this.log('All structured response attempts failed — showing error');
-        displayText = `**⚠️ System Error:** The model returned an invalid response format. Please try again.\n\n> The response could not be parsed as structured JSON. This may be due to the model running out of output tokens.`;
+        result = this.processStructuredResponse(structured, prompt);
+      } else if (prompt.context?.workflow) {
+        result = this.processResponseError(streamText);
       } else {
-        // Fallback: treat as plain text (legacy a2ui tags will be parsed by the view)
-        displayText = streamText;
+        result = { displayText: streamText, a2ui: [], messages: [] };
       }
 
-      // Process artifacts: create physical files and replace content with summary
-      const finalText = this.cleanMessageText(displayText);
-      let processedText = await this.processArtifacts(finalText);
+      // Send final structured message to View
+      const messagePayload: ChatMessagePayload = {
+        text: result.displayText,
+        ...(result.code ? { code: result.code } : {}),
+        ...(result.a2ui.length > 0 ? { a2ui: result.a2ui } : {}),
+        ...(result.messages.length > 0 ? { messages: result.messages } : {}),
+        ...(streamResult.toolEvents.length > 0 ? { toolEvents: streamResult.toolEvents } : {}),
+        ...(streamResult.delegations.length > 0 ? { delegations: streamResult.delegations } : {}),
+        ...(streamResult.usage ? { usage: streamResult.usage } : {}),
+        agentRole: role,
+        isStreaming: false,
+      };
 
-      // Auto-inject artifact review blocks when a gate is present but no artifacts are referenced
-      // This makes Review buttons LLM-independent — they're derived from the workflow output definition
-      const hasGate = /<a2ui[^>]*type="gate"/.test(processedText);
-      const hasArtifactRefs = /<a2ui[^>]*type="artifact"[^>]*path="/.test(processedText);
-
-      if (hasGate && !hasArtifactRefs) {
-        try {
-          const wfState = await this.getWorkflowState();
-          const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
-          const fs = await import('fs/promises');
-
-          // Collect candidate artifact paths from multiple sources
-          const candidatePaths: string[] = [];
-
-          // Source 1 (most reliable): YAML frontmatter output field — direct file paths
-          const yamlOutputs: string[] = wfState?.workflow?.output || [];
-          for (const p of yamlOutputs) {
-            if (p.endsWith('.md') && !p.includes('<')) {
-              candidatePaths.push(p);
-            }
-          }
-
-          // Source 2: parsedSections.outputs — text descriptions with backtick-wrapped paths
-          const sectionOutputs = wfState?.parsedSections?.outputs || wfState?.workflow?.sections?.outputs || [];
-          for (const output of sectionOutputs) {
-            const pathMatch = String(output).match(/`([^`]+\.md)`/);
-            if (pathMatch && !pathMatch[1].includes('<')) {
-              candidatePaths.push(pathMatch[1]);
-            }
-          }
-
-          // Deduplicate
-          const uniquePaths = [...new Set(candidatePaths)];
-
-          const artifactBlocks: string[] = [];
-          for (const rawPath of uniquePaths) {
-            if (rawPath.includes('<')) { continue; } // skip template paths
-            const absPath = path.join(workspacePath, rawPath);
-            try {
-              await fs.access(absPath);
-              const label = path.basename(rawPath);
-              artifactBlocks.push(`<a2ui type="artifact" id="auto-${label}" label="${label}" path="${rawPath}">Review document</a2ui>`);
-              this.log(`Auto-injected artifact reference: ${rawPath}`);
-            } catch { /* file doesn't exist yet, skip */ }
-          }
-
-          // Handle template paths (e.g. <taskId>-<taskTitle>) by glob-searching
-          const templateOutputs = [...yamlOutputs, ...sectionOutputs.map((s: string) => {
-            const m = String(s).match(/`([^`]+\.md)`/);
-            return m ? m[1] : '';
-          })].filter(p => p.includes('<') && p.endsWith('.md'));
-
-          for (const rawPath of [...new Set(templateOutputs)]) {
-            const parts = rawPath.split('/');
-            const fileName = parts[parts.length - 1];
-            const parentPattern = parts.slice(0, -1).join('/').replace(/<[^>]+>/g, '*');
-            try {
-              const glob = await import('glob');
-              const matches = await glob.glob(path.join(workspacePath, parentPattern, fileName));
-              for (const match of matches) {
-                const relPath = path.relative(workspacePath, match);
-                const label = path.basename(match);
-                if (!artifactBlocks.some(b => b.includes(`path="${relPath}"`))) {
-                  artifactBlocks.push(`<a2ui type="artifact" id="auto-${label}" label="${label}" path="${relPath}">Review document</a2ui>`);
-                  this.log(`Auto-injected artifact reference (glob): ${relPath}`);
-                }
-              }
-            } catch { /* glob not available, skip */ }
-          }
-
-          if (artifactBlocks.length > 0) {
-            // Insert artifact blocks before the gate
-            const gateRegex = /(<a2ui[^>]*type="gate")/;
-            processedText = processedText.replace(gateRegex, artifactBlocks.join('\n\n') + '\n\n$1');
-          }
-        } catch (err: any) {
-          this.log(`Auto-inject artifact refs failed: ${err.message}`);
-        }
-      }
-
-      // Send final completion message
-      this.messenger.emit({
-        id: randomUUID(),
-        from: `${NAME}::background`,
-        to: `${NAME}::view`,
-        timestamp: Date.now(),
-        origin: MessageOrigin.Server,
-        payload: {
-          command: MESSAGES.RECEIVE_MESSAGE,
-          data: { text: processedText, agentRole: role, isStreaming: false }
-        }
-      });
-
-      return { success: true };
+      return messagePayload;
 
     } catch (error: any) {
-      this.log('Failed to stream from sidecar', error);
-      this.emitAgentResponse(role, `**System Error:** ${error.message}`);
-      return { success: false, error: error.message };
+      this.logTagged('#llm', 'Failed to stream from sidecar', error);
+      return {
+        text: `**System Error:** ${error.message}`,
+        a2ui: [{ type: 'error', id: `error-${Date.now()}`, label: error.message }],
+        agentRole: 'system',
+        isStreaming: false,
+      } as ChatMessagePayload;
     }
   }
 
   private async handleLoadInit(): Promise<any> {
     try {
-      const workspaceFolders = vscode.workspace.workspaceFolders;
-      if (!workspaceFolders || workspaceFolders.length === 0) {
+      const rootPath = this.workspacePath;
+      if (!rootPath) {
         return { error: 'No workspace open' };
       }
-
-      const rootPath = workspaceFolders[0].uri.fsPath;
       const initPath = vscode.Uri.file(path.join(rootPath, '.agent', 'workflows', 'init.md'));
 
       const content = await vscode.workspace.fs.readFile(initPath);
@@ -908,12 +1080,12 @@ export class ChatBackground extends Background {
 
       return { success: true, content: content.toString(), version: packageJson.version };
     } catch (error) {
-      this.log('Error loading init.md', error);
+      this.logTagged('#system', 'Error loading init.md', error);
       return { error: 'Failed to load init.md' };
     }
   }
 
-  private async handleSelectFiles(): Promise<any> {
+  private async handleSelectFiles(): Promise<ChatMessagePayload> {
     const files = await vscode.window.showOpenDialog({
       canSelectMany: true,
       openLabel: 'Attach',
@@ -922,173 +1094,435 @@ export class ChatBackground extends Background {
       }
     });
 
-    if (files && files.length > 0) {
-      this.messenger.emit({
-        id: randomUUID(),
-        from: `${NAME}::background`,
-        to: `${NAME}::view`,
-        timestamp: Date.now(),
-        origin: MessageOrigin.Server,
-        payload: {
-          command: MESSAGES.SELECT_FILES_RESPONSE,
-          data: { files: files.map(f => f.fsPath) }
-        }
-      });
-    }
-    return { success: true };
+    const paths = files?.map(f => f.fsPath) || [];
+    return {
+      text: paths.length > 0 ? `📎 ${paths.length} file(s) attached` : '',
+      a2ui: [],
+      agentRole: 'system',
+      isStreaming: false,
+      files: paths,
+    };
   }
 
-  private async handleOpenFolder(): Promise<any> {
+  private async handleOpenFolder(): Promise<ChatMessagePayload> {
     vscode.commands.executeCommand('vscode.openFolder');
-    return { success: true };
+    return { text: '', a2ui: [], agentRole: 'system', isStreaming: false };
+  }
+
+
+  // ─── Generic Workflow Pass Action System ───────────────────────────────────
+
+  /**
+   * Resolve workflow variables from the most recent candidate and/or active task.md.
+   * Variables are used to populate template placeholders and resolve output paths.
+   *
+   * Sources (in priority order):
+   * 1. Most recent candidate in .agent/artifacts/candidate/
+   * 2. Most recent task.md in .agent/artifacts/<taskId>/
+   *
+   * Returns a WorkflowVars with string fields + criteria array.
+   */
+  private async resolveWorkflowVariables(workspaceRoot: string): Promise<WorkflowVars> {
+    const fs = await import('fs/promises');
+    const vars: WorkflowVars = {
+      TS: new Date().toISOString().slice(0, 10).replace(/-/g, ''),
+      TASK: '',
+      taskId: '',
+      taskTitle: 'Untitled',
+      taskObjective: '',
+      titleShort: 'task',
+      language: 'Español',
+      'ISO-8601': new Date().toISOString(),
+      criteria: [],
+    };
+
+    // 1. Try to read the most recent candidate
+    const candidateDir = path.join(workspaceRoot, '.agent', 'artifacts', 'candidate');
+    try {
+      const files = await fs.readdir(candidateDir);
+      const candidates = files
+        .filter((f: string) => f.endsWith('-candidate.md'))
+        .sort()
+        .reverse();
+
+      if (candidates.length > 0) {
+        const candidateFile = path.join(candidateDir, candidates[0]);
+        const content = await fs.readFile(candidateFile, 'utf-8');
+
+        // Extract timestamp from filename
+        const tsMatch = candidates[0].match(/^(\d{8})/);
+        if (tsMatch) { vars.TS = tsMatch[1]; }
+
+        // Extract titleShort from filename: "20240515-test-candidate.md" → "test"
+        const nameSlugMatch = candidates[0].match(/^\d{8}-(.+)-candidate\.md$/);
+        if (nameSlugMatch) {
+          vars.titleShort = nameSlugMatch[1];
+        }
+
+        // Extract structured fields — bilingual support (EN/ES)
+        const langMatch = content.match(/##\s*(?:Language|Idioma)\s*\n+([^\n]+)/i);
+        if (langMatch) { vars.language = langMatch[1].trim(); }
+
+        const titleMatch = content.match(/\*\*(?:Title|Título)\*\*:\s*(.+)/i);
+        if (titleMatch) { vars.taskTitle = titleMatch[1].trim(); }
+
+        const objMatch = content.match(/\*\*(?:Objective|Objetivo)\*\*:\s*(.+)/i);
+        if (objMatch) { vars.taskObjective = objMatch[1].trim(); }
+
+        const shortMatch = content.match(/\*\*(?:Title Short|Título Corto)\*\*:\s*(.+)/i);
+        if (shortMatch) {
+          vars.titleShort = shortMatch[1].trim();
+        } else if (!nameSlugMatch) {
+          // Derive from taskTitle only if filename didn't have it
+          vars.titleShort = vars.taskTitle
+            .toLowerCase()
+            .replace(/[^a-z0-9áéíóúñü\s-]/gi, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .substring(0, 50);
+        }
+
+        // Extract acceptance criteria — bilingual section heading
+        const criteriaSection = content.match(/##\s*(?:Acceptance Criteria|Criterios de Aceptación)\s*\n([\s\S]*?)(?=\n---|$)/i);
+        if (criteriaSection) {
+          const lines = criteriaSection[1].split('\n');
+          for (const line of lines) {
+            const m = line.match(/^\d+\.\s+(.+)/);
+            if (m) { vars.criteria.push(m[1].trim()); }
+          }
+        }
+
+        this.logTagged('#lifecycle', `resolveWorkflowVariables: candidate parsed — title="${vars.taskTitle}", TS=${vars.TS}`);
+      }
+    } catch { /* candidate dir may not exist yet */ }
+
+    // Compute derived variables
+    vars.taskId = `${vars.TS}-${vars.titleShort}`;
+    vars.TASK = vars.taskId;
+
+    // 2. Try to find active task folder (may override some vars)
+    const artifactsDir = path.join(workspaceRoot, '.agent', 'artifacts');
+    try {
+      const entries = await fs.readdir(artifactsDir);
+      // Find task folders (format: YYYYMMDD-slug, exclude "candidate")
+      const taskFolders = entries
+        .filter((e: string) => /^\d{8}-.+/.test(e))
+        .sort()
+        .reverse();
+
+      if (taskFolders.length > 0) {
+        const activeTaskFolder = taskFolders[0];
+        const taskMdPath = path.join(artifactsDir, activeTaskFolder, 'task.md');
+        try {
+          await fs.stat(taskMdPath);
+          // task.md exists — use this task folder as TASK
+          vars.TASK = activeTaskFolder;
+          vars.taskId = activeTaskFolder;
+          this.logTagged('#lifecycle', `resolveWorkflowVariables: active task found — ${activeTaskFolder}`);
+        } catch { /* task.md doesn't exist yet — use candidate-derived values */ }
+      }
+    } catch { /* artifacts dir may not exist */ }
+
+    return vars;
   }
 
   /**
-   * Process artifact A2UI blocks in the final message text.
-   * Creates physical files on disk and replaces artifact content with a brief summary.
+   * Execute workflow pass actions generically.
+   * Checks the workflow's output paths, resolves placeholders,
+   * and creates missing artifacts from templates.
+   *
+   * Returns an array of created artifact paths.
    */
-  private async processArtifacts(text: string): Promise<string> {
-    const artifactRegex = /<a2ui\s+([^>]*)type="artifact"([^>]*)>([\s\S]*?)<\/a2ui>/gi;
-    let result = text;
-    let match;
-
-    // Collect all artifact matches first (to avoid regex state issues)
-    const artifacts: Array<{ fullMatch: string; attrs: string; content: string }> = [];
-    while ((match = artifactRegex.exec(text)) !== null) {
-      artifacts.push({
-        fullMatch: match[0],
-        attrs: match[1] + match[2],
-        content: match[3].trim(),
-      });
-    }
-
-    if (artifacts.length === 0) { return text; }
-
-    const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-    if (!workspacePath) { return text; }
+  private async executeWorkflowPassActions(workflowState: any): Promise<string[]> {
+    const workspaceRoot = this.workspacePath;
+    if (!workspaceRoot) { return []; }
 
     const fs = await import('fs/promises');
+    const workflow = workflowState?.workflow;
+    if (!workflow) { return []; }
 
-    for (const artifact of artifacts) {
-      const pathMatch = artifact.attrs.match(/path="([^"]+)"/);
-      const labelMatch = artifact.attrs.match(/label="([^"]+)"/);
-      const idMatch = artifact.attrs.match(/id="([^"]+)"/);
+    // Get output artifact paths from the workflow definition
+    const rawOutputs: string[] = workflow.sections?.outputs || [];
+    // Also extract backtick-wrapped paths from pass.actions
+    const passActions: string[] = workflow.pass?.actions || [];
 
-      if (!pathMatch) { continue; }
+    // Resolve variables from candidate/task.md
+    const vars = await this.resolveWorkflowVariables(workspaceRoot);
 
-      const artifactPath = pathMatch[1];
-      const label = labelMatch?.[1] || artifactPath.split('/').pop() || 'Document';
-      const id = idMatch?.[1] || `artifact-${Date.now()}`;
+    // Collect all artifact file paths (.md) and folder paths from outputs + pass actions
+    const outputPathSet = new Set<string>();
 
-      // Resolve absolute path
-      const absolutePath = path.isAbsolute(artifactPath)
-        ? artifactPath
-        : path.join(workspacePath, artifactPath);
-
-      // Create directory if needed
-      try {
-        await fs.mkdir(path.dirname(absolutePath), { recursive: true });
-      } catch { /* directory exists */ }
-
-      // Write the artifact file
-      try {
-        await fs.writeFile(absolutePath, artifact.content, 'utf-8');
-        this.log(`Artifact created: ${artifactPath} (${artifact.content.length} chars)`);
-      } catch (err: any) {
-        this.log(`Failed to create artifact ${artifactPath}: ${err.message}`);
-        continue;
+    // Helper: extract .agent/artifacts/... paths from text
+    const extractArtifactPaths = (text: string) => {
+      // Match backtick-wrapped or plain .agent/artifacts/...  paths ending in .md
+      const mdRegex = /`?(\.agent\/artifacts\/[^\s)`]+\.md)`?/gi;
+      let match;
+      while ((match = mdRegex.exec(text)) !== null) {
+        outputPathSet.add(match[1]);
       }
+    };
 
-      // Detect purely internal bootstrap artifacts that don't need developer review.
-      // Review artifacts (analysis, planning, acceptance, etc.) MUST remain visible
-      // so the developer can inspect them before approving the gate.
-      //
-      // EXCEPTION: If the message contains a gate, ALL artifacts must remain visible
-      // so the Review button appears — the user needs to inspect them before approving.
-      const fileName = path.basename(artifactPath);
-      const INTERNAL_ARTIFACTS = ['init.md', 'task.md'];
-      const hasGateInText = /<a2ui[^>]*type="gate"/.test(result);
-      const isInternalArtifact = !hasGateInText
-        && (artifactPath.startsWith('.agent/') || absolutePath.includes('/.agent/'))
-        && INTERNAL_ARTIFACTS.includes(fileName);
+    // Helper: extract and create folder paths
+    const extractAndCreateFolders = async (text: string) => {
+      const folderRegex = /`(\.agent\/artifacts\/[^`]+\/)`/g;
+      let match;
+      while ((match = folderRegex.exec(text)) !== null) {
+        const resolved = this.resolvePathPlaceholders(match[1], vars);
+        const abs = path.join(workspaceRoot, resolved);
+        try {
+          await fs.mkdir(abs, { recursive: true });
+          this.logTagged('#lifecycle', `Pass action: created folder ${resolved}`);
+        } catch { /* already exists */ }
+      }
+    };
 
-      if (isInternalArtifact) {
-        // Internal bootstrap artifact: replace with brief inline notification (no card)
-        const inlineNotice = `\n> ✅ **${fileName}** created\n`;
-        result = result.replace(artifact.fullMatch, inlineNotice);
-        this.log(`Internal artifact (hidden from chat): ${artifactPath}`);
-      } else {
-        // Review/user-facing artifact: show card with summary and Open button.
-        // IMPORTANT: The summary stored in the message must NOT include visual hints
-        // like "... click to view full document" — those are for the renderer only.
-        // If the LLM sees that text in its context, it copies it into the next artifact.
-        const lines = artifact.content.split('\n').filter(l => l.trim().length > 0);
-        const summaryLines = lines.slice(0, 5);
-        const summary = summaryLines.join('\n');
+    // From explicit outputs section
+    for (const output of rawOutputs) {
+      extractArtifactPaths(output);
+    }
 
-        const summaryBlock = `<a2ui type="artifact" id="${id}" label="${label}" path="${artifactPath}">\n${summary}\n</a2ui>`;
-        result = result.replace(artifact.fullMatch, summaryBlock);
+    // From pass actions: extract file paths and create folders
+    for (const action of passActions) {
+      extractArtifactPaths(action);
+      await extractAndCreateFolders(action);
+    }
+
+    // Also extract folders from outputs section
+    for (const output of rawOutputs) {
+      await extractAndCreateFolders(output);
+    }
+
+    const outputPaths = Array.from(outputPathSet);
+    this.logTagged('#lifecycle', `executeWorkflowPassActions: extracted ${outputPaths.length} paths: ${JSON.stringify(outputPaths)}`);
+
+    if (outputPaths.length === 0) {
+      this.logTagged('#lifecycle', 'executeWorkflowPassActions: no output artifacts to check');
+      return [];
+    }
+
+    const created: string[] = [];
+
+    for (const rawPath of outputPaths) {
+      const resolvedPath = this.resolvePathPlaceholders(rawPath, vars);
+      const absolutePath = path.join(workspaceRoot, resolvedPath);
+      const basename = path.basename(absolutePath);
+      this.logTagged('#lifecycle', `Pass action: processing "${rawPath}" → "${resolvedPath}" (abs: ${absolutePath})`);
+
+      try {
+        // Skip if file already exists with content
+        try {
+          const stat = await fs.stat(absolutePath);
+          if (stat.size > 0) {
+            this.logTagged('#lifecycle', `Pass action: artifact already exists — ${resolvedPath} (${stat.size} bytes)`);
+            continue;
+          }
+        } catch {
+          // File doesn't exist — proceed to create it
+        }
+
+        // Ensure parent directory exists
+        await fs.mkdir(path.dirname(absolutePath), { recursive: true });
+        this.logTagged('#lifecycle', `Pass action: [${basename}] directory ensured, resolving template...`);
+
+        // Find matching template (strip version suffix: "analysis-v1.md" → "analysis.md")
+        const templateName = basename.replace(/-v\d+\.md$/, '.md');
+        const templatePath = path.join(workspaceRoot, '.agent', 'templates', 'lifecycle', templateName);
+        this.logTagged('#lifecycle', `Pass action: [${basename}] looking for template at ${templatePath}`);
+
+        let content: string;
+        try {
+          const template = await fs.readFile(templatePath, 'utf-8');
+          content = this.populateTemplate(template, vars);
+          this.logTagged('#lifecycle', `Pass action: [${basename}] populated from template "${templateName}" (${content.length} chars)`);
+        } catch {
+          content = `---\nartifact: ${templateName.replace('.md', '')}\nstatus: active\n---\n\n# ${basename}\n\n_Created automatically during workflow transition._\n`;
+          this.logTagged('#lifecycle', `Pass action: [${basename}] no template found, using placeholder`);
+        }
+
+        await fs.writeFile(absolutePath, content, 'utf-8');
+        this.logTagged('#lifecycle', `Pass action: ✅ wrote ${resolvedPath} (${content.length} bytes)`);
+        created.push(resolvedPath);
+      } catch (err: any) {
+        this.logTagged('#lifecycle', `Pass action: ❌ ERROR creating ${resolvedPath}: ${err.message}\n${err.stack}`);
       }
     }
 
-    return result;
+    return created;
+  }
+
+  /**
+   * Resolve path placeholders like <TS>, <TASK>, <title-short> in artifact paths.
+   */
+  private resolvePathPlaceholders(rawPath: string, vars: WorkflowVars): string {
+    return rawPath
+      .replace(/<TS>/g, vars.TS || '')
+      .replace(/<TASK>/g, vars.TASK || vars.taskId || '')
+      .replace(/<title-short>/g, vars.titleShort || '')
+      .replace(/<TIMESTAMP>/g, vars.TS || '');
+  }
+
+  /**
+   * Populate a template with resolved variables.
+   * Handles {{placeholder}} syntax and structured content blocks.
+   */
+  private populateTemplate(template: string, vars: WorkflowVars): string {
+    const now = vars['ISO-8601'] || new Date().toISOString();
+
+    // Replace standard {{placeholder}} variables
+    let content = template
+      .replace(/\{\{taskId\}\}/g, vars.taskId || '')
+      .replace(/\{\{taskTitle\}\}/g, vars.taskTitle || '')
+      .replace(/\{\{taskObjective\}\}/g, vars.taskObjective || '')
+      .replace(/\{\{ISO-8601\}\}/g, now)
+      .replace(/\{\{language\}\}/g, vars.language || '')
+      .replace(/\{\{TASK\}\}/g, vars.TASK || '')
+      .replace(/\{\{TS\}\}/g, vars.TS || '');
+
+    // Replace acceptance criteria block if present in template
+    if (vars.criteria && vars.criteria.length > 0) {
+      const criteriaYaml = vars.criteria
+        .map((c, i) => `  - id: AC-${i + 1}\n    description: "${c}"\n    status: pending`)
+        .join('\n');
+
+      content = content.replace(
+        /```yaml\nacceptance_criteria:[\s\S]*?```/m,
+        `\`\`\`yaml\nacceptance_criteria:\n${criteriaYaml}\n\`\`\``
+      );
+    }
+
+    // Replace criterion placeholders ({{criterion-1}}, {{criterion-2}}, etc.)
+    for (let i = 0; i < (vars.criteria?.length || 0); i++) {
+      content = content.replace(
+        new RegExp(`\\{\\{criterion-${i + 1}\\}\\}`, 'g'),
+        vars.criteria[i]
+      );
+    }
+
+    return content;
   }
 
   /**
    * Open a file in VS Code editor from a chat file link.
    */
-  private async handleOpenFile(data: { path: string }): Promise<any> {
+  private async handleOpenFile(data: { path: string }): Promise<ChatMessagePayload> {
+    const emptyPayload: ChatMessagePayload = { text: '', a2ui: [], agentRole: 'system', isStreaming: false };
+    const errorPayload = (msg: string): ChatMessagePayload => ({
+      text: `**Error:** ${msg}`,
+      a2ui: [{ type: 'error', id: `error-${Date.now()}`, label: msg }],
+      agentRole: 'system',
+      isStreaming: false,
+    });
+
+    // Helper: try to open a file and return true if successful
+    const tryOpen = async (absPath: string): Promise<boolean> => {
+      try {
+        const uri = vscode.Uri.file(absPath);
+        const doc = await vscode.workspace.openTextDocument(uri);
+        await vscode.window.showTextDocument(doc, { preview: true });
+        return true;
+      } catch { return false; }
+    };
+
     try {
-      const filePath = data.path;
-      const workspaceFolders = vscode.workspace.workspaceFolders;
-      if (!workspaceFolders) { return { success: false, error: 'No workspace' }; }
+      const filePath = data.path.replace(/\s*\/\s*/g, '/').trim();
+      const wsRoot = this.workspacePath;
+      if (!wsRoot) { return errorPayload('No workspace'); }
 
-      const wsRoot = workspaceFolders[0].uri.fsPath;
+      const basename = path.basename(filePath);
+      const artifactsRoot = path.join(wsRoot, '.agent', 'artifacts');
 
-      // Build candidate paths in priority order
-      const candidates: string[] = [];
-
+      // ── Phase 1: Direct path resolution ─────────────────────
+      const directCandidates: string[] = [];
       if (path.isAbsolute(filePath)) {
-        candidates.push(filePath);
+        directCandidates.push(filePath);
       } else {
-        // 1. Direct path relative to workspace
-        candidates.push(path.join(wsRoot, filePath));
-        // 2. Prepend .agent/ (LLM often says "artifacts/..." instead of ".agent/artifacts/...")
-        candidates.push(path.join(wsRoot, '.agent', filePath));
-        // 3. Just the filename in .agent/artifacts/
-        const basename = path.basename(filePath);
-        candidates.push(path.join(wsRoot, '.agent', 'artifacts', '**', basename));
+        directCandidates.push(path.join(wsRoot, filePath));
+        directCandidates.push(path.join(wsRoot, '.agent', filePath));
       }
 
-      // Try direct candidates first
-      for (const candidate of candidates) {
-        if (!candidate.includes('*')) {
-          try {
-            const uri = vscode.Uri.file(candidate);
-            const doc = await vscode.workspace.openTextDocument(uri);
-            await vscode.window.showTextDocument(doc, { preview: true });
-            return { success: true };
-          } catch {
-            // Try next candidate
+      for (const c of directCandidates) {
+        if (await tryOpen(c)) { return emptyPayload; }
+      }
+
+      // ── Phase 2: Artifact-aware search ──────────────────────
+      // LLM often generates wrong folder names (session UUIDs, wrong timestamps).
+      // Search across ALL subdirectories of .agent/artifacts/ for the target file.
+      const fsP = await import('fs/promises');
+      const basenameVariants = [basename];
+      // Also try without "workflow." prefix (e.g. "workflow.init.md" → "init.md")
+      const strippedBasename = basename.replace(/^workflow\./, '');
+      if (strippedBasename !== basename) {
+        basenameVariants.push(strippedBasename);
+      }
+
+      try {
+        const artifactDirs = await fsP.readdir(artifactsRoot, { withFileTypes: true });
+        for (const variant of basenameVariants) {
+          // Try root of artifacts first
+          const rootCandidate = path.join(artifactsRoot, variant);
+          if (await tryOpen(rootCandidate)) {
+            this.logTagged('#system', `File opened from artifacts root: ${variant} (requested: ${basename})`);
+            return emptyPayload;
           }
+          // Then try each subdirectory
+          for (const entry of artifactDirs) {
+            if (entry.isDirectory()) {
+              const candidate = path.join(artifactsRoot, entry.name, variant);
+              if (await tryOpen(candidate)) {
+                this.logTagged('#system', `File opened from artifacts/${entry.name}/${variant} (requested: ${filePath})`);
+                return emptyPayload;
+              }
+            }
+          }
+        }
+
+        // Phase 2b: If basename not found, try finding ANY .md file in the parent dir 
+        // (handles wrong filenames from LLM, e.g. "workflow.init.md" when file is "task.md")
+        const pathSegments = filePath.replace(/\\/g, '/').split('/');
+        // Look for a folder segment that matches a real artifact folder
+        for (const entry of artifactDirs) {
+          if (entry.isDirectory()) {
+            // Check if any path segment partially matches this folder
+            const dirName = entry.name;
+            const hasMatch = pathSegments.some(s =>
+              s === dirName || dirName.includes(s) || s.includes(dirName)
+            );
+            if (hasMatch) {
+              const dirPath = path.join(artifactsRoot, dirName);
+              const filesInDir = await fsP.readdir(dirPath);
+              const ext = path.extname(basename) || '.md';
+              const mdFiles = filesInDir.filter(f => f.endsWith(ext));
+              if (mdFiles.length === 1) {
+                // Only one matching file — open it
+                if (await tryOpen(path.join(dirPath, mdFiles[0]))) {
+                  this.logTagged('#system', `File opened via dir match: artifacts/${dirName}/${mdFiles[0]} (requested: ${filePath})`);
+                  return emptyPayload;
+                }
+              }
+            }
+          }
+        }
+      } catch { /* artifacts dir may not exist yet */ }
+
+      // ── Phase 3: Workspace-wide glob search ─────────────────
+      for (const variant of basenameVariants) {
+        const globPattern = new vscode.RelativePattern(wsRoot, `**/${variant}`);
+        const found = await vscode.workspace.findFiles(globPattern, '**/node_modules/**', 1);
+        if (found.length > 0) {
+          const doc = await vscode.workspace.openTextDocument(found[0]);
+          await vscode.window.showTextDocument(doc, { preview: true });
+          if (variant !== basename) {
+            this.logTagged('#system', `File opened via glob (variant: ${variant}, requested: ${basename})`);
+          }
+          return emptyPayload;
         }
       }
 
-      // Fallback: glob search for the filename in the workspace
-      const basename = path.basename(filePath);
-      const globPattern = new vscode.RelativePattern(wsRoot, `**/${basename}`);
-      const found = await vscode.workspace.findFiles(globPattern, '**/node_modules/**', 1);
-      if (found.length > 0) {
-        const doc = await vscode.workspace.openTextDocument(found[0]);
-        await vscode.window.showTextDocument(doc, { preview: true });
-        return { success: true };
-      }
-
-      this.log(`File not found: ${filePath} (tried ${candidates.length} candidates + glob)`);
-      return { success: false, error: `File not found: ${filePath}` };
+      this.logTagged('#system', `File not found: ${filePath} (tried direct + artifact scan + glob)`);
+      return errorPayload(`File not found: ${filePath}`);
     } catch (err: any) {
-      this.log(`Failed to open file: ${err.message}`);
-      return { success: false, error: err.message };
+      this.logTagged('#system', `Failed to open file: ${err.message}`);
+      return errorPayload(err.message);
     }
   }
 
@@ -1139,10 +1573,10 @@ export class ChatBackground extends Background {
   private async getWorkflowState(): Promise<any> {
     try {
       const state = await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_STATUS);
-      this.log(`→ WORKFLOW_STATUS`, state ? `workflowId=${state.currentWorkflowId}, status=${state.status}` : 'null');
+      this.logTagged('#workflow', `→ WORKFLOW_STATUS`, state ? `workflowId=${state.currentWorkflowId}, status=${state.status}` : 'null');
       return state;
     } catch (err: any) {
-      this.log(`→ WORKFLOW_STATUS failed: ${err?.message}`);
+      this.logTagged('#workflow', `→ WORKFLOW_STATUS failed: ${err?.message}`);
       return null;
     }
   }
@@ -1152,11 +1586,10 @@ export class ChatBackground extends Background {
    * Source of truth: .agent/workflows/tasklifecycle/*.md
    */
   private async handleLifecyclePhasesRequest(data: { strategy: string }): Promise<any> {
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (!workspaceFolders) { return { phases: [] }; }
+    if (!this.workspacePath) { return { phases: [] }; }
 
     const dirName = data.strategy || 'tasklifecycle';
-    const dirPath = vscode.Uri.joinPath(workspaceFolders[0].uri, '.agent', 'workflows', dirName);
+    const dirPath = vscode.Uri.joinPath(vscode.Uri.file(this.workspacePath), '.agent', 'workflows', dirName);
 
     try {
       const fs = await import('fs/promises');
@@ -1175,69 +1608,23 @@ export class ChatBackground extends Background {
         return { id, label: labelPart };
       });
 
-      this.log(`Loaded ${phases.length} phases for ${dirName}: ${phases.map(p => p.id).join(', ')}`);
+      this.logTagged('#lifecycle', `Loaded ${phases.length} phases for ${dirName}: ${phases.map(p => p.id).join(', ')}`);
       return { phases };
     } catch (err: any) {
-      this.log(`Failed to read lifecycle phases for ${dirName}: ${err.message}`);
+      this.logTagged('#lifecycle', `Failed to read lifecycle phases for ${dirName}: ${err.message}`);
       return { phases: [] };
     }
   }
-
-  /**
-   * Create init.md artifact for the init workflow gate.
-   */
-  // createInitArtifact removed — LLM is responsible for creating artifacts via tools.
-  // The extension only interprets the workflow schema (gates, pass, fail).
 
   /**
    * Handle roles changed notification from Settings background.
    * Fetches fresh roles and pushes them to Chat view.
    */
   private async handleRolesChanged(): Promise<any> {
-    try {
-      const result = await this.sendMessage('settings', SETTINGS_MESSAGES.GET_ROLES);
-      if (result?.success && result.roles) {
-        this.messenger.emit({
-          id: randomUUID(),
-          from: `${NAME}::background`,
-          to: `${NAME}::view`,
-          timestamp: Date.now(),
-          origin: MessageOrigin.Server,
-          payload: {
-            command: 'REFRESH_AGENTS',
-            data: { agents: result.roles }
-          }
-        });
-      }
-    } catch (error) {
-      this.log('Error handling roles changed', error);
-    }
+    // Invalidate settings cache so next message picks up changes
+    this.invalidateSettingsCache();
+    this.logTagged('#config', 'Roles changed — settings cache invalidated');
     return { success: true };
-  }
-
-  /**
-   * Format conversation history + current message into a single input string.
-   * Gives the LLM memory of the conversation so it can recall names, topics, etc.
-   */
-  private formatInputWithHistory(currentText: string, history?: Array<{ role: string, text: string }>): string {
-    if (!history || history.length <= 1) {
-      return currentText;
-    }
-
-    // Format previous messages (exclude the last one which is the current message)
-    const previousMessages = history.slice(0, -1)
-      .filter(m => m.text && m.text.trim())
-      .map(m => {
-        const label = m.role === 'user' ? 'User' : m.role.charAt(0).toUpperCase() + m.role.slice(1);
-        return `${label}: ${m.text}`;
-      })
-      .join('\n');
-
-    if (!previousMessages) {
-      return currentText;
-    }
-
-    return `[Conversation history]\n${previousMessages}\n\n[Current message]\nUser: ${currentText}`;
   }
 
   protected getHtmlForWebview(webview: vscode.Webview): string {
@@ -1245,19 +1632,7 @@ export class ChatBackground extends Background {
     return ViewHtml.getWebviewHtml(webview, this._extensionUri, this.viewTagName, scriptPath, this.appVersion);
   }
 
-  private emitStatus(status: string) {
-    this.messenger.emit({
-      id: randomUUID(),
-      from: `${NAME}::background`,
-      to: `${NAME}::view`,
-      timestamp: Date.now(),
-      origin: MessageOrigin.Server,
-      payload: {
-        command: 'AGENT_STATUS',
-        data: { status }
-      }
-    });
-  }
+
 
   private emitAgentResponse(role: string, text: string) {
     this.messenger.emit({
@@ -1279,18 +1654,14 @@ export class ChatBackground extends Background {
 
   private async handleWorkflowCommand(commandId: string): Promise<any> {
     try {
-      const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+      const workspaceRoot = this.workspacePath;
       if (!workspaceRoot) {
-        this.emitAgentResponse('system', '👋 **Welcome to Extensio!** Please open a folder or workspace to begin.');
-        return { success: false, error: 'No workspace open' };
+        return { success: false, error: 'No workspace open', errorText: '👋 **Welcome to Extensio!** Please open a folder or workspace to begin.' };
       }
-
-      // Auto-create new session if there's existing history
-      this.emitToView('NEW_SESSION_AUTO', {});
 
       const rawResult = await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_START, {
         workflowId: commandId,
-        taskId: `task-${Date.now()}`,
+        taskId: this.getLastSessionId() || `task-${Date.now()}`,
         dirPath: `${workspaceRoot}/.agent/workflows`,
       }, 45_000);
 
@@ -1300,30 +1671,37 @@ export class ChatBackground extends Background {
       // Clean owner name ('architect-agent' -> 'architect') so it matches personas and routing
       const owner = result?.owner ? result.owner.replace(/-agent$/, '') : undefined;
 
-      return { success: true, owner, workflowId: result?.workflowId || commandId };
+      // Extract workflowState directly from the command response (no polling needed)
+      const state = result?.workflowState || await this.getWorkflowState();
+
+      return {
+        success: true,
+        owner,
+        workflowId: result?.workflowId || commandId,
+        newSession: true,
+        workflowState: state,
+        gate: state?.currentGate || null,
+      };
     } catch (error: any) {
-      this.log('Failed to start workflow', error);
-      this.emitAgentResponse('system', `**Error starting workflow:** ${error.message}`);
-      return { success: false, error: error.message };
+      this.logTagged('#workflow', 'Failed to start workflow', error);
+      return { success: false, error: error.message, errorText: `**Error starting workflow:** ${error.message}` };
     }
   }
 
-  private async handleGateRequest(data: any): Promise<any> {
-    this.log('Gate request received', data);
-    this.emitToView(MESSAGES.GATE_REQUEST, data);
-    return { success: true };
-  }
 
-  private async handleGateResponse(data: any): Promise<any> {
+
+
+
+  private async handleGateResponse(data: any): Promise<ChatMessagePayload> {
     try {
-      this.log('Gate response from user', JSON.stringify(data));
+      this.logTagged('#gate', 'Gate response from user', JSON.stringify(data));
 
       // 1. Read current workflow state to get pass target BEFORE sending gate response
       const workflowState = await this.getWorkflowState();
       const passTarget = workflowState?.workflow?.pass?.nextTarget;
 
       // 2. Advance workflow: step complete → gate approve/reject
-      if (data.decision === 'SI') {
+      if (data.decision === 'SI' || data.decision === 'approve') {
         try {
           await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_STEP_COMPLETE);
         } catch { /* step may already be at gate */ }
@@ -1331,18 +1709,25 @@ export class ChatBackground extends Background {
           gateId: data.gateId || 'gate',
           decision: 'SI',
         });
-        this.log(`Gate approved. passTarget=${passTarget}`);
+        this.logTagged('#gate', `Gate approved. passTarget=${passTarget}`);
+
+        // 2.5. Execute pass actions: ensure workflow output artifacts exist
+        let createdArtifacts: string[] = [];
+        try {
+          createdArtifacts = await this.executeWorkflowPassActions(workflowState);
+          if (createdArtifacts.length > 0) {
+            this.logTagged('#lifecycle', `Pass actions created ${createdArtifacts.length} artifact(s): ${createdArtifacts.join(', ')}`);
+          }
+        } catch (err: any) {
+          this.logTagged('#lifecycle', `Warning: Pass actions failed: ${err.message}`);
+        }
 
         // 3. Auto-transition to next workflow via passTarget (data-driven)
         if (passTarget) {
-          // passTarget formats (from YAML frontmatter):
-          //   - Simple: "tasklifecycle"
-          //   - Conditional: "key:target | key:target"
           let nextWorkflowId: string;
           const targets = passTarget.split('|').map((t: string) => t.trim());
 
           if (targets[0].includes(':')) {
-            // Conditional map: resolve by first value
             const targetMap = new Map(
               targets.map((t: string) => {
                 const [key, val] = t.split(':').map(s => s.trim());
@@ -1351,64 +1736,105 @@ export class ChatBackground extends Background {
             );
             nextWorkflowId = targetMap.values().next().value || targets[0];
           } else {
-            // Simple string: use directly
             nextWorkflowId = targets[0];
           }
 
-          // Clean any legacy workflow./workflows. prefix if present
           const cleanId = nextWorkflowId.replace(/^workflows?\./, '');
-          this.log(`Auto-transitioning to next workflow: ${cleanId}`);
+          this.logTagged('#workflow', `Auto-transitioning to next workflow: ${cleanId}`);
           try {
-            const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-            await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_START, {
+            const workspaceRoot = this.workspacePath;
+            const startResult = await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_START, {
               workflowId: cleanId,
               taskId: data.taskTitle || 'task',
               dirPath: workspaceRoot ? `${workspaceRoot}/.agent/workflows` : undefined,
             });
-            this.log(`Successfully started next workflow: ${cleanId}`);
+            this.logTagged('#workflow', `Successfully started next workflow: ${cleanId}`);
 
-            // Auto-kickoff: tell the view to send a silent message to start the new phase
-            // Small delay to let the engine state settle before the view queries it
-            setTimeout(() => {
-              this.emitToView(MESSAGES.PHASE_AUTO_START, {
+            // Extract workflowState from the start command response
+            const newState = startResult?.workflowState || await this.getWorkflowState();
+
+            return {
+              text: 'Gate **approved**',
+              a2ui: [],
+              agentRole: 'system',
+              isStreaming: false,
+              phaseAutoStart: {
                 phaseId: cleanId,
                 owner: workflowState.workflow?.owner?.replace(/-agent$/, '') || 'architect',
-              });
-              this.log(`Emitted PHASE_AUTO_START for ${cleanId}`);
-            }, 500);
+                createdArtifacts,
+              },
+              workflowState: newState,
+              gate: newState?.currentGate || null,
+            };
           } catch (err: any) {
-            this.log(`Failed to start next workflow: ${err.message}`);
+            this.logTagged('#workflow', `Failed to start next workflow: ${err.message}`);
           }
         } else {
-          // No explicit passTarget — could be a lifecycle phase gate (engine handles transition)
-          // or a simple internal gate (no transition).
-          // Wait for the engine to process, then check if phase advanced.
+          // No explicit passTarget — lifecycle internal gate or simple workflow gate
           const previousPhaseId = workflowState?.workflow?.id;
           const gateAnswerText = data.gateAnswerText || 'Gate approved. Continue with the workflow.';
+          const isLifecycle = workflowState?.isLifecycle;
+          const phases: any[] = workflowState?.phases || [];
 
-          setTimeout(async () => {
-            try {
-              const newState = await this.getWorkflowState();
-              const newPhaseId = newState?.workflow?.id;
+          // For lifecycle workflows, try to advance to the next phase manually
+          // (the engine's XState actor may not be alive after sidecar restart)
+          if (isLifecycle && phases.length > 0) {
+            const currentIdx = phases.findIndex((p: any) => p.status === 'active');
+            const nextIdx = currentIdx >= 0 ? currentIdx + 1 : -1;
 
-              if (newPhaseId && newPhaseId !== previousPhaseId) {
-                // Engine advanced to a new phase — trigger auto-start
-                const owner = newState.workflow?.owner?.replace(/-agent$/, '') || 'architect';
-                this.emitToView(MESSAGES.PHASE_AUTO_START, {
-                  phaseId: newPhaseId,
-                  owner,
+            if (nextIdx >= 0 && nextIdx < phases.length) {
+              const nextPhase = phases[nextIdx];
+              const owner = nextPhase.owner?.replace(/-agent$/, '') || workflowState.workflow?.owner?.replace(/-agent$/, '') || 'architect';
+              this.logTagged('#lifecycle', `Lifecycle phase advance: ${phases[currentIdx]?.id} → ${nextPhase.id} (manual)`);
+
+              // Try to tell the engine to advance (may fail if actor is null)
+              try {
+                await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_GATE_RESPONSE, {
+                  gateId: data.gateId || 'gate',
+                  decision: 'SI',
                 });
-                this.log(`Phase advanced: ${previousPhaseId} → ${newPhaseId}. Emitted PHASE_AUTO_START`);
-              } else {
-                // Same phase — internal gate, emit GATE_CONTINUE
-                this.emitToView(MESSAGES.GATE_CONTINUE, { gateAnswerText });
-                this.log(`Emitted GATE_CONTINUE (no transition, internal gate)`);
-              }
-            } catch {
-              this.emitToView(MESSAGES.GATE_CONTINUE, { gateAnswerText });
-              this.log(`Emitted GATE_CONTINUE (fallback after error)`);
+              } catch { /* engine may not have active actor */ }
+
+              return {
+                text: 'Gate **approved**',
+                a2ui: [],
+                agentRole: 'system',
+                isStreaming: false,
+                phaseAutoStart: { phaseId: nextPhase.id, owner, createdArtifacts: createdArtifacts || [] },
+                workflowState: workflowState,
+              };
             }
-          }, 500);
+          }
+
+          // Get current state from the gate response (no polling needed)
+          const newState = await this.getWorkflowState();
+          const newPhaseId = newState?.workflow?.id;
+
+          if (newPhaseId && newPhaseId !== previousPhaseId) {
+            // Engine advanced to a new phase
+            const owner = newState.workflow?.owner?.replace(/-agent$/, '') || 'architect';
+            this.logTagged('#lifecycle', `Phase advanced: ${previousPhaseId} → ${newPhaseId}`);
+            return {
+              text: 'Gate **approved**',
+              a2ui: [],
+              agentRole: 'system',
+              isStreaming: false,
+              phaseAutoStart: { phaseId: newPhaseId, owner },
+              workflowState: newState,
+              gate: newState?.currentGate || null,
+            };
+          } else {
+            // Same phase — internal gate
+            this.logTagged('#gate', 'Internal gate — same phase, continue');
+            return {
+              text: 'Gate **approved**',
+              a2ui: [],
+              agentRole: 'system',
+              isStreaming: false,
+              gateContinue: { gateAnswerText },
+              workflowState: newState,
+            };
+          }
         }
       } else {
         // Gate rejected
@@ -1417,34 +1843,30 @@ export class ChatBackground extends Background {
           decision: 'NO',
           reason: data.reason,
         });
-        this.log('Gate rejected by user');
+        this.logTagged('#gate', 'Gate rejected by user');
       }
 
-      return { success: true };
+      const decision = data.decision === 'SI' || data.decision === 'approve' ? 'approved' : 'rejected';
+      return {
+        text: `Gate **${decision}**`,
+        a2ui: [],
+        agentRole: 'system',
+        isStreaming: false,
+      };
     } catch (error: any) {
-      this.log('Failed to handle gate response', error);
-      return { success: false, error: error.message };
+      this.logTagged('#gate', 'Failed to handle gate response', error);
+      return {
+        text: `**Error:** ${error.message}`,
+        a2ui: [{ type: 'error', id: `error-${Date.now()}`, label: error.message }],
+        agentRole: 'system',
+        isStreaming: false,
+      };
     }
   }
 
 
 
-  private async handleWorkflowStateUpdate(data: any): Promise<any> {
-    this.log('Workflow state update', data);
-    this.emitToView(MESSAGES.WORKFLOW_STATE_UPDATE, data);
-    return { success: true };
-  }
 
-  private emitToView(command: string, data: any): void {
-    this.messenger.emit({
-      id: randomUUID(),
-      from: `${NAME}::background`,
-      to: `${NAME}::view`,
-      timestamp: Date.now(),
-      origin: MessageOrigin.Server,
-      payload: { command, data }
-    });
-  }
 
 
   private getSessions(): any[] {
@@ -1464,12 +1886,9 @@ export class ChatBackground extends Background {
   }
 
   private async handleSaveSession(data: { sessionId?: string, messages: any[], taskTitle?: string, elapsedSeconds?: number, progress?: number, tokenUsage?: any, accessLevel?: string, securityScore?: number, taskSteps?: any[] }): Promise<any> {
-    // Skip saving sessions that have no meaningful content (no user interaction)
-    const hasUserInteraction = data.messages.some((m: any) =>
-      m.role === 'user' || (m.a2uiAnswers && Object.keys(m.a2uiAnswers).length > 0)
-    );
-    if (!hasUserInteraction) {
-      this.log('Skipping save — no user interaction in session');
+    // Skip saving truly empty sessions (no messages at all)
+    if (!data.messages || data.messages.length === 0) {
+      this.logTagged('#session', 'Skipping save — empty session');
       return { success: true, sessionId: data.sessionId };
     }
 
@@ -1515,7 +1934,8 @@ export class ChatBackground extends Background {
 
     await this.saveSessions(sessions);
     await this.setLastSessionId(id);
-    this.log(`Session saved: ${id} ("${data.taskTitle || title}")`);
+    Logger.setSession(id);
+    this.logTagged('#session', `Session saved: ${id} ("${data.taskTitle || title}")`);
     return { success: true, sessionId: id };
   }
 
@@ -1533,26 +1953,31 @@ export class ChatBackground extends Background {
     const session = sessions.find(s => s.id === targetId);
 
     if (!session) {
-      this.log(`Session not found: ${targetId}`);
+      this.logTagged('#session', `Session not found: ${targetId}`);
       return { success: false, error: 'Session not found' };
     }
 
     await this.setLastSessionId(session.id);
+    Logger.setSession(session.id);
 
-    this.messenger.emit({
-      id: randomUUID(),
-      from: `${NAME}::background`,
-      to: `${NAME}::view`,
-      timestamp: Date.now(),
-      origin: MessageOrigin.Server,
-      payload: {
-        command: MESSAGES.LOAD_SESSION_RESPONSE,
-        data: { session }
-      }
-    });
+    // Restore workflow state for this task (sessionId === taskId).
+    // Fire-and-forget: do NOT block session load — sidecar may not be ready at startup.
+    // The workflow state will arrive via emitWorkflowState → push to View.
+    const taskId = session.id;
+    this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_SWITCH_TASK, { taskId })
+      .then((restored: any) => {
+        if (restored?.workflowState) {
+          this.logTagged('#workflow', `Workflow state restored for task: ${taskId}`);
+        } else {
+          this.logTagged('#workflow', `No workflow state for task: ${taskId}`);
+        }
+      })
+      .catch(() => {
+        this.logTagged('#workflow', `Could not restore workflow state for task: ${taskId}`);
+      });
 
-    this.log(`Session loaded: ${session.id} ("${session.title}")`);
-    return { success: true };
+    this.logTagged('#session', `Session loaded: ${session.id} ("${session.title}")`);
+    return { success: true, session };
   }
 
   private async handleListSessions(): Promise<any> {
@@ -1574,19 +1999,7 @@ export class ChatBackground extends Background {
       } : undefined,
     }));
 
-    this.messenger.emit({
-      id: randomUUID(),
-      from: `${NAME}::background`,
-      to: `${NAME}::view`,
-      timestamp: Date.now(),
-      origin: MessageOrigin.Server,
-      payload: {
-        command: MESSAGES.LIST_SESSIONS_RESPONSE,
-        data: { sessions }
-      }
-    });
-
-    return { success: true, count: sessions.length };
+    return { success: true, sessions };
   }
 
   private async handleDeleteSession(data: { sessionId: string }): Promise<any> {
@@ -1599,14 +2012,23 @@ export class ChatBackground extends Background {
       await this.setLastSessionId(sessions.length > 0 ? sessions[0].id : null);
     }
 
-    this.log(`Session deleted: ${data.sessionId}`);
+    // Reset workflow engine to clean state for next session
+    try {
+      await this.sendMessage('Runtime', RUNTIME_MESSAGES.WORKFLOW_RESET);
+      this.logTagged('#workflow', `Workflow engine reset after session delete`);
+    } catch (err: any) {
+      this.logTagged('#workflow', `Warning: Workflow reset failed: ${err.message}`);
+    }
+
+    this.logTagged('#session', `Session deleted: ${data.sessionId}`);
     return { success: true };
   }
 
   private async handleNewSession(): Promise<any> {
     const id = randomUUID();
     await this.setLastSessionId(id);
-    this.log(`New session started: ${id}`);
+    Logger.setSession(id);
+    this.logTagged('#session', `New session started: ${id}`);
     return { success: true, sessionId: id };
   }
 

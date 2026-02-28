@@ -376,6 +376,7 @@ export function renderA2UIConfirm(block: A2UIBlock, view: IChatView, msg: any, m
     if (!msg.a2uiAnswers) { msg.a2uiAnswers = {}; }
     msg.a2uiAnswers[block.id] = val;
     view.sendSilentMessage(`${block.label || block.id}: ${val}`);
+    view.handleGateResponse(block.id, val === 'SI' ? 'approve' : 'reject');
     const copy = [...(view as any).history];
     copy[msgIndex] = { ...copy[msgIndex], a2uiAnswers: { ...msg.a2uiAnswers } };
     (view as any).history = copy;

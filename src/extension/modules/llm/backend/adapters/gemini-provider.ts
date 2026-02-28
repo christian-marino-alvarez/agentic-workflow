@@ -164,14 +164,18 @@ class GeminiModel implements Model {
     const modelConfig: any = { model: this.modelName };
     if (sysInstruction) { modelConfig.systemInstruction = sysInstruction; }
 
-    // Add Structured Output config if a json_schema is provided
-    if (request.outputType && typeof request.outputType === 'object' && request.outputType.type === 'json_schema') {
+    // Add Structured Output config only when there are NO tools.
+    // Gemini does not support combining responseMimeType with function calling.
+    const hasTools = geminiTools && geminiTools.length > 0;
+    if (!hasTools && request.outputType && typeof request.outputType === 'object' && request.outputType.type === 'json_schema') {
       const gSchema = cleanJsonSchema(request.outputType.schema);
       modelConfig.generationConfig = {
         responseMimeType: 'application/json',
         responseSchema: gSchema,
       };
       console.log(`[gemini::model] Enforcing Structured Output schema: ${request.outputType.name}`);
+    } else if (hasTools) {
+      console.log(`[gemini::model] Skipping JSON schema (tools present — Gemini limitation)`);
     }
 
     const modelObj = this.client.getGenerativeModel(modelConfig);
@@ -230,14 +234,18 @@ class GeminiModel implements Model {
     const modelConfig: any = { model: this.modelName };
     if (sysInstruction) { modelConfig.systemInstruction = sysInstruction; }
 
-    // Add Structured Output config if a json_schema is provided
-    if (request.outputType && typeof request.outputType === 'object' && request.outputType.type === 'json_schema') {
+    // Add Structured Output config only when there are NO tools.
+    // Gemini does not support combining responseMimeType with function calling.
+    const hasTools = geminiTools && geminiTools.length > 0;
+    if (!hasTools && request.outputType && typeof request.outputType === 'object' && request.outputType.type === 'json_schema') {
       const gSchema = cleanJsonSchema(request.outputType.schema);
       modelConfig.generationConfig = {
         responseMimeType: 'application/json',
         responseSchema: gSchema,
       };
       console.log(`[gemini::model] Enforcing Structured Output schema: ${request.outputType.name}`);
+    } else if (hasTools) {
+      console.log(`[gemini::model] Skipping JSON schema (tools present — Gemini limitation)`);
     }
 
     const modelObj = this.client.getGenerativeModel(modelConfig);

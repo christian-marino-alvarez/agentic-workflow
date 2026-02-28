@@ -53,7 +53,11 @@ export interface IChatView {
   taskSteps: TaskStep[];
   showTimeline: boolean;
   showDetails: boolean;
+  showWelcome: boolean;
   workflowDetails: WorkflowDetails;
+
+  // Session list for welcome screen
+  sessionList: Array<{ id: string; title: string; timestamp: number; messageCount: number }>;
 
   // Execution timer
   elapsedSeconds: number;
@@ -93,5 +97,7 @@ export interface IChatView {
   confirmA2UIOption(option: string): void;
   cancelA2UI(): void;
   newSession(): void;
+  startNewTask(): void;
+  loadSession(sessionId: string): void;
   sendMessage(target: string, command: string, data?: any, timeoutMs?: number): Promise<any>;
 }

@@ -44,14 +44,14 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
       )
     );
 
-    this.log('Auth Provider Registered');
+    this.logTagged('#system', 'Auth Provider Registered');
 
     // Attempt to restore sessions from SecretStorage on startup
     this.restoreSession().catch(err => {
-      this.log('Could not restore Google session:', err.message);
+      this.logTagged('#system', 'Could not restore Google session:', err.message);
     });
     this.restoreOpenAISession().catch(err => {
-      this.log('Could not restore OpenAI session:', err.message);
+      this.logTagged('#system', 'Could not restore OpenAI session:', err.message);
     });
   }
 
@@ -68,7 +68,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
   // ─── AuthenticationProvider Interface ────────────────────
 
   public async getSessions(scopes?: readonly string[]): Promise<vscode.AuthenticationSession[]> {
-    this.log('getSessions called', scopes);
+    this.logTagged('#system', 'getSessions called', scopes);
     return this._sessions;
   }
 
@@ -78,7 +78,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
    * via a local callback server, and exchanges it for tokens.
    */
   public async createSession(scopes: readonly string[]): Promise<vscode.AuthenticationSession> {
-    this.log('createSession called — starting Google OAuth PKCE flow');
+    this.logTagged('#system', 'createSession called — starting Google OAuth PKCE flow');
 
     // ─── Pre-flight: Check if Client ID is configured ───
     const clientId = this.getGoogleClientId();
@@ -92,7 +92,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
 
     // 2. Start local callback server
     const { port, codePromise, server } = await this.startCallbackServer();
-    this.log(`Callback server listening on port ${port}`);
+    this.logTagged('#system', `Callback server listening on port ${port}`);
 
     // 3. Build auth URL and open browser
     const redirectUri = `http://localhost:${port}/callback`;
@@ -109,7 +109,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
     authUrl.searchParams.set('access_type', 'offline');
     authUrl.searchParams.set('prompt', 'consent');
 
-    this.log('Opening browser for Google login...');
+    this.logTagged('#system', 'Opening browser for Google login...');
     const opened = await vscode.env.openExternal(vscode.Uri.parse(authUrl.toString()));
     if (!opened) {
       server.close();
@@ -136,7 +136,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
       server.close();
     }
 
-    this.log('Authorization code received, exchanging for tokens...');
+    this.logTagged('#system', 'Authorization code received, exchanging for tokens...');
 
     // 5. Exchange code for tokens
     const tokens = await this.exchangeCodeForTokens(authCode, codeVerifier, redirectUri);
@@ -165,12 +165,12 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
     this._sessions = [session];
     this._onDidChangeSessions.fire({ added: [session], removed: [], changed: [] });
 
-    this.log('Session created:', session.account.label);
+    this.logTagged('#system', 'Session created:', session.account.label);
     return session;
   }
 
   public async removeSession(sessionId: string): Promise<void> {
-    this.log('removeSession called', sessionId);
+    this.logTagged('#system', 'removeSession called', sessionId);
 
     const index = this._sessions.findIndex(s => s.id === sessionId);
     if (index > -1) {
@@ -183,7 +183,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
     await this.context.secrets.delete(SECRET_KEYS.REFRESH_TOKEN);
     await this.context.secrets.delete(SECRET_KEYS.ACCOUNT_INFO);
 
-    this.log('Session removed and tokens cleared');
+    this.logTagged('#system', 'Session removed and tokens cleared');
   }
 
   // ─── Message Handler ────────────────────────────────────
@@ -193,15 +193,15 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
 
     switch (command) {
       case MESSAGES.LOGIN_REQUEST:
-        this.log('Login request received');
+        this.logTagged('#system', 'Login request received');
         try {
           await this.createSession(GOOGLE_SCOPES);
         } catch (e: any) {
-          this.log('Login failed:', e.message);
+          this.logTagged('#system', 'Login failed:', e.message);
         }
         break;
       case MESSAGES.LOGOUT_REQUEST:
-        this.log('Logout request received');
+        this.logTagged('#system', 'Logout request received');
         if (this._sessions.length > 0) {
           await this.removeSession(this._sessions[0].id);
         }
@@ -234,7 +234,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
     const config = vscode.workspace.getConfiguration();
     await config.update(GOOGLE_CLIENT_ID_KEY, clientId, vscode.ConfigurationTarget.Global);
     await config.update(GOOGLE_CLIENT_SECRET_KEY, clientSecret, vscode.ConfigurationTarget.Global);
-    this.log('Google OAuth credentials saved to settings');
+    this.logTagged('#system', 'Google OAuth credentials saved to settings');
   }
 
   /**
@@ -247,7 +247,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
     // Remove the VS Code session so getSessions returns empty
     this._sessions = [];
     this._onDidChangeSessions.fire({ added: [], removed: [], changed: [] });
-    this.log('Google OAuth credentials removed');
+    this.logTagged('#system', 'Google OAuth credentials removed');
   }
 
   // ─── PKCE Helpers ───────────────────────────────────────
@@ -267,7 +267,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
     codeVerifier: string,
     redirectUri: string
   ): Promise<{ access_token: string; refresh_token?: string; id_token?: string }> {
-    this.log('Token exchange: redirectUri =', redirectUri);
+    this.logTagged('#system', 'Token exchange: redirectUri =', redirectUri);
 
     const body = new URLSearchParams({
       code,
@@ -286,7 +286,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
 
     if (!response.ok) {
       const errorBody = await response.text();
-      this.log('Token exchange FAILED:', response.status, errorBody);
+      this.logTagged('#system', 'Token exchange FAILED:', response.status, errorBody);
 
       // Parse Google's error for a user-friendly message
       let userMessage = `Token exchange failed (${response.status})`;
@@ -306,7 +306,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
       throw new Error(userMessage);
     }
 
-    this.log('Token exchange successful');
+    this.logTagged('#system', 'Token exchange successful');
     return response.json();
   }
 
@@ -316,7 +316,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
   public async refreshAccessToken(): Promise<string | null> {
     const refreshToken = await this.context.secrets.get(SECRET_KEYS.REFRESH_TOKEN);
     if (!refreshToken) {
-      this.log('No refresh token available');
+      this.logTagged('#system', 'No refresh token available');
       return null;
     }
 
@@ -334,7 +334,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
     });
 
     if (!response.ok) {
-      this.log('Token refresh failed:', response.status);
+      this.logTagged('#system', 'Token refresh failed:', response.status);
       return null;
     }
 
@@ -348,7 +348,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
       this._onDidChangeSessions.fire({ added: [], removed: [], changed: this._sessions });
     }
 
-    this.log('Access token refreshed');
+    this.logTagged('#system', 'Access token refreshed');
     return newToken;
   }
 
@@ -390,9 +390,9 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
 
       this._sessions = [session];
       this._onDidChangeSessions.fire({ added: [session], removed: [], changed: [] });
-      this.log('Session restored for:', session.account.label);
+      this.logTagged('#system', 'Session restored for:', session.account.label);
     } catch {
-      this.log('Failed to parse stored account info');
+      this.logTagged('#system', 'Failed to parse stored account info');
     }
   }
 
@@ -404,7 +404,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
    * Get active OpenAI sessions.
    */
   public async getOpenAISessions(): Promise<vscode.AuthenticationSession[]> {
-    this.log('getOpenAISessions called');
+    this.logTagged('#system', 'getOpenAISessions called');
     return this._openaiSessions;
   }
 
@@ -415,7 +415,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
    * No client_secret is needed (PKCE public client flow).
    */
   public async createOpenAISession(scopes: readonly string[]): Promise<vscode.AuthenticationSession> {
-    this.log('createOpenAISession called — starting OpenAI OAuth PKCE flow');
+    this.logTagged('#system', 'createOpenAISession called — starting OpenAI OAuth PKCE flow');
 
     // ─── Pre-flight: Check if Client ID is configured ───
     const clientId = this.getOpenAIClientId();
@@ -429,7 +429,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
 
     // 2. Start local callback server
     const { port, codePromise, server } = await this.startCallbackServer();
-    this.log(`OpenAI callback server listening on port ${port}`);
+    this.logTagged('#system', `OpenAI callback server listening on port ${port}`);
 
     // 3. Build auth URL and open browser
     const redirectUri = `http://localhost:${port}/callback`;
@@ -444,7 +444,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
     authUrl.searchParams.set('code_challenge_method', 'S256');
     authUrl.searchParams.set('state', state);
 
-    this.log('Opening browser for OpenAI login...');
+    this.logTagged('#system', 'Opening browser for OpenAI login...');
     const opened = await vscode.env.openExternal(vscode.Uri.parse(authUrl.toString()));
     if (!opened) {
       server.close();
@@ -470,7 +470,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
       server.close();
     }
 
-    this.log('OpenAI authorization code received, exchanging for tokens...');
+    this.logTagged('#system', 'OpenAI authorization code received, exchanging for tokens...');
 
     // 5. Exchange code for tokens (public client — no client_secret)
     const tokens = await this.exchangeOpenAICodeForTokens(authCode, codeVerifier, redirectUri);
@@ -497,12 +497,12 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
     };
 
     this._openaiSessions = [session];
-    this.log('OpenAI session created:', session.account.label);
+    this.logTagged('#system', 'OpenAI session created:', session.account.label);
     return session;
   }
 
   public async removeOpenAISession(sessionId: string): Promise<void> {
-    this.log('removeOpenAISession called', sessionId);
+    this.logTagged('#system', 'removeOpenAISession called', sessionId);
 
     const index = this._openaiSessions.findIndex(s => s.id === sessionId);
     if (index > -1) {
@@ -514,7 +514,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
     await this.context.secrets.delete(OPENAI_SECRET_KEYS.REFRESH_TOKEN);
     await this.context.secrets.delete(OPENAI_SECRET_KEYS.ACCOUNT_INFO);
 
-    this.log('OpenAI session removed and tokens cleared');
+    this.logTagged('#system', 'OpenAI session removed and tokens cleared');
   }
 
   /**
@@ -525,7 +525,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
     await this.context.secrets.delete(OPENAI_SECRET_KEYS.REFRESH_TOKEN);
     await this.context.secrets.delete(OPENAI_SECRET_KEYS.ACCOUNT_INFO);
     this._openaiSessions = [];
-    this.log('OpenAI OAuth credentials removed');
+    this.logTagged('#system', 'OpenAI OAuth credentials removed');
   }
 
   // ─── OpenAI Client ID ──────────────────────────────────
@@ -541,7 +541,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
   public async saveOpenAICredentials(clientId: string): Promise<void> {
     const config = vscode.workspace.getConfiguration();
     await config.update(OPENAI_CLIENT_ID_KEY, clientId, vscode.ConfigurationTarget.Global);
-    this.log('OpenAI OAuth Client ID saved to settings');
+    this.logTagged('#system', 'OpenAI OAuth Client ID saved to settings');
   }
 
   // ─── OpenAI Token Exchange (Public Client — no secret) ──
@@ -551,7 +551,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
     codeVerifier: string,
     redirectUri: string
   ): Promise<{ access_token: string; refresh_token?: string }> {
-    this.log('OpenAI token exchange: redirectUri =', redirectUri);
+    this.logTagged('#system', 'OpenAI token exchange: redirectUri =', redirectUri);
 
     const body = new URLSearchParams({
       code,
@@ -570,7 +570,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
 
     if (!response.ok) {
       const errorBody = await response.text();
-      this.log('OpenAI token exchange FAILED:', response.status, errorBody);
+      this.logTagged('#system', 'OpenAI token exchange FAILED:', response.status, errorBody);
 
       let userMessage = `Token exchange failed (${response.status})`;
       try {
@@ -587,7 +587,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
       throw new Error(userMessage);
     }
 
-    this.log('OpenAI token exchange successful');
+    this.logTagged('#system', 'OpenAI token exchange successful');
     return response.json();
   }
 
@@ -597,7 +597,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
   public async refreshOpenAIAccessToken(): Promise<string | null> {
     const refreshToken = await this.context.secrets.get(OPENAI_SECRET_KEYS.REFRESH_TOKEN);
     if (!refreshToken) {
-      this.log('No OpenAI refresh token available');
+      this.logTagged('#system', 'No OpenAI refresh token available');
       return null;
     }
 
@@ -614,7 +614,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
     });
 
     if (!response.ok) {
-      this.log('OpenAI token refresh failed:', response.status);
+      this.logTagged('#system', 'OpenAI token refresh failed:', response.status);
       return null;
     }
 
@@ -626,7 +626,7 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
       this._openaiSessions[0] = { ...this._openaiSessions[0], accessToken: newToken };
     }
 
-    this.log('OpenAI access token refreshed');
+    this.logTagged('#system', 'OpenAI access token refreshed');
     return newToken;
   }
 
@@ -667,9 +667,9 @@ export class Auth extends Background implements vscode.AuthenticationProvider {
       };
 
       this._openaiSessions = [session];
-      this.log('OpenAI session restored for:', session.account.label);
+      this.logTagged('#system', 'OpenAI session restored for:', session.account.label);
     } catch {
-      this.log('Failed to parse stored OpenAI account info');
+      this.logTagged('#system', 'Failed to parse stored OpenAI account info');
     }
   }
 

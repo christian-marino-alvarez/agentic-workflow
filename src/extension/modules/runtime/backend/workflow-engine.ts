@@ -45,7 +45,7 @@ export class WorkflowEngine {
     const savedState = await this.persistence.loadState();
     if (savedState) {
       this.lastPersistedState = savedState;
-      console.log(`[WorkflowEngine] Restored: task=${savedState.taskId}`);
+      console.log(`[#workflow] [WorkflowEngine] Restored: task=${savedState.taskId}`);
     }
   }
 
@@ -166,7 +166,7 @@ export class WorkflowEngine {
       types: {
         context: {} as WorkflowContext,
         events: {} as WorkflowEvent,
-        input: {} as { taskId: string; strategy: string; workflowDef: WorkflowDef },
+        input: {} as { taskId: string; workflowDef: WorkflowDef },
       },
       guards: {
         hasGate: ({ context }) => {
@@ -179,7 +179,6 @@ export class WorkflowEngine {
       initial: WORKFLOW_STATES.IDLE,
       context: ({ input }) => ({
         taskId: input.taskId,
-        strategy: input.strategy,
         currentWorkflowId: def.id,
         isLifecycle: false,
         currentStepIndex: 0,
@@ -248,7 +247,7 @@ export class WorkflowEngine {
           },
         },
         entry: [() => {
-          console.log(`[WorkflowEngine] Entered phase: ${phase.id} (owner: ${phase.owner})`);
+          console.log(`[#workflow] [WorkflowEngine] Entered phase: ${phase.id} (owner: ${phase.owner})`);
         }],
       };
     }
@@ -263,7 +262,7 @@ export class WorkflowEngine {
       types: {
         context: {} as WorkflowContext,
         events: {} as WorkflowEvent,
-        input: {} as { taskId: string; strategy: string; workflowDef: WorkflowDef; phases: WorkflowDef[] },
+        input: {} as { taskId: string; workflowDef: WorkflowDef; phases: WorkflowDef[] },
       },
       guards: {
         hasGate: ({ context }) => {
@@ -277,7 +276,6 @@ export class WorkflowEngine {
       initial: phases.length > 0 ? phases[0].id.replace(/\./g, '_') : 'lifecycle_completed',
       context: ({ input }) => ({
         taskId: input.taskId,
-        strategy: input.strategy,
         currentWorkflowId: lifecycleDef.id,
         isLifecycle: true,
         currentStepIndex: 0,
@@ -316,15 +314,15 @@ export class WorkflowEngine {
   // ─── Public API ───────────────────────────────────────────
 
   async initialize(): Promise<void> {
-    console.log('[WorkflowEngine] Initializing...');
+    console.log('[#workflow] [WorkflowEngine] Initializing...');
     await this.discoverAndRegisterAgents();
     await this.restorePersistedState();
-    console.log(`[WorkflowEngine] Ready (${this.agentRegistry.size} agents)`);
+    console.log(`[#workflow] [WorkflowEngine] Ready (${this.agentRegistry.size} agents)`);
   }
 
   async refreshAgentRegistry(): Promise<void> {
     await this.discoverAndRegisterAgents();
-    console.log(`[WorkflowEngine] Registry refreshed: ${this.agentRegistry.size} agents`);
+    console.log(`[#workflow] [WorkflowEngine] Registry refreshed: ${this.agentRegistry.size} agents`);
   }
 
   async loadWorkflow(filePath: string): Promise<WorkflowDef> {
@@ -398,14 +396,14 @@ export class WorkflowEngine {
           sections: { inputs: [], outputs: [], objective: '', instructions: '', pass: '', fail: '' },
         };
 
-        console.log(`[WorkflowEngine] Building lifecycle machine with ${phases.length} phases`);
+        console.log(`[#workflow] [WorkflowEngine] Building lifecycle machine with ${phases.length} phases`);
         const machine = this.buildLifecycleMachine(phases, lifecycleDef);
         this.actor = createActor(machine, {
-          input: { taskId: input.taskId, strategy: input.strategy, workflowDef: lifecycleDef, phases },
+          input: { taskId: input.taskId, workflowDef: lifecycleDef, phases },
         });
         this.actor.subscribe(() => this.emitStateChange());
         this.actor.start();
-        console.log(`[WorkflowEngine] Started lifecycle "${input.workflowId}" for task "${input.taskId}" (${phases.length} phases)`);
+        console.log(`[#workflow] [WorkflowEngine] Started lifecycle "${input.workflowId}" for task "${input.taskId}" (${phases.length} phases)`);
         return lifecycleDef;
       }
     }
@@ -419,13 +417,13 @@ export class WorkflowEngine {
 
     const machine = this.createMachine(def);
     this.actor = createActor(machine, {
-      input: { taskId: input.taskId, strategy: input.strategy, workflowDef: def },
+      input: { taskId: input.taskId, workflowDef: def },
     });
 
     this.actor.subscribe(() => this.emitStateChange());
     this.actor.start();
     this.actor.send({ type: ENGINE_EVENTS.START } as WorkflowEvent);
-    console.log(`[WorkflowEngine] Started "${input.workflowId}" for task "${input.taskId}"`);
+    console.log(`[#workflow] [WorkflowEngine] Started "${input.workflowId}" for task "${input.taskId}"`);
     return def;
   }
 
@@ -451,7 +449,7 @@ export class WorkflowEngine {
       });
     }
 
-    console.log(`[WorkflowEngine] Started subtask "${workflowId}" (type: dynamic)`);
+    console.log(`[#workflow] [WorkflowEngine] Started subtask "${workflowId}" (type: dynamic)`);
     return def;
   }
 
@@ -467,37 +465,9 @@ export class WorkflowEngine {
         payload: { workflowId },
       });
     }
-    console.log(`[WorkflowEngine] Subtask "${workflowId}" completed`);
+    console.log(`[#workflow] [WorkflowEngine] Subtask "${workflowId}" completed`);
   }
 
-  /**
-   * Switch lifecycle strategy (e.g., short → long or long → short).
-   * Stops the current lifecycle and starts the new one, preserving the taskId.
-   */
-  async switchStrategy(newStrategy: 'long' | 'short'): Promise<WorkflowDef> {
-    const currentState = this.getState();
-    const currentTaskId = currentState?.taskId || `task-${Date.now()}`;
-
-    // Determine new lifecycle workflow ID
-    const newLifecycleId = newStrategy === 'long' ? 'tasklifecycle-long' : 'tasklifecycle-short';
-
-    // Stop current actor if running
-    if (this.actor) {
-      try {
-        this.actor.stop();
-      } catch { /* may already be stopped */ }
-      this.actor = null;
-    }
-
-    console.log(`[WorkflowEngine] Switching strategy to "${newStrategy}" (lifecycle: ${newLifecycleId})`);
-
-    // Start the new lifecycle
-    return this.start({
-      workflowId: newLifecycleId,
-      taskId: currentTaskId,
-      strategy: newStrategy,
-    });
-  }
 
   /**
    * Get the currently active phase definition (for lifecycle workflows).
@@ -514,7 +484,7 @@ export class WorkflowEngine {
       throw new Error('[WorkflowEngine] No active workflow');
     }
     this.actor.send({ type: ENGINE_EVENTS.STEP_COMPLETE } as WorkflowEvent);
-    console.log('[WorkflowEngine] Step completed');
+    console.log('[#workflow] [WorkflowEngine] Step completed');
   }
 
   /**
@@ -545,10 +515,48 @@ export class WorkflowEngine {
     }
   }
 
+  /**
+   * Reset engine to a clean state: stop active actor, clear persistence.
+   */
+  async reset(): Promise<void> {
+    if (this.actor) {
+      this.actor.stop();
+      this.actor = null;
+    }
+    this.lastPersistedState = null;
+    await this.persistence.clear();
+    console.log('[#workflow] [WorkflowEngine] Reset — all state cleared');
+  }
+
+  /**
+   * Switch to a different task by loading its persisted state.
+   * Stops the current actor (if any) and restores the snapshot for the target task.
+   * The XState actor is NOT re-created — the snapshot is enough for UI rendering.
+   * If the user continues working, the next start/stepComplete will re-create the actor.
+   */
+  async switchToTask(taskId: string): Promise<WorkflowEngineState | null> {
+    if (this.actor) {
+      this.actor.stop();
+      this.actor = null;
+    }
+
+    const state = await this.persistence.loadTaskState(taskId);
+    if (state) {
+      this.lastPersistedState = state;
+      await this.persistence.setActiveTask(taskId);
+      console.log(`[#workflow] [WorkflowEngine] Switched to task: ${taskId}`);
+    } else {
+      this.lastPersistedState = null;
+      console.log(`[#workflow] [WorkflowEngine] No state for task: ${taskId}`);
+    }
+
+    return state;
+  }
+
   async reload(filePath: string): Promise<void> {
     const def = await this.parser.parse(filePath);
     this.workflows.set(def.id, def);
-    console.log(`[WorkflowEngine] Reloaded workflow "${def.id}"`);
+    console.log(`[#workflow] [WorkflowEngine] Reloaded workflow "${def.id}"`);
   }
 
   getState(): WorkflowEngineState | null {

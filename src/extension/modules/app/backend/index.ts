@@ -26,7 +26,7 @@ export class AppServer extends AbstractBackend {
   }
 
   protected async listen(command: string, data: any): Promise<any> {
-    console.log(`[AppSidecar] Handling Command: ${command}`, JSON.stringify(data));
+    console.log(`[#system] [AppSidecar] Handling Command: ${command}`, JSON.stringify(data));
     return { success: true, message: 'Command received', command };
   }
 }

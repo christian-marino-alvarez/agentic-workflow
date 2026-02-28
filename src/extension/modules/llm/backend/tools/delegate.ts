@@ -10,6 +10,22 @@ const workspaceRoot = process.env.WORKSPACE_ROOT || process.cwd();
 const MAX_OUTPUT_CHARS = 8000;
 
 /**
+ * Discover available agent role names from the .agent/rules/roles/ directory.
+ * Returns an array of role names (without .md extension).
+ */
+async function discoverAvailableRoles(): Promise<string[]> {
+  try {
+    const rolesDir = path.join(workspaceRoot, '.agent', 'rules', 'roles');
+    const entries = await fs.readdir(rolesDir);
+    return entries
+      .filter(f => f.endsWith('.md') && f !== 'index.md')
+      .map(f => f.replace(/\.md$/, ''));
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Load the full role markdown content for a given agent.
  * Returns undefined if no role file exists.
  */
@@ -59,29 +75,44 @@ async function loadRoleCapabilities(roleName: string): Promise<Record<string, an
  * Creates the delegateTask tool.
  * This tool is ONLY given to the architect-agent.
  * It invokes a sub-agent with the target agent's persona and capabilities.
+ * Available roles are discovered at creation time and injected into the schema.
  */
 export function createDelegateTaskTool(factory: LLMFactory, apiKey?: string, provider?: string, binding?: Record<string, string>) {
+  // Discover available roles once at tool creation (cached for the session)
+  const availableRolesPromise = discoverAvailableRoles();
+
   return tool({
     name: 'delegateTask',
-    description: `Delegate a sub-task to a specialized agent. Use this when a task requires expertise from another agent (qa, backend, view, researcher, etc.). The sub-agent will execute the task using its own persona, model, and capabilities, then return a report. IMPORTANT: This requires developer confirmation before execution.`,
+    description: `Delegate a sub-task to a specialized agent. The sub-agent will execute the task using its own persona, model, and capabilities, then return a report. CRITICAL: You MUST only delegate to agents that exist in the project's roles directory. If no suitable agent exists, ask the developer which agent to use or provide customInstructions for a temporary agent.`,
     parameters: z.object({
-      agent: z.string().describe('Name of the target agent to delegate to (e.g. "qa", "researcher", "backend", "view")'),
+      agent: z.string().describe('Name of the target agent — MUST be one of the registered roles in .agent/rules/roles/. Common agents: "qa", "researcher", "backend", "background", "view", "engine", "neo", "vscode-specialist", "devops". Do NOT invent agent names.'),
       task: z.string().describe('Detailed description of the sub-task for the agent to execute'),
-      customInstructions: z.string().optional().describe('Optional: custom instructions for a temporary/virtual agent (used when no existing agent fits)')
+      customInstructions: z.string().optional().describe('Optional: custom instructions for a temporary/virtual agent (used when no existing agent fits the task)')
     }),
     execute: async (input) => {
       const startTime = Date.now();
-      const targetAgent = input.agent;
+      const targetAgent = input.agent.replace(/-agent$/, ''); // Clean suffix if present
       const taskDescription = input.task;
+      const availableRoles = await availableRolesPromise;
 
-      console.log(`[delegateTask] Delegation requested: agent="${targetAgent}", task="${taskDescription.substring(0, 80)}..."`);
+      console.log(`[delegateTask] Delegation requested: agent="${targetAgent}", task="${taskDescription.substring(0, 80)}...", available=[${availableRoles.join(', ')}]`);
 
-      // 1. Load role instructions (or use custom instructions for temporary agents)
+      // 1. Validate target agent exists in available roles
+      if (!input.customInstructions && !availableRoles.includes(targetAgent)) {
+        const roleList = availableRoles.length > 0
+          ? availableRoles.map(r => `"${r}"`).join(', ')
+          : '(no roles found)';
+        console.log(`[delegateTask] REJECTED: agent "${targetAgent}" not found. Available: ${roleList}`);
+        return `[DELEGATION REJECTED] El agente "${targetAgent}" no existe. Agentes disponibles: ${roleList}. DEBES usar uno de estos agentes existentes. Si ninguno es adecuado para la tarea, pregunta al desarrollador cuál usar o proporciona customInstructions para un agente temporal.`;
+      }
+
+      // 2. Load role instructions (or use custom instructions for temporary agents)
       let instructions = input.customInstructions;
       if (!instructions) {
         instructions = await loadRoleInstructions(targetAgent);
         if (!instructions) {
-          return `[DELEGATION FAILED] No se encontró archivo de rol para el agente "${targetAgent}". Opciones: (1) usar un agente existente, (2) proporcionar customInstructions para crear un agente temporal.`;
+          const roleList = availableRoles.map(r => `"${r}"`).join(', ');
+          return `[DELEGATION FAILED] No se encontró archivo de rol para "${targetAgent}". Agentes disponibles: ${roleList}.`;
         }
       }
 

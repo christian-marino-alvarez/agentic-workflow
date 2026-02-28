@@ -70,7 +70,7 @@ export class Settings extends View {
   public override listen(message: any): void {
     const { command, data } = message.payload || {};
     if (command) {
-      this.log('Event:', command);
+      this.logTagged('#config', 'Event:', command);
     }
     // Real-time usage update from background
     if (command === 'USAGE_UPDATED' && data) {
@@ -96,7 +96,7 @@ export class Settings extends View {
   async activate() {
     if (this._dataLoaded) { return; }
     this._dataLoaded = true;
-    this.log('Settings tab activated — loading data...');
+    this.logTagged('#config', 'Settings tab activated — loading data...');
     await Promise.all([
       this.loadModels(),
       this.refreshRoles(),
@@ -115,7 +115,7 @@ export class Settings extends View {
   // --- Data Operations (Request-Response) ---
 
   private async loadModels(): Promise<void> {
-    this.log('Starting loadModels()...');
+    this.logTagged('#config', 'Starting loadModels()...');
 
     // Only set loading if we are not already in form or list (initial load)
     if (this.viewState === ViewState.LOADING) {
@@ -124,10 +124,10 @@ export class Settings extends View {
 
     // No artificial delay — load immediately
     try {
-      this.log('Sending GET_REQUEST to background...');
+      this.logTagged('#config', 'Sending GET_REQUEST to background...');
       const data = await this.sendMessage(SCOPES.BACKGROUND, MESSAGES.GET_REQUEST);
-      this.log('Response received:', { success: data.success, modelCount: data.models?.length, activeModelId: data.activeModelId });
-      this.log('Models loaded:', data.models?.length, 'active:', data.activeModelId);
+      this.logTagged('#config', 'Response received:', { success: data.success, modelCount: data.models?.length, activeModelId: data.activeModelId });
+      this.logTagged('#config', 'Models loaded:', data.models?.length, 'active:', data.activeModelId);
       this.models = data.models || [];
       this.activeModelId = data.activeModelId;
 
@@ -136,10 +136,10 @@ export class Settings extends View {
         this.viewState = ViewState.LIST;
       }
     } catch (error: any) {
-      this.log('Error loading models:', error.message, error);
+      this.logTagged('#config', 'Error loading models:', error.message, error);
       this.viewState = ViewState.LIST; // Fallback to list even on error
     } finally {
-      this.log('loadModels() finished. viewState =', this.viewState);
+      this.logTagged('#config', 'loadModels() finished. viewState =', this.viewState);
     }
   }
 
@@ -164,7 +164,7 @@ export class Settings extends View {
         );
       }
     } catch (error: any) {
-      this.log('Error refreshing roles:', error);
+      this.logTagged('#config', 'Error refreshing roles:', error);
     }
   }
 
@@ -175,7 +175,7 @@ export class Settings extends View {
         this.roleBindings = result.bindings;
       }
     } catch (error: any) {
-      this.log('Error loading bindings:', error);
+      this.logTagged('#config', 'Error loading bindings:', error);
     }
   }
 
@@ -186,7 +186,7 @@ export class Settings extends View {
         this.disabledRoles = new Set(result.disabledRoles);
       }
     } catch (error: any) {
-      this.log('Error loading disabled roles:', error);
+      this.logTagged('#config', 'Error loading disabled roles:', error);
     }
   }
 
@@ -197,7 +197,7 @@ export class Settings extends View {
         this.pricing = result.pricing;
       }
     } catch (error: any) {
-      this.log('Error loading pricing:', error);
+      this.logTagged('#config', 'Error loading pricing:', error);
     }
   }
 
@@ -209,7 +209,7 @@ export class Settings extends View {
         this.currentMonth = result.currentMonth;
       }
     } catch (error: any) {
-      this.log('Error loading usage:', error);
+      this.logTagged('#config', 'Error loading usage:', error);
     }
   }
 
@@ -376,10 +376,10 @@ export class Settings extends View {
           ...this.providerDiscoveredModels,
           [provider]: result.models
         };
-        this.log(`Discovered ${result.models.length} models for provider ${provider}`);
+        this.logTagged('#config', `Discovered ${result.models.length} models for provider ${provider}`);
       }
     } catch (e: any) {
-      this.log('Error discovering models for provider:', e.message);
+      this.logTagged('#config', 'Error discovering models for provider:', e.message);
     }
   }
 
@@ -427,7 +427,7 @@ export class Settings extends View {
   // --- User Actions ---
 
   async userActionRefresh() {
-    this.log('userActionRefresh');
+    this.logTagged('#config', 'userActionRefresh');
     this.viewState = ViewState.LOADING;
     await Promise.all([
       this.loadModels(),
@@ -437,7 +437,7 @@ export class Settings extends View {
   }
 
   userActionAdded() {
-    this.log('userActionAdded');
+    this.logTagged('#config', 'userActionAdded');
     this.editingModel = undefined;
     this.errorMessage = undefined;
     this.connectionTestResult = undefined;
@@ -449,7 +449,7 @@ export class Settings extends View {
   }
 
   userActionEdited(id: string) {
-    this.log('userActionEdited:', id);
+    this.logTagged('#config', 'userActionEdited:', id);
     this.errorMessage = undefined;
     this.connectionTestResult = undefined;
     this.editingModel = this.models.find(m => m.id === id);
@@ -484,7 +484,7 @@ export class Settings extends View {
     }
 
     if (this.pendingDeleteId === id) {
-      this.log('Confirming delete:', id);
+      this.logTagged('#config', 'Confirming delete:', id);
       this.pendingDeleteId = undefined;
       // Optimistic update or show loading?
       // For delete, maybe just stay in List but show busy?
@@ -494,16 +494,16 @@ export class Settings extends View {
         this.viewState = ViewState.LOADING; // Show loading during reload
         await this.loadModels();
       } catch (error: any) {
-        this.log('Error deleting model:', error.message);
+        this.logTagged('#config', 'Error deleting model:', error.message);
       }
     } else {
       this.pendingDeleteId = id;
-      this.log('Pending delete:', id);
+      this.logTagged('#config', 'Pending delete:', id);
 
       // Auto-cancel after 3 seconds
       this.deleteTimeout = setTimeout(() => {
         if (this.pendingDeleteId === id) {
-          this.log('Auto-cancelling delete for:', id);
+          this.logTagged('#config', 'Auto-cancelling delete for:', id);
           this.pendingDeleteId = undefined;
         }
       }, 3000);
@@ -553,7 +553,7 @@ export class Settings extends View {
       apiKey: formData.get('apiKey') as string,
     };
 
-    this.log('Testing connection...', testModel);
+    this.logTagged('#config', 'Testing connection...', testModel);
     this.isTestingConnection = true;
     this.connectionTestResult = undefined;
 
@@ -600,7 +600,7 @@ export class Settings extends View {
         this.fetchDiscoveredModels();
       }
     } catch (error: any) {
-      this.log('Error testing connection:', error.message);
+      this.logTagged('#config', 'Error testing connection:', error.message);
       this.errorMessage = error.message;
       this.connectionTestResult = { success: false, message: error.message };
 
@@ -632,10 +632,10 @@ export class Settings extends View {
         if (!this.selectedModelId) {
           this.selectedModelId = result.models[0].id;
         }
-        this.log(`Discovered ${result.models.length} models for ${provider}`);
+        this.logTagged('#config', `Discovered ${result.models.length} models for ${provider}`);
       }
     } catch (e: any) {
-      this.log('Error fetching discovered models:', e.message);
+      this.logTagged('#config', 'Error fetching discovered models:', e.message);
     }
   }
 
@@ -654,7 +654,7 @@ export class Settings extends View {
 
     if (isDuplicate) {
       this.errorMessage = `A model with name "${name}" already exists. Please choose a different name.`;
-      this.log('Validation Error:', this.errorMessage);
+      this.logTagged('#config', 'Validation Error:', this.errorMessage);
       return;
     }
 
@@ -682,7 +682,7 @@ export class Settings extends View {
       this.connectionTestResult = undefined;
       await this.loadModels();
     } catch (error: any) {
-      this.log('Error saving model:', error.message);
+      this.logTagged('#config', 'Error saving model:', error.message);
       this.errorMessage = error.message;
     }
   }
@@ -726,12 +726,12 @@ export class Settings extends View {
         this.setSecureState(false);
       }
     } catch (error: any) {
-      this.log('Failed to remove credentials:', error.message);
+      this.logTagged('#config', 'Failed to remove credentials:', error.message);
     }
   }
 
   userActionOpenExternal(url: string) {
-    this.log('Opening external URL:', url);
+    this.logTagged('#config', 'Opening external URL:', url);
     // Post to background to open external URL via vscode.env.openExternal
     this.sendMessage(SCOPES.BACKGROUND, MESSAGES.OPEN_EXTERNAL, { url });
   }
@@ -815,7 +815,7 @@ export class Settings extends View {
         this.setSecureState(false);
       }
     } catch (error: any) {
-      this.log('Failed to remove OpenAI credentials:', error.message);
+      this.logTagged('#config', 'Failed to remove OpenAI credentials:', error.message);
     }
   }
 
@@ -846,7 +846,7 @@ export class Settings extends View {
   }
 
   override render() {
-    this.log('Rendering Settings view. State:', this.viewState, 'Models:', this.models.length);
+    this.logTagged('#config', 'Rendering Settings view. State:', this.viewState, 'Models:', this.models.length);
     return templates.main.render(this);
   }
 }

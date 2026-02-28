@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import { MessagingBackground } from '../messaging/background.js';
 import { MessageOrigin, LayerScope } from '../constants.js';
 import { Message } from '../types.js';
-import { Logger } from '../logger.js';
+import { Logger, LOG_TAGS } from '../logger.js';
 
 /** Default timeout for awaiting a response (ms) */
 const REQUEST_TIMEOUT = 10_000;
@@ -80,9 +80,10 @@ export abstract class Background implements vscode.WebviewViewProvider {
 
       // Native log handler
       if (command === 'log') {
-        const { message, args } = msg.payload.data || {};
-        // Forward to output channel via Logger
-        Logger.log(message, ...(args || []));
+        const { message, tag, args, sessionId } = msg.payload.data || {};
+        if (sessionId) { Logger.setSession(sessionId); }
+        // Forward to output channel via Logger (with optional tag)
+        Logger.log(message, tag || undefined, ...(args || []));
         return;
       }
 
@@ -131,12 +132,24 @@ export abstract class Background implements vscode.WebviewViewProvider {
           this.reply(msg.from || 'view', `${command}::response`, result, msg.id);
         }
       } catch (error: any) {
-        this.log(`Error in listen (${command}):`, error.message);
+        this.logTagged('#msg', `Error in listen (${command}):`, error.message);
         if (msg.id) {
           this.reply(msg.from || 'view', `${command}::response`, { success: false, error: error.message }, msg.id);
         }
       }
     });
+  }
+
+  // ─── Workspace Access ───────────────────────────────────────────────────
+
+  /** Absolute path of the first workspace folder, or empty string if none. */
+  protected get workspacePath(): string {
+    return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
+  }
+
+  /** Display name of the first workspace folder, or 'project' as fallback. */
+  protected get workspaceName(): string {
+    return vscode.workspace.workspaceFolders?.[0]?.name || 'project';
   }
 
   /**
@@ -161,7 +174,7 @@ export abstract class Background implements vscode.WebviewViewProvider {
    */
   protected async runBackend(scriptPath: string, port: number = 3000): Promise<void> {
     if (this.sidecarProcess) {
-      this.log('Backend sidecar already running, skipping spawn.');
+      this.logTagged('#system', 'Backend sidecar already running, skipping spawn.');
       return;
     }
 
@@ -180,18 +193,18 @@ export abstract class Background implements vscode.WebviewViewProvider {
         for (let i = 0; i < 10 && dir !== path.dirname(dir); i++) {
           if (fs.existsSync(path.join(dir, '.agent'))) {
             workspaceRoot = dir;
-            this.log(`Inferred workspace root from active editor: ${workspaceRoot}`);
+            this.logTagged('#system', `Inferred workspace root from active editor: ${workspaceRoot}`);
             break;
           }
           dir = path.dirname(dir);
         }
       }
       if (!workspaceRoot) {
-        this.log('WARNING: No workspace folder found — WORKSPACE_ROOT will be empty');
+        this.logTagged('#system', 'WARNING: No workspace folder found — WORKSPACE_ROOT will be empty');
       }
     }
 
-    this.log(`Spawning sidecar: node ${scriptPath}`);
+    this.logTagged('#system', `Spawning sidecar: node ${scriptPath}`);
     this.sidecarProcess = spawn('node', [scriptPath], {
       env: {
         ...process.env,
@@ -211,7 +224,7 @@ export abstract class Background implements vscode.WebviewViewProvider {
     });
 
     this.sidecarProcess.on('exit', (code) => {
-      this.log(`Sidecar exited with code ${code}`);
+      this.logTagged('#system', `Sidecar exited with code ${code}`);
       this.sidecarProcess = undefined;
     });
 
@@ -237,17 +250,19 @@ export abstract class Background implements vscode.WebviewViewProvider {
    */
   public sendMessage(to: string, command: string, data: any = {}, timeout = REQUEST_TIMEOUT): Promise<any> {
     const id = randomUUID();
+    const actionLabel = `[a:${id.slice(0, 4)}]`;
+    const startTime = Date.now();
 
     this.messenger.emit({
       id,
       from: this.identity,
       to,
       origin: MessageOrigin.Server,
-      timestamp: Date.now(),
+      timestamp: startTime,
       payload: { command, data }
     });
 
-    this.log(`→ ${command}`);
+    this.logTagged(LOG_TAGS.MSG, `→ ${command} ${actionLabel}`);
 
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
@@ -255,7 +270,14 @@ export abstract class Background implements vscode.WebviewViewProvider {
         reject(new Error(`[Background:${this.moduleName}] Timeout waiting for response to "${command}" (${timeout}ms)`));
       }, timeout);
 
-      this.pendingRequests.set(id, { resolve, reject, timer });
+      this.pendingRequests.set(id, {
+        resolve: (responseData: any) => {
+          this.logTagged(LOG_TAGS.MSG, `← ${command} ${actionLabel} ${Date.now() - startTime}ms`);
+          resolve(responseData);
+        },
+        reject,
+        timer
+      });
     });
   }
 
@@ -275,35 +297,7 @@ export abstract class Background implements vscode.WebviewViewProvider {
     });
   }
 
-  /**
-   * Register a request-response handler for a specific command.
-   * The handler receives the request data and returns the response data.
-   * The response is automatically sent back with the correlationId.
-   */
-  public handle(command: string, handler: (data: any) => Promise<any>): { dispose: () => void } {
-    return this.messenger.subscribe(this.identity, async (message: Message) => {
-      if (message.payload.command !== command) { return; }
 
-      this.log(`Handling: ${command}`);
-      try {
-        const result = await handler(message.payload.data);
-        this.reply(
-          message.from || 'view',
-          `${command}::response`,
-          result,
-          message.id
-        );
-      } catch (error: any) {
-        this.log(`Error handling ${command}:`, error.message);
-        this.reply(
-          message.from || 'view',
-          `${command}::response`,
-          { success: false, error: error.message },
-          message.id
-        );
-      }
-    });
-  }
 
   // --- WebviewViewProvider Implementation ---
 
@@ -312,7 +306,7 @@ export abstract class Background implements vscode.WebviewViewProvider {
     context: vscode.WebviewViewResolveContext,
     _token: vscode.CancellationToken,
   ): void {
-    this.log('resolveWebviewView called');
+    this.logTagged('#system', 'resolveWebviewView called');
     this._webviewView = webviewView;
     webviewView.webview.options = {
       enableScripts: true,
@@ -324,7 +318,7 @@ export abstract class Background implements vscode.WebviewViewProvider {
 
     // Initial HTML setup
     webviewView.webview.html = this.getHtmlForWebview(webviewView.webview);
-    this.log('Webview HTML set');
+    this.logTagged('#system', 'Webview HTML set');
   }
 
   /**
@@ -334,9 +328,9 @@ export abstract class Background implements vscode.WebviewViewProvider {
   protected abstract getHtmlForWebview(webview: vscode.Webview): string;
 
   public dispose(): void {
-    this.log('Disposing...');
+    this.logTagged('#system', 'Disposing...');
     if (this.sidecarProcess) {
-      this.log('Killing sidecar process...');
+      this.logTagged('#system', 'Killing sidecar process...');
       this.sidecarProcess.kill();
       this.sidecarProcess = undefined;
     }
@@ -363,12 +357,12 @@ export abstract class Background implements vscode.WebviewViewProvider {
         }
 
         const pids = stdout.trim().split('\n');
-        this.log(`Cleaning up busy port ${port} (PIDs: ${pids.join(', ')})`);
+        this.logTagged('#system', `Cleaning up busy port ${port} (PIDs: ${pids.join(', ')})`);
 
         const killCmd = `kill -9 ${pids.join(' ')}`;
         exec(killCmd, (killErr) => {
           if (killErr) {
-            this.log(`Failed to cleanup port ${port}: ${killErr.message}`);
+            this.logTagged('#system', `Failed to cleanup port ${port}: ${killErr.message}`);
           }
           resolve();
         });
@@ -381,6 +375,13 @@ export abstract class Background implements vscode.WebviewViewProvider {
    */
   protected log(message: string, ...args: any[]): void {
     Logger.log(`[${this.moduleName}::background] ${message}`, ...args);
+  }
+
+  /**
+   * Tagged logger for structured filtering.
+   */
+  protected logTagged(tag: string, message: string, ...args: any[]): void {
+    Logger.log(`[${this.moduleName}::background] ${message}`, tag, ...args);
   }
 
   /**

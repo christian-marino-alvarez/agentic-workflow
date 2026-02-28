@@ -12,12 +12,6 @@ export class RuntimeBackground extends Background {
   private permissionEngine: PermissionEngine;
   private workflowWatcher: vscode.FileSystemWatcher | null = null;
   private rolesWatcher: vscode.FileSystemWatcher | null = null;
-  private pollingTimer: ReturnType<typeof setInterval> | null = null;
-  private lastStatus: string = ENGINE_STATUS.IDLE;
-  private lastWorkflowId: string = '';
-  private lastPhaseId: string = '';
-  private taskStepsEmitted: boolean = false;
-  private stablePollCount: number = 0;
 
   constructor(context: vscode.ExtensionContext) {
     super(NAME, context.extensionUri, 'runtime-view');
@@ -37,12 +31,12 @@ export class RuntimeBackground extends Background {
       'dist/extension/modules/runtime/backend/index.js'
     );
     this.runBackend(scriptPath, 3001).catch((err: Error) => {
-      this.log('FATAL: Failed to spawn Runtime Server', err);
+      this.logTagged('#workflow', 'FATAL: Failed to spawn Runtime Server', err);
     });
   }
 
   private setupFileWatchers(context: vscode.ExtensionContext): void {
-    const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    const workspaceRoot = this.workspacePath;
     if (!workspaceRoot) {
       return;
     }
@@ -76,16 +70,16 @@ export class RuntimeBackground extends Background {
   }
 
   private onWorkflowFileChanged(): void {
-    this.log('Workflow file changed — notifying engine');
+    this.logTagged('#workflow', 'Workflow file changed — notifying engine');
     this.forwardToSidecar(MESSAGES.WORKFLOW_RELOAD, {}).catch((err: Error) => {
-      this.log('Failed to notify workflow change', err);
+      this.logTagged('#workflow', 'Failed to notify workflow change', err);
     });
   }
 
   private onRolesDirectoryChanged(): void {
-    this.log('Agent roles changed — refreshing registry');
+    this.logTagged('#workflow', 'Agent roles changed — refreshing registry');
     this.forwardToSidecar('workflow.agents.refresh', {}).catch((err: Error) => {
-      this.log('Failed to refresh agent registry', err);
+      this.logTagged('#workflow', 'Failed to refresh agent registry', err);
     });
   }
 
@@ -97,7 +91,7 @@ export class RuntimeBackground extends Background {
       return { error: 'Permission denied', code: 'E_PERM' };
     }
 
-    this.log(`Authorized action: ${action}`, params);
+    this.logTagged('#workflow', `Authorized action: ${action}`, params);
     return { success: true, result: 'Action executed (mock)' };
   }
 
@@ -115,37 +109,33 @@ export class RuntimeBackground extends Background {
           await this.forwardToSidecar('workflow.loadAll', {
             dirPath: data.dirPath,
           }, 5_000);
-          this.log('Workflows loaded from', data.dirPath);
+          this.logTagged('#workflow', 'Workflows loaded from', data.dirPath);
           loaded = true;
         } catch (loadErr: any) {
           if (attempt < 5) {
-            this.log(`Workflow load attempt ${attempt}/5 failed, retrying in 500ms...`);
+            this.logTagged('#workflow', `Workflow load attempt ${attempt}/5 failed, retrying in 500ms...`);
             await new Promise(r => setTimeout(r, 500));
           } else {
-            this.log('Workflow load failed after 5 attempts:', loadErr.message);
+            this.logTagged('#workflow', 'Workflow load failed after 5 attempts:', loadErr.message);
           }
         }
       }
     }
 
     const result = await this.forwardToSidecar('workflow.start', data);
-    this.startPolling();
-    // Force emit immediately to populate the UI (including timeline) without waiting 1s
-    this.pollWorkflowState(true);
+    this.emitWorkflowState(result);
     return result;
   }
 
   private async handleWorkflowGateResponse(data: any): Promise<any> {
     const result = await this.forwardToSidecar('workflow.gate.respond', data);
-    this.startPolling();
-    this.pollWorkflowState(true);
+    this.emitWorkflowState(result);
     return result;
   }
 
   private async handleWorkflowStepComplete(): Promise<any> {
     const result = await this.forwardToSidecar('workflow.stepComplete', {});
-    this.startPolling();
-    this.pollWorkflowState(true);
+    this.emitWorkflowState(result);
     return result;
   }
 
@@ -163,105 +153,43 @@ export class RuntimeBackground extends Background {
     return this.forwardToSidecar('workflow.agents', {});
   }
 
-  private async handleWorkflowSwitchStrategy(data: any): Promise<any> {
-    // Ensure workflows are loaded before switching
-    const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-    if (workspaceRoot) {
-      try {
-        await this.forwardToSidecar('workflow.loadAll', {
-          dirPath: `${workspaceRoot}/.agent/workflows`,
-        }, 30_000);
-      } catch (err: any) {
-        this.log('Workflow reload before switch failed:', err.message);
-      }
-    }
-
-    const result = await this.forwardToSidecar('workflow.switchStrategy', data, 15_000);
-    this.startPolling();
-    this.pollWorkflowState(true);
+  private async handleWorkflowReset(): Promise<any> {
+    const result = await this.forwardToSidecar('workflow.reset', {});
+    this.emitWorkflowState(result);
     return result;
   }
+
+  private async handleWorkflowSwitchTask(data: any): Promise<any> {
+    const result = await this.forwardToSidecar('workflow.switchTask', data);
+    this.emitWorkflowState(result);
+    return result;
+  }
+
 
   private async forwardToSidecar(command: string, data: any, timeout?: number): Promise<any> {
     return this.sendMessage(`${NAME}::backend`, command, data, timeout);
   }
 
-  // ─── Workflow State Polling ───────────────────────────────
+  // ─── Response-driven State Emission ──────────────────────
 
-  private startPolling(): void {
-    this.stopPolling();
-    this.taskStepsEmitted = false;
-    this.stablePollCount = 0;
-    this.pollingTimer = setInterval(() => this.pollWorkflowState(), 1000);
-  }
-
-  private stopPolling(): void {
-    if (this.pollingTimer) {
-      clearInterval(this.pollingTimer);
-      this.pollingTimer = null;
+  /**
+   * Extract workflowState from the sidecar response and emit it to Chat.
+   * Replaces the previous polling mechanism — state is now returned synchronously
+   * with every mutating command, so no setInterval is needed.
+   */
+  private emitWorkflowState(result: any): void {
+    // Unwrap JSON-RPC wrapper if present
+    const unwrapped = result?.result || result;
+    const state = unwrapped?.workflowState;
+    if (!state) {
+      return;
     }
-  }
 
-  private async pollWorkflowState(forceEmit = false): Promise<void> {
-    try {
-      const rawState = await this.forwardToSidecar('workflow.status', {});
-      // Unwrap JSON-RPC result wrapper ({success, result}) from sidecar
-      const state = rawState?.result || rawState;
-      if (!state) {
-        return;
-      }
+    this.logTagged('#workflow', `State emitted: status=${state.status}, workflow=${state.currentWorkflowId || 'none'}, phase=${state.currentPhaseId || 'none'}`);
+    this.notifyChat(CHAT_MESSAGES.WORKFLOW_STATE_UPDATE, state);
 
-      const currentStatus = state.status || ENGINE_STATUS.IDLE;
-      const hasSteps = Array.isArray(state.steps) && state.steps.length > 0;
-      const currentWorkflowId = state.currentWorkflowId || '';
-      const currentPhaseId = state.currentPhaseId || '';
-
-      // Detect meaningful changes: status, workflow ID (init → lifecycle), or active phase
-      const statusChanged = currentStatus !== this.lastStatus;
-      const workflowChanged = currentWorkflowId !== this.lastWorkflowId;
-      const phaseChanged = currentPhaseId !== this.lastPhaseId;
-      const shouldEmit = forceEmit || statusChanged || workflowChanged || phaseChanged;
-
-      if (shouldEmit) {
-        if (!forceEmit) {
-          this.log(`Workflow state changed: ${this.lastStatus} → ${currentStatus}` +
-            (workflowChanged ? ` (workflow: ${this.lastWorkflowId} → ${currentWorkflowId})` : '') +
-            (phaseChanged ? ` (phase: ${this.lastPhaseId} → ${currentPhaseId})` : ''));
-        }
-        this.lastStatus = currentStatus;
-        this.lastWorkflowId = currentWorkflowId;
-        this.lastPhaseId = currentPhaseId;
-        this.stablePollCount = 0;
-        this.notifyChat(CHAT_MESSAGES.WORKFLOW_STATE_UPDATE, state);
-      } else if (hasSteps && !this.taskStepsEmitted) {
-        // Always emit at least once if we have steps (even if status hasn't changed)
-        this.taskStepsEmitted = true;
-        this.notifyChat(CHAT_MESSAGES.WORKFLOW_STATE_UPDATE, state);
-      } else {
-        // No change — count stable polls
-        this.stablePollCount++;
-      }
-
-      if (currentStatus === ENGINE_STATUS.WAITING_GATE && state.currentGate) {
-        this.notifyChat(CHAT_MESSAGES.GATE_REQUEST, state.currentGate);
-        this.stopPolling();
-      }
-
-      // Stop on terminal states
-      if (currentStatus === ENGINE_STATUS.COMPLETED || currentStatus === ENGINE_STATUS.FAILED) {
-        this.stopPolling();
-      }
-      if (currentStatus === ENGINE_STATUS.IDLE && !hasSteps) {
-        this.stopPolling();
-      }
-
-      // Stop if state has been stable for 5 consecutive polls (no changes = LLM is handling it)
-      if (this.stablePollCount >= 5) {
-        this.log('Workflow state stable — stopping poll');
-        this.stopPolling();
-      }
-    } catch (err) {
-      this.log('Polling error', err);
+    if (state.status === ENGINE_STATUS.WAITING_GATE && state.currentGate) {
+      this.notifyChat(CHAT_MESSAGES.GATE_REQUEST, state.currentGate);
     }
   }
 
@@ -304,8 +232,13 @@ export class RuntimeBackground extends Background {
       case MESSAGES.WORKFLOW_AGENTS:
         return this.handleWorkflowAgents();
 
-      case MESSAGES.WORKFLOW_SWITCH_STRATEGY:
-        return this.handleWorkflowSwitchStrategy(message.payload.data);
+      case MESSAGES.WORKFLOW_RESET:
+        return this.handleWorkflowReset();
+
+      case MESSAGES.WORKFLOW_SWITCH_TASK:
+        return this.handleWorkflowSwitchTask(message.payload.data);
+
+
 
       default:
         return super.listen(message);

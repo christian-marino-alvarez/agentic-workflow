@@ -26,24 +26,24 @@ export const STATIC_PREAMBLE = [
   '### OUTPUT RULES',
   '1. Use writeFile SILENTLY — never announce file operations.',
   '2. Show ONLY: questions for user, confirmed outcomes, errors needing action.',
-  '3. When asking questions, let the ui_intent components do the talking.',
-  '4. Your text should give brief context or warmth, the components handle the interaction.',
+  '3. When asking questions, declare the appropriate REQUEST intents.',
+  '4. Your text should give brief context or warmth, the intents handle the interaction.',
   '',
-  '### MANDATORY UI INTENT USAGE',
-  'When you need the user to make ANY decision or confirmation, you MUST include ui_intent components in your JSON response.',
-  '- YES/NO questions → {"type": "confirm", "id": "...", "label": "...", "options": ["SI", "NO"]}',
-  '- Choose from options → {"type": "choice", "id": "...", "label": "...", "options": [...]}',
-  '- Multiple selections → {"type": "multi", "id": "...", "label": "...", "options": [...]}',
-  '- Free text input → {"type": "input", "id": "...", "label": "..."}',
-  'NEVER ask a question as plain text if it can be a ui_intent component.',
-  'Gate approvals (SI/NO), phase confirmations, and all workflow decisions MUST use ui_intent.',
+  '### MANDATORY INTENT USAGE',
+  'When you need the user to make ANY decision or confirmation, you MUST include intents in your JSON response.',
+  '- YES/NO questions → { "type": "A2UI", "action": "REQUEST", "component": "CONFIRM" }',
+  '- Choose from options → { "type": "A2UI", "action": "REQUEST", "component": "CHOICE" }',
+  '- Multiple selections → { "type": "A2UI", "action": "REQUEST", "component": "MULTI_SELECT" }',
+  '- Free text input → { "type": "A2UI", "action": "REQUEST", "component": "INPUT" }',
+  'NEVER ask a question as plain text if it can be a REQUEST intent.',
+  'Gate approvals, phase confirmations, and all workflow decisions MUST use intents.',
   '',
   '### WORKFLOW INTERPRETATION',
   '| Section | Visibility | Your action |',
   '|---------|-----------|-------------|',
   '| **Objective** | USER-FACING | Communicate progress toward this goal. |',
   '| **Instructions** | SILENT | Execute step by step. NEVER narrate. |',
-  '| **Gate** | USER-FACING | Present to user via ui_intent gate component. |',
+  '| **Gate** | USER-FACING | Present to user via REQUEST GATE intent. |',
   '| **Input/Output** | SILENT | Resolve/create silently. |',
   '| **Pass/Fail** | SILENT | Handled by the extension automatically. |',
   '',
@@ -71,7 +71,7 @@ export function behavioralPreamble(projectName: string, language?: string | null
  * Sent as user message when a slash command triggers a workflow.
  */
 export function workflowStartPrompt(commandId: string): string {
-  return `The command /${commandId} has been launched. Follow the workflow Instructions in STRICT ORDER, starting with step 1. Execute ONLY the first step now and wait for user response before proceeding. Keep your text to 1-2 sentences MAX — let the ui_intent components handle the interaction. DO NOT explain what the workflow does or list its steps. Sound natural, like a colleague starting a quick task together. Respond with valid JSON matching the response schema.`;
+  return `The command /${commandId} has been launched. Follow the workflow Instructions in STRICT ORDER, starting with step 1. Execute ONLY the first step now and wait for user response before proceeding. Keep your text to 1-2 sentences MAX — let the intents handle the interaction. DO NOT explain what the workflow does or list its steps. Sound natural, like a colleague starting a quick task together. Respond with valid JSON matching the response schema.`;
 }
 
 /**
@@ -93,71 +93,14 @@ export function lifecycleStartPrompt(taskText: string, lifecycleId: string): str
     ? 'Phase 0: Acceptance Criteria (/phase-0-acceptance-criteria). Formulate the clarification questions specific to this task before advancing to any other phase. Do NOT delegate to any agent yet. Do NOT proceed to research or analysis without completing this phase.'
     : 'Phase 1: Brief (/short-phase-1-brief). Includes clarification questions and complexity detection.';
 
-  return `The user wants to start the task: "${taskText}". The workflow "${lifecycleId}" has been launched. The first phase is: ${firstPhase}. Execute ONLY this phase. Do NOT use tools. Respond with the questions for this phase using ui_intent components. Remember: respond with valid JSON.`;
+  return `The user wants to start the task: "${taskText}". The workflow "${lifecycleId}" has been launched. The first phase is: ${firstPhase}. Execute ONLY this phase. Do NOT use tools. Respond with the questions for this phase using REQUEST intents. Remember: respond with valid JSON.`;
 }
 
 /**
- * UI Intent Component Catalog — injected into every LLM system prompt.
- * Defines the JSON format for interactive UI components the model can emit.
+ * Correction prompt sent when the LLM's response fails Zod validation.
+ * Used by retryWithCorrection to recover from format errors.
  */
-export const A2UI_INSTRUCTIONS = `
-
-## Interactive UI Components (ui_intent)
-When you need the user to interact, add components to the "ui_intent" array in your JSON response.
-Do NOT use HTML tags, custom markup, or <a2ui> elements. Use the ui_intent JSON format exclusively.
-
-### Component Types
-
-**choice** — Single select (radio buttons):
-{"type": "choice", "id": "language", "label": "Conversation language", "options": ["Español", "English"], "preselected": 0}
-
-**confirm** — Yes/No:
-{"type": "confirm", "id": "approve", "label": "Do you approve?", "options": ["SI", "NO"]}
-
-**multi** — Multi-select checkboxes:
-{"type": "multi", "id": "features", "label": "Select features", "options": ["Auth", "API", "UI"]}
-
-**gate** — Workflow gate evaluation:
-{"type": "gate", "id": "gate-eval", "label": "Gate Evaluation: all requirements met", "options": ["SI", "NO"]}
-
-**artifact** — Document for review (collapsible card):
-{"type": "artifact", "id": "analysis-doc", "label": "analysis.md", "path": ".agent/artifacts/task/analysis.md", "content": "# Analysis\\n## Scope\\nThe task covers..."}
-
-**input** — Free-text input:
-{"type": "input", "id": "task-title", "label": "Task title"}
-
-### Rules
-- Every component MUST have: type, id, label
-- Options array is required for choice/confirm/multi/gate
-- Use "content" and "path" for artifact type
-- You can have multiple components in one response
-- Text in the "text" field renders as normal markdown alongside the components
-
-### Workflow Gate Usage (CRITICAL)
-When a workflow has a Gate section and you have evaluated all requirements, you MUST present the result
-using type="gate" so the extension can handle the workflow transition automatically:
-
-\\\`\\\`\\\`
-<a2ui type="gate" id="gate-eval" label="Gate Evaluation: all requirements met">
-- [ ] SI
-- [ ] NO
-</a2ui>
-\\\`\\\`\\\`
-
-⚠️ **type="gate" vs type="choice"**: These are DIFFERENT and NOT interchangeable:
-- \`type="choice"\` = inline approval (e.g. "approve-analysis", "approve-planning"). Does NOT trigger phase transitions.
-- \`type="gate"\` = FINAL workflow gate evaluation. Triggers the engine to advance to the next phase/workflow.
-
-After ALL inline approvals (type="choice") are done and ALL gate requirements are met,
-you MUST present a SEPARATE type="gate" block. This is MANDATORY — without it, the workflow will NOT advance.
-
-The extension will read the workflow's pass target and automatically start the next workflow or phase.
-You do NOT need to manually start the next workflow — just present the gate confirmation and wait.
-
-### Artifact + Approval Pattern
-After creating an artifact, present it for review with an approval component:
-"ui_intent": [
-  {"type": "artifact", "id": "analysis-doc", "label": "analysis.md", "path": ".agent/artifacts/task/analysis.md", "content": "..."},
-  {"type": "choice", "id": "analysis-approval", "label": "Do you approve the analysis?", "options": ["SI", "NO"]}
-]
-`;
+export const FORMAT_CORRECTION_PROMPT =
+  'Your previous response could not be parsed. You MUST respond with a valid JSON object: ' +
+  '{"text": "<your response>", "intents": [...]}. ' +
+  'Include the appropriate intents. Do NOT wrap in code fences.';

@@ -49,10 +49,10 @@ export abstract class View extends LitElement {
     if (!(window as any).__v_error_bridge) {
       (window as any).__v_error_bridge = true;
       window.addEventListener('error', (e) => {
-        this.log(`[GLOBAL ERROR] ${e.message} at ${e.filename}:${e.lineno}`);
+        this.logTagged('#system', `[GLOBAL ERROR] ${e.message} at ${e.filename}:${e.lineno}`);
       });
       window.addEventListener('unhandledrejection', (e) => {
-        this.log(`[UNHANDLED PROMISE] ${e.reason}`);
+        this.logTagged('#system', `[UNHANDLED PROMISE] ${e.reason}`);
       });
     }
   }
@@ -105,17 +105,19 @@ export abstract class View extends LitElement {
    */
   public sendMessage(to: string, command: string, data: any = {}, timeout = REQUEST_TIMEOUT): Promise<any> {
     const id = crypto.randomUUID();
+    const actionLabel = `[a:${id.slice(0, 4)}]`;
+    const startTime = Date.now();
 
     const payload = {
       id,
-      timestamp: Date.now(),
+      timestamp: startTime,
       to,
       from: `${this.moduleName}::view`,
       origin: MessageOrigin.View,
       payload: { command, data }
     };
 
-    this.log(`→ ${command}`, this.sanitizeForLog(data));
+    this.logTagged('#msg', `→ ${command} ${actionLabel}`, this.sanitizeForLog(data));
     this.vscode?.postMessage(payload);
 
     // Return a promise that resolves when the response is correlated
@@ -125,7 +127,14 @@ export abstract class View extends LitElement {
         reject(new Error(`[View] Timeout waiting for response to "${command}" (${timeout}ms)`));
       }, timeout);
 
-      this.pendingRequests.set(id, { resolve, reject, timer });
+      this.pendingRequests.set(id, {
+        resolve: (responseData: any) => {
+          this.logTagged('#msg', `← ${command} ${actionLabel} ${Date.now() - startTime}ms`);
+          resolve(responseData);
+        },
+        reject,
+        timer
+      });
     });
   }
 
@@ -153,7 +162,7 @@ export abstract class View extends LitElement {
       command: 'log',
       id: crypto.randomUUID(),
       timestamp: Date.now(),
-      to: 'app', // Default to app background
+      to: 'app',
       from: 'view',
       origin: MessageOrigin.View,
       payload: {
@@ -161,6 +170,37 @@ export abstract class View extends LitElement {
         data: { message: formattedMsg, args: safeArgs }
       }
     });
+  }
+
+  /**
+   * Tagged logger for structured filtering.
+   */
+  protected logTagged(tag: string, message: string, ...args: any[]): void {
+    const capitalizedName = this.moduleName.charAt(0).toUpperCase() + this.moduleName.slice(1);
+    const formattedMsg = `[${capitalizedName}::view] ${message}`;
+    const safeArgs = args.map(a => this.sanitizeForLog(a));
+    console.log(`%c${formattedMsg}`, LOG_STYLE.View, ...safeArgs);
+
+    // Forward to background for output channel logging (with tag + sessionId)
+    this.vscode?.postMessage({
+      command: 'log',
+      id: crypto.randomUUID(),
+      timestamp: Date.now(),
+      to: 'app',
+      from: 'view',
+      origin: MessageOrigin.View,
+      payload: {
+        command: 'log',
+        data: { message: formattedMsg, tag, args: safeArgs, sessionId: this.getSessionId() }
+      }
+    });
+  }
+
+  /**
+   * Override in subclasses to provide the active session ID for log tracing.
+   */
+  protected getSessionId(): string {
+    return '';
   }
 
   /**

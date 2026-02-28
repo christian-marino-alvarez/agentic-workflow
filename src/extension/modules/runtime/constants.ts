@@ -48,7 +48,8 @@ export const MESSAGES = {
   WORKFLOW_RELOAD: 'WORKFLOW_RELOAD',
   WORKFLOW_STATUS: 'WORKFLOW_STATUS',
   WORKFLOW_AGENTS: 'WORKFLOW_AGENTS',
-  WORKFLOW_SWITCH_STRATEGY: 'WORKFLOW_SWITCH_STRATEGY',
+  WORKFLOW_RESET: 'WORKFLOW_RESET',
+  WORKFLOW_SWITCH_TASK: 'WORKFLOW_SWITCH_TASK',
 } as const;
 
 /**
@@ -67,7 +68,8 @@ export const RPC_COMMANDS = {
   WORKFLOW_RELOAD: 'workflow.reload',
   WORKFLOW_AGENTS: 'workflow.agents',
   WORKFLOW_AGENTS_REFRESH: 'workflow.agents.refresh',
-  WORKFLOW_SWITCH_STRATEGY: 'workflow.switchStrategy',
+  WORKFLOW_RESET: 'workflow.reset',
+  WORKFLOW_SWITCH_TASK: 'workflow.switchTask',
 } as const;
 
 /**

@@ -7,6 +7,7 @@ import { historyStyles } from './history/css.js';
 import { messageStyles } from './message/css.js';
 import { inputStyles } from './input/css.js';
 import { a2uiStyles } from './a2ui/css.js';
+import { welcomeStyles } from './welcome/css.js';
 
 export const styles = [
   css`
@@ -134,5 +135,6 @@ export const styles = [
   historyStyles,
   messageStyles,
   inputStyles,
-  a2uiStyles
+  a2uiStyles,
+  welcomeStyles
 ];

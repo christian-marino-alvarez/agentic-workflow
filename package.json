@@ -1,5 +1,5 @@
 {
-  "name": "cortex-ai",
+  "name": "extensio-agent",
   "displayName": "Extensio",
   "publisher": "christian-marino-alvarez",
   "version": "1.27.0-beta.4",
@@ -150,7 +150,13 @@
           "description": "Monthly token usage history (accumulated per YYYY-MM key)"
         }
       }
-    }
+    },
+    "commands": [
+      {
+        "command": "agenticWorkflow.filterLogs",
+        "title": "Agentic: Filter Logs"
+      }
+    ]
   },
   "bin": {
     "agentic-workflow": "bin/cli.js"

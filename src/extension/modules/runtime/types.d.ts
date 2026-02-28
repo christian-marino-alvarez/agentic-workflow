@@ -11,12 +11,16 @@
 
 export interface Frontmatter {
   id: string;
+  name?: string;
   description?: string;
   owner: string;
   version?: string;
   trigger: string[];
   type: 'static' | 'dynamic';
+  objective?: string;
   context?: string[];
+  input?: string[];
+  output?: string[];
   pass?: {
     nextTarget?: string | Record<string, string>;
   };
@@ -122,7 +126,6 @@ export interface WorkflowEngineState {
 
 export interface StartWorkflowInput {
   taskId: string;
-  strategy: string;
   workflowId: string;
 }
 
@@ -141,7 +144,7 @@ export interface EmitInput {
 // ─── XState Machine Types ─────────────────────────────────────
 
 export type WorkflowEvent =
-  | { type: typeof import('./constants.js').ENGINE_EVENTS.START; taskId: string; strategy: string }
+  | { type: typeof import('./constants.js').ENGINE_EVENTS.START; taskId: string }
   | { type: typeof import('./constants.js').ENGINE_EVENTS.STEP_COMPLETE; stepNumber: number }
   | { type: typeof import('./constants.js').ENGINE_EVENTS.GATE_APPROVE; gateId: string }
   | { type: typeof import('./constants.js').ENGINE_EVENTS.GATE_REJECT; gateId: string; reason?: string }
@@ -156,7 +159,6 @@ export type WorkflowEvent =
 
 export interface WorkflowContext {
   taskId: string;
-  strategy: string;
   currentWorkflowId: string;
   /** True when running a multi-phase lifecycle (vs a simple single-workflow). */
   isLifecycle: boolean;

@@ -4,6 +4,7 @@ import { WorkflowParser } from './workflow-parser.js';
 import { WorkflowPersistence } from './persistence.js';
 import { ContextLoader } from './context-loader.js';
 import { IntentResolver, tryParseStructuredResponse } from './intent-resolver.js';
+import { buildPreamble, buildResponseSchema } from './prompt-schema.js';
 import { ENGINE_EVENTS, WORKFLOW_STATES, LISTENER_EVENTS, ENGINE_STATUS } from '../constants.js';
 import type {
   WorkflowDef,
@@ -655,8 +656,11 @@ export class WorkflowEngine {
 
     const ctx = await this.contextLoader.loadAll(owner, constitutionRefs, workflowContextRefs);
 
-    // Build system prompt
-    const systemParts: string[] = [];
+    // Build system prompt — preamble + response schema FIRST (prefix caching)
+    const systemParts: string[] = [
+      buildPreamble(input.language),
+      buildResponseSchema(),
+    ];
     if (ctx.agentPersona) {
       systemParts.push(ctx.agentPersona);
     }
@@ -675,9 +679,6 @@ export class WorkflowEngine {
     }
     if (currentPhase?.gate) {
       systemParts.push(`### GATE REQUIREMENTS\n${currentPhase.gate.requirements.map((r, i) => `${i + 1}. ${r}`).join('\n')}`);
-    }
-    if (input.language) {
-      systemParts.push(`### LANGUAGE\nRespond in ${input.language === 'es' ? 'Español' : 'English'}.`);
     }
 
     // Build messages

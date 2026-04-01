@@ -13,7 +13,14 @@ const program = new Command();
 program
     .name('agentic-workflow')
     .description('Portable agentic orchestration system')
-    .version('1.0.0');
+    .version('1.0.0')
+    .option('-w, --workspace <path>', 'Specify the workspace directory')
+    .hook('preAction', (thisCommand) => {
+        const workspace = thisCommand.opts().workspace;
+        if (workspace) {
+            process.chdir(workspace);
+        }
+    });
 
 program
     .command('init')

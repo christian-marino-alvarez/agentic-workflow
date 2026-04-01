@@ -2,7 +2,7 @@
   "name": "@christianmaf80/agentic-workflow",
   "displayName": "Agentic Workflow",
   "publisher": "christian-marino-alvarez",
-  "version": "1.42.0",
+  "version": "1.42.1-beta.1",
   "description": "Portable agentic workflow orchestration system with strict identity and gate discipline",
   "type": "module",
   "workspaces": [

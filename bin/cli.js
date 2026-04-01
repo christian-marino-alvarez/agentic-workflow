@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import { initCommand } from '../dist/cli/commands/init.js';
+import { scaffoldCommand } from '../dist/cli/commands/scaffold.js';
 import { createCommand } from '../dist/cli/commands/create.js';
 import { restoreCommand } from '../dist/cli/commands/restore.js';
 import { cleanCommand } from '../dist/cli/commands/clean.js';
@@ -26,6 +27,12 @@ program
     .argument('<name>', 'The name for the new element')
     .description('Scaffold a new project-specific element')
     .action(createCommand);
+
+program
+    .command('scaffold <directory>')
+    .description('Scaffold the agentic system into a custom directory name (instead of .agent)')
+    .option('--non-interactive', 'Run without prompts (assume YES)')
+    .action((directory, options) => scaffoldCommand(directory, options));
 
 program
     .command('restore')

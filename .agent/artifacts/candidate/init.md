@@ -1,6 +1,6 @@
 # init bootstrap
 
-- command: /init
+- command: init
 - role.architect: architect-agent
 - constitution.loaded.in_context: true
 

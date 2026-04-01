@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.27.0-beta.4](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.27.0-beta.3...agentic-workflow-v1.27.0-beta.4) (2026-04-01)
+
+### Features
+
+* **cli**: add `--dir` flag to init command to customize workspace dir
+* **build**: restore `build-bootstrap` scripts
+
 ## [1.27.0-beta.3](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.26.0-beta.3...agentic-workflow-v1.27.0-beta.3) (2026-02-18)
 
 

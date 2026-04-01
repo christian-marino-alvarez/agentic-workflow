@@ -24,6 +24,11 @@ export abstract class View extends LitElement {
   /** Map of pending requests awaiting responses, keyed by message id */
   private pendingRequests = new Map<string, PendingRequest>();
 
+  /**
+   * Lazy singleton accessor for the VS Code Webview API.
+   * Safe for Node.js (Extension Host) — only acquires in browser context.
+   * Uses window.vscodeApi as cache to guarantee single acquisition.
+   */
   protected get vscode() {
     if (!(window as any).vscodeApi) {
       if ((window as any).acquireVsCodeApi) {
@@ -40,6 +45,16 @@ export abstract class View extends LitElement {
   override connectedCallback() {
     super.connectedCallback();
     this.onMessage((msg) => this.listen(msg));
+
+    if (!(window as any).__v_error_bridge) {
+      (window as any).__v_error_bridge = true;
+      window.addEventListener('error', (e) => {
+        this.log(`[GLOBAL ERROR] ${e.message} at ${e.filename}:${e.lineno}`);
+      });
+      window.addEventListener('unhandledrejection', (e) => {
+        this.log(`[UNHANDLED PROMISE] ${e.reason}`);
+      });
+    }
   }
 
   /**
@@ -67,7 +82,14 @@ export abstract class View extends LitElement {
         return; // Don't forward to handler — it's a correlated response
       }
 
-      handler(message);
+      // Filter by intended destination: only route if it's meant for this view, or a global broadcast
+      const intendedTarget = message.to;
+      const myScope = `${this.moduleName}::view`;
+      const isBroadcast = intendedTarget === 'view' || intendedTarget === '*';
+
+      if (intendedTarget === myScope || isBroadcast) {
+        handler(message);
+      }
     });
   }
 
@@ -88,12 +110,12 @@ export abstract class View extends LitElement {
       id,
       timestamp: Date.now(),
       to,
-      from: 'view',
+      from: `${this.moduleName}::view`,
       origin: MessageOrigin.View,
       payload: { command, data }
     };
 
-    this.log(`→ ${command}`, data);
+    this.log(`→ ${command}`, this.sanitizeForLog(data));
     this.vscode?.postMessage(payload);
 
     // Return a promise that resolves when the response is correlated
@@ -121,8 +143,10 @@ export abstract class View extends LitElement {
    * Standardized logger for the View layer.
    */
   protected log(message: string, ...args: any[]): void {
-    const formattedMsg = `[${this.moduleName}::view] ${message}`;
-    console.log(`%c${formattedMsg}`, LOG_STYLE.View, ...args);
+    const capitalizedName = this.moduleName.charAt(0).toUpperCase() + this.moduleName.slice(1);
+    const formattedMsg = `[${capitalizedName}::view] ${message}`;
+    const safeArgs = args.map(a => this.sanitizeForLog(a));
+    console.log(`%c${formattedMsg}`, LOG_STYLE.View, ...safeArgs);
 
     // Forward to background for output channel logging
     this.vscode?.postMessage({
@@ -134,8 +158,22 @@ export abstract class View extends LitElement {
       origin: MessageOrigin.View,
       payload: {
         command: 'log',
-        data: { message: formattedMsg, args }
+        data: { message: formattedMsg, args: safeArgs }
       }
     });
+  }
+
+  /**
+   * Mask sensitive fields (apiKey, accessToken) before logging.
+   */
+  private sanitizeForLog(data: any): any {
+    if (!data || typeof data !== 'object') { return data; }
+    const sanitized = { ...data };
+    for (const key of ['apiKey', 'accessToken', 'clientSecret']) {
+      if (typeof sanitized[key] === 'string' && sanitized[key].length > 0) {
+        sanitized[key] = sanitized[key].substring(0, 4) + '•••••';
+      }
+    }
+    return sanitized;
   }
 }

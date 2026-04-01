@@ -18,7 +18,7 @@ constitution:
     - .agent/rules/constitution/clean-code.md
     - .agent/rules/constitution/agents-behavior.md
 language:
-  value: Spanish
+  value: español
   confirmed: true
-strategy: long
+strategy: short
 ```

@@ -16,7 +16,8 @@ blocking: true
   - `.agent/artifacts/<taskId>-<taskTitle>/agent-tasks/<N>-backend-<taskName>.md`
 - Constitution loaded:
   - `constitution.backend` (MANDATORY)
-  - `constitution.clean_code` (MANDATORY)
+  - `.agent/rules/constitution/architecture/index.md` (MANDATORY)
+  - `constitution.agents_behavior` (MANDATORY)
 - Role activated:
   - `roles.backend`
 

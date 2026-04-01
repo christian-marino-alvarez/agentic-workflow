@@ -13,14 +13,14 @@ export default class extends Generator {
 
     // Index
     this.fs.copyTpl(
-      this.templatePath('index.ts'),
+      this.templatePath('index.ts.ejs'),
       this.destinationPath(`${modulePath}/index.ts`),
       { name: moduleName, className: this._capitalize(moduleName) }
     );
 
     // View Index
     this.fs.copyTpl(
-      this.templatePath('view/index.ts'),
+      this.templatePath('view/index.ts.ejs'),
       this.destinationPath(`${modulePath}/view/index.ts`),
       { name: moduleName, className: this._capitalize(moduleName) }
     );
@@ -29,7 +29,7 @@ export default class extends Generator {
     // Helper to copy template files
     const copyViewTemplate = (subPath) => {
       this.fs.copyTpl(
-        this.templatePath(`view/templates/${subPath}`),
+        this.templatePath(`view/templates/${subPath}.ejs`),
         this.destinationPath(`${modulePath}/view/templates/${subPath}`),
         { name: moduleName, className: this._capitalize(moduleName) }
       );
@@ -42,14 +42,14 @@ export default class extends Generator {
 
     // Background
     this.fs.copyTpl(
-      this.templatePath('background/index.ts'),
+      this.templatePath('background/index.ts.ejs'),
       this.destinationPath(`${modulePath}/background/index.ts`),
       { name: moduleName, className: this._capitalize(moduleName) }
     );
 
     // Backend
     this.fs.copyTpl(
-      this.templatePath('backend/index.ts'),
+      this.templatePath('backend/index.ts.ejs'),
       this.destinationPath(`${modulePath}/backend/index.ts`),
       { name: moduleName, className: this._capitalize(moduleName) }
     );

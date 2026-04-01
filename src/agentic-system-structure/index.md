@@ -25,6 +25,7 @@ agent:
       backend: .agent/rules/constitution/backend.md
       background: .agent/rules/constitution/background.md
       view: .agent/rules/constitution/view.md
+      modular_architecture: .agent/rules/constitution/modular-architecture.md
 
     roles:
       architect: .agent/rules/roles/architect.md
@@ -36,9 +37,14 @@ agent:
       backend: .agent/rules/roles/backend.md
       background: .agent/rules/roles/background.md
       view: .agent/rules/roles/view.md
+      devops: .agent/rules/roles/devops.md
+
+  skills:
+    scaffolding: .agent/skills/scaffolding/SKILL.md
 
   workflows:
     init: .agent/workflows/init.md
+    scaffold-module: .agent/workflows/scaffold-module.md
     tasklifecycle-long: .agent/workflows/tasklifecycle-long/index.md
     tasklifecycle-short: .agent/workflows/tasklifecycle-short/index.md
     coding:

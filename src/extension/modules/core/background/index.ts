@@ -1,5 +1,7 @@
 import { randomUUID } from 'crypto';
 import { spawn, ChildProcess, exec } from 'child_process';
+import * as fs from 'fs';
+import * as path from 'path';
 import * as vscode from 'vscode';
 import { MessagingBackground } from '../messaging/background.js';
 import { MessageOrigin, LayerScope } from '../constants.js';
@@ -22,12 +24,14 @@ interface PendingRequest {
  * Supports request-response pattern via correlation IDs.
  */
 export abstract class Background implements vscode.WebviewViewProvider {
-  private messenger: MessagingBackground = new MessagingBackground();
+  protected messenger: MessagingBackground = new MessagingBackground();
   private sidecarProcess?: ChildProcess;
   private pendingRequests = new Map<string, PendingRequest>();
   protected disposables: { dispose: () => void }[] = [];
   protected readonly scope = LayerScope.Background;
   protected readonly identity: string;
+  protected appVersion: string;
+  protected _webviewView?: vscode.WebviewView;
 
   constructor(
     protected readonly moduleName: string,
@@ -35,6 +39,20 @@ export abstract class Background implements vscode.WebviewViewProvider {
     protected readonly viewTagName: string
   ) {
     this.identity = `${this.moduleName}::${this.scope}`;
+
+    try {
+      const pkgPath = path.join(this._extensionUri.fsPath, 'package.json');
+      if (fs.existsSync(pkgPath)) {
+        const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+        this.appVersion = pkg.version || '0.0.0-no-version';
+      } else {
+        this.appVersion = '0.0.0-not-found';
+        console.error(`package.json not found at ${pkgPath}`);
+      }
+    } catch (e: any) {
+      this.appVersion = '0.0.0-exception';
+      console.error('Failed to read package.json version', e.message);
+    }
 
     // Wire message subscription → listen()
     this.messenger.subscribe(this.identity, async (msg: Message) => {
@@ -63,8 +81,46 @@ export abstract class Background implements vscode.WebviewViewProvider {
       // Native log handler
       if (command === 'log') {
         const { message, args } = msg.payload.data || {};
-        // Forward to output channel via Logger, prefixed with [View]
-        Logger.log(`[View] ${message}`, ...(args || []));
+        // Forward to output channel via Logger
+        Logger.log(message, ...(args || []));
+        return;
+      }
+
+      // Native SET_TITLE handler — updates the webview panel title
+      if (command === 'SET_TITLE') {
+        const { title } = msg.payload.data || {};
+        if (this._webviewView && typeof title === 'string') {
+          this._webviewView.title = title;
+        }
+        if (msg.id) {
+          this.reply(msg.from || 'view', 'SET_TITLE::response', { success: true }, msg.id);
+        }
+        return;
+      }
+
+      // Native SET_BADGE handler — sets a badge on the webview panel
+      if (command === 'SET_BADGE') {
+        const { value, tooltip } = msg.payload.data || {};
+        if (this._webviewView) {
+          this._webviewView.badge = value !== null && value !== undefined
+            ? { value: Number(value), tooltip: tooltip || '' }
+            : undefined;
+        }
+        if (msg.id) {
+          this.reply(msg.from || 'view', 'SET_BADGE::response', { success: true }, msg.id);
+        }
+        return;
+      }
+
+      // Native SET_DESCRIPTION handler — sets secondary text next to the panel title
+      if (command === 'SET_DESCRIPTION') {
+        const { description } = msg.payload.data || {};
+        if (this._webviewView) {
+          this._webviewView.description = typeof description === 'string' ? description : undefined;
+        }
+        if (msg.id) {
+          this.reply(msg.from || 'view', 'SET_DESCRIPTION::response', { success: true }, msg.id);
+        }
         return;
       }
 
@@ -111,13 +167,24 @@ export abstract class Background implements vscode.WebviewViewProvider {
 
     await this.killPort(port);
 
+    // Resolve workspace root for the sidecar to use for file path resolution
+    const workspaceRoot = vscode.workspace?.workspaceFolders?.[0]?.uri?.fsPath || '';
+    if (!workspaceRoot) {
+      this.log('WARNING: No workspace folder found — WORKSPACE_ROOT will be empty');
+    }
+
     this.log(`Spawning sidecar: node ${scriptPath}`);
     this.sidecarProcess = spawn('node', [scriptPath], {
-      env: { ...process.env, PORT: port.toString() }
+      env: {
+        ...process.env,
+        PORT: port.toString(),
+        WORKSPACE_ROOT: workspaceRoot,
+        EXTENSION_URI: this._extensionUri.fsPath
+      }
     });
 
     this.sidecarProcess.stdout?.on('data', (data) => {
-      // Direct log via Logger to use ::backend tag instead of ::background
+      // Direct log via Logger to use :backend tag instead of :background
       Logger.log(`[${this.moduleName}::backend] ${data.toString().trim()}`);
     });
 
@@ -138,7 +205,7 @@ export abstract class Background implements vscode.WebviewViewProvider {
    * Configure the sidecar endpoint for this backend messenger.
    */
   protected setEndpoint(url: string): void {
-    this.messenger.setEndpoint(url);
+    this.messenger.setEndpoint(url, this.moduleName);
   }
 
   /**
@@ -178,7 +245,7 @@ export abstract class Background implements vscode.WebviewViewProvider {
    * Send a response message (fire-and-forget, no correlation needed).
    * Used internally by handle() to send responses back.
    */
-  private reply(to: string, command: string, data: any, correlationId: string): void {
+  protected reply(to: string, command: string, data: any, correlationId: string): void {
     this.messenger.emit({
       id: randomUUID(),
       from: this.identity,
@@ -228,6 +295,7 @@ export abstract class Background implements vscode.WebviewViewProvider {
     _token: vscode.CancellationToken,
   ): void {
     this.log('resolveWebviewView called');
+    this._webviewView = webviewView;
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [this._extensionUri]
@@ -295,5 +363,25 @@ export abstract class Background implements vscode.WebviewViewProvider {
    */
   protected log(message: string, ...args: any[]): void {
     Logger.log(`[${this.moduleName}::background] ${message}`, ...args);
+  }
+
+  /**
+   * Abstracted Authentication getter.
+   * Allows modules to request sessions without importing 'vscode'.
+   */
+  protected async getSession(
+    providerId: string,
+    scopes: readonly string[],
+    options?: { createIfNone?: boolean }
+  ): Promise<import('../types.js').IAuthenticationSession | undefined> {
+    const session = await vscode.authentication.getSession(providerId, scopes, options);
+    if (!session) return undefined;
+
+    return {
+      id: session.id,
+      accessToken: session.accessToken,
+      account: { label: session.account.label, id: session.account.id },
+      scopes: session.scopes
+    };
   }
 }

@@ -1,6 +1,8 @@
 {
-  "name": "@christianmaf80/agentic-workflow",
-  "version": "1.24.0-beta.4",
+  "name": "agentic-workflow",
+  "displayName": "Agentic Workflow",
+  "publisher": "christian-marino-alvarez",
+  "version": "1.27.0-beta.6",
   "description": "Portable agentic workflow orchestration system with strict identity and gate discipline",
   "type": "module",
   "workspaces": [
@@ -8,7 +10,6 @@
     "src/extension/modules/app",
     "src/cli"
   ],
-  "displayName": "Agentic Workflow",
   "main": "./dist/extension/extension.js",
   "engines": {
     "vscode": "^1.108.2"
@@ -16,15 +17,12 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onView:mainView"
-  ],
   "contributes": {
     "viewsContainers": {
       "activitybar": [
         {
           "id": "main",
-          "title": "Agent Chat",
+          "title": "Agentic Workflow",
           "icon": "media/agent-chat.svg"
         }
       ]
@@ -33,7 +31,7 @@
       "main": [
         {
           "id": "mainView",
-          "name": "Agent Chat",
+          "name": "Agentic Workflow",
           "icon": "media/agent-chat.svg",
           "type": "webview"
         }
@@ -82,6 +80,42 @@
           "type": "string",
           "default": "",
           "description": "ID of the currently active LLM model"
+        },
+        "agenticWorkflow.googleClientId": {
+          "type": "string",
+          "default": "",
+          "description": "Google OAuth Client ID for Gemini authentication. Create one at console.cloud.google.com/apis/credentials (Desktop app type)."
+        },
+        "agenticWorkflow.googleClientSecret": {
+          "type": "string",
+          "default": "",
+          "description": "Google OAuth Client Secret for Gemini authentication (from the same Desktop app credential)."
+        },
+        "agenticWorkflow.openaiClientId": {
+          "type": "string",
+          "default": "",
+          "description": "OpenAI OAuth Client ID for PKCE authentication. Get one at platform.openai.com/settings."
+        },
+        "agenticWorkflow.roleBindings": {
+          "type": "object",
+          "default": {},
+          "description": "Map of Agent Roles to Model IDs",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "agenticWorkflow.discoveredModelsCache": {
+          "type": "object",
+          "default": {},
+          "description": "Cached discovered models per provider (persists across restarts)"
+        },
+        "agenticWorkflow.disabledRoles": {
+          "type": "array",
+          "default": [],
+          "description": "List of disabled agent role names (hidden from Chat dropdown)",
+          "items": {
+            "type": "string"
+          }
         }
       }
     }
@@ -98,7 +132,8 @@
     "bin",
     "README.md",
     "LICENSE",
-    "RELEASE_PROCESS.md"
+    "RELEASE_PROCESS.md",
+    "media"
   ],
   "scripts": {
     "build": "node scripts/clean-dist.mjs && tsc -p tsconfig.build.json && npm run copy-assets",
@@ -136,26 +171,42 @@
   "author": "Christian Marino Alvarez",
   "license": "ISC",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.76.0",
     "@clack/prompts": "^0.7.0",
     "@fastify/cors": "^11.2.0",
+    "@google/generative-ai": "^0.24.1",
     "@material/web": "^2.4.1",
+    "@openai/agents": "^0.4.12",
+    "@vscode/codicons": "^0.0.44",
     "commander": "^11.1.0",
     "fastify": "^5.7.4",
     "gray-matter": "^4.0.3",
     "lit": "^3.3.2",
-    "openai": "^6.17.0"
+    "lowdb": "^7.0.1",
+    "marked": "^17.0.3",
+    "openai": "^6.17.0",
+    "vscode-jsonrpc": "^8.2.1",
+    "xstate": "^5.28.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
+    "@types/chai": "^5.2.3",
     "@types/glob": "^8.1.0",
+    "@types/js-yaml": "^4.0.9",
     "@types/mocha": "^10.0.10",
     "@types/node": "^20.10.6",
+    "@types/sinon": "^21.0.0",
     "@types/vscode": "^1.108.1",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
+    "chai": "^6.2.2",
     "esbuild": "^0.27.3",
     "eslint": "^9.39.2",
     "glob": "^13.0.3",
+    "jsdom": "^28.1.0",
+    "sinon": "^21.0.1",
+    "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.52.0",
     "vitest": "^4.0.18",

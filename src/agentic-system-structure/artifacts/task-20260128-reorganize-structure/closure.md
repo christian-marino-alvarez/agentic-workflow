@@ -21,13 +21,13 @@ Se han cumplido todos los objetivos establecidos en el Brief:
 - **Estrategia**: Short (3 fases).
 - **Ficheros modificados**:
   - `package.json`
-  - `src/infrastructure/utils/backup.ts`
-  - `src/infrastructure/migration/backup.ts`
+  - `src/core/utils/backup.ts`
+  - `src/core/migration/backup.ts`
   - `src/cli/commands/init.ts`
   - Toda la documentación agéntica (.md).
 
 ## 3. Resultado Final
-El repositorio presenta ahora una separación clara entre el código fuente de la extensión (`src/infrastructure`, `src/cli`) y la configuración del sistema agéntico (`src/agentic-system-structure`). Se ha mantenido compatibilidad mediante un mirror en `.agent/`.
+El repositorio presenta ahora una separación clara entre el código fuente de la extensión (`src/core`, `src/cli`) y la configuración del sistema agéntico (`src/agentic-system-structure`). Se ha mantenido compatibilidad mediante un mirror en `.agent/`.
 
 ## 4. Confirmación de Cierre
 La tarea se considera **finalizada con éxito**.

@@ -2,6 +2,7 @@
 import { Command } from 'commander';
 import { initCommand } from '../dist/cli/commands/init.js';
 import { scaffoldCommand } from '../dist/cli/commands/scaffold.js';
+import { forkCommand } from '../dist/cli/commands/fork.js';
 import { createCommand } from '../dist/cli/commands/create.js';
 import { restoreCommand } from '../dist/cli/commands/restore.js';
 import { cleanCommand } from '../dist/cli/commands/clean.js';
@@ -33,6 +34,11 @@ program
     .description('Scaffold the agentic system into a custom directory name (instead of .agent)')
     .option('--non-interactive', 'Run without prompts (assume YES)')
     .action((directory, options) => scaffoldCommand(directory, options));
+
+program
+    .command('fork <directory>')
+    .description('Clone the entire Agentic Workflow framework source code to build an independent fork')
+    .action((directory) => forkCommand(directory));
 
 program
     .command('restore')

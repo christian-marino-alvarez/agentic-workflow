@@ -9,11 +9,12 @@ import {
 import { performBackup } from '../../infrastructure/utils/backup.js';
 import { startRuntimeMcpServer } from '../../runtime/mcp/server.js';
 
-export async function initCommand(options: { nonInteractive?: boolean; startMcp?: boolean } = {}) {
+export async function initCommand(options: { nonInteractive?: boolean; startMcp?: boolean; dir?: string } = {}) {
   intro('Agentic Workflow Initialization');
 
   const cwd = process.cwd();
-  const agentDir = path.join(cwd, '.agent');
+  const agentFolderName = options.dir || '.agent';
+  const agentDir = path.join(cwd, agentFolderName);
   const nonInteractive = Boolean(options.nonInteractive);
   const startMcp = Boolean(options.startMcp);
 
@@ -68,23 +69,23 @@ export async function initCommand(options: { nonInteractive?: boolean; startMcp?
   sCleanup.stop('Local environment cleaned.');
 
   const s = spinner();
-  s.start('Scaffolding .agent (core copied locally)...');
+  s.start(`Scaffolding ${agentFolderName} (core copied locally)...`);
 
   try {
     // Resolve absolute path to core package for local copy
     const corePath = (await resolveInstalledCorePath(cwd)) ?? await resolveCorePath();
 
-    // Replace existing .agent with a clean scaffold
+    // Replace existing target dir with a clean scaffold
     await fs.rm(agentDir, { recursive: true, force: true });
     await fs.mkdir(agentDir, { recursive: true });
 
-    await scaffoldAgentWorkspace(corePath, agentDir);
-    await writeAgentsEntry(cwd);
+    await scaffoldAgentWorkspace(corePath, agentDir, agentFolderName);
+    await writeAgentsEntry(cwd, agentFolderName);
     await fs.mkdir(path.join(cwd, '.backups'), { recursive: true });
 
     s.stop('Configuration complete.');
 
-    note(`Core copied from: ${corePath}\nLocal .agent created with full core files.`, 'Installed');
+    note(`Core copied from: ${corePath}\nLocal ${agentFolderName} created with full core files.`, 'Installed');
 
     outro('Agentic System initialized successfully.');
 
@@ -113,7 +114,7 @@ async function cleanupLegacyMcpConfig(cwd: string) {
   }
 }
 
-async function scaffoldAgentWorkspace(corePath: string, agentDir: string) {
+async function scaffoldAgentWorkspace(corePath: string, agentDir: string, agentFolderName: string) {
   const entries = ['rules', 'workflows', 'templates', 'artifacts'];
   await Promise.all(
     entries.map(async (entry) => {
@@ -122,11 +123,23 @@ async function scaffoldAgentWorkspace(corePath: string, agentDir: string) {
       await fs.cp(srcPath, destPath, { recursive: true });
     })
   );
-  await fs.copyFile(path.join(corePath, 'index.md'), path.join(agentDir, 'index.md'));
+  
+  const srcIndexPath = path.join(corePath, 'index.md');
+  const destIndexPath = path.join(agentDir, 'index.md');
+  
+  if (agentFolderName !== '.agent') {
+    let indexContent = await fs.readFile(srcIndexPath, 'utf-8');
+    indexContent = indexContent.replace(/\.agent\//g, `${agentFolderName}/`);
+    indexContent = indexContent.replace(/UNIFIED INDEX — \.agent/g, `UNIFIED INDEX — ${agentFolderName}`);
+    await fs.writeFile(destIndexPath, indexContent);
+  } else {
+    await fs.copyFile(srcIndexPath, destIndexPath);
+  }
+  
   await fs.mkdir(path.join(agentDir, 'artifacts', 'candidate'), { recursive: true });
 }
 
-async function writeAgentsEntry(cwd: string) {
+async function writeAgentsEntry(cwd: string, agentFolderName: string) {
   const agentsPath = path.join(cwd, 'AGENTS.md');
   const content = `# AGENTS
 
@@ -134,7 +147,7 @@ Este fichero es el punto de entrada para asistentes del IDE.
 Solo define el arranque del sistema mediante el workflow \`init\`.
 
 ## Arranque (OBLIGATORIO)
-1. Leer \`.agent/index.md\` (root index local).
+1. Leer \`${agentFolderName}/index.md\` (root index local).
 2. Cargar el indice de workflows en \`agent.domains.workflows.index\`.
 3. Cargar \`workflows.init\`.
 4. Ejecutar el workflow \`init\` y seguir sus Gates.

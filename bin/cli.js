@@ -16,6 +16,7 @@ program
 program
     .command('init')
     .description('Initialize the agentic system in the current directory')
+    .option('--dir <directory>', 'Specify the directory name to scaffold (default: .agent)')
     .option('--non-interactive', 'Run without prompts (assume YES)')
     .option('--start-mcp', 'Start MCP server after initialization (foreground)')
     .action((options) => initCommand(options));

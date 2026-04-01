@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.27.0-beta.5](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.27.0-beta.3...agentic-workflow-v1.27.0-beta.5) (2026-04-01)
+
+### Features
+
+* **cli**: add `scaffold` command for custom directory setups and restore build-bootstrap scripts
+
 ## [1.27.0-beta.3](https://github.com/christian-marino-alvarez/agentic-workflow/compare/agentic-workflow-v1.26.0-beta.3...agentic-workflow-v1.27.0-beta.3) (2026-02-18)
 
 

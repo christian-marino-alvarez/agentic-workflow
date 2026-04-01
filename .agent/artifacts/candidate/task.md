@@ -1,5 +1,7 @@
 # Task Candidate
 
-- title: Re-implement Setup/Config (D1)
-- description: Re-implement the Setup and Configuration domain (D1) to align with the new modular architecture. This includes implementing a real `SettingsStorage` in the Core Background layer and recreating the Configuration UI using Lit components, ensuring strict separation of concerns and proper state management.
-- goal: Implement persistent SettingsStorage and a new Lit-based Configuration UI.
+## Description
+Implementar un **Workflow Execution Engine** en el Runtime Server que interprete los workflows definidos en `.agent/workflows/`, los ejecute según la estrategia elegida (long/short), gestione gates de aprobación del desarrollador con UI interactiva, y muestre el progreso en un panel dedicado separado del chat.
+
+## Objective
+Que el sistema agentico sea capaz de leer, interpretar y ejecutar los workflows automáticamente desde el servidor runtime, siguiendo la cadena de PASS entre fases, identificando el agente owner de cada workflow, y con el architect orquestando las delegaciones. El chat solo mostrará resúmenes de tarea e informes con links a artefactos.

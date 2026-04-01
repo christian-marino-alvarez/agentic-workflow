@@ -1,30 +1,37 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { Background, ViewHtml, Message } from '../../core/index.js';
-import { Settings } from '../../settings/backend/index.js';
-import { MESSAGES } from '../../settings/constants.js';
 
 import { NAME } from '../constants.js';
 
 /**
  * Concrete implementation of Background acting as the App Shell.
  */
-export class AppBackground extends Background {
-  private readonly settings: Settings;
+import { SettingsBackground } from '../../settings/background/index.js';
+import { RuntimeBackground } from '../../runtime/background/index.js';
+import { ChatBackground } from '../../chat/background/index.js';
 
-  constructor(context: vscode.ExtensionContext) {
+/**
+ * Concrete implementation of Background acting as the App Shell.
+ */
+export class AppBackground extends Background {
+  private settingsBg: SettingsBackground;
+
+  constructor(context: vscode.ExtensionContext, appVersion: string) {
     super(NAME, context.extensionUri, `${NAME}-view`);
+    this.appVersion = appVersion;
     this.log('Initialized');
 
-    // Initialize services
-    this.settings = new Settings(context);
+    // Initialize domain-specific backgrounds (instantiation registers them on the global bus)
+    this.settingsBg = new SettingsBackground(context);
+    void new ChatBackground(context);
+    void new RuntimeBackground(context);
 
     // --- Sidecar ---
-
     if (process.env.VSCODE_TEST_MODE === 'true') {
       this.log('TEST MODE: Skipping sidecar spawn');
     } else {
-      const scriptPath = path.join(context.extensionUri.fsPath, 'dist-backend/extension/modules/app/backend/index.js');
+      const scriptPath = path.join(context.extensionUri.fsPath, 'dist/extension/modules/app/backend/index.js');
       this.runBackend(scriptPath, 3000).catch(err => {
         this.log('FATAL: Failed to run backend sidecar', err);
       });
@@ -34,36 +41,35 @@ export class AppBackground extends Background {
   /**
    * Handle incoming messages from the View layer.
    */
-  public override async listen(message: Message): Promise<void> {
-    const { command, data } = message.payload;
+  public override async listen(message: Message): Promise<any> {
+    // App Shell logic (if any)
+    // Settings and Chat Backgrounds already subscribe to the global EventBus 
+    // independently via their base Background class constructor.
+  }
 
-    switch (command) {
-      case MESSAGES.GET_REQUEST: {
-        const models = await this.settings.getModels();
-        const activeModelId = await this.settings.getActiveModelId();
-        return { success: true, models, activeModelId } as any;
-      }
+  /**
+   * Override to set the panel description based on OAuth session state.
+   * Uses webviewView.description to add "🔒 Secure" next to the title.
+   */
+  public override resolveWebviewView(
+    webviewView: vscode.WebviewView,
+    context: vscode.WebviewViewResolveContext,
+    token: vscode.CancellationToken
+  ): void {
+    super.resolveWebviewView(webviewView, context, token);
 
-      case MESSAGES.SAVE_REQUEST: {
-        await this.settings.saveModel(data);
-        return { success: true } as any;
-      }
+    // Share webview reference with Settings module for title/badge updates only.
+    // Do NOT call settingsBg.resolveWebviewView — it would attach a second
+    // messenger listener, causing every message to be processed twice.
+    this.settingsBg.setWebviewViewRef(webviewView);
 
-      case MESSAGES.DELETE_REQUEST: {
-        await this.settings.deleteModel(data);
-        return { success: true } as any;
-      }
-
-      case MESSAGES.SELECT_REQUEST: {
-        await this.settings.setActiveModel(data);
-        const activeId = await this.settings.getActiveModelId();
-        return { success: true, activeId } as any;
-      }
-    }
+    // NOTE: "🔒 Secure" is set by the View layer AFTER verifying the connection
+    // via autoVerifyOAuth(). We do NOT set it here based on session alone,
+    // because having an OAuth session doesn't mean the model is verified.
   }
 
   protected getHtmlForWebview(webview: vscode.Webview): string {
     const scriptPath = 'dist/extension/modules/app/view/index.js';
-    return ViewHtml.getWebviewHtml(webview, this._extensionUri, this.viewTagName, scriptPath);
+    return ViewHtml.getWebviewHtml(webview, this._extensionUri, this.viewTagName, scriptPath, this.appVersion);
   }
 }

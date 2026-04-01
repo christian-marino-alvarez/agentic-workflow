@@ -1,114 +1,163 @@
-# Roadmap Backlog - ADR-001: VS Code ChatKit + Agent SDK + MCP Integration
+# Roadmap Backlog - Advanced Agentic Workflow
 
-**Última actualización**: 2026-02-15 (Post-Audit T11)
-**Roadmap completo**: `.backups/.agent.backup_2026-02-06T08-11-37-009Z/artifacts/2-implementacion-adr-vscode-integration/roadmap.md`
+## 🌍 Global Status
+| Domain | Status | Completed | Total |
+|---|---|---|---|
+| **D1: Settings & OAuth** | 🏗️ Architecture | 6 | 8 |
+| **D2: UI (Chat/Workflows)** | 🏗️ In Progress | 7 | 12 |
+| **D3: Backend (Agents)** | 🏗️ In Progress | 4 | 8 |
+| **D4: Runtime & Execution** | 🏗️ Concept | 0 | 2 |
+| **D7: Release/CI-CD** | ✅ Stable | 3 | 3 |
+| **D8: E2E Testing** | ✅ Stable | 4 | 4 |
 
----
+**Total**: 24/37 tasks completed
 
-## Estado Global
-
-| Dominio | Completitud | Tareas Completadas | Tareas Totales |
-|---------|-------------|---------------------|----------------|
-| D1: Setup/Config | 0% | 0/4 | 4 |
-| D2: UI/ChatKit | 0% | 0/6 | 6 |
-| D3: Backend/Extension Host | 25% | 1/4 | 4 |
-| D4: Agents SDK/Backend | 0% | 0/5 | 5 |
-| D5: MCP/Governance | 0% | 0/4 | 4 |
-| D6: Security | 0% | 0/3 | 3 |
-| D7: Release/CI-CD | 0% | 0/2 | 2 |
-| D8: E2E Testing | 0% | 0/4 | 4 |
-
-**Total**: 1/32 tareas completadas (<5%)
-
----
-
-## 🎯 Prioridad Alta - Tareas Inmediatas
-
-### Fase 1: Refinamiento & Constitución (Current)
-
-- [x] **T11**: Refinamiento de Constitución de Capas (Backend/Background/View)
-  - Auditoría de Roadmap y definición de reglas modulares.
-  - **Agente**: architect-agent
-
-- [ ] **TXXX**: Re-implementación de Setup/Config (D1)
-  - Implementar `SettingsStorage` real en `core/background`.
-  - Re-crear UI de Configuración bajo nuevas reglas Lit.
+## 🎯 Priority High - Critical Path
+- [x] **T017**: D1 - OAuth Authentication Provider (vscode.authentication)
+- [x] **T018**: D1 - Model Registry UI (API Key + OAuth Tokens)
+- [x] **T010**: D3 - Chat Session Endpoint
+- [x] **T019**: D3 - Agent Factory & Role-Model Binding ✅
+- [x] **T039**: D3 - Agent Delegation (Inter-Agent Task Routing) ✅
+- [ ] **T024**: D2 - Workflow Viewer (Load & Display) 🔥 **NEXT**
+- [ ] **T043**: D3 - Async Delegation & Multi-Stream
+- [ ] **T032**: D4 - Runtime Server (File I/O & Sandbox)
+- [ ] **T020**: D2 - Chat Filters (Agent/Thread)
 
 ---
 
-## ⚠️ Estado de Auditoría (2026-02-15)
+## 📅 Backlog by Domain
 
-> **NOTA CRÍTICA**: Tras la auditoría T11, se ha determinado que gran parte de las tareas marcadas previamente como "Completadas" requerían re-implementación o adaptación a la nueva arquitectura modular. Se ha procedido a un RESET masivo de estados.
+### D1: Settings & Configuration (OAuth)
+> Focus: Secure token management and Model Registry.
+- [x] **T017**: OAuth Provider Implementation
+  - Implement `AuthenticationProvider` for Google OAuth + PKCE. ✅
+  - Integration with `vscode.authentication`. ✅
+  - ⚠️ OpenAI does NOT support third-party OAuth (API keys only).
+  - OAuth timeout fix: 10s → 120s for browser login flows.
+- [x] **T018**: Model Registry UI
+  - CRUD for LLM Models (Name, Provider, AuthType). ✅
+  - Secure storage of API Keys vs OAuth Tokens. ✅
+- [ ] **T021**: Settings Migration
+  - Migrate current `settings.json` to new Registry format.
+- [ ] **T022**: Profile Management
+  - Allow switching between "Work" (Codex) and "Research" (Claude) profiles.
+- [x] **T023**: Settings Validation
+  - Verify API Keys/Tokens on save. ✅ (Test Connection for API key + OAuth)
+- [x] **T040**: Disabled Roles Configuration
+  - Register `disabledRoles` in package.json. ✅
+  - Chat dropdown filters out disabled agents. ✅
+- [x] **T034**: Default Model per Task Type
+  - Role-Model binding via Settings Role Binding section. ✅
+  - Each agent role can be assigned a specific model. ✅
+  - Model description shown on selection to aid decision. ✅
+- [ ] **T035**: Import/Export Configuration
+  - Export model registry to JSON/YAML. Import from file.
+- [x] **T036**: Advanced Validation
+  - Model capability detection (vision, tools, code, streaming). ✅
+  - Capability toggles visible per agent in Role Binding. ✅
+  - `detectCapabilities()` auto-detects from model name. ✅
 
-### Dominio D1: Setup/Config (Estado: RESTART)
-- [ ] **T002**: Schema de Configuración de Modelos LLM (Pendiente)
-- [ ] **T003**: Settings Persistence (Pendiente)
-- [ ] **T004**: UI de Configuración (Pendiente)
+### D2: UI & User Experience (Advanced)
+> Focus: Visual Workflows and Enhanced Chat.
+- [x] **T041**: Agent Dropdown UX
+  - Dropdown opens upward (above input). ✅
+  - All agents visible regardless of model assignment. ✅
+  - `index.md` excluded from role listing. ✅
+  - Max-height with scroll for many agents. ✅
+- [ ] **T024**: Workflow Viewer (Litegraph)
+  - Integrate **Litegraph.js** into a Lit Component.
+  - Read-only view of `.agent/workflows/*.md` (parsed to graph).
+- [ ] **T025**: Workflow Editor (Litegraph)
+  - Drag & Drop interface for creating workflows.
+  - Serialize to JSON/YAML.
+- [ ] **T020**: Chat Filters
+  - Filter messages by specific Agent (e.g., "Show only Architect").
+  - Filter by Thread/Task.
+- [ ] **T026**: Task Timeline
+  - Visualize Agent execution history using **vis-timeline**.
+  - Interactive zoom/pan.
+- [ ] **T027**: Agent Status Widget
+  - Real-time status in VS Code Status Bar.
+- [ ] **T028**: Theme Synchronization
+  - Ensure all Lit components (Graph/Timeline) match VS Code Theme.
+- [x] **T037**: App Version & Footer Refactor
+  - Centralize version logic in App class. ✅
+  - Move footer to AppView template. ✅
+- [x] **T044**: History Tab UX
+  - Session list loads reactively via AppView state. ✅
+  - Session persistence via globalState (survives restarts). ✅
+  - Double-click delete with 3s auto-cancel (matches Settings). ✅
+  - Header style matches Settings (header-actions pattern). ✅
+- [x] **T045**: Skeleton Loading System
+  - 1s skeleton overlay on every tab transition. ✅
+  - Views always mounted in DOM (no removal/re-add). ✅
+  - AppView @state() with accessor for proper Lit reactivity. ✅
+- [x] **T046**: Model Descriptions in Settings
+  - getModelDescription() for 20+ known models. ✅
+  - Shown in Role Binding card on model selection. ✅
+  - Fade-in animation, italic styling. ✅
+- [x] **T047**: Chat Agent Bar Layout
+  - Capabilities and Sandbox toggle on second row. ✅
+  - Agent dropdown on first row, labels below. ✅
 
-### Dominio D3: Backend/Extension Host (Estado: PARTIAL)
-- [ ] **T010**: ChatKit Session Endpoint (Pendiente)
-- [x] **T011**: Communication Bridge (Básico implementado en `core/messaging`)
-- [ ] **T012**: Backend HTTP Client (Pendiente/Mock)
+### D3: Backend & Agent Orchestration
+> Focus: Dynamic Agent Instantiation & Multi-Agent Collaboration.
+- [x] **T010**: Chat Session Endpoint
+  - Ensure `ChatBackendClient` targets correct `/sessions` endpoint. ✅
+  - Functional chat flow restored. ✅
+- [x] **T019**: Agent Factory & Persona Injection
+  - Role-Model binding via Settings. ✅
+  - `LLMFactory.createAgent()` resolves provider + model dynamically. ✅
+  - Full role `.md` content injected as system prompt instructions. ✅
+  - Agent personality persists throughout conversation. ✅
+  - Attachment context appended to LLM input. ✅
+- [x] **T042**: Agent Selection & Context
+  - Chat dropdown shows all workspace roles. ✅
+  - Selected agent's role sent to sidecar. ✅
+  - Attached files included in LLM context. ✅
+  - System loading messages hidden (errors only). ✅
+- [x] **T039**: Agent Delegation (Inter-Agent Task Routing) ✅
+  - `delegateTask` tool for coordinator agents (architect). ✅
+  - Sub-agent invocation within a single chat session. ✅
+  - Delegation result returned as tool_result to coordinator. ✅
+  - Visual indicator in chat ("🔀 Delegated to QA → ..."). ✅
+  - Recursion guard (max depth, no self-delegation). ✅
+  - Per-agent pastel colors in chat. ✅
+  - Sub-agents instructed to ask developer questions. ✅
+- [ ] **T043**: Async Delegation & Multi-Stream 🔥
+  - Async delegation: sub-agent runs in background, returns task ID.
+  - Chat multi-stream: support concurrent SSE streams.
+  - Continue chatting with architect while delegation runs.
+  - Polling/notification when sub-agent completes.
+  - Real-time intermediate streaming of sub-agent output.
+- [ ] **T029**: Role Definition Schema
+  - Enhance `roles.yaml` to support forced model capabilities (e.g., "Requires Vision").
+- [ ] **T030**: Agent Lifecycle Events
+  - Emit events (Start/Think/Tool/End) for the Timeline UI.
+- [ ] **T031**: Context Windows Management
+  - Dynamic context pruning based on Agent-Model limits.
+
+### D4: Runtime & Execution Engine
+> Focus: Flow Control and Safe Action Execution.
+- [ ] **T032**: Runtime Server (Action Runner)
+  - Dedicated server/process to execute Agent actions (File Read/Write, Command Exec).
+  - Sandboxing and permission control (Allow/Deny prompts).
+- [ ] **T033**: Flow Engine
+  - Interpreter to execute Litegraph workflows (JSON).
+  - Orchestrates data flow between nodes and calls Agent Actions.
+
+### D7 & D8 (Maintenance)
+- [x] CI/CD Pipelines (Done)
+- [x] E2E Base Suite (Done)
+- [x] **T038**: Fix CI Build Errors
+  - Resolved TypeScript errors in CI. ✅
 
 ---
 
-## 📋 Backlog - Fase 3: Frontend
+## 🚀 Next Suggested Steps
+1.  **T024 (Workflow Viewer)**: Load and display `.agent/workflows/*.md` in UI. 🔥
+2.  **T043 (Async Delegation)**: Multi-stream + continue chatting during delegation.
+3.  **T020 (Chat Filters)**: Quick win for UI usability.
 
-### Dominio D2: UI/ChatKit (Estado: RESTART/VERIFY)
+**Last Updated**: 2026-02-20 by architect-agent (priorities reordered: T024 before T043)
 
-- [ ] **T005**: Setup de Lit en Webview
-  - Lit framework configuration y decorators
-  - Build process con esbuild y bundling
-  - Base class `AgwViewBase` implementada
-
-- [ ] **T006**: ChatKit Web Component Integration
-  - `<openai-chatkit>` integrado via CDN + types NPM
-  - Inicialización imperativa via `setOptions()`
-
-- [ ] **T007**: Model Dropdown Component
-  - Lit component con dropdown
-  - Sincronización en tiempo real (Event Bus)
-
-- [ ] **T008**: Theming de ChatKit (VS Code Dark/Light)
-  - Dark/light automático via `colorScheme` en `setOptions()`
-
-- [ ] **T009**: CSP (Content Security Policy) Configuration
-  - `frame-src`, `child-src` para iframe de ChatKit
-
-- [ ] **T032**: Unified Tabbed Shell (Fase 0)
-  - Unificar las 4 vistas en un único `<agw-unified-shell>`
-
----
-
-## 📋 Backlog - Fase 4: Advanced Features
-
-### Dominio D4: Agents SDK/Backend
-
-- [ ] **T015**: Node.js Backend Server - Scaffolding
-  - Setup inicial de backend TypeScript (Core/Module structure)
-
-- [ ] **T016**: Agent Workflows Implementation (TypeScript)
-  - Lógica base de workflows en core.
-
-### Dominio D6: Security
-
-- [ ] **T023**: Secrets Management
-  - Implementado en `src/extension/modules/core/background` (Basic)
-
----
-
-## 📋 Backlog - Fase 5: Hardening - Release - E2E
-
-*(Todas las tareas D5, D7, D8 están pendientes)*
-
----
-
-## 🚀 Próximos Pasos Recomendados
-
-1. **Prioridad 1**: Implementar `SettingsStorage` (TXXX) para dar persistencia real.
-2. **Prioridad 2**: Reconstruir `ChatKit Session Endpoint` (T010) bajo reglas de `constitution.backend`.
-3. **Prioridad 3**: Formalizar `Backend HTTP Client` (T012).
-
----
-
-**Última revisión**: 2026-02-15 por architect-agent (Post-T11 Audit)

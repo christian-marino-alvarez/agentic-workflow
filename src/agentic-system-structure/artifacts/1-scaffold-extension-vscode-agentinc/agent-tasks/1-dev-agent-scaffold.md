@@ -1,9 +1,3 @@
----
-kind: artifact
-name: 1-dev-agent-scaffold
-source: agentic-system-structure
----
-
 🧑‍💻 **dev-agent**: Tarea asignada para generar scaffold oficial.
 
 ---

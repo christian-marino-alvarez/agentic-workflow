@@ -26,6 +26,8 @@ Any code that violates these rules MUST be considered incomplete.
 ### 1.1 General
 - Names MUST reveal intent.
 - Names MUST NOT require comments to be understood.
+- **Code MUST be self-documenting through explicit, representative names.**
+- If a comment is needed to explain what something does, rename it instead.
 - Avoid abbreviations unless they are domain-standard (`id`, `url`, `api`).
 
 ### 1.2 Variables
@@ -48,6 +50,22 @@ Any code that violates these rules MUST be considered incomplete.
 
 ❌ `Manager`, `Processor`, `Helper`  
 ✅ `StorageDriver`, `TabsEngine`
+
+### 1.5 Constants over String Literals
+- **All string union types MUST be derived from constant objects.**
+- Magic strings (`'idle'`, `'running'`, `'error'`) are FORBIDDEN in code.
+- Define values as `as const` objects in `constants.ts`.
+- Derive types using `typeof CONST[keyof typeof CONST]`.
+
+❌ `status: 'idle' | 'running' | 'failed'`  
+✅
+```ts
+// constants.ts
+export const ENGINE_STATUS = { IDLE: 'idle', RUNNING: 'running', FAILED: 'failed' } as const;
+
+// types.d.ts
+status: typeof ENGINE_STATUS[keyof typeof ENGINE_STATUS];
+```
 
 ---
 
@@ -85,14 +103,17 @@ Examples of forbidden mixes:
 ## 4. Comments (Last Resort)
 
 ### 4.1 Rules
-- Comments MUST NOT explain *what* the code does.
+- **Prefer no comments.** Code should be readable without them.
+- Comments MUST NOT explain *what* the code does — rename instead.
 - Comments MAY explain *why* something non-obvious exists.
+- If a comment is needed to explain *what*, **rename the symbol** to make the comment unnecessary.
 
 If a comment is needed to explain *what*, the code is wrong.
 
 ### 4.2 Forbidden
 - Commented-out code
 - TODO without owner or intent
+- Redundant comments that repeat the function/variable name
 
 ---
 

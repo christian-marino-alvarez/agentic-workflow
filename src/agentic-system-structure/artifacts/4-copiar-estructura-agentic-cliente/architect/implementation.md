@@ -1,9 +1,3 @@
----
-kind: artifact
-name: implementation
-source: agentic-system-structure
----
-
 # Informe de Implementacion — 4-copiar-estructura-agentic-cliente
 
 🏛️ **architect-agent**: Implementacion verificada para copia completa de `.agent` en cliente.

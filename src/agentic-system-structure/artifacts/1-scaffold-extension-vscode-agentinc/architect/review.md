@@ -1,9 +1,3 @@
----
-kind: artifact
-name: review
-source: agentic-system-structure
----
-
 🏛️ **architect-agent**: Revision de implementacion de fase 4.
 
 ---

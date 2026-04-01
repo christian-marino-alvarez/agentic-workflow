@@ -9,17 +9,22 @@ import { randomUUID } from 'crypto';
  */
 export class MessagingBackend extends Messaging {
   private endpoint?: string;
+  private moduleIdentity?: string;
   private disposables: { dispose: () => void }[] = [];
 
   /**
    * Set the Sidecar base URL.
    */
-  public setEndpoint(url: string): void {
+  public setEndpoint(url: string, moduleName?: string): void {
     this.endpoint = url;
+    this.moduleIdentity = moduleName ? `${moduleName}::${LayerScope.Backend}` : undefined;
 
     // Automatic Bridge: Bus -> Sidecar
     const sub = this.on(message => {
-      const isTargetedToBackend = message.to === LayerScope.Backend || message.to.endsWith(`::${LayerScope.Backend}`) || message.to === 'sidecar';
+      // If module-scoped, only forward messages for THIS module's backend
+      const isTargetedToBackend = this.moduleIdentity
+        ? message.to === this.moduleIdentity || message.to === LayerScope.Backend
+        : message.to === LayerScope.Backend || message.to.endsWith(`::${LayerScope.Backend}`) || message.to === 'sidecar';
 
       // If message is for sidecar and we originated it (not from server), send it out
       if (isTargetedToBackend && message.from !== 'sidecar' && this.endpoint) {
@@ -58,10 +63,21 @@ export class MessagingBackend extends Messaging {
           to: message.from,
           origin: MessageOrigin.Server,
           timestamp: Date.now(),
+          correlationId: message.id,
           payload: { command: `${message.payload.command}::response`, data }
         });
       } else {
-        console.error(`[MessagingBackend] HTTP Error: ${response.status} ${response.statusText}`);
+        const errorText = await response.text().catch(() => response.statusText);
+        console.error(`[MessagingBackend] HTTP Error: ${response.status} ${errorText}`);
+        this.emit({
+          id: randomUUID(),
+          from: 'sidecar',
+          to: message.from,
+          origin: MessageOrigin.Server,
+          timestamp: Date.now(),
+          correlationId: message.id,
+          payload: { command: `${message.payload.command}::response`, data: { success: false, error: errorText } }
+        });
       }
     } catch (e) {
       console.error('[MessagingBackend] Request error:', e);
